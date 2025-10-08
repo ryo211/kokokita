@@ -159,7 +159,8 @@ struct HomeView: View {
                 name: agg.details.facilityName,
                 address: agg.details.facilityAddress,
                 phone: nil
-            )
+            ),
+            photoPaths: agg.details.photoPaths
         )
     }
 

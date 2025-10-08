@@ -53,7 +53,7 @@ struct VisitDetailContent: View {
 
             }
             .padding(.horizontal)
-
+            
             // 時刻・住所カード
             InfoCard {
                 HStack(alignment: .top, spacing: 12) {
@@ -81,6 +81,11 @@ struct VisitDetailContent: View {
             }
             .padding(.horizontal)
 
+            if !data.photoPaths.isEmpty {
+                PhotoReadOnlyGrid(paths: data.photoPaths)
+                    .padding(.horizontal, 10)
+            }
+            
             // 地図カード
             if isSharing {
                 if let img = mapSnapshot {

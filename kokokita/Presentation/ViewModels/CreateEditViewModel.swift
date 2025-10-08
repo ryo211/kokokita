@@ -1,6 +1,7 @@
 import Foundation
 import CoreLocation
 import Contacts
+import UIKit
 
 @MainActor
 final class CreateEditViewModel: ObservableObject {
@@ -19,6 +20,14 @@ final class CreateEditViewModel: ObservableObject {
     @Published var labelIds: Set<UUID> = []
     @Published var groupId: UUID?
     
+    @Published var photoPaths: [String] = []
+    // --- 写真の編集中ドラフト管理（最小修正） ---
+    @Published var photoPathsEditing: [String] = []   // 編集用の一時コピー
+    private var originalPhotoPaths: [String] = []     // 編集開始時の元データ
+    private var pendingAdds: Set<String> = []         // セッション中に追加された画像
+    private var pendingDeletes: Set<String> = []      // 削除予約された既存画像
+    @Published var didSave: Bool = false              // 保存済みフラグ
+    private var isEditing: Bool = false               // 編集モード中か
 
     // MARK: - UI State
     @Published var showPOI = false
@@ -79,7 +88,17 @@ final class CreateEditViewModel: ObservableObject {
         labelIds = Set(agg.details.labelIds)
         groupId   = agg.details.groupId
         addressLine = agg.details.resolvedAddress
+
+        // 写真のみドラフト管理
+        photoPaths = agg.details.photoPaths
+        photoPathsEditing = agg.details.photoPaths
+        originalPhotoPaths = agg.details.photoPaths
+        pendingAdds.removeAll()
+        pendingDeletes.removeAll()
+        didSave = false
+        isEditing = true
     }
+
 
     // MARK: - Location
     func requestLocation() async {
@@ -178,7 +197,8 @@ final class CreateEditViewModel: ObservableObject {
                 comment: comment.nilIfBlank,
                 labelIds: Array(labelIds),
                 groupId: groupId,
-                resolvedAddress: addressLine
+                resolvedAddress: addressLine,
+                photoPaths: photoPaths
             )
 
             try repo.create(visit: visit, details: details)
@@ -199,17 +219,31 @@ final class CreateEditViewModel: ObservableObject {
                 cur.comment = comment.isEmpty ? nil : comment
                 cur.labelIds = Array(labelIds)
                 cur.groupId = groupId
-                // 住所を保存（表示用が入っていれば）
                 if let addr = addressLine, !addr.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                     cur.resolvedAddress = addr
                 }
+                // 写真はドラフトを確定
+                cur.photoPaths = photoPathsEditing
             }
+
+            // 削除予約を確定
+            for path in pendingDeletes {
+                ImageStore.delete(path)
+            }
+
+            // 状態を同期
+            originalPhotoPaths = photoPathsEditing
+            photoPaths = photoPathsEditing
+            pendingAdds.removeAll()
+            pendingDeletes.removeAll()
+            didSave = true
             return true
         } catch {
             alert = error.localizedDescription
             return false
         }
     }
+
 
     // MARK: - Taxonomy helpers
 
@@ -257,6 +291,68 @@ final class CreateEditViewModel: ObservableObject {
         return [pm.name, pm.locality, pm.administrativeArea, pm.country]
             .compactMap { $0 }
             .joined(separator: " ")
+    }
+    
+    func addPhotos(_ images: [UIImage]) {
+        let current = isEditing ? photoPathsEditing : photoPaths
+        let remain = max(0, AppMedia.maxPhotosPerVisit - current.count)
+        guard remain > 0 else { return }
+        let picked = images.prefix(remain)
+
+        for ui in picked {
+            if let saved = try? ImageStore.save(ui) {
+                if isEditing {
+                    photoPathsEditing.append(saved)
+                    if !originalPhotoPaths.contains(saved) {
+                        pendingAdds.insert(saved)  // キャンセル時に掃除
+                    }
+                } else {
+                    // 新規作成：保存用配列とUI用配列の両方に積む
+                    photoPaths.append(saved)
+                    photoPathsEditing.append(saved)
+                }
+            }
+        }
+    }
+
+
+    func removePhoto(at index: Int) {
+        if isEditing {
+            guard photoPathsEditing.indices.contains(index) else { return }
+            let path = photoPathsEditing.remove(at: index)
+
+            if pendingAdds.contains(path) {
+                ImageStore.delete(path)
+                pendingAdds.remove(path)
+            } else if originalPhotoPaths.contains(path) {
+                pendingDeletes.insert(path) // 保存時に削除確定
+            }
+        } else {
+            // 新規作成：UIと保存用を両方から削除
+            guard photoPathsEditing.indices.contains(index) else { return }
+            let path = photoPathsEditing.remove(at: index)
+
+            if let i = photoPaths.firstIndex(of: path) {
+                photoPaths.remove(at: i)
+            }
+            ImageStore.delete(path)
+        }
+    }
+
+
+    // 保存せず閉じた場合の後処理（onDisappear などで呼ぶ）
+    func discardPhotoEditingIfNeeded() {
+        guard isEditing, didSave == false else { return }
+
+        // セッション中に追加した画像を削除
+        for path in pendingAdds {
+            ImageStore.delete(path)
+        }
+
+        // 編集前の状態に戻す
+        photoPathsEditing = originalPhotoPaths
+        pendingAdds.removeAll()
+        pendingDeletes.removeAll()
     }
 
 }

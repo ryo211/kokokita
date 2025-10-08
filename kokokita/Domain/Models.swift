@@ -64,12 +64,13 @@ public struct PlacePOI: Identifiable, Equatable {
 
 struct VisitDetails: Codable, Equatable {
     var title: String?
-    public var facilityName: String?
-    public var facilityAddress: String?
+    var facilityName: String?
+    var facilityAddress: String?
     var comment: String?
     var labelIds: [UUID]
     var groupId: UUID?
-    public var resolvedAddress: String?
+    var resolvedAddress: String?
+    var photoPaths: [String] = []
     
     public init(title: String? = nil,
                 facilityName: String? = nil,
@@ -77,7 +78,8 @@ struct VisitDetails: Codable, Equatable {
                 comment: String? = nil,
                 labelIds: [UUID] = [],
                 groupId: UUID? = nil,
-                resolvedAddress: String? = nil
+                resolvedAddress: String? = nil,
+                photoPaths: [String] = []
     ) {
         self.title = title
         self.facilityName = facilityName
@@ -86,6 +88,7 @@ struct VisitDetails: Codable, Equatable {
         self.labelIds = labelIds
         self.groupId = groupId
         self.resolvedAddress = resolvedAddress
+        self.photoPaths = photoPaths
     }
 }
 

@@ -108,7 +108,6 @@ struct VisitEditScreen: View {
             }
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    // ← ToolbarItemの“中”は常に1つのViewにする
                     Group {
                         if showsCloseButton {
                             Button("閉じる") { onClose() }
@@ -350,9 +349,9 @@ struct VisitEditScreen: View {
             .presentationDetents([.large, .large])
         }
         .ignoresSafeArea(.keyboard, edges: .bottom)
-//        .dismissKeyboardOnBackgroundTap {
-//            focusedField = nil
-//        }
+        .onDisappear {
+            vm.discardPhotoEditingIfNeeded()
+        }
     }
 
     // MARK: - Form共通
@@ -373,6 +372,10 @@ struct VisitEditScreen: View {
                             vm.clearFacilityInfo()
                         }
                     )
+                }
+                
+                if #available(iOS 16.0, *) {
+                    PhotoAttachmentSection(vm: vm, allowDelete: true)
                 }
 
                 TextEditor(text: $vm.comment)

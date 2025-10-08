@@ -42,6 +42,20 @@ final class CoreDataVisitRepository: VisitRepository, TaxonomyRepository {
         // to-many labels
         d.labels    = NSSet(array: try fetchLabelEntities(for: details.labelIds))
 
+        if !details.photoPaths.isEmpty {
+            let ordered = NSMutableOrderedSet()
+            for (idx, path) in details.photoPaths.enumerated() {
+                let p = VisitPhotoEntity(context: ctx)
+                p.id = UUID()
+                p.filePath = path
+                p.orderIndex = Int16(idx)   // Ordered リレーションがあるなら任意
+                p.createdAt = Date()
+                p.details = d
+                ordered.add(p)
+            }
+            d.photos = ordered
+        }
+        
         // リレーション接続（inverse は DataModel 側で設定しておく）
         v.details = d
 
@@ -61,10 +75,65 @@ final class CoreDataVisitRepository: VisitRepository, TaxonomyRepository {
             facilityAddress: d.facilityAddress,
             comment: d.comment,
             labelIds: (d.labels as? Set<LabelEntity>)?.compactMap { $0.id } ?? [],
-            groupId: d.groupId
+            groupId: d.groupId,
+            photoPaths: {
+                    let arr: [VisitPhotoEntity]
+                    if let ordered = d.photos as? NSOrderedSet,
+                       let casted = ordered.array as? [VisitPhotoEntity] {
+                        arr = casted
+                    } else if let set = d.photos as? Set<VisitPhotoEntity> {
+                        arr = set.sorted { $0.orderIndex < $1.orderIndex }
+                    } else {
+                        arr = []
+                    }
+                    return arr.compactMap { $0.filePath }
+                }()
         )
         transform(&cur)
 
+        // 既存の PhotoEntity をマップ化（filePath を一意キー扱い）
+        let existing: [VisitPhotoEntity] = {
+            if let ordered = d.photos as? NSOrderedSet,
+               let casted = ordered.array as? [VisitPhotoEntity] {
+                return casted
+            } else if let set = d.photos as? Set<VisitPhotoEntity> {
+                return Array(set)
+            } else { return [] }
+        }()
+        var byPath = Dictionary(uniqueKeysWithValues: existing.compactMap { e in
+            (e.filePath ?? "") .isEmpty ? nil : (e.filePath!, e)
+        })
+
+        // 削除（無くなったパス）
+        let newSet = Set(cur.photoPaths)
+        for e in existing {
+            let path = e.filePath ?? ""
+            if !newSet.contains(path) {
+                // ファイルも削除
+                if !path.isEmpty { ImageStore.delete(path) }
+                ctx.delete(e)
+                byPath.removeValue(forKey: path)
+            }
+        }
+
+        // 追加/並べ替え
+        let ordered = NSMutableOrderedSet()
+        for (idx, path) in cur.photoPaths.enumerated() {
+            if let exist = byPath[path] {
+                exist.orderIndex = Int16(idx)
+                ordered.add(exist)
+            } else {
+                // 追加
+                let p = VisitPhotoEntity(context: ctx)
+                p.id = UUID()
+                p.filePath = path
+                p.orderIndex = Int16(idx)
+                p.createdAt = Date()
+                p.details = d
+                ordered.add(p)
+            }
+        }
+        
         // 反映
         d.title     = cur.title
         d.facilityName = cur.facilityName
@@ -73,6 +142,7 @@ final class CoreDataVisitRepository: VisitRepository, TaxonomyRepository {
         d.groupId   = cur.groupId
         d.resolvedAddress = cur.resolvedAddress
         d.labels    = NSSet(array: try fetchLabelEntities(for: cur.labelIds))
+        d.photos    = ordered
 
         // 不変部は触っていないので d のみチェックで十分
         preflightValidate([d])
@@ -84,6 +154,18 @@ final class CoreDataVisitRepository: VisitRepository, TaxonomyRepository {
 
     func delete(id: UUID) throws {
         if let v = try fetchVisitEntity(id: id) {
+            // ファイルパスを先に退避して削除
+            if let d = v.details {
+                let photos: [VisitPhotoEntity] = {
+                    if let ordered = d.photos as? NSOrderedSet,
+                       let casted = ordered.array as? [VisitPhotoEntity] {
+                        return casted
+                    } else if let set = d.photos as? Set<VisitPhotoEntity> {
+                        return Array(set)
+                    } else { return [] }
+                }()
+                for p in photos { if let path = p.filePath { ImageStore.delete(path) } }
+            }
             ctx.delete(v)
             try ctx.save()
         }
@@ -228,12 +310,23 @@ final class CoreDataVisitRepository: VisitRepository, TaxonomyRepository {
                 createdAtUTC: ic
             )
         )
-
+        
+        
         // Details（可変部）
         let d = v.details
         let labelEntities = (d?.labels as? Set<LabelEntity>) ?? []
         let labelIds = labelEntities.compactMap { $0.id }
 
+        let photoEntities: [VisitPhotoEntity] = {
+            if let ordered = d?.photos as? NSOrderedSet,
+               let casted = ordered.array as? [VisitPhotoEntity] {
+                return casted
+            } else if let set = d?.photos as? Set<VisitPhotoEntity> {
+                return set.sorted { $0.orderIndex < $1.orderIndex }
+            } else { return [] }
+        }()
+        let photoPaths = photoEntities.compactMap { $0.filePath }
+        
         let details = VisitDetails(
             title: d?.title,
             facilityName: d?.facilityName, 
@@ -241,7 +334,8 @@ final class CoreDataVisitRepository: VisitRepository, TaxonomyRepository {
             comment: d?.comment,
             labelIds: labelIds,
             groupId: d?.groupId,
-            resolvedAddress: d?.resolvedAddress
+            resolvedAddress: d?.resolvedAddress,
+            photoPaths: photoPaths
         )
 
         return VisitAggregate(id: id, visit: visit, details: details)

@@ -157,6 +157,7 @@ struct VisitDetailData {
     var coordinate: CLLocationCoordinate2D?
     var memo: String?
     var facility: FacilityInfo?
+    var photoPaths: [String]
 }
 
 
