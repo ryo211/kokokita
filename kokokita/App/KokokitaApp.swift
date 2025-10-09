@@ -15,7 +15,8 @@ struct KokokitaApp: App {
     }
     
     @StateObject private var uiState = AppUIState()
-
+    @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    
     var body: some Scene {
         WindowGroup {
             RootTabView()

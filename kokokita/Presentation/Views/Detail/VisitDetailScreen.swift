@@ -9,7 +9,7 @@ import SwiftUI
 import MapKit
 import CoreLocation
 
-// MARK: - 公開：詳細画面（UI草案）
+// MARK: - 詳細画面
 struct VisitDetailScreen: View {
     let data: VisitDetailData
     let onBack: () -> Void
@@ -55,35 +55,11 @@ struct VisitDetailScreen: View {
                 VisitDetailContent(data: data, mapSnapshot: nil, isSharing: false)
             }
 
-            // フッター共有ボタン（固定）
-            VStack {
-                Spacer()
-                HStack {
-                    Button {
-                        Task { await makeAndShare() }
-                    } label: {
-                        HStack(spacing: 8) {
-                            Image(systemName: "square.and.arrow.up")
-                            Text("共有")
-                                .fontWeight(.semibold)
-                        }
-                        .frame(maxWidth: .infinity, minHeight: 44)
-                    }
-                    .buttonStyle(BorderedProminentButtonStyle())
-                    .controlSize(.large)
-                }
-                .padding(.horizontal)
-                .padding(.vertical, 10)
-                .padding(.bottom, 20)
-                .background(.ultraThinMaterial)
-                .clipShape(RoundedRectangle(cornerRadius: 0))
-            }
-            .ignoresSafeArea(edges: .bottom)
         }
         // ▼ 標準の戻るボタンを活かしつつ、右側に「編集」を出す
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
+            ToolbarItemGroup(placement: .topBarTrailing) {
                 Button {
                     onEdit()
                 } label: {
@@ -93,11 +69,26 @@ struct VisitDetailScreen: View {
                     }
                     .font(.subheadline.weight(.semibold))
                 }
+
+                Button {
+                    Task { await makeAndShare() }
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "square.and.arrow.up")
+                        Text("共有")
+                    }
+                    .font(.subheadline.weight(.semibold))
+                }
             }
         }
+
         .sheet(item: $sharePayload) { payload in
             ActivityView(items: [payload.text, payload.image])
         }
+//        .safeAreaInset(edge: .bottom) {
+//            Color.clear
+//                .frame(height: 24)  // まずは24〜32くらいでOK。足りなければ増やす
+//        }
     }
     
     private func shareText() -> String {

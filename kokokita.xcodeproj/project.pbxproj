@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		45B215842E7EF0B70004B944 /* Kokokita.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 45B215822E7EF0B70004B944 /* Kokokita.xcdatamodeld */; };
+		45DF36A02E975A2200B6526D /* GoogleMobileAds in Frameworks */ = {isa = PBXBuildFile; productRef = 45DF369F2E975A2200B6526D /* GoogleMobileAds */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -41,6 +42,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				45DF36A02E975A2200B6526D /* GoogleMobileAds in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -84,6 +86,7 @@
 			);
 			name = kokokita;
 			packageProductDependencies = (
+				45DF369F2E975A2200B6526D /* GoogleMobileAds */,
 			);
 			productName = kokokita;
 			productReference = 45B214B72E7EDB560004B944 /* kokokita.app */;
@@ -113,6 +116,9 @@
 			);
 			mainGroup = 45B214AE2E7EDB560004B944;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				45DF369E2E975A2200B6526D /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 45B214B82E7EDB560004B944 /* Products */;
 			projectDirPath = "";
@@ -356,6 +362,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		45DF369E2E975A2200B6526D /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/googleads/swift-package-manager-google-mobile-ads";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.12.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		45DF369F2E975A2200B6526D /* GoogleMobileAds */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 45DF369E2E975A2200B6526D /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */;
+			productName = GoogleMobileAds;
+		};
+/* End XCSwiftPackageProductDependency section */
 
 /* Begin XCVersionGroup section */
 		45B215822E7EF0B70004B944 /* Kokokita.xcdatamodeld */ = {

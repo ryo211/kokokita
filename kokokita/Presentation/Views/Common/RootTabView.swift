@@ -17,12 +17,14 @@ struct RootTabView: View {
     @EnvironmentObject private var ui: AppUIState
 
     var body: some View {
-        ZStack {
-            // ← TabViewをやめて手動で表示を切替
-            Group {
+        // ← 重ねずに“占有する”縦積みレイアウトに変更
+        VStack(spacing: 0) {
+            // ===== コンテンツ領域（フッター分を除いた残り全体） =====
+            ZStack { // （必要なければ Group でもOK）
                 switch tab {
                 case .home:
                     NavigationStack { HomeView() }
+
                 case .map:
                     NavigationStack {
                         VStack(spacing: 12) {
@@ -32,6 +34,7 @@ struct RootTabView: View {
                         .navigationTitle("地図")
                         .navigationBarTitleDisplayMode(.inline)
                     }
+
                 case .calendar:
                     NavigationStack {
                         VStack(spacing: 12) {
@@ -41,25 +44,42 @@ struct RootTabView: View {
                         .navigationTitle("カレンダー")
                         .navigationBarTitleDisplayMode(.inline)
                     }
+
                 case .menu:
                     NavigationStack { MenuHomeView() }
+
                 case .center:
-                    Color.clear // 使わない（中央ボタン専用ダミー）
+                    Color.clear // 中央ボタンは別途 sheet 起動
                 }
             }
-        }
-        // カスタムフッター（必要な時だけ表示）
-        .safeAreaInset(edge: .bottom) {
-            if !ui.isTabBarHidden {
-                CustomBottomBar(
-                    current: tab,
-                    onSelect: { tab = $0 },
-                    onCenterTap: { showCreate = true }
-                )
-                .transition(.move(edge: .bottom).combined(with: .opacity))
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            // ↑ これで子の ScrollView は“フッターより上”で止まります
+
+            // ===== フッター領域（バナー + カスタムタブバー） =====
+            VStack(spacing: 0) {
+                // 固定バナー（フッターの“上”に配置）
+                BannerAdView(adUnitID: bannerAdUnitID)
+                    .background(.thinMaterial)
+                    .transition(.opacity)
+
+                if !ui.isTabBarHidden {
+                    CustomBottomBar(
+                        current: tab,
+                        onSelect: { tab = $0 },
+                        onCenterTap: { showCreate = true }
+                    )
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
             }
+            // ここまでが“常に表示される固定領域”
         }
+        // 画面全体の背景（下は Safe Area を無視しない）
+        .background(Color(.systemBackground))
         .animation(.snappy, value: ui.isTabBarHidden)
+        // キーボードだけ下端を無視（入力用画面で下が切れないように）
+        .ignoresSafeArea(.keyboard, edges: .bottom)
+
+        // 新規作成モーダル
         .sheet(isPresented: $showCreate, onDismiss: {
             NotificationCenter.default.post(name: .visitsChanged, object: nil)
         }) {
@@ -70,7 +90,6 @@ struct RootTabView: View {
     }
 }
 
-
 private struct CustomBottomBar: View {
     let current: RootTab
     let onSelect: (RootTab) -> Void
@@ -78,7 +97,6 @@ private struct CustomBottomBar: View {
 
     var body: some View {
         ZStack {
-            // 背景バー
             Rectangle()
                 .fill(.ultraThinMaterial)
                 .frame(height: 72)
@@ -88,7 +106,6 @@ private struct CustomBottomBar: View {
                 barButton(icon: "house.fill", title: "ホーム", tab: .home)
                 barButton(icon: "map.fill", title: "地図", tab: .map)
 
-                // 中央の大ボタン
                 Button(action: onCenterTap) {
                     ZStack {
                         Circle()
@@ -116,13 +133,20 @@ private struct CustomBottomBar: View {
             onSelect(tab)
         } label: {
             VStack(spacing: 4) {
-                Image(systemName: icon)
-                    .font(.title3)
-                Text(title)
-                    .font(.caption2)
+                Image(systemName: icon).font(.title3)
+                Text(title).font(.caption2)
             }
             .frame(maxWidth: .infinity)
             .foregroundStyle(current == tab ? .primary : .secondary)
         }
+        .buttonStyle(.plain)
     }
+}
+
+private var bannerAdUnitID: String {
+    #if DEBUG
+    return "ca-app-pub-3940256099942544/2934735716"
+    #else
+    return "ca-app-pub-xxxxxxxxxxxxxxxx/zzzzzzzzzz"
+    #endif
 }

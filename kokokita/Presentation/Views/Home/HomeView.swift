@@ -71,9 +71,9 @@ struct HomeView: View {
                         onEdit: { editingTarget = agg },
                         onShare: { /* 共有導線をここに（必要なら）*/ }
                     )
-                    .environmentObject(ui) 
-                    .onAppear { ui.isTabBarHidden = true }
-                    .onDisappear { ui.isTabBarHidden = false }
+//                    .environmentObject(ui) 
+//                    .onAppear { ui.isTabBarHidden = true }
+//                    .onDisappear { ui.isTabBarHidden = false }
 
                 } label: {
                     VisitListRow(agg: agg, labelMap: labelMap, groupMap: groupMap)
@@ -97,7 +97,6 @@ struct HomeView: View {
         }
 
         .listStyle(.plain)
-        .padding(.bottom, 72) // カスタムフッターと重ならないよう底上げ
         .task { vm.reload() }
         .onReceive(NotificationCenter.default.publisher(for: .visitsChanged)) { _ in
             Task { vm.reload() }
