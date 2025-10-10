@@ -11,10 +11,12 @@ import CoreLocation
 
 // MARK: - 詳細画面
 struct VisitDetailScreen: View {
+    @Environment(\.dismiss) private var dismiss
     let data: VisitDetailData
     let onBack: () -> Void
     let onEdit: () -> Void
     let onShare: () -> Void
+    let onDelete: () -> Void
 
     // 地図カメラ
     @State private var camera: MapCameraPosition
@@ -22,17 +24,20 @@ struct VisitDetailScreen: View {
 //    @State private var shareImage: UIImage? = nil
 //    @State private var showShareSheet = false
     @State private var sharePayload: SharePayload? = nil
+    @State private var showDeleteAlert = false
     // SNSカードの論理サイズ（表示用は1/3で描画、保存はscale=3で 1080x1350）
     private let logicalSize = CGSize(width: 360, height: 450)
     
     init(data: VisitDetailData,
          onBack: @escaping () -> Void = {},
          onEdit: @escaping () -> Void = {},
-         onShare: @escaping () -> Void = {}) {
+         onShare: @escaping () -> Void = {},
+         onDelete: @escaping () -> Void = {}) {
         self.data = data
         self.onBack = onBack
         self.onEdit = onEdit
         self.onShare = onShare
+        self.onDelete = onDelete
 
         if let c = data.coordinate {
             let region = MKCoordinateRegion(center: c,
@@ -79,11 +84,27 @@ struct VisitDetailScreen: View {
                     }
                     .font(.subheadline.weight(.semibold))
                 }
+                
+                Button(role: .destructive) {
+                    showDeleteAlert = true
+                } label: {
+                    Image(systemName: "trash")
+                }
+                .accessibilityLabel("削除")
             }
         }
 
         .sheet(item: $sharePayload) { payload in
             ActivityView(items: [payload.text, payload.image])
+        }
+        .alert("この記録を削除しますか？", isPresented: $showDeleteAlert) {
+            Button("削除", role: .destructive) {
+                onDelete()
+                dismiss()
+            }
+            Button("キャンセル", role: .cancel) { }
+        } message: {
+            Text("この操作は取り消せません。")
         }
     }
     

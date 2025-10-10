@@ -69,7 +69,12 @@ struct HomeView: View {
                         data: toDetailData(agg),
                         onBack: {},                 // NavigationLink なので未使用
                         onEdit: { editingTarget = agg },
-                        onShare: { /* 共有導線をここに（必要なら）*/ }
+                        onShare: { /* 共有導線をここに（必要なら）*/ },
+                        onDelete: {
+                            withAnimation {
+                                vm.delete(id: agg.id)
+                            }
+                        }
                     )
                 } label: {
                     VisitListRow(agg: agg, labelMap: labelMap, groupMap: groupMap)
@@ -100,18 +105,17 @@ struct HomeView: View {
         .onReceive(NotificationCenter.default.publisher(for: .taxonomyChanged)) { _ in
             Task { await vm.reloadTaxonomyThenData() }
         }
-        .confirmationDialog(                                   // ← 警告を表示
+        .alert(
             "この記録を削除しますか？",
             isPresented: Binding(
                 get: { pendingDeleteId != nil },
                 set: { if !$0 { pendingDeleteId = nil } }
-            ),
-            titleVisibility: .visible
+            )
         ) {
             Button("削除", role: .destructive) {
                 if let id = pendingDeleteId {
                     withAnimation {
-                        vm.delete(id: id)                      // ← 実際の削除
+                        vm.delete(id: id)
                     }
                 }
                 pendingDeleteId = nil
@@ -119,6 +123,8 @@ struct HomeView: View {
             Button("キャンセル", role: .cancel) {
                 pendingDeleteId = nil
             }
+        } message: {
+            Text("この操作は取り消せません。")
         }
     }
     
