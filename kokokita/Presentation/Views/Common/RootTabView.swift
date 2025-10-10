@@ -8,7 +8,7 @@
 import SwiftUI
 
 enum RootTab: Hashable {
-    case home, map, center, calendar, menu
+    case home, /* map, */ center, /* calendar, */ menu
 }
 
 struct RootTabView: View {
@@ -25,25 +25,25 @@ struct RootTabView: View {
                 case .home:
                     NavigationStack { HomeView() }
 
-                case .map:
-                    NavigationStack {
-                        VStack(spacing: 12) {
-                            Image(systemName: "map").font(.largeTitle)
-                            Text("地図（後日実装）").foregroundStyle(.secondary)
-                        }
-                        .navigationTitle("地図")
-                        .navigationBarTitleDisplayMode(.inline)
-                    }
+                // case .map:
+                //     NavigationStack {
+                //         VStack(spacing: 12) {
+                //             Image(systemName: "map").font(.largeTitle)
+                //             Text("地図（後日実装）").foregroundStyle(.secondary)
+                //         }
+                //         .navigationTitle("地図")
+                //         .navigationBarTitleDisplayMode(.inline)
+                //     }
 
-                case .calendar:
-                    NavigationStack {
-                        VStack(spacing: 12) {
-                            Image(systemName: "calendar").font(.largeTitle)
-                            Text("カレンダー（後日実装）").foregroundStyle(.secondary)
-                        }
-                        .navigationTitle("カレンダー")
-                        .navigationBarTitleDisplayMode(.inline)
-                    }
+                // case .calendar:
+                //     NavigationStack {
+                //         VStack(spacing: 12) {
+                //             Image(systemName: "calendar").font(.largeTitle)
+                //             Text("カレンダー（後日実装）").foregroundStyle(.secondary)
+                //         }
+                //         .navigationTitle("カレンダー")
+                //         .navigationBarTitleDisplayMode(.inline)
+                //     }
 
                 case .menu:
                     NavigationStack { MenuHomeView() }
@@ -53,7 +53,6 @@ struct RootTabView: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            // ↑ これで子の ScrollView は“フッターより上”で止まります
 
             // ===== フッター領域（バナー + カスタムタブバー） =====
             VStack(spacing: 0) {
@@ -104,7 +103,7 @@ private struct CustomBottomBar: View {
 
             HStack {
                 barButton(icon: "house.fill", title: "ホーム", tab: .home)
-                barButton(icon: "map.fill", title: "地図", tab: .map)
+                // barButton(icon: "map.fill", title: "地図", tab: .map)
 
                 Button(action: onCenterTap) {
                     ZStack {
@@ -120,10 +119,10 @@ private struct CustomBottomBar: View {
                 }
                 .accessibilityLabel("ココキタ")
 
-                barButton(icon: "calendar", title: "カレンダー", tab: .calendar)
+                // barButton(icon: "calendar", title: "カレンダー", tab: .calendar)
                 barButton(icon: "ellipsis.circle.fill", title: "メニュー", tab: .menu)
             }
-            .padding(.horizontal, 12)
+            .padding(.horizontal, 24)
             .padding(.bottom, 8)
         }
     }

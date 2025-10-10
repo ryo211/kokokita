@@ -82,30 +82,32 @@ struct SearchFilterSheet: View {
             }
 
             Section("ラベル") {
-                Picker("ラベル", selection: $vm.labelFilter) {
+                Picker(selection: $vm.labelFilter) {
                     Text("指定なし").tag(UUID?.none)
                     ForEach(
                         vm.labels
-                            .filter { !$0.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty } // ★追加
+                            .filter { !$0.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
                             .sorted { $0.name.localizedCompare($1.name) == .orderedAscending }
                     ) { t in
                         Text(t.name).tag(Optional(t.id))
                     }
-                }
+                } label: { EmptyView() }
+                .labelsHidden()
                 .onChange(of: vm.labelFilter) { _ in vm.applyAndReload() }
             }
 
             Section("グループ") {
-                Picker("グループ", selection: $vm.groupFilter) {
+                Picker(selection: $vm.groupFilter) {
                     Text("指定なし").tag(UUID?.none)
                     ForEach(
                         vm.groups
-                            .filter { !$0.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty } // ★追加
+                            .filter { !$0.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
                             .sorted { $0.name.localizedCompare($1.name) == .orderedAscending }
                     ) { t in
                         Text(t.name).tag(Optional(t.id))
                     }
-                }
+                } label: { EmptyView() }
+                .labelsHidden()
                 .onChange(of: vm.groupFilter) { _ in vm.applyAndReload() }
             }
             
@@ -132,6 +134,7 @@ struct SearchFilterSheet: View {
         .onAppear {
             // 既存値を編集用に反映
             titleQuery = vm.titleQuery
+            titleDraft = vm.titleQuery // ← 追加
             selectedLabel = vm.labelFilter
             selectedGroup = vm.groupFilter
 

@@ -85,10 +85,6 @@ struct VisitDetailScreen: View {
         .sheet(item: $sharePayload) { payload in
             ActivityView(items: [payload.text, payload.image])
         }
-//        .safeAreaInset(edge: .bottom) {
-//            Color.clear
-//                .frame(height: 24)  // まずは24〜32くらいでOK。足りなければ増やす
-//        }
     }
     
     private func shareText() -> String {
@@ -122,7 +118,10 @@ struct VisitDetailScreen: View {
 
         // 2) 同じ中身を共有用フラグでレンダリング
         let img: UIImage? = await MainActor.run {
-            let content = VisitDetailContent(data: data, mapSnapshot: mapImage, isSharing: true)
+            let content = VStack(spacing: 0) {
+                VisitDetailContent(data: data, mapSnapshot: mapImage, isSharing: true)
+                    .padding(.all, 20)
+            }
             return ShareImageRenderer.renderWidth(content, width: 360, scale: 3) // 1080px 幅
         }
 

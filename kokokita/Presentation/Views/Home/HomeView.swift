@@ -71,10 +71,6 @@ struct HomeView: View {
                         onEdit: { editingTarget = agg },
                         onShare: { /* 共有導線をここに（必要なら）*/ }
                     )
-//                    .environmentObject(ui) 
-//                    .onAppear { ui.isTabBarHidden = true }
-//                    .onDisappear { ui.isTabBarHidden = false }
-
                 } label: {
                     VisitListRow(agg: agg, labelMap: labelMap, groupMap: groupMap)
                 }
@@ -179,4 +175,3 @@ private struct VisitListRow: View {
         }
     }
 }
-
