@@ -24,14 +24,16 @@ final class CreateEditViewModel: ObservableObject {
     @Published var alert: String?
     @Published var showActionPrompt: Bool = false
 
-    // POI関連のUI状態（転送プロパティ）
-    var showPOI: Bool {
-        get { poiCoordinator.showPOI }
-        set { poiCoordinator.showPOI = newValue }
+    // POI関連のUI状態（ViewからBindingするため@Publishedで公開）
+    @Published var showPOI: Bool = false {
+        didSet {
+            // ViewからshowPOIが変更されたらpoiCoordinatorにも反映
+            if showPOI != poiCoordinator.showPOI {
+                poiCoordinator.showPOI = showPOI
+            }
+        }
     }
-    var poiList: [PlacePOI] {
-        poiCoordinator.poiList
-    }
+    @Published var poiList: [PlacePOI] = []
 
     // 測位フラグ（偽装/外部アクセサリ検知）
     private var lastFlags = LocationSourceFlags(
@@ -50,7 +52,7 @@ final class CreateEditViewModel: ObservableObject {
     private let locationGeocodingService: LocationGeocodingService
 
     /// POI検索・調整サービス
-    let poiCoordinator: POICoordinatorService
+    private let poiCoordinator: POICoordinatorService
 
     // MARK: - Initialization
 
@@ -67,6 +69,17 @@ final class CreateEditViewModel: ObservableObject {
         self.photoService = PhotoEditService()
         self.locationGeocodingService = LocationGeocodingService(locationService: loc)
         self.poiCoordinator = POICoordinatorService(poiService: poi)
+
+        // POI状態の同期（poiCoordinatorの変更をViewModelに反映）
+        setupPOIBinding()
+    }
+
+    private func setupPOIBinding() {
+        // poiCoordinatorのshowPOIとpoiListの変更を監視してViewModelに反映
+        poiCoordinator.$showPOI
+            .assign(to: &$showPOI)
+        poiCoordinator.$poiList
+            .assign(to: &$poiList)
     }
 
     // MARK: - Load Existing
