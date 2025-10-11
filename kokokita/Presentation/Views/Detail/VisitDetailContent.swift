@@ -16,6 +16,16 @@ struct VisitDetailContent: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: UIConstants.Spacing.large) {
+            // 共有画像の場合、最上部にロゴを表示
+            if isSharing {
+                KokokitaHeaderLogo(size: .small)
+                    .opacity(0.8)
+                    .fixedSize()
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.top, UIConstants.Spacing.medium)
+                    .padding(.bottom, UIConstants.Spacing.small)
+            }
+
             // タイトル + ラベル/グループ（くっつくイメージ）
             VStack(alignment: .leading, spacing: UIConstants.Spacing.medium) {
                 HStack(spacing: UIConstants.Spacing.medium) {

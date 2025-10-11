@@ -112,9 +112,20 @@ private struct CustomBottomBar: View {
                             .frame(width: UIConstants.Size.centerButtonSize,
                                    height: UIConstants.Size.centerButtonSize)
                             .shadow(radius: UIConstants.Shadow.radiusMedium * 3, y: UIConstants.Shadow.radiusMedium)
-                        Image(systemName: "mappin.and.ellipse")
-                            .foregroundStyle(.white)
-                            .font(.title2.weight(.semibold))
+
+                        VStack(spacing: 2) {
+                            Image(systemName: "mappin.and.ellipse")
+                                .foregroundStyle(.white)
+                                .font(.title3.weight(.semibold))
+                                .accessibilityHidden(true)
+                            Text("ココキタ")
+                                .font(.caption2.weight(.bold))
+                                .foregroundStyle(.white)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.7)
+                        }
+                        .padding(.vertical, 6)
+                        .padding(.horizontal, 8)
                     }
                     .padding(.horizontal, UIConstants.Spacing.medium - 2)
                 }

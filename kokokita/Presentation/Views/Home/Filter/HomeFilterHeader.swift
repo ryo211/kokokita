@@ -15,26 +15,29 @@ struct HomeFilterHeader: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .center) {
-                Button(action: onTapSearch) {
-                    Image(systemName: "magnifyingglass").font(.title2)
-                        .foregroundStyle(Color.blue)             // ← iOS標準の青
-                        .shadow(radius: 2)                       // ← 少し影を足すと目立つ
-                }
-                .buttonStyle(.plain)
+                // ロゴ
+                KokokitaHeaderLogoSimple()
 
                 Spacer()
+
+                // 検索ボタン
+                Button(action: onTapSearch) {
+                    Image(systemName: "magnifyingglass").font(.title2)
+                        .foregroundStyle(Color.blue)
+                }
+                .buttonStyle(.plain)
                 
                 Button {
                     vm.toggleSort()
                 } label: {
                     // 降順（最新が上）がデフォ。アイコンと説明を状態で出し分け。
                     HStack(spacing: 6) {
+                        Text(vm.sortAscending ? "　古い順" : "新しい順")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
                         Image(systemName: vm.sortAscending ? "chevron.up"
                                                            : "chevron.down")
                             .font(.system(size: 12))
-                        Text(vm.sortAscending ? "古い順　" : "新しい順")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
                     }
                 }
                 .buttonStyle(.plain)
