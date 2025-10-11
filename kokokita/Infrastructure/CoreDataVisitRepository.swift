@@ -66,7 +66,14 @@ final class CoreDataVisitRepository: VisitRepository, TaxonomyRepository {
     }
 
     func updateDetails(id: UUID, transform: (inout VisitDetails) -> Void) throws {
-        guard let v = try fetchVisitEntity(id: id), let d = v.details else { return }
+        guard let v = try fetchVisitEntity(id: id) else {
+            Logger.warning("Visit not found for update: \(id)")
+            return
+        }
+        guard let d = v.details else {
+            Logger.error("Visit details missing for id: \(id)")
+            return
+        }
 
         // 現状値を Domain 型に戻してから編集クロージャを適用
         var cur = VisitDetails(
@@ -76,30 +83,12 @@ final class CoreDataVisitRepository: VisitRepository, TaxonomyRepository {
             comment: d.comment,
             labelIds: (d.labels as? Set<LabelEntity>)?.compactMap { $0.id } ?? [],
             groupId: d.groupId,
-            photoPaths: {
-                    let arr: [VisitPhotoEntity]
-                    if let ordered = d.photos as? NSOrderedSet,
-                       let casted = ordered.array as? [VisitPhotoEntity] {
-                        arr = casted
-                    } else if let set = d.photos as? Set<VisitPhotoEntity> {
-                        arr = set.sorted { $0.orderIndex < $1.orderIndex }
-                    } else {
-                        arr = []
-                    }
-                    return arr.compactMap { $0.filePath }
-                }()
+            photoPaths: photoEntities(from: d).compactMap { $0.filePath }
         )
         transform(&cur)
 
         // 既存の PhotoEntity をマップ化（filePath を一意キー扱い）
-        let existing: [VisitPhotoEntity] = {
-            if let ordered = d.photos as? NSOrderedSet,
-               let casted = ordered.array as? [VisitPhotoEntity] {
-                return casted
-            } else if let set = d.photos as? Set<VisitPhotoEntity> {
-                return Array(set)
-            } else { return [] }
-        }()
+        let existing = photoEntities(from: d)
         var byPath = Dictionary(uniqueKeysWithValues: existing.compactMap { e in
             (e.filePath ?? "") .isEmpty ? nil : (e.filePath!, e)
         })
@@ -155,17 +144,8 @@ final class CoreDataVisitRepository: VisitRepository, TaxonomyRepository {
     func delete(id: UUID) throws {
         if let v = try fetchVisitEntity(id: id) {
             // ファイルパスを先に退避して削除
-            if let d = v.details {
-                let photos: [VisitPhotoEntity] = {
-                    if let ordered = d.photos as? NSOrderedSet,
-                       let casted = ordered.array as? [VisitPhotoEntity] {
-                        return casted
-                    } else if let set = d.photos as? Set<VisitPhotoEntity> {
-                        return Array(set)
-                    } else { return [] }
-                }()
-                for p in photos { if let path = p.filePath { ImageStore.delete(path) } }
-            }
+            let photos = photoEntities(from: v.details)
+            for p in photos { if let path = p.filePath { ImageStore.delete(path) } }
             ctx.delete(v)
             try ctx.save()
         }
@@ -220,7 +200,10 @@ final class CoreDataVisitRepository: VisitRepository, TaxonomyRepository {
 
 
     func get(by id: UUID) throws -> VisitAggregate? {
-        guard let v = try fetchVisitEntity(id: id) else { return nil }
+        guard let v = try fetchVisitEntity(id: id) else {
+            Logger.debug("Visit not found: \(id)")
+            return nil
+        }
         return toAggregate(v)
     }
 
@@ -230,7 +213,10 @@ final class CoreDataVisitRepository: VisitRepository, TaxonomyRepository {
         let req: NSFetchRequest<LabelEntity> = LabelEntity.fetchRequest()
         req.sortDescriptors = [NSSortDescriptor(key: #keyPath(LabelEntity.name), ascending: true)]
         return try ctx.fetch(req).compactMap { row in
-            guard let id = row.id, let name = row.name else { return nil }
+            guard let id = row.id, let name = row.name else {
+                Logger.warning("Label entity missing required fields (id or name)")
+                return nil
+            }
             return LabelTag(id: id, name: name)
         }
     }
@@ -239,7 +225,10 @@ final class CoreDataVisitRepository: VisitRepository, TaxonomyRepository {
         let req: NSFetchRequest<GroupEntity> = GroupEntity.fetchRequest()
         req.sortDescriptors = [NSSortDescriptor(key: #keyPath(GroupEntity.name), ascending: true)]
         return try ctx.fetch(req).compactMap { row in
-            guard let id = row.id, let name = row.name else { return nil }
+            guard let id = row.id, let name = row.name else {
+                Logger.warning("Group entity missing required fields (id or name)")
+                return nil
+            }
             return GroupTag(id: id, name: name)
         }
     }
@@ -251,10 +240,15 @@ final class CoreDataVisitRepository: VisitRepository, TaxonomyRepository {
             return LabelTag(id: id, name: nm)
         }
         let e = LabelEntity(context: ctx)
-        e.id = UUID()
+        let newId = UUID()
+        e.id = newId
         e.name = name
         try ctx.save()
-        return LabelTag(id: e.id!, name: e.name!)
+        guard let savedId = e.id, let savedName = e.name else {
+            Logger.error("Failed to save label entity properly")
+            throw NSError(domain: "Repository", code: 2, userInfo: [NSLocalizedDescriptionKey: "ラベルの保存に失敗しました"])
+        }
+        return LabelTag(id: savedId, name: savedName)
     }
 
     func upsertGroup(name: String) throws -> GroupTag {
@@ -264,10 +258,15 @@ final class CoreDataVisitRepository: VisitRepository, TaxonomyRepository {
             return GroupTag(id: id, name: nm)
         }
         let e = GroupEntity(context: ctx)
-        e.id = UUID()
+        let newId = UUID()
+        e.id = newId
         e.name = name
         try ctx.save()
-        return GroupTag(id: e.id!, name: e.name!)
+        guard let savedId = e.id, let savedName = e.name else {
+            Logger.error("Failed to save group entity properly")
+            throw NSError(domain: "Repository", code: 2, userInfo: [NSLocalizedDescriptionKey: "グループの保存に失敗しました"])
+        }
+        return GroupTag(id: savedId, name: savedName)
     }
 
     // MARK: - Helpers
@@ -277,6 +276,27 @@ final class CoreDataVisitRepository: VisitRepository, TaxonomyRepository {
         req.fetchLimit = 1
         req.predicate = NSPredicate(format: "id == %@", id as CVarArg)
         return try ctx.fetch(req).first
+    }
+
+    /// 写真エンティティを取得（NSOrderedSet または Set から配列に変換）
+    private func photoEntities(from details: VisitDetailsEntity?) -> [VisitPhotoEntity] {
+        guard let details = details else { return [] }
+
+        if let ordered = details.photos as? NSOrderedSet,
+           let casted = ordered.array as? [VisitPhotoEntity] {
+            return casted
+        } else if let set = details.photos as? Set<VisitPhotoEntity> {
+            return set.sorted { $0.orderIndex < $1.orderIndex }
+        }
+        return []
+    }
+
+    /// ジェネリックなエンティティ取得ヘルパー
+    private func fetchEntity<T: NSManagedObject>(_ type: T.Type, id: UUID) throws -> T? {
+        let req = T.fetchRequest()
+        req.fetchLimit = 1
+        req.predicate = NSPredicate(format: "id == %@", id as CVarArg)
+        return try ctx.fetch(req).first as? T
     }
 
     private func toAggregate(_ v: VisitEntity) -> VisitAggregate? {
@@ -289,7 +309,10 @@ final class CoreDataVisitRepository: VisitRepository, TaxonomyRepository {
             let pub  = v.integrityPubRaw,
             let hash = v.integrityPayloadHash,
             let ic   = v.integrityCreatedAtUTC
-        else { return nil }
+        else {
+            Logger.error("Visit entity has missing required fields")
+            return nil
+        }
 
         // Visit（不変部）
         let visit = Visit(
@@ -317,15 +340,8 @@ final class CoreDataVisitRepository: VisitRepository, TaxonomyRepository {
         let labelEntities = (d?.labels as? Set<LabelEntity>) ?? []
         let labelIds = labelEntities.compactMap { $0.id }
 
-        let photoEntities: [VisitPhotoEntity] = {
-            if let ordered = d?.photos as? NSOrderedSet,
-               let casted = ordered.array as? [VisitPhotoEntity] {
-                return casted
-            } else if let set = d?.photos as? Set<VisitPhotoEntity> {
-                return set.sorted { $0.orderIndex < $1.orderIndex }
-            } else { return [] }
-        }()
-        let photoPaths = photoEntities.compactMap { $0.filePath }
+        let photos = photoEntities(from: d)
+        let photoPaths = photos.compactMap { $0.filePath }
         
         let details = VisitDetails(
             title: d?.title,
@@ -450,17 +466,11 @@ final class CoreDataVisitRepository: VisitRepository, TaxonomyRepository {
         }
     }
     private func fetchLabelEntity(id: UUID) throws -> LabelEntity? {
-        let req = LabelEntity.fetchRequest()
-        req.fetchLimit = 1
-        req.predicate = NSPredicate(format: "id == %@", id as CVarArg)
-        return try ctx.fetch(req).first
+        try fetchEntity(LabelEntity.self, id: id)
     }
 
     private func fetchGroupEntity(id: UUID) throws -> GroupEntity? {
-        let req = GroupEntity.fetchRequest()
-        req.fetchLimit = 1
-        req.predicate = NSPredicate(format: "id == %@", id as CVarArg)
-        return try ctx.fetch(req).first
+        try fetchEntity(GroupEntity.self, id: id)
     }
 
     private func normalizedName(_ s: String) -> String {
@@ -468,29 +478,41 @@ final class CoreDataVisitRepository: VisitRepository, TaxonomyRepository {
     }
     
     func createLabel(name: String) throws -> UUID {
-        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmed = name.trimmed
         guard !trimmed.isEmpty else {
+            Logger.warning("Attempted to create label with empty name")
             throw NSError(domain: "Label", code: 1,
                           userInfo: [NSLocalizedDescriptionKey: "空名は作成できません"])
         }
         let e = LabelEntity(context: ctx)
-        e.id = UUID()
+        let newId = UUID()
+        e.id = newId
         e.name = trimmed
         try ctx.save()
-        return e.id!
+        guard let savedId = e.id else {
+            Logger.error("Label entity ID is nil after save")
+            throw NSError(domain: "Repository", code: 2, userInfo: [NSLocalizedDescriptionKey: "ラベルの保存に失敗しました"])
+        }
+        return savedId
     }
 
     func createGroup(name: String) throws -> UUID {
-        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmed = name.trimmed
         guard !trimmed.isEmpty else {
+            Logger.warning("Attempted to create group with empty name")
             throw NSError(domain: "Group", code: 1,
                           userInfo: [NSLocalizedDescriptionKey: "空名は作成できません"])
         }
         let e = GroupEntity(context: ctx)
-        e.id = UUID()
+        let newId = UUID()
+        e.id = newId
         e.name = trimmed
         try ctx.save()
-        return e.id!
+        guard let savedId = e.id else {
+            Logger.error("Group entity ID is nil after save")
+            throw NSError(domain: "Repository", code: 2, userInfo: [NSLocalizedDescriptionKey: "グループの保存に失敗しました"])
+        }
+        return savedId
     }
 }
 

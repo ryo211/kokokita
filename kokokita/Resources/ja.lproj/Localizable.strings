@@ -1,0 +1,100 @@
+/*
+  Localizable.strings
+  kokokita
+
+  Created by Claude on 2025/10/11.
+*/
+
+// MARK: - Common
+"common.ok" = "OK";
+"common.cancel" = "キャンセル";
+"common.close" = "閉じる";
+"common.save" = "保存";
+"common.delete" = "削除";
+"common.edit" = "編集";
+"common.done" = "完了";
+"common.error" = "エラー";
+"common.loading" = "読み込み中…";
+"common.retry" = "再試行";
+"common.notSelected" = "未選択";
+
+// MARK: - Visit Edit
+"visit.edit.titlePlaceholder" = "タイトル";
+"visit.edit.memoPlaceholder" = "メモ";
+"visit.edit.editSection" = "編集";
+"visit.edit.saveButton" = "保存";
+"visit.edit.locationAcquiring" = "現在地を取得しています…";
+"visit.edit.kokokamo" = "ココカモ？";
+"visit.edit.selectLabel" = "ラベルを選択";
+"visit.edit.selectGroup" = "グループを選択";
+"visit.edit.createNew" = "新規作成…";
+"visit.edit.labelName" = "ラベル名";
+"visit.edit.groupName" = "グループ名";
+"visit.edit.createAndSelect" = "作成して選択";
+"visit.edit.newLabel" = "ラベル新規作成";
+"visit.edit.newGroup" = "グループ新規作成";
+"visit.edit.clearSelection" = "未選択にする";
+
+// MARK: - Photo
+"photo.photo" = "写真";
+"photo.camera" = "カメラ";
+
+// MARK: - Home
+"home.title" = "ココキタ";
+"home.noVisits" = "訪問記録がありません";
+"home.filter.all" = "すべて";
+"home.filter.label" = "ラベル";
+"home.filter.group" = "グループ";
+"home.filter.period" = "期間";
+"home.search.placeholder" = "検索";
+"home.deleteConfirmTitle" = "この記録を削除しますか？";
+"home.deleteConfirmMessage" = "この操作は取り消せません。";
+"home.noTitle" = "（タイトルなし）";
+
+// MARK: - Detail
+"detail.share" = "共有";
+"detail.map" = "地図";
+"detail.accuracy" = "精度";
+"detail.coordinates" = "座標";
+"detail.timestamp" = "訪問日時";
+"detail.labels" = "ラベル";
+"detail.group" = "グループ";
+"detail.memo" = "メモ";
+"detail.facility" = "施設情報";
+
+// MARK: - Menu
+"menu.title" = "メニュー";
+"menu.labels" = "ラベル管理";
+"menu.groups" = "グループ管理";
+"menu.settings" = "設定";
+"menu.about" = "このアプリについて";
+"menu.resetAll" = "すべてリセット";
+
+// MARK: - Tab Bar
+"tab.home" = "ホーム";
+"tab.menu" = "メニュー";
+"tab.kokokita" = "ココキタ";
+
+// MARK: - Error Messages
+"error.locationSimulated" = "位置情報がシミュレーション／外部アクセサリ由来の可能性があるため、記録できません。";
+"error.locationDenied" = "位置情報の使用が許可されていません。設定から許可してください。";
+"error.saveFailed" = "保存に失敗しました";
+"error.loadFailed" = "読み込みに失敗しました";
+"error.deleteFailed" = "削除に失敗しました";
+"error.poiSearchFailed" = "周辺施設の検索に失敗しました";
+"error.imageEncodeFailed" = "画像のエンコードに失敗しました";
+
+// MARK: - Facility Info
+"facility.name" = "施設名";
+"facility.address" = "住所";
+"facility.phone" = "電話番号";
+"facility.clear" = "クリア";
+
+// MARK: - Period Filter
+"period.today" = "今日";
+"period.yesterday" = "昨日";
+"period.thisWeek" = "今週";
+"period.lastWeek" = "先週";
+"period.thisMonth" = "今月";
+"period.lastMonth" = "先月";
+"period.custom" = "期間指定";

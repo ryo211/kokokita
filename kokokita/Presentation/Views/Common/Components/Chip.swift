@@ -48,20 +48,20 @@ struct Chip: View {
 
     private var verticalPadding: CGFloat {
         switch size {
-        case .regular: return 6
-        case .small:   return 3
+        case .regular: return UIConstants.Padding.chipVertical
+        case .small:   return UIConstants.Padding.chipSmallVertical
         }
     }
 
     private var horizontalPadding: CGFloat {
         switch size {
-        case .regular: return 10
-        case .small:   return 6
+        case .regular: return UIConstants.Padding.chipHorizontal
+        case .small:   return UIConstants.Padding.chipSmallHorizontal
         }
     }
 
     var body: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: UIConstants.Spacing.small) {
             if let img = systemImage {
                 Image(systemName: img)
                     .imageScale(size == .small ? .small : .medium)
@@ -79,7 +79,7 @@ struct Chip: View {
         .font(font)
         .padding(.vertical, verticalPadding)
         .padding(.horizontal, horizontalPadding)
-        .background(tint.opacity(0.15), in: Capsule())
+        .background(tint.opacity(UIConstants.Alpha.chipBackground), in: Capsule())
         .foregroundStyle(tint)
     }
 }

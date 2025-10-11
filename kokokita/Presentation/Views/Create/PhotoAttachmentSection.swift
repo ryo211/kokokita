@@ -20,14 +20,14 @@ struct PhotoAttachmentSection: View {
     @State private var showCamera = false
     @State private var fullScreenIndex: Int? = nil
 
-    private var canAddMore: Bool { vm.photoPathsEditing.count < AppMedia.maxPhotosPerVisit }
+    private var canAddMore: Bool { vm.photoService.photoPathsEditing.count < AppConfig.maxPhotosPerVisit }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
 
             LazyVGrid(columns: [GridItem(.adaptive(minimum: thumbSize), spacing: 5)], spacing: 5)  {
-                ForEach(vm.photoPathsEditing.indices, id: \.self) { idx in
-                    let path = vm.photoPathsEditing[idx]
+                ForEach(vm.photoService.photoPathsEditing.indices, id: \.self) { idx in
+                    let path = vm.photoService.photoPathsEditing[idx]
                     PhotoThumb(
                         path: path,
                         size: thumbSize,
@@ -39,15 +39,15 @@ struct PhotoAttachmentSection: View {
             }
             .padding(.top, 2)
 
-            // “写真 / カメラ” ボタン（サムネ列の下）
+            // "写真 / カメラ" ボタン（サムネ列の下）
             if allowDelete && canAddMore {
                 HStack(spacing: 12) {
                     PhotosPicker(
                         selection: $libSelection,
-                        maxSelectionCount: AppMedia.maxPhotosPerVisit - vm.photoPathsEditing.count,
+                        maxSelectionCount: AppConfig.maxPhotosPerVisit - vm.photoService.photoPathsEditing.count,
                         matching: .images
                     ) {
-                        Label("写真", systemImage: "photo.on.rectangle")
+                        Label(L.Photo.photo, systemImage: "photo.on.rectangle")
                     }
                     .onChange(of: libSelection) { _ in
                         Task { await loadSelectedLibraryItems() }
@@ -56,7 +56,7 @@ struct PhotoAttachmentSection: View {
                     Button {
                         showCamera = true
                     } label: {
-                        Label("カメラ", systemImage: "camera")
+                        Label(L.Photo.camera, systemImage: "camera")
                     }
                     .disabled(!UIImagePickerController.isSourceTypeAvailable(.camera))
                 }
@@ -78,7 +78,7 @@ struct PhotoAttachmentSection: View {
             get: { fullScreenIndex.map { PhotoPager.IndexWrapper(index: $0) } },
             set: { fullScreenIndex = $0?.index }
         )) { wrapper in
-            PhotoPager(paths: vm.photoPathsEditing, startIndex: wrapper.index)
+            PhotoPager(paths: vm.photoService.photoPathsEditing, startIndex: wrapper.index)
         }
     }
 

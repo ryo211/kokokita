@@ -15,10 +15,10 @@ struct VisitDetailContent: View {
     var isSharing: Bool = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: UIConstants.Spacing.large) {
             // タイトル + ラベル/グループ（くっつくイメージ）
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(spacing: 8) {
+            VStack(alignment: .leading, spacing: UIConstants.Spacing.medium) {
+                HStack(spacing: UIConstants.Spacing.medium) {
                     Text(data.title.ifBlank("（タイトルなし）"))
                         .font(.title2.bold())
                         .lineLimit(3)
@@ -92,9 +92,9 @@ struct VisitDetailContent: View {
                     Image(uiImage: img)
                         .resizable()
                         .scaledToFill()
-                        .frame(height: 300)
+                        .frame(height: UIConstants.Size.shareMapHeight)
                         .clipped()
-                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                        .clipShape(RoundedRectangle(cornerRadius: AppConfig.mapCornerRadius))
                 }
             } else {
                 if let c = data.coordinate {
@@ -102,11 +102,10 @@ struct VisitDetailContent: View {
                         MapPreview(
                             lat: c.latitude,
                             lon: c.longitude,
-                            showCoordinateOverlay: true,
-                            decimals: 5
+                            showCoordinateOverlay: true
                         )
-                        .frame(height: 220)
-                        .clipShape(RoundedRectangle(cornerRadius: 16))
+                        .frame(height: UIConstants.Size.mapPreviewHeight)
+                        .clipShape(RoundedRectangle(cornerRadius: UIConstants.CornerRadius.large))
                     }
                     .padding(.horizontal)
                 }
@@ -136,16 +135,19 @@ struct VisitDetailContent: View {
 
 
 struct InfoCard<Content: View>: View {
-    var padding: CGFloat = 16
+    var padding: CGFloat = UIConstants.Padding.infoCard
     @ViewBuilder var content: Content
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: UIConstants.Spacing.large) {
                 content
             }
             .padding(padding)
         }
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 4)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: UIConstants.CornerRadius.large, style: .continuous))
+        .shadow(color: Color.black.opacity(UIConstants.Alpha.subtleHighlight),
+                radius: UIConstants.Shadow.radiusLarge,
+                x: 0,
+                y: UIConstants.Shadow.offsetYLarge)
     }
 }

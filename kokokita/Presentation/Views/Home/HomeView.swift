@@ -14,12 +14,8 @@ struct HomeView: View {
     @State private var editingTarget: VisitAggregate? = nil
     
     // 名前辞書（型を固定して軽くする）
-    private var labelMap: [UUID: String] {
-        Dictionary(uniqueKeysWithValues: vm.labels.map { ($0.id, $0.name) })
-    }
-    private var groupMap: [UUID: String] {
-        Dictionary(uniqueKeysWithValues: vm.groups.map { ($0.id, $0.name) })
-    }
+    private var labelMap: [UUID: String] { vm.labels.nameMap }
+    private var groupMap: [UUID: String] { vm.groups.nameMap }
 
     var body: some View {
         NavigationStack {
@@ -41,11 +37,11 @@ struct HomeView: View {
                 set: { _ in vm.alert = nil }
             )
         ) { msg in
-            Alert(title: Text("エラー"),
+            Alert(title: Text(L.Common.error),
                   message: Text(msg.text),
-                  dismissButton: .default(Text("OK")))
+                  dismissButton: .default(Text(L.Common.ok)))
         }
-        .navigationTitle("ホーム")
+        .navigationTitle(L.Home.title)
         .toolbar(.hidden, for: .navigationBar)
         .sheet(item: $editingTarget) { agg in
             NavigationStack {
@@ -84,7 +80,7 @@ struct HomeView: View {
                         pendingDeleteId = agg.id
                         showDeleteConfirm = true
                     } label: {
-                        Label("削除", systemImage: "trash")
+                        Label(L.Common.delete, systemImage: "trash")
                     }
                     .tint(.red)
                 }
@@ -106,13 +102,13 @@ struct HomeView: View {
             Task { await vm.reloadTaxonomyThenData() }
         }
         .alert(
-            "この記録を削除しますか？",
+            L.Home.deleteConfirmTitle,
             isPresented: Binding(
                 get: { pendingDeleteId != nil },
                 set: { if !$0 { pendingDeleteId = nil } }
             )
         ) {
-            Button("削除", role: .destructive) {
+            Button(L.Common.delete, role: .destructive) {
                 if let id = pendingDeleteId {
                     withAnimation {
                         vm.delete(id: id)
@@ -120,11 +116,11 @@ struct HomeView: View {
                 }
                 pendingDeleteId = nil
             }
-            Button("キャンセル", role: .cancel) {
+            Button(L.Common.cancel, role: .cancel) {
                 pendingDeleteId = nil
             }
         } message: {
-            Text("この操作は取り消せません。")
+            Text(L.Home.deleteConfirmMessage)
         }
     }
     
@@ -133,7 +129,7 @@ struct HomeView: View {
             let t = agg.details.title?.trimmingCharacters(in: .whitespacesAndNewlines)
             if let t, !t.isEmpty { return t }
             if let f = agg.details.facilityName, !f.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { return f }
-            return "（タイトルなし）"
+            return L.Home.noTitle
         }()
 
         let labels: [String] = agg.details.labelIds.compactMap { labelMap[$0] }

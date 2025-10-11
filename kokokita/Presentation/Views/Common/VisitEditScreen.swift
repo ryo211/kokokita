@@ -51,19 +51,19 @@ struct VisitEditScreen: View {
     
     // 表示名（ラベル複数）
     private var selectedLabelNames: [String] {
-        let dict = Dictionary(uniqueKeysWithValues: labelOptions.map { ($0.id, $0.name) })
+        let dict = labelOptions.nameMap
         return vm.labelIds.compactMap { dict[$0] }
     }
     private var selectedLabelTitle: String {
-        if selectedLabelNames.isEmpty { return "未選択" }
+        if selectedLabelNames.isEmpty { return L.Common.notSelected }
         if selectedLabelNames.count <= 2 { return selectedLabelNames.joined(separator: ", ") }
         let head = selectedLabelNames.prefix(2).joined(separator: ", ")
         return "\(head) ほか\(selectedLabelNames.count - 2)件"
     }
     // 表示名（グループ単一）
     private var selectedGroupName: String {
-        let dict = Dictionary(uniqueKeysWithValues: groupOptions.map { ($0.id, $0.name) })
-        return vm.groupId.flatMap { dict[$0] } ?? "未選択"
+        let dict = groupOptions.nameMap
+        return vm.groupId.flatMap { dict[$0] } ?? L.Common.notSelected
     }
     
     private var actionPromptBinding: Binding<Bool> {
@@ -86,13 +86,13 @@ struct VisitEditScreen: View {
                     .disabled(locating)
 
                 if locating {
-                    VStack(spacing: 12) {
+                    VStack(spacing: UIConstants.Spacing.large) {
                         ProgressView()
-                        Text("現在地を取得しています…")
+                        Text(L.VisitEdit.locationAcquiring)
                             .font(.footnote)
                             .foregroundStyle(.secondary)
                         if vm.alert != nil {
-                            Button("再試行") {
+                            Button(L.Common.retry) {
                                 Task {
                                     locating = true
                                     await vm.requestLocation()
@@ -103,21 +103,21 @@ struct VisitEditScreen: View {
                         }
                     }
                     .padding()
-                    .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 16))
+                    .background(.thinMaterial, in: RoundedRectangle(cornerRadius: UIConstants.CornerRadius.large))
                 }
             }
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Group {
                         if showsCloseButton {
-                            Button("閉じる") { onClose() }
+                            Button(L.Common.close) { onClose() }
                         } else {
                             EmptyView()
                         }
                     }
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("保存") { saveTapped() }
+                    Button(L.Common.save) { saveTapped() }
                         .disabled(disableSave)
                 }
                 ToolbarItem(placement: .keyboard) {
@@ -125,7 +125,7 @@ struct VisitEditScreen: View {
                     if focusedField == .comment || focusedField == .title {
                         HStack {
                             Spacer()
-                            Button("完了") {
+                            Button(L.Common.done) {
                                 focusedField = nil
                             }
                         }
@@ -149,21 +149,23 @@ struct VisitEditScreen: View {
             
             .safeAreaInset(edge: .bottom) {
                 if focusedField == nil {
-                    EditFooterBar(
-                        onSave: {
-                            focusedField = nil
-                            saveTapped()
-                        },
-                        onPoi:  { Task {
-                            focusedField = nil
-                            await vm.openPOI() }
-                        },
-                        saveDisabled: disableSave
-                    )
-                    .padding(.horizontal, 16)
-                    .padding(.top, 8)
-                    .padding(.bottom, needsBottomSafePadding ? max(8, bottomSafeInset() + 4) : 8) // ← 端末の安全領域ぶんを加算
-                    .background(.regularMaterial)
+                    VStack(spacing: 0) {
+                        EditFooterBar(
+                            onSave: {
+                                focusedField = nil
+                                saveTapped()
+                            },
+                            onPoi:  { Task {
+                                focusedField = nil
+                                await vm.openPOI() }
+                            },
+                            saveDisabled: disableSave
+                        )
+                        if needsBottomSafePadding {
+                            Spacer()
+                                .frame(height: max(0, bottomSafeInset() - UIConstants.Spacing.medium + UIConstants.Spacing.small))
+                        }
+                    }
                 }
             }
 
@@ -197,126 +199,41 @@ struct VisitEditScreen: View {
                     set: { _ in vm.alert = nil }
                 )
             ) { msg in
-                Alert(title: Text("エラー"), message: Text(msg.text), dismissButton: .default(Text("OK")))
+                Alert(title: Text(L.Common.error), message: Text(msg.text), dismissButton: .default(Text(L.Common.ok)))
             }
         }
         // —— ラベル複数選択
         .sheet(isPresented: $labelPickerShown) {
-            NavigationStack {
-                List {
-                    Section {
-                        Button {
-                            labelCreateShown = true
-                        } label: {
-                            Label("新規作成…", systemImage: "plus.circle")
-                        }
-                    }
-                    Section {
-                        ForEach(labelOptions) { t in
-                            Button {
-                                if vm.labelIds.contains(t.id) {
-                                    vm.labelIds.remove(t.id)
-                                } else {
-                                    vm.labelIds.insert(t.id)
-                                }
-                            } label: {
-                                HStack {
-                                    Text(t.name)
-                                    Spacer()
-                                    if vm.labelIds.contains(t.id) {
-                                        Image(systemName: "checkmark")
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                .navigationTitle("ラベルを選択")
-                .toolbar {
-                    ToolbarItem(placement: .navigationBarTrailing) {
-                        Button("完了") { labelPickerShown = false }
-                    }
-                }
-            }
+            LabelPickerSheet(
+                selectedIds: $vm.labelIds,
+                labelOptions: $labelOptions,
+                isPresented: $labelPickerShown,
+                showCreateSheet: $labelCreateShown
+            )
             // ラベル新規作成
             .sheet(isPresented: $labelCreateShown) {
-                NavigationStack {
-                    Form {
-                        Section {
-                            TextField("ラベル名", text: $newLabelName)
-                        }
-                        Section {
-                            Button("作成して選択") {
-                                createLabelAndSelect()
-                            }
-                            .disabled(newLabelName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-
-                            Button("キャンセル", role: .cancel) {
-                                newLabelName = ""
-                                labelCreateShown = false
-                            }
-                        }
-                    }
-                    .navigationTitle("ラベル新規作成")
-                }
+                LabelCreateSheet(
+                    newLabelName: $newLabelName,
+                    isPresented: $labelCreateShown,
+                    onCreate: createLabelAndSelect
+                )
             }
         }
         // —— グループ選択
         .sheet(isPresented: $groupPickerShown) {
-            NavigationStack {
-                List {
-                    Section {
-                        Button {
-                            groupCreateShown = true
-                        } label: {
-                            Label("新規作成…", systemImage: "plus.circle")
-                        }
-                        Button("未選択にする") { vm.groupId = nil }
-                    }
-                    Section {
-                        ForEach(groupOptions) { t in
-                            Button {
-                                vm.groupId = t.id
-                            } label: {
-                                HStack {
-                                    Text(t.name)
-                                    Spacer()
-                                    if vm.groupId == t.id {
-                                        Image(systemName: "checkmark")
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                .navigationTitle("グループを選択")
-                .toolbar {
-                    ToolbarItem(placement: .navigationBarTrailing) {
-                        Button("完了") { groupPickerShown = false }
-                    }
-                }
-            }
+            GroupPickerSheet(
+                selectedId: $vm.groupId,
+                groupOptions: $groupOptions,
+                isPresented: $groupPickerShown,
+                showCreateSheet: $groupCreateShown
+            )
             // グループ新規作成
             .sheet(isPresented: $groupCreateShown) {
-                NavigationStack {
-                    Form {
-                        Section {
-                            TextField("グループ名", text: $newGroupName)
-                        }
-                        Section {
-                            Button("作成して選択") {
-                                createGroupAndSelect()
-                            }
-                            .disabled(newGroupName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-
-                            Button("キャンセル", role: .cancel) {
-                                newGroupName = ""
-                                groupCreateShown = false
-                            }
-                        }
-                    }
-                    .navigationTitle("グループ新規作成")
-                }
+                GroupCreateSheet(
+                    newGroupName: $newGroupName,
+                    isPresented: $groupCreateShown,
+                    onCreate: createGroupAndSelect
+                )
             }
         }
         
@@ -357,9 +274,9 @@ struct VisitEditScreen: View {
     // MARK: - Form共通
     private var formContent: some View {
         Form {
-            Section("編集") {
-                HStack(spacing: 8) {
-                    TextField("タイトル", text: $vm.title)
+            Section(L.VisitEdit.editSection) {
+                HStack(spacing: UIConstants.Spacing.medium) {
+                    TextField(L.VisitEdit.titlePlaceholder, text: $vm.title)
                         .focused($focusedField, equals: .title)
 
                     // 施設情報ボタン（共通）
@@ -373,7 +290,7 @@ struct VisitEditScreen: View {
                         }
                     )
                 }
-                
+
                 if #available(iOS 16.0, *) {
                     PhotoAttachmentSection(vm: vm, allowDelete: true)
                 }
@@ -383,8 +300,8 @@ struct VisitEditScreen: View {
                     .frame(minHeight: 80)
                     .overlay(alignment: .topLeading) {
                         if vm.comment.isEmpty {
-                            Text("メモ").foregroundStyle(.secondary)
-                                .padding(.top, 8).padding(.leading, 5)
+                            Text(L.VisitEdit.memoPlaceholder).foregroundStyle(.secondary)
+                                .padding(.top, UIConstants.Spacing.medium).padding(.leading, 5)
                         }
                     }
 
@@ -427,13 +344,8 @@ struct VisitEditScreen: View {
 
     private func onAppearTask() async {
         // 候補をロード（空白除外 & 名前順）
-        labelOptions = ((try? AppContainer.shared.repo.allLabels()) ?? [])
-            .filter { !$0.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
-            .sorted { $0.name.localizedCompare($1.name) == .orderedAscending }
-
-        groupOptions = ((try? AppContainer.shared.repo.allGroups()) ?? [])
-            .filter { !$0.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
-            .sorted { $0.name.localizedCompare($1.name) == .orderedAscending }
+        labelOptions = ((try? AppContainer.shared.repo.allLabels()) ?? []).sortedByName
+        groupOptions = ((try? AppContainer.shared.repo.allGroups()) ?? []).sortedByName
 
         // create だけ即測位
         if case .create = mode {
@@ -472,51 +384,7 @@ struct VisitEditScreen: View {
         newGroupName = ""
         groupCreateShown = false
     }
-    
-    private struct EditFooterBar: View {
-        var onSave: () -> Void
-        var onPoi: () -> Void
-        var saveDisabled: Bool
 
-        var body: some View {
-            // TabBarやホームインジケータを避けつつ、上に固定表示される
-            HStack(spacing: 12) {
-                // 保存（プライマリ）
-                Button {
-                    onSave()
-                } label: {
-                    HStack(spacing: 8) {
-                        Image(systemName: "checkmark.circle.fill")
-                        Text("保存")
-                    }
-                    .frame(maxWidth: .infinity, minHeight: 32)
-                }
-                .buttonStyle(BorderedProminentButtonStyle())
-                .controlSize(.large)
-                .buttonBorderShape(.roundedRectangle(radius: 14))
-                .disabled(saveDisabled)
-                
-                // ココカモ？
-                Button {
-                    onPoi()
-                } label: {
-                    HStack(spacing: 8) {
-                        Image(systemName: "magnifyingglass.circle.fill")
-                        Text("ココカモ？")
-                    }
-                    .frame(maxWidth: .infinity, minHeight: 32)
-                }
-                .buttonStyle(BorderedButtonStyle())
-                .controlSize(.large)
-                .buttonBorderShape(.roundedRectangle(radius: 14))
-            }
-            .padding(.horizontal, 16)
-            .padding(.top, 8)
-            .padding(.bottom, 8) // 安全地帯上での余白
-            .background(.regularMaterial) // 半透明で上に敷く
-        }
-    }
-    
     private func bottomSafeInset() -> CGFloat {
         // iOS 15+ で安全に keyWindow を探して bottom インセットを返す
         guard let scene = UIApplication.shared.connectedScenes

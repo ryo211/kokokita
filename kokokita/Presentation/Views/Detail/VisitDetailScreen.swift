@@ -26,7 +26,8 @@ struct VisitDetailScreen: View {
     @State private var sharePayload: SharePayload? = nil
     @State private var showDeleteAlert = false
     // SNSカードの論理サイズ（表示用は1/3で描画、保存はscale=3で 1080x1350）
-    private let logicalSize = CGSize(width: 360, height: 450)
+    private let logicalSize = CGSize(width: AppConfig.shareImageLogicalWidth,
+                                      height: AppConfig.shareImageLogicalHeight)
     
     init(data: VisitDetailData,
          onBack: @escaping () -> Void = {},
@@ -41,8 +42,8 @@ struct VisitDetailScreen: View {
 
         if let c = data.coordinate {
             let region = MKCoordinateRegion(center: c,
-                                            latitudinalMeters: 600,
-                                            longitudinalMeters: 600)
+                                            latitudinalMeters: AppConfig.mapDisplayRadius * 2,
+                                            longitudinalMeters: AppConfig.mapDisplayRadius * 2)
             _camera = State(initialValue: .region(region))
         } else {
             _camera = State(initialValue: .automatic) // 位置なし
@@ -129,11 +130,11 @@ struct VisitDetailScreen: View {
         if let c = data.coordinate {
             mapImage = await MapSnapshotService.makeSnapshot(
                 center: c,
-                size: CGSize(width: 360, height: 300),
-                spanMeters: 300,
+                size: CGSize(width: AppConfig.shareImageLogicalWidth, height: UIConstants.Size.shareMapHeight),
+                spanMeters: AppConfig.mapDisplayRadius,
                 showCoordinateBadge: true,   // ← バッジを載せる
-                decimals: 4,
-                badgeInset: 8
+                decimals: AppConfig.coordinateDecimals,
+                badgeInset: UIConstants.Spacing.medium
             )
         }
 
@@ -141,9 +142,9 @@ struct VisitDetailScreen: View {
         let img: UIImage? = await MainActor.run {
             let content = VStack(spacing: 0) {
                 VisitDetailContent(data: data, mapSnapshot: mapImage, isSharing: true)
-                    .padding(.all, 20)
+                    .padding(.all, UIConstants.Spacing.xxLarge)
             }
-            return ShareImageRenderer.renderWidth(content, width: 360, scale: 3) // 1080px 幅
+            return ShareImageRenderer.renderWidth(content, width: AppConfig.shareImageLogicalWidth, scale: AppConfig.shareImageScale)
         }
 
         // 3) シート表示（前回の SharePayload 方式）

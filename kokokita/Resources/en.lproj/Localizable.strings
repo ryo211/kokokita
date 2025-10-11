@@ -1,0 +1,100 @@
+/*
+  Localizable.strings
+  kokokita
+
+  Created by Claude on 2025/10/11.
+*/
+
+// MARK: - Common
+"common.ok" = "OK";
+"common.cancel" = "Cancel";
+"common.close" = "Close";
+"common.save" = "Save";
+"common.delete" = "Delete";
+"common.edit" = "Edit";
+"common.done" = "Done";
+"common.error" = "Error";
+"common.loading" = "Loading…";
+"common.retry" = "Retry";
+"common.notSelected" = "Not Selected";
+
+// MARK: - Visit Edit
+"visit.edit.titlePlaceholder" = "Title";
+"visit.edit.memoPlaceholder" = "Memo";
+"visit.edit.editSection" = "Edit";
+"visit.edit.saveButton" = "Save";
+"visit.edit.locationAcquiring" = "Getting current location…";
+"visit.edit.kokokamo" = "Nearby";
+"visit.edit.selectLabel" = "Select Labels";
+"visit.edit.selectGroup" = "Select Group";
+"visit.edit.createNew" = "Create New…";
+"visit.edit.labelName" = "Label Name";
+"visit.edit.groupName" = "Group Name";
+"visit.edit.createAndSelect" = "Create and Select";
+"visit.edit.newLabel" = "New Label";
+"visit.edit.newGroup" = "New Group";
+"visit.edit.clearSelection" = "Clear Selection";
+
+// MARK: - Photo
+"photo.photo" = "Photo";
+"photo.camera" = "Camera";
+
+// MARK: - Home
+"home.title" = "Kokokita";
+"home.noVisits" = "No visits recorded";
+"home.filter.all" = "All";
+"home.filter.label" = "Label";
+"home.filter.group" = "Group";
+"home.filter.period" = "Period";
+"home.search.placeholder" = "Search";
+"home.deleteConfirmTitle" = "Delete this record?";
+"home.deleteConfirmMessage" = "This action cannot be undone.";
+"home.noTitle" = "(No Title)";
+
+// MARK: - Detail
+"detail.share" = "Share";
+"detail.map" = "Map";
+"detail.accuracy" = "Accuracy";
+"detail.coordinates" = "Coordinates";
+"detail.timestamp" = "Visited";
+"detail.labels" = "Labels";
+"detail.group" = "Group";
+"detail.memo" = "Memo";
+"detail.facility" = "Facility Info";
+
+// MARK: - Menu
+"menu.title" = "Menu";
+"menu.labels" = "Manage Labels";
+"menu.groups" = "Manage Groups";
+"menu.settings" = "Settings";
+"menu.about" = "About";
+"menu.resetAll" = "Reset All";
+
+// MARK: - Tab Bar
+"tab.home" = "Home";
+"tab.menu" = "Menu";
+"tab.kokokita" = "Kokokita";
+
+// MARK: - Error Messages
+"error.locationSimulated" = "Location data appears to be simulated or from an external accessory and cannot be recorded.";
+"error.locationDenied" = "Location access is not permitted. Please allow it in Settings.";
+"error.saveFailed" = "Failed to save";
+"error.loadFailed" = "Failed to load";
+"error.deleteFailed" = "Failed to delete";
+"error.poiSearchFailed" = "Failed to search nearby places";
+"error.imageEncodeFailed" = "Failed to encode image";
+
+// MARK: - Facility Info
+"facility.name" = "Facility Name";
+"facility.address" = "Address";
+"facility.phone" = "Phone";
+"facility.clear" = "Clear";
+
+// MARK: - Period Filter
+"period.today" = "Today";
+"period.yesterday" = "Yesterday";
+"period.thisWeek" = "This Week";
+"period.lastWeek" = "Last Week";
+"period.thisMonth" = "This Month";
+"period.lastMonth" = "Last Month";
+"period.custom" = "Custom Period";

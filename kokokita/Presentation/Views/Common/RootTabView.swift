@@ -98,32 +98,33 @@ private struct CustomBottomBar: View {
         ZStack {
             Rectangle()
                 .fill(.ultraThinMaterial)
-                .frame(height: 72)
+                .frame(height: UIConstants.Size.tabBarHeight)
                 .overlay(Divider(), alignment: .top)
 
             HStack {
-                barButton(icon: "house.fill", title: "ホーム", tab: .home)
+                barButton(icon: "house.fill", title: L.Tab.home, tab: .home)
                 // barButton(icon: "map.fill", title: "地図", tab: .map)
 
                 Button(action: onCenterTap) {
                     ZStack {
                         Circle()
                             .fill(Color.accentColor)
-                            .frame(width: 64, height: 64)
-                            .shadow(radius: 6, y: 2)
+                            .frame(width: UIConstants.Size.centerButtonSize,
+                                   height: UIConstants.Size.centerButtonSize)
+                            .shadow(radius: UIConstants.Shadow.radiusMedium * 3, y: UIConstants.Shadow.radiusMedium)
                         Image(systemName: "mappin.and.ellipse")
                             .foregroundStyle(.white)
                             .font(.title2.weight(.semibold))
                     }
-                    .padding(.horizontal, 6)
+                    .padding(.horizontal, UIConstants.Spacing.medium - 2)
                 }
-                .accessibilityLabel("ココキタ")
+                .accessibilityLabel(L.Tab.kokokita)
 
                 // barButton(icon: "calendar", title: "カレンダー", tab: .calendar)
-                barButton(icon: "ellipsis.circle.fill", title: "メニュー", tab: .menu)
+                barButton(icon: "ellipsis.circle.fill", title: L.Tab.menu, tab: .menu)
             }
-            .padding(.horizontal, 24)
-            .padding(.bottom, 8)
+            .padding(.horizontal, UIConstants.Spacing.extraLarge + 8)
+            .padding(.bottom, UIConstants.Spacing.medium)
         }
     }
 
@@ -131,7 +132,7 @@ private struct CustomBottomBar: View {
         Button {
             onSelect(tab)
         } label: {
-            VStack(spacing: 4) {
+            VStack(spacing: UIConstants.Spacing.small) {
                 Image(systemName: icon).font(.title3)
                 Text(title).font(.caption2)
             }

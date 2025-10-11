@@ -11,15 +11,15 @@ import CoreLocation
 
 struct MapPreview: View {
     let coordinate: CLLocationCoordinate2D
-    var radius: CLLocationDistance = 5000
+    var radius: CLLocationDistance = AppConfig.mapDisplayRadius
     var showCoordinateOverlay: Bool = true
-    var decimals: Int = 5
+    var decimals: Int = AppConfig.coordinateDecimals
 
     @State private var position: MapCameraPosition
 
 
-    init(lat: Double, lon: Double, radius: CLLocationDistance = 5000,
-         showCoordinateOverlay: Bool = true, decimals: Int = 5) {
+    init(lat: Double, lon: Double, radius: CLLocationDistance = AppConfig.mapDisplayRadius,
+         showCoordinateOverlay: Bool = true, decimals: Int = AppConfig.coordinateDecimals) {
         let center = CLLocationCoordinate2D(latitude: lat, longitude: lon)
         let region = MKCoordinateRegion(center: center,
                                         latitudinalMeters: radius * 2,
@@ -48,7 +48,7 @@ struct MapPreview: View {
                     .padding(8)
             }
         }
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .clipShape(RoundedRectangle(cornerRadius: AppConfig.mapCornerRadius))
     }
 }
 
