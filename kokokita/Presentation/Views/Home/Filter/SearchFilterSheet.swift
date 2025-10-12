@@ -110,25 +110,22 @@ struct SearchFilterSheet: View {
                 .labelsHidden()
                 .onChange(of: vm.groupFilter) { _ in vm.applyAndReload() }
             }
-            
-            Section {
-                Button(role: .destructive) {
-                    debounceTask?.cancel()
-                    vm.clearAllFilters()
-                    titleDraft = ""
-                    useDateRange = false
-                    vm.applyAndReload()
-                } label: {
-                    Label("検索項目を全クリア", systemImage: "xmark.circle")
-                }
-            }
-
         }
         .navigationTitle("検索")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button("閉じる") { onClose() }
+            }
+            ToolbarItem(placement: .primaryAction) {
+                Button("クリア") {
+                    debounceTask?.cancel()
+                    vm.clearAllFilters()
+                    titleDraft = ""
+                    useDateRange = false
+                    vm.applyAndReload()
+                }
+                .fontWeight(.regular)
             }
         }
         .onAppear {
