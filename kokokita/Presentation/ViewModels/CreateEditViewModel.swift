@@ -2,6 +2,7 @@ import Foundation
 import CoreLocation
 import Contacts
 import UIKit
+import Combine
 
 @MainActor
 final class CreateEditViewModel: ObservableObject {
@@ -45,6 +46,7 @@ final class CreateEditViewModel: ObservableObject {
     // MARK: - Dependencies (Services)
     private let integ: IntegrityService
     private let repo: VisitRepository & TaxonomyRepository
+    private var cancellables = Set<AnyCancellable>()
 
     /// 写真管理サービス
     let photoService: PhotoEditService
@@ -73,6 +75,9 @@ final class CreateEditViewModel: ObservableObject {
 
         // POI状態の同期（poiCoordinatorの変更をViewModelに反映）
         setupPOIBinding()
+
+        // PhotoService の変更をViewModelに伝播
+        setupPhotoBinding()
     }
 
     private func setupPOIBinding() {
@@ -81,6 +86,15 @@ final class CreateEditViewModel: ObservableObject {
             .assign(to: &$showPOI)
         poiCoordinator.$poiList
             .assign(to: &$poiList)
+    }
+
+    private func setupPhotoBinding() {
+        // photoServiceの変更をこのViewModelの変更として伝播
+        photoService.objectWillChange
+            .sink { [weak self] _ in
+                self?.objectWillChange.send()
+            }
+            .store(in: &cancellables)
     }
 
     // MARK: - Load Existing

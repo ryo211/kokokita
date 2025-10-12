@@ -69,22 +69,16 @@ final class PhotoEditService: ObservableObject {
 
     /// 写真を追加する
     func addPhotos(_ images: [UIImage]) {
-        let current = isEditing ? photoPathsEditing : photoPaths
+        let current = photoPathsEditing
         let remain = max(0, AppConfig.maxPhotosPerVisit - current.count)
         guard remain > 0 else { return }
         let picked = images.prefix(remain)
 
         for ui in picked {
             if let saved = try? ImageStore.save(ui) {
-                if isEditing {
-                    photoPathsEditing.append(saved)
-                    if !originalPhotoPaths.contains(saved) {
-                        pendingAdds.insert(saved)  // キャンセル時に掃除
-                    }
-                } else {
-                    // 新規作成：保存用配列とUI用配列の両方に積む
-                    photoPaths.append(saved)
-                    photoPathsEditing.append(saved)
+                photoPathsEditing.append(saved)
+                if isEditing && !originalPhotoPaths.contains(saved) {
+                    pendingAdds.insert(saved)  // キャンセル時に掃除
                 }
             }
         }
@@ -94,10 +88,10 @@ final class PhotoEditService: ObservableObject {
 
     /// 写真を削除する
     func removePhoto(at index: Int) {
-        if isEditing {
-            guard photoPathsEditing.indices.contains(index) else { return }
-            let path = photoPathsEditing.remove(at: index)
+        guard photoPathsEditing.indices.contains(index) else { return }
+        let path = photoPathsEditing.remove(at: index)
 
+        if isEditing {
             if pendingAdds.contains(path) {
                 ImageStore.delete(path)
                 pendingAdds.remove(path)
@@ -105,13 +99,7 @@ final class PhotoEditService: ObservableObject {
                 pendingDeletes.insert(path) // 保存時に削除確定
             }
         } else {
-            // 新規作成：UIと保存用を両方から削除
-            guard photoPathsEditing.indices.contains(index) else { return }
-            let path = photoPathsEditing.remove(at: index)
-
-            if let i = photoPaths.firstIndex(of: path) {
-                photoPaths.remove(at: i)
-            }
+            // 新規作成：即座に削除
             ImageStore.delete(path)
         }
     }
@@ -152,7 +140,7 @@ final class PhotoEditService: ObservableObject {
 
     /// 現在有効な写真パスを取得（保存時に使用）
     func getCurrentPaths() -> [String] {
-        isEditing ? photoPathsEditing : photoPaths
+        photoPathsEditing
     }
 
     /// 削除予約されたパスのセットを取得
