@@ -16,5 +16,10 @@ struct CreateView: View {
         }
         .presentationDetents([.large])
         .ignoresSafeArea(.keyboard, edges: .bottom)
+        .onChange(of: vm.shouldDismiss) { shouldDismiss in
+            if shouldDismiss {
+                dismiss()
+            }
+        }
     }
 }

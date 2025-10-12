@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import CoreLocation
 
 enum RootTab: Hashable {
     case home, /* map, */ center, /* calendar, */ menu
@@ -14,6 +15,7 @@ enum RootTab: Hashable {
 struct RootTabView: View {
     @State private var tab: RootTab = .home
     @State private var showCreate = false
+    @State private var showLocationPermissionAlert = false
     @EnvironmentObject private var ui: AppUIState
 
     var body: some View {
@@ -65,7 +67,9 @@ struct RootTabView: View {
                     CustomBottomBar(
                         current: tab,
                         onSelect: { tab = $0 },
-                        onCenterTap: { showCreate = true }
+                        onCenterTap: {
+                            checkLocationPermissionAndCreate()
+                        }
                     )
                     .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
@@ -85,6 +89,43 @@ struct RootTabView: View {
             CreateView()
                 .presentationDetents([.large])
                 .ignoresSafeArea(.keyboard, edges: .bottom)
+        }
+
+        // 位置情報権限アラート
+        .alert("位置情報の権限が必要です", isPresented: $showLocationPermissionAlert) {
+            Button("設定を開く") {
+                openSettings()
+            }
+            Button("キャンセル", role: .cancel) {}
+        } message: {
+            Text("位置情報を使用するには、設定アプリで位置情報の使用を許可してください。")
+        }
+    }
+
+    // MARK: - Helper Methods
+
+    private func checkLocationPermissionAndCreate() {
+        let status = CLLocationManager.authorizationStatus()
+
+        switch status {
+        case .authorizedAlways, .authorizedWhenInUse:
+            // 権限あり：作成画面を開く
+            showCreate = true
+        case .notDetermined:
+            // 未決定：システムダイアログが表示されるので作成画面を開く
+            showCreate = true
+        case .denied, .restricted:
+            // 拒否済み：設定誘導アラートを表示
+            showLocationPermissionAlert = true
+        @unknown default:
+            // 未知のステータス：念のため作成画面を開く
+            showCreate = true
+        }
+    }
+
+    private func openSettings() {
+        if let url = URL(string: UIApplication.openSettingsURLString) {
+            UIApplication.shared.open(url)
         }
     }
 }

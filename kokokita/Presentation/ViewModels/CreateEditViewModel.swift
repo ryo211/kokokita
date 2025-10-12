@@ -23,6 +23,7 @@ final class CreateEditViewModel: ObservableObject {
     // MARK: - UI State
     @Published var alert: String?
     @Published var showActionPrompt: Bool = false
+    @Published var shouldDismiss: Bool = false  // 権限拒否時に画面を閉じる
 
     // POI関連のUI状態（ViewからBindingするため@Publishedで公開）
     @Published var showPOI: Bool = false {
@@ -130,6 +131,14 @@ final class CreateEditViewModel: ObservableObject {
             accuracy = result.accuracy
             addressLine = result.address
 
+        } catch let error as LocationServiceError {
+            switch error {
+            case .permissionDenied:
+                // 権限が拒否された場合は画面を閉じる
+                shouldDismiss = true
+            case .other:
+                alert = error.localizedDescription
+            }
         } catch {
             alert = error.localizedDescription
         }
