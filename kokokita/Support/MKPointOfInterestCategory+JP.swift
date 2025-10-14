@@ -1,6 +1,21 @@
 import MapKit
 
 extension MKPointOfInterestCategory {
+    /// 全ての利用可能なPOIカテゴリを取得
+    static var allCases: [MKPointOfInterestCategory] {
+        return [
+            .airport, .amusementPark, .aquarium, .atm, .automotiveRepair,
+            .bakery, .bank, .beach, .beauty, .brewery,
+            .cafe, .campground, .carRental, .evCharger, .fireStation,
+            .fitnessCenter, .foodMarket, .gasStation, .hospital, .hotel,
+            .landmark, .laundry, .library, .mailbox, .marina,
+            .movieTheater, .museum, .nationalPark, .nightlife, .park,
+            .parking, .pharmacy, .police, .postOffice, .publicTransport,
+            .restaurant, .restroom, .school, .spa, .stadium,
+            .store, .theater, .university, .winery, .zoo
+        ]
+    }
+
     var japaneseName: String {
         switch self {
         case .airport:         return "空港"
@@ -38,7 +53,7 @@ extension MKPointOfInterestCategory {
         case .police:          return "警察署"
         case .postOffice:      return "郵便局"
         case .publicTransport: return "公共交通"
-        case .restaurant:      return "レストラン"
+        case .restaurant:      return "飲食店"
         case .restroom:        return "トイレ"
         case .school:          return "学校"
         case .spa:             return "スパ"

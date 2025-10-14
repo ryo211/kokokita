@@ -17,6 +17,7 @@ final class CreateEditViewModel: ObservableObject {
     @Published var title: String = ""
     @Published var facilityName: String? = nil
     @Published var facilityAddress: String? = nil
+    @Published var facilityCategory: String? = nil
     @Published var comment: String = ""
     @Published var labelIds: Set<UUID> = []
     @Published var groupId: UUID?
@@ -107,6 +108,7 @@ final class CreateEditViewModel: ObservableObject {
         title     = agg.details.title ?? ""
         facilityName = agg.details.facilityName ?? ""
         facilityAddress = agg.details.facilityAddress ?? ""
+        facilityCategory = agg.details.facilityCategory
         comment   = agg.details.comment ?? ""
         labelIds = Set(agg.details.labelIds)
         groupId   = agg.details.groupId
@@ -130,6 +132,7 @@ final class CreateEditViewModel: ObservableObject {
     func clearFacilityInfo() {
         self.facilityName = nil
         self.facilityAddress = nil
+        self.facilityCategory = nil
     }
 
     // MARK: - Location
@@ -173,6 +176,7 @@ final class CreateEditViewModel: ObservableObject {
         self.title = data.title
         self.facilityName = data.facilityName
         self.facilityAddress = data.facilityAddress
+        self.facilityCategory = data.facilityCategory
         poiCoordinator.closePOI()
     }
 
@@ -213,6 +217,7 @@ final class CreateEditViewModel: ObservableObject {
                 title: title.nilIfBlank,
                 facilityName: facilityName,
                 facilityAddress: facilityAddress,
+                facilityCategory: facilityCategory,
                 comment: comment.nilIfBlank,
                 labelIds: Array(labelIds),
                 groupId: groupId,
@@ -235,6 +240,7 @@ final class CreateEditViewModel: ObservableObject {
                 cur.title = title.isEmpty ? nil : title
                 cur.facilityName = facilityName
                 cur.facilityAddress = facilityAddress
+                cur.facilityCategory = facilityCategory
                 cur.comment = comment.isEmpty ? nil : comment
                 cur.labelIds = Array(labelIds)
                 cur.groupId = groupId

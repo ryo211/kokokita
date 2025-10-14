@@ -7,6 +7,7 @@
 
 // HomeFilterHeader.swift（新規）
 import SwiftUI
+import MapKit
 
 struct HomeFilterHeader: View {
     @ObservedObject var vm: HomeViewModel
@@ -84,6 +85,18 @@ struct HomeFilterHeader: View {
                 FlowRow(spacing: 6, rowSpacing: 6) {
                     Chip(name, kind: .group) {
                         vm.groupFilter = nil
+                        vm.reload()
+                    }
+                }
+            }
+
+            // 5) カテゴリ
+            if let catRaw = vm.categoryFilter {
+                let category = MKPointOfInterestCategory(rawValue: catRaw)
+                let name = category.japaneseName
+                FlowRow(spacing: 6, rowSpacing: 6) {
+                    Chip(name, kind: .category) {
+                        vm.categoryFilter = nil
                         vm.reload()
                     }
                 }

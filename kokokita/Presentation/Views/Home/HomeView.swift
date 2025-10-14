@@ -157,6 +157,7 @@ struct HomeView: View {
                 address: agg.details.facilityAddress,
                 phone: nil
             ),
+            facilityCategory: agg.details.facilityCategory,
             photoPaths: agg.details.photoPaths
         )
     }

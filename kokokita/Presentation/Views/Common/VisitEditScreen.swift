@@ -284,6 +284,7 @@ struct VisitEditScreen: View {
                         name: vm.facilityName,
                         address: vm.facilityAddress,
                         phone: nil,                    // あれば vm.facilityPhone
+                        categoryRawValue: vm.facilityCategory,
                         mode: .editable,
                         onClear: {
                             vm.clearFacilityInfo()

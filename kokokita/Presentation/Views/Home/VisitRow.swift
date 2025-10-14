@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import MapKit
 
 /// 記録一覧のセル
 struct VisitRow: View {
@@ -27,8 +28,16 @@ struct VisitRow: View {
                   .foregroundStyle(.secondary)
 
               if let title = agg.details.title, !title.isEmpty {
-                  Text(title)
-                      .font(.headline)
+                  VStack(alignment: .leading, spacing: 2) {
+                      Text(title)
+                          .font(.headline)
+                      if let catRaw = agg.details.facilityCategory {
+                          let category = MKPointOfInterestCategory(rawValue: catRaw)
+                          Text(category.japaneseName)
+                              .font(.caption)
+                              .foregroundStyle(.secondary)
+                      }
+                  }
               }
 
               // ラベル／グループ名のバッジを表示

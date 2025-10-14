@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import MapKit
 
 /// 施設情報ボタン（共通）
 /// - 編集画面でも詳細画面でも使えるように、onClear は任意
@@ -15,6 +16,7 @@ struct FacilityInfoButton: View {
     let name: String?
     let address: String?
     let phone: String?          // 将来用（あれば表示）
+    let categoryRawValue: String?  // カテゴリ
     var mode: Mode = .readOnly  // 既定は閲覧用
     var onClear: (() -> Void)?  // editable のときだけ渡す
 
@@ -24,7 +26,8 @@ struct FacilityInfoButton: View {
         let n = name?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         let a = address?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         let p = phone?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        return !n.isEmpty || !a.isEmpty || !p.isEmpty
+        let c = categoryRawValue?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return !n.isEmpty || !a.isEmpty || !p.isEmpty || !c.isEmpty
     }
 
     var body: some View {
@@ -41,6 +44,7 @@ struct FacilityInfoButton: View {
                         name: name,
                         address: address,
                         phone: phone,
+                        categoryRawValue: categoryRawValue,
                         mode: mode,
                         onClear: {
                             onClear?()
@@ -62,9 +66,16 @@ struct FacilityInfoPopoverContent: View {
     let name: String?
     let address: String?
     let phone: String?
+    let categoryRawValue: String?
     let mode: FacilityInfoButton.Mode
     let onClear: () -> Void
     let onClose: () -> Void
+
+    private var categoryName: String? {
+        guard let raw = categoryRawValue else { return nil }
+        let cat = MKPointOfInterestCategory(rawValue: raw)
+        return cat.japaneseName
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -76,6 +87,13 @@ struct FacilityInfoPopoverContent: View {
                     Text(n).font(.subheadline.bold())
 //                    Spacer()
 //                    CopyButton(value: n)
+                }
+            }
+
+            if let cat = categoryName, !cat.isEmpty {
+                HStack(alignment: .top, spacing: 6) {
+                    Image(systemName: "tag")
+                    Text(cat).font(.caption).foregroundStyle(.secondary)
                 }
             }
 

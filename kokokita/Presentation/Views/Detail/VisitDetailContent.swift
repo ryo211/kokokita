@@ -29,13 +29,23 @@ struct VisitDetailContent: View {
             // タイトル + ラベル/グループ（くっつくイメージ）
             VStack(alignment: .leading, spacing: UIConstants.Spacing.medium) {
                 HStack(spacing: UIConstants.Spacing.medium) {
-                    Text(data.title.ifBlank("（タイトルなし）"))
-                        .font(.title2.bold())
-                        .lineLimit(3)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(data.title.ifBlank("（タイトルなし）"))
+                            .font(.title2.bold())
+                            .lineLimit(3)
+                        if let catRaw = data.facilityCategory {
+                            let category = MKPointOfInterestCategory(rawValue: catRaw)
+                            Text(category.japaneseName)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    Spacer(minLength: 0)
                     FacilityInfoButton(
                         name: data.facility?.name,
                         address: data.facility?.address,
                         phone: data.facility?.phone,
+                        categoryRawValue: data.facilityCategory,
                         mode: .readOnly                // 閲覧用。クリアは出ない
                     )
                 }

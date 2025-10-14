@@ -42,11 +42,12 @@ final class POICoordinatorService: ObservableObject {
     // MARK: - Apply POI
 
     /// 選択されたPOIの情報を返す（適用はViewModel側で行う）
-    func getApplicableData(from poi: PlacePOI) -> (title: String, facilityName: String, facilityAddress: String?) {
+    func getApplicableData(from poi: PlacePOI) -> (title: String, facilityName: String, facilityAddress: String?, facilityCategory: String?) {
         return (
             title: poi.name,
             facilityName: poi.name,
-            facilityAddress: poi.address
+            facilityAddress: poi.address,
+            facilityCategory: poi.poiCategoryRaw
         )
     }
 

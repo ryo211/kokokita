@@ -7,6 +7,7 @@
 
 // SearchFilterSheet.swift
 import SwiftUI
+import MapKit
 
 struct SearchFilterSheet: View {
     @ObservedObject var vm: HomeViewModel
@@ -109,6 +110,17 @@ struct SearchFilterSheet: View {
                 } label: { EmptyView() }
                 .labelsHidden()
                 .onChange(of: vm.groupFilter) { _ in vm.applyAndReload() }
+            }
+
+            Section("施設カテゴリ") {
+                Picker(selection: $vm.categoryFilter) {
+                    Text("指定なし").tag(String?.none)
+                    ForEach(MKPointOfInterestCategory.allCases, id: \.rawValue) { category in
+                        Text(category.japaneseName).tag(Optional(category.rawValue))
+                    }
+                } label: { EmptyView() }
+                .labelsHidden()
+                .onChange(of: vm.categoryFilter) { _ in vm.applyAndReload() }
             }
         }
         .navigationTitle("検索")

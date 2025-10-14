@@ -12,6 +12,7 @@ final class HomeViewModel: ObservableObject {
     @Published var items: [VisitAggregate] = []
     @Published var labelFilter: UUID? = nil
     @Published var groupFilter: UUID? = nil
+    @Published var categoryFilter: String? = nil  // カテゴリフィルタ (rawValue)
     @Published var titleQuery: String = ""         // タイトル部分一致
     @Published var dateFrom: Date? = nil          // 範囲: 開始
     @Published var dateTo: Date? = nil            // 範囲: 終了
@@ -33,7 +34,7 @@ final class HomeViewModel: ObservableObject {
     
     // 適用中のフィルタがあるか
     var hasActiveFilters: Bool {
-        return labelFilter != nil || groupFilter != nil ||
+        return labelFilter != nil || groupFilter != nil || categoryFilter != nil ||
                !titleQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
                dateFrom != nil || dateTo != nil
     }
@@ -42,6 +43,7 @@ final class HomeViewModel: ObservableObject {
     func clearAllFilters() {
         labelFilter = nil
         groupFilter = nil
+        categoryFilter = nil
         titleQuery = ""
         dateFrom = nil
         dateTo = nil
@@ -72,6 +74,12 @@ final class HomeViewModel: ObservableObject {
                 dateFrom: from,
                 dateToExclusive: toExclusive
             )
+
+            // カテゴリフィルタ（クライアントサイド）
+            if let catFilter = categoryFilter {
+                rows = rows.filter { $0.details.facilityCategory == catFilter }
+            }
+
             // ★ ここでソートを一元管理（timestampUTC がない場合は適宜プロパティ名を合わせる）
             rows.sort { a, b in
                 let ta = a.visit.timestampUTC

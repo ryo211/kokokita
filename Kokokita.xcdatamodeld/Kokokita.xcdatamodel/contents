@@ -12,6 +12,7 @@
     <entity name="VisitDetailsEntity" representedClassName="VisitDetailsEntity" syncable="YES" codeGenerationType="class">
         <attribute name="comment" optional="YES" attributeType="String"/>
         <attribute name="facilityAddress" optional="YES" attributeType="String"/>
+        <attribute name="facilityCategory" optional="YES" attributeType="String"/>
         <attribute name="facilityName" optional="YES" attributeType="String"/>
         <attribute name="groupId" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
         <attribute name="placeText" optional="YES" attributeType="String"/>

@@ -36,6 +36,7 @@ final class CoreDataVisitRepository: VisitRepository, TaxonomyRepository {
         d.title     = details.title
         d.facilityName = details.facilityName
         d.facilityAddress = details.facilityAddress
+        d.facilityCategory = details.facilityCategory
         d.comment   = details.comment
         d.groupId   = details.groupId
         d.resolvedAddress = details.resolvedAddress
@@ -80,9 +81,11 @@ final class CoreDataVisitRepository: VisitRepository, TaxonomyRepository {
             title: d.title,
             facilityName: d.facilityName,
             facilityAddress: d.facilityAddress,
+            facilityCategory: d.facilityCategory,
             comment: d.comment,
             labelIds: (d.labels as? Set<LabelEntity>)?.compactMap { $0.id } ?? [],
             groupId: d.groupId,
+            resolvedAddress: d.resolvedAddress,
             photoPaths: photoEntities(from: d).compactMap { $0.filePath }
         )
         transform(&cur)
@@ -127,6 +130,7 @@ final class CoreDataVisitRepository: VisitRepository, TaxonomyRepository {
         d.title     = cur.title
         d.facilityName = cur.facilityName
         d.facilityAddress = cur.facilityAddress
+        d.facilityCategory = cur.facilityCategory
         d.comment   = cur.comment
         d.groupId   = cur.groupId
         d.resolvedAddress = cur.resolvedAddress
@@ -345,8 +349,9 @@ final class CoreDataVisitRepository: VisitRepository, TaxonomyRepository {
         
         let details = VisitDetails(
             title: d?.title,
-            facilityName: d?.facilityName, 
+            facilityName: d?.facilityName,
             facilityAddress: d?.facilityAddress,
+            facilityCategory: d?.facilityCategory,
             comment: d?.comment,
             labelIds: labelIds,
             groupId: d?.groupId,
