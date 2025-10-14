@@ -24,11 +24,38 @@ struct KokokamoPOISheet<Item: Identifiable>: View {
     let onSelect: (Item) -> Void
 
     @State private var selectedCategory: KKCategory? = nil
+    @State private var searchText: String = ""
+    @FocusState private var isSearchFocused: Bool
 
     var body: some View {
         VStack(spacing: 0) {
             KKFilterBar(selected: $selectedCategory)
                 .padding(.bottom, 8)
+
+            // キーワード検索フィールド
+            HStack(spacing: 8) {
+                Image(systemName: "magnifyingglass")
+                    .foregroundStyle(.secondary)
+                TextField("施設名で検索", text: $searchText)
+                    .focused($isSearchFocused)
+                    .textFieldStyle(.plain)
+                    .autocorrectionDisabled()
+                if !searchText.isEmpty {
+                    Button {
+                        searchText = ""
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(Color(.systemGray6))
+            .cornerRadius(10)
+            .padding(.horizontal)
+            .padding(.bottom, 8)
 
             List(filteredItems, id: \.id) { p in
                 Button { onSelect(p) } label: {
@@ -54,14 +81,35 @@ struct KokokamoPOISheet<Item: Identifiable>: View {
         }
         .navigationTitle("現在地から半径100m以内の施設")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button("完了") {
+                    isSearchFocused = false
+                }
+            }
+        }
     }
 
     private var filteredItems: [Item] {
-        guard let sel = selectedCategory else { return items }
-        return items.filter {
-            poiCategory($0)?.kkCategory ?? .other == sel
-            
+        var result = items
+
+        // カテゴリフィルタ
+        if let sel = selectedCategory {
+            result = result.filter {
+                poiCategory($0)?.kkCategory ?? .other == sel
+            }
         }
+
+        // キーワード検索
+        let trimmedQuery = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmedQuery.isEmpty {
+            result = result.filter {
+                name($0).localizedCaseInsensitiveContains(trimmedQuery)
+            }
+        }
+
+        return result
     }
 }
 
