@@ -55,6 +55,12 @@ struct LabelListView: View {
                     Section { TextField("ラベル名", text: $newLabelName)
                         .textInputAutocapitalization(.none)
                         .disableAutocorrection(true)
+                        .submitLabel(.done)
+                        .onSubmit {
+                            if !newLabelName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                                createLabel()
+                            }
+                        }
                     }
                     Section {
                         Button("作成") { createLabel() }
@@ -115,7 +121,14 @@ struct LabelDetailView: View {
 
     var body: some View {
         Form {
-            Section { TextField("ラベル名", text: $name) }
+            Section { TextField("ラベル名", text: $name)
+                .submitLabel(.done)
+                .onSubmit {
+                    if !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                        save()
+                    }
+                }
+            }
             Section {
                 Button(role: .destructive) {
                     showDeleteConfirm = true

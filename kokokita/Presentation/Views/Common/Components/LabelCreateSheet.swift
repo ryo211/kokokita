@@ -18,6 +18,12 @@ struct LabelCreateSheet: View {
             Form {
                 Section {
                     TextField(L.VisitEdit.labelName, text: $newLabelName)
+                        .submitLabel(.done)
+                        .onSubmit {
+                            if !newLabelName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                                onCreate()
+                            }
+                        }
                 }
                 Section {
                     Button(L.VisitEdit.createAndSelect) {

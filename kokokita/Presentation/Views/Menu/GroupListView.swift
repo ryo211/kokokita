@@ -55,6 +55,12 @@ struct GroupListView: View {
                     Section { TextField("グループ名", text: $newGroupName)
                         .textInputAutocapitalization(.none)
                         .disableAutocorrection(true)
+                        .submitLabel(.done)
+                        .onSubmit {
+                            if !newGroupName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                                createGroup()
+                            }
+                        }
                     }
                     Section {
                         Button("作成") { createGroup() }
@@ -115,7 +121,14 @@ struct GroupDetailView: View {
 
     var body: some View {
         Form {
-            Section { TextField("グループ名", text: $name) }
+            Section { TextField("グループ名", text: $name)
+                .submitLabel(.done)
+                .onSubmit {
+                    if !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                        save()
+                    }
+                }
+            }
             Section {
                 Button(role: .destructive) { showDeleteConfirm = true } label: {
                     Label("このグループを削除", systemImage: "trash")

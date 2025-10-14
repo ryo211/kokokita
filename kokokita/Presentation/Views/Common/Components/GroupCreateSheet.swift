@@ -18,6 +18,12 @@ struct GroupCreateSheet: View {
             Form {
                 Section {
                     TextField(L.VisitEdit.groupName, text: $newGroupName)
+                        .submitLabel(.done)
+                        .onSubmit {
+                            if !newGroupName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                                onCreate()
+                            }
+                        }
                 }
                 Section {
                     Button(L.VisitEdit.createAndSelect) {

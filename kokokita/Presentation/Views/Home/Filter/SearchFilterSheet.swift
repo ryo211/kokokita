@@ -39,6 +39,7 @@ struct SearchFilterSheet: View {
             Section("キーワード") {
                 TextField("タイトルに含む語", text: $titleDraft)
                     .textInputAutocapitalization(.never)
+                    .submitLabel(.done)
                     .onChange(of: titleDraft) { new in
                         // 入力中は 250ms デバウンスで反映
                         debounceTask?.cancel()

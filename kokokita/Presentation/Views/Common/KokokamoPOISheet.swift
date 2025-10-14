@@ -40,6 +40,10 @@ struct KokokamoPOISheet<Item: Identifiable>: View {
                     .focused($isSearchFocused)
                     .textFieldStyle(.plain)
                     .autocorrectionDisabled()
+                    .submitLabel(.done)
+                    .onSubmit {
+                        isSearchFocused = false
+                    }
                 if !searchText.isEmpty {
                     Button {
                         searchText = ""
@@ -81,14 +85,6 @@ struct KokokamoPOISheet<Item: Identifiable>: View {
         }
         .navigationTitle("現在地から半径100m以内の施設")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItemGroup(placement: .keyboard) {
-                Spacer()
-                Button("完了") {
-                    isSearchFocused = false
-                }
-            }
-        }
     }
 
     private var filteredItems: [Item] {
