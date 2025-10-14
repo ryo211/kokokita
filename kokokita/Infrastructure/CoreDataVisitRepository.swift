@@ -177,8 +177,10 @@ final class CoreDataVisitRepository: VisitRepository, TaxonomyRepository {
             predicates.append(NSPredicate(format: "details.groupId == %@", gf as CVarArg))
         }
         if let q = titleQuery, !q.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            // タイトルは details.title
-            predicates.append(NSPredicate(format: "details.title CONTAINS[cd] %@", q))
+            // タイトルまたは住所に含まれる（OR検索）
+            let titlePredicate = NSPredicate(format: "details.title CONTAINS[cd] %@", q)
+            let addressPredicate = NSPredicate(format: "details.resolvedAddress CONTAINS[cd] %@", q)
+            predicates.append(NSCompoundPredicate(orPredicateWithSubpredicates: [titlePredicate, addressPredicate]))
         }
         if let from = dateFrom {
             // 日付は VisitEntity 側の timestampUTC を使用

@@ -37,7 +37,7 @@ struct SearchFilterSheet: View {
     var body: some View {
         Form {
             Section("キーワード") {
-                TextField("タイトルに含む語", text: $titleDraft)
+                TextField("タイトルまたは住所に含む語", text: $titleDraft)
                     .textInputAutocapitalization(.never)
                     .submitLabel(.done)
                     .onChange(of: titleDraft) { new in
