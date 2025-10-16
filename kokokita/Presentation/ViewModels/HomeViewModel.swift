@@ -12,6 +12,7 @@ final class HomeViewModel: ObservableObject {
     @Published var items: [VisitAggregate] = []
     @Published var labelFilter: UUID? = nil
     @Published var groupFilter: UUID? = nil
+    @Published var memberFilter: UUID? = nil
     @Published var categoryFilter: String? = nil  // カテゴリフィルタ (rawValue)
     @Published var titleQuery: String = ""         // タイトル部分一致
     @Published var dateFrom: Date? = nil          // 範囲: 開始
@@ -19,6 +20,7 @@ final class HomeViewModel: ObservableObject {
 
     @Published var labels: [LabelTag] = []
     @Published var groups: [GroupTag] = []
+    @Published var members: [MemberTag] = []
     @Published var alert: String?
     
     @Published var sortAscending: Bool = false {            // ★ 既定は「降順 = 最新が上」
@@ -34,7 +36,7 @@ final class HomeViewModel: ObservableObject {
     
     // 適用中のフィルタがあるか
     var hasActiveFilters: Bool {
-        return labelFilter != nil || groupFilter != nil || categoryFilter != nil ||
+        return labelFilter != nil || groupFilter != nil || memberFilter != nil || categoryFilter != nil ||
                !titleQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
                dateFrom != nil || dateTo != nil
     }
@@ -43,6 +45,7 @@ final class HomeViewModel: ObservableObject {
     func clearAllFilters() {
         labelFilter = nil
         groupFilter = nil
+        memberFilter = nil
         categoryFilter = nil
         titleQuery = ""
         dateFrom = nil
@@ -80,6 +83,11 @@ final class HomeViewModel: ObservableObject {
                 rows = rows.filter { $0.details.facilityCategory == catFilter }
             }
 
+            // メンバーフィルタ（クライアントサイド）
+            if let memberFilter = memberFilter {
+                rows = rows.filter { $0.details.memberIds.contains(memberFilter) }
+            }
+
             // ★ ここでソートを一元管理（timestampUTC がない場合は適宜プロパティ名を合わせる）
             rows.sort { a, b in
                 let ta = a.visit.timestampUTC
@@ -87,9 +95,10 @@ final class HomeViewModel: ObservableObject {
                 return sortAscending ? (ta < tb) : (ta > tb)
             }
             items = rows
-            
+
             labels = try repo.allLabels()
             groups = try repo.allGroups()
+            members = try repo.allMembers()
         } catch {
             alert = error.localizedDescription
         }
@@ -120,6 +129,7 @@ final class HomeViewModel: ObservableObject {
         do {
             self.labels = try repo.allLabels()
             self.groups = try repo.allGroups()
+            self.members = try repo.allMembers()
         } catch {
             self.alert = error.localizedDescription
         }

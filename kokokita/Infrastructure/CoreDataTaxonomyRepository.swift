@@ -42,6 +42,18 @@ final class CoreDataTaxonomyRepository: TaxonomyRepository {
         }
     }
 
+    func allMembers() throws -> [MemberTag] {
+        let req: NSFetchRequest<MemberEntity> = MemberEntity.fetchRequest()
+        req.sortDescriptors = [NSSortDescriptor(key: #keyPath(MemberEntity.name), ascending: true)]
+        return try ctx.fetch(req).compactMap { row in
+            guard let id = row.id, let name = row.name else {
+                Logger.warning("Member entity missing required fields (id or name)")
+                return nil
+            }
+            return MemberTag(id: id, name: name)
+        }
+    }
+
     // MARK: - Upsert Operations
 
     func upsertLabel(name: String) throws -> LabelTag {
@@ -78,6 +90,24 @@ final class CoreDataTaxonomyRepository: TaxonomyRepository {
             throw NSError(domain: "Repository", code: 2, userInfo: [NSLocalizedDescriptionKey: "グループの保存に失敗しました"])
         }
         return GroupTag(id: savedId, name: savedName)
+    }
+
+    func upsertMember(name: String) throws -> MemberTag {
+        let req: NSFetchRequest<MemberEntity> = MemberEntity.fetchRequest()
+        req.predicate = NSPredicate(format: "name == %@", name)
+        if let hit = try ctx.fetch(req).first, let id = hit.id, let nm = hit.name {
+            return MemberTag(id: id, name: nm)
+        }
+        let e = MemberEntity(context: ctx)
+        let newId = UUID()
+        e.id = newId
+        e.name = name
+        try ctx.save()
+        guard let savedId = e.id, let savedName = e.name else {
+            Logger.error("Failed to save member entity properly")
+            throw NSError(domain: "Repository", code: 2, userInfo: [NSLocalizedDescriptionKey: "メンバーの保存に失敗しました"])
+        }
+        return MemberTag(id: savedId, name: savedName)
     }
 
     // MARK: - Create Operations
@@ -120,6 +150,25 @@ final class CoreDataTaxonomyRepository: TaxonomyRepository {
         return savedId
     }
 
+    func createMember(name: String) throws -> UUID {
+        let trimmed = name.trimmed
+        guard !trimmed.isEmpty else {
+            Logger.warning("Attempted to create member with empty name")
+            throw NSError(domain: "Member", code: 1,
+                          userInfo: [NSLocalizedDescriptionKey: "空名は作成できません"])
+        }
+        let e = MemberEntity(context: ctx)
+        let newId = UUID()
+        e.id = newId
+        e.name = trimmed
+        try ctx.save()
+        guard let savedId = e.id else {
+            Logger.error("Member entity ID is nil after save")
+            throw NSError(domain: "Repository", code: 2, userInfo: [NSLocalizedDescriptionKey: "メンバーの保存に失敗しました"])
+        }
+        return savedId
+    }
+
     // MARK: - Update Operations
 
     func renameLabel(id: UUID, newName: String) throws {
@@ -137,6 +186,15 @@ final class CoreDataTaxonomyRepository: TaxonomyRepository {
             return
         }
         group.name = newName
+        try ctx.save()
+    }
+
+    func renameMember(id: UUID, newName: String) throws {
+        guard let member = try fetchEntity(MemberEntity.self, id: id) else {
+            Logger.warning("Member not found for rename: \(id)")
+            return
+        }
+        member.name = newName
         try ctx.save()
     }
 
@@ -180,6 +238,27 @@ final class CoreDataTaxonomyRepository: TaxonomyRepository {
         }
 
         ctx.delete(group)
+        try ctx.save()
+    }
+
+    func deleteMember(id: UUID) throws {
+        guard let member = try fetchEntity(MemberEntity.self, id: id) else {
+            Logger.warning("Member not found for delete: \(id)")
+            return
+        }
+
+        // 関連から外す（安全のため）
+        let req = VisitDetailsEntity.fetchRequest()
+        req.predicate = NSPredicate(format: "ANY members == %@", member)
+        let affected = try ctx.fetch(req)
+        for d in affected {
+            if var set = d.members as? Set<MemberEntity> {
+                set.remove(member)
+                d.members = NSSet(set: set)
+            }
+        }
+
+        ctx.delete(member)
         try ctx.save()
     }
 

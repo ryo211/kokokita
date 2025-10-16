@@ -16,6 +16,7 @@ struct HomeView: View {
     // 名前辞書（型を固定して軽くする）
     private var labelMap: [UUID: String] { vm.labels.nameMap }
     private var groupMap: [UUID: String] { vm.groups.nameMap }
+    private var memberMap: [UUID: String] { vm.members.nameMap }
 
     var body: some View {
         NavigationStack {
@@ -73,7 +74,7 @@ struct HomeView: View {
                         }
                     )
                 } label: {
-                    VisitListRow(agg: agg, labelMap: labelMap, groupMap: groupMap)
+                    VisitListRow(agg: agg, labelMap: labelMap, groupMap: groupMap, memberMap: memberMap)
                 }
                 .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                     Button() {
@@ -134,6 +135,7 @@ struct HomeView: View {
 
         let labels: [String] = agg.details.labelIds.compactMap { labelMap[$0] }
         let group: String?   = agg.details.groupId.flatMap { groupMap[$0] }
+        let members: [String] = agg.details.memberIds.compactMap { memberMap[$0] }
 
         let coord: CLLocationCoordinate2D? = {
             let lat = agg.visit.latitude
@@ -148,6 +150,7 @@ struct HomeView: View {
             title: title,
             labels: labels,
             group: group,
+            members: members,
             timestamp: agg.visit.timestampUTC,
             address: address,
             coordinate: coord,
@@ -169,12 +172,14 @@ private struct VisitListRow: View {
     let agg: VisitAggregate
     let labelMap: [UUID: String]
     let groupMap: [UUID: String]
+    let memberMap: [UUID: String]
 
     var body: some View {
         let labelNames = agg.details.labelIds.compactMap { labelMap[$0] }
         let groupName  = agg.details.groupId.flatMap { groupMap[$0] }
-        VisitRow(agg: agg) { _, _ in
-            (labels: labelNames, group: groupName)
+        let memberNames = agg.details.memberIds.compactMap { memberMap[$0] }
+        VisitRow(agg: agg) { _, _, _ in
+            (labels: labelNames, group: groupName, members: memberNames)
         }
     }
 }

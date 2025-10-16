@@ -26,14 +26,19 @@ protocol VisitRepository {
 protocol TaxonomyRepository {
     func allLabels() throws -> [LabelTag]
     func allGroups() throws -> [GroupTag]
+    func allMembers() throws -> [MemberTag]
     func upsertLabel(name: String) throws -> LabelTag
     func upsertGroup(name: String) throws -> GroupTag
+    func upsertMember(name: String) throws -> MemberTag
     func renameLabel(id: UUID, newName: String) throws
     func deleteLabel(id: UUID) throws
     func renameGroup(id: UUID, newName: String) throws
     func deleteGroup(id: UUID) throws
+    func renameMember(id: UUID, newName: String) throws
+    func deleteMember(id: UUID) throws
     func createLabel(name: String) throws -> UUID
     func createGroup(name: String) throws -> UUID
+    func createMember(name: String) throws -> UUID
 }
 
 protocol LocationService {

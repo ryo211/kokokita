@@ -21,6 +21,7 @@ final class CreateEditViewModel: ObservableObject {
     @Published var comment: String = ""
     @Published var labelIds: Set<UUID> = []
     @Published var groupId: UUID?
+    @Published var memberIds: Set<UUID> = []
 
     // MARK: - UI State
     @Published var alert: String?
@@ -112,6 +113,7 @@ final class CreateEditViewModel: ObservableObject {
         comment   = agg.details.comment ?? ""
         labelIds = Set(agg.details.labelIds)
         groupId   = agg.details.groupId
+        memberIds = Set(agg.details.memberIds)
         addressLine = agg.details.resolvedAddress
 
         // 写真はサービス経由で管理
@@ -221,6 +223,7 @@ final class CreateEditViewModel: ObservableObject {
                 comment: comment.nilIfBlank,
                 labelIds: Array(labelIds),
                 groupId: groupId,
+                memberIds: Array(memberIds),
                 resolvedAddress: addressLine,
                 photoPaths: photoService.getCurrentPaths()
             )
@@ -244,6 +247,7 @@ final class CreateEditViewModel: ObservableObject {
                 cur.comment = comment.isEmpty ? nil : comment
                 cur.labelIds = Array(labelIds)
                 cur.groupId = groupId
+                cur.memberIds = Array(memberIds)
                 if let addr = addressLine, !addr.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                     cur.resolvedAddress = addr
                 }
@@ -290,6 +294,23 @@ final class CreateEditViewModel: ObservableObject {
                 return exist.id
             }
             let id = try repo.createGroup(name: n)
+            NotificationCenter.default.post(name: .taxonomyChanged, object: nil)
+            return id
+        } catch {
+            self.alert = error.localizedDescription
+            return nil
+        }
+    }
+
+    func createMember(_ name: String) -> UUID? {
+        let n = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !n.isEmpty else { return nil }
+
+        do {
+            if let exist = try? repo.allMembers().first(where: { $0.name == n }) {
+                return exist.id
+            }
+            let id = try repo.createMember(name: n)
             NotificationCenter.default.post(name: .taxonomyChanged, object: nil)
             return id
         } catch {

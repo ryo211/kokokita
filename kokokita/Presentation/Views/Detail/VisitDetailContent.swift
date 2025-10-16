@@ -69,6 +69,26 @@ struct VisitDetailContent: View {
                             }
                         }
                     }
+
+                    // メンバー（複数あり得る）
+                    if !data.members.isEmpty {
+                        FlowRow(spacing: 6, rowSpacing: 6) {
+                            ForEach(data.members, id: \.self) { name in
+                                let t = name.trimmed
+                                if !t.isEmpty {
+                                    HStack(spacing: 4) {
+                                        Image(systemName: "person")
+                                            .font(.caption2)
+                                        Text(t)
+                                            .font(.caption)
+                                    }
+                                    .padding(.horizontal, 10)
+                                    .padding(.vertical, 6)
+                                    .background(Color.blue.opacity(0.15), in: RoundedRectangle(cornerRadius: 8))
+                                }
+                            }
+                        }
+                    }
                 }
 
             }

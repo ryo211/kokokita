@@ -9,6 +9,11 @@
         <attribute name="name" attributeType="String"/>
         <relationship name="visits" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="VisitDetailsEntity" inverseName="labels" inverseEntity="VisitDetailsEntity"/>
     </entity>
+    <entity name="MemberEntity" representedClassName="MemberEntity" syncable="YES" codeGenerationType="class">
+        <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="name" attributeType="String"/>
+        <relationship name="visits" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="VisitDetailsEntity" inverseName="members" inverseEntity="VisitDetailsEntity"/>
+    </entity>
     <entity name="VisitDetailsEntity" representedClassName="VisitDetailsEntity" syncable="YES" codeGenerationType="class">
         <attribute name="comment" optional="YES" attributeType="String"/>
         <attribute name="facilityAddress" optional="YES" attributeType="String"/>
@@ -19,6 +24,7 @@
         <attribute name="resolvedAddress" optional="YES" attributeType="String"/>
         <attribute name="title" optional="YES" attributeType="String"/>
         <relationship name="labels" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="LabelEntity" inverseName="visits" inverseEntity="LabelEntity"/>
+        <relationship name="members" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="MemberEntity" inverseName="visits" inverseEntity="MemberEntity"/>
         <relationship name="photos" optional="YES" toMany="YES" deletionRule="Cascade" ordered="YES" destinationEntity="VisitPhotoEntity" inverseName="details" inverseEntity="VisitPhotoEntity"/>
     </entity>
     <entity name="VisitEntity" representedClassName="VisitEntity" syncable="YES" codeGenerationType="class">

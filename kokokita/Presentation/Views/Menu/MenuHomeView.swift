@@ -22,6 +22,12 @@ struct MenuHomeView: View {
                 } label: {
                     Label("グループを編集", systemImage: "folder")
                 }
+
+                NavigationLink {
+                    MemberListView()
+                } label: {
+                    Label("メンバーを編集", systemImage: "person")
+                }
             }
 
             Section {

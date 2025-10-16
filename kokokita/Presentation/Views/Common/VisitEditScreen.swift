@@ -32,19 +32,23 @@ struct VisitEditScreen: View {
     @State private var showActionPromptLocal = false
     @State private var showFacilityPopover = false
 
-    // ラベル/グループ候補
+    // ラベル/グループ/メンバー候補
     @State private var labelOptions: [LabelTag] = []
     @State private var groupOptions: [GroupTag] = []
+    @State private var memberOptions: [MemberTag] = []
 
     // ピッカー/作成シート
     @State private var labelPickerShown = false
     @State private var groupPickerShown = false
+    @State private var memberPickerShown = false
     @State private var labelCreateShown = false
     @State private var groupCreateShown = false
+    @State private var memberCreateShown = false
 
     // 作成入力
     @State private var newLabelName = ""
     @State private var newGroupName = ""
+    @State private var newMemberName = ""
     
     // 住所のプレビュー用
     @State private var showAddressPopover = false
@@ -64,6 +68,17 @@ struct VisitEditScreen: View {
     private var selectedGroupName: String {
         let dict = groupOptions.nameMap
         return vm.groupId.flatMap { dict[$0] } ?? L.Common.notSelected
+    }
+    // 表示名（メンバー複数）
+    private var selectedMemberNames: [String] {
+        let dict = memberOptions.nameMap
+        return vm.memberIds.compactMap { dict[$0] }
+    }
+    private var selectedMemberTitle: String {
+        if selectedMemberNames.isEmpty { return L.Common.notSelected }
+        if selectedMemberNames.count <= 2 { return selectedMemberNames.joined(separator: ", ") }
+        let head = selectedMemberNames.prefix(2).joined(separator: ", ")
+        return "\(head) ほか\(selectedMemberNames.count - 2)件"
     }
     
     private var actionPromptBinding: Binding<Bool> {
@@ -236,8 +251,25 @@ struct VisitEditScreen: View {
                 )
             }
         }
-        
-        // 3択 “ココキタ！” プロンプト（create のときだけ）
+        // —— メンバー複数選択
+        .sheet(isPresented: $memberPickerShown) {
+            MemberPickerSheet(
+                selectedIds: $vm.memberIds,
+                memberOptions: $memberOptions,
+                isPresented: $memberPickerShown,
+                showCreateSheet: $memberCreateShown
+            )
+            // メンバー新規作成
+            .sheet(isPresented: $memberCreateShown) {
+                MemberCreateSheet(
+                    newMemberName: $newMemberName,
+                    isPresented: $memberCreateShown,
+                    onCreate: createMemberAndSelect
+                )
+            }
+        }
+
+        // 3択 "ココキタ！" プロンプト（create のときだけ）
         .sheet(isPresented: $showActionPromptLocal) {
             PostKokokitaPromptSheet(
                 timestamp: vm.timestampDisplay,
@@ -314,6 +346,10 @@ struct VisitEditScreen: View {
                     Label("\(selectedGroupName)", systemImage: "folder")
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
+                Button { memberPickerShown = true } label: {
+                    Label("\(selectedMemberTitle)", systemImage: "person")
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
             }
 
         }
@@ -347,6 +383,7 @@ struct VisitEditScreen: View {
         // 候補をロード（空白除外 & 名前順）
         labelOptions = ((try? AppContainer.shared.repo.allLabels()) ?? []).sortedByName
         groupOptions = ((try? AppContainer.shared.repo.allGroups()) ?? []).sortedByName
+        memberOptions = ((try? AppContainer.shared.repo.allMembers()) ?? []).sortedByName
 
         // create だけ即測位
         if case .create = mode {
@@ -384,6 +421,20 @@ struct VisitEditScreen: View {
         }
         newGroupName = ""
         groupCreateShown = false
+    }
+
+    private func createMemberAndSelect() {
+        let name = newMemberName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !name.isEmpty else { return }
+        if let exist = memberOptions.first(where: { $0.name == name }) {
+            vm.memberIds.insert(exist.id)
+        } else if let id = vm.createMember(name) {
+            let tag = MemberTag(id: id, name: name)
+            memberOptions.append(tag)
+            vm.memberIds.insert(id)
+        }
+        newMemberName = ""
+        memberCreateShown = false
     }
 
     private func bottomSafeInset() -> CGFloat {

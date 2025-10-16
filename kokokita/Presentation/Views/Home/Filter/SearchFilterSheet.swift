@@ -113,6 +113,21 @@ struct SearchFilterSheet: View {
                 .onChange(of: vm.groupFilter) { _ in vm.applyAndReload() }
             }
 
+            Section("メンバー") {
+                Picker(selection: $vm.memberFilter) {
+                    Text("指定なし").tag(UUID?.none)
+                    ForEach(
+                        vm.members
+                            .filter { !$0.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+                            .sorted { $0.name.localizedCompare($1.name) == .orderedAscending }
+                    ) { t in
+                        Text(t.name).tag(Optional(t.id))
+                    }
+                } label: { EmptyView() }
+                .labelsHidden()
+                .onChange(of: vm.memberFilter) { _ in vm.applyAndReload() }
+            }
+
             Section("施設カテゴリ") {
                 Picker(selection: $vm.categoryFilter) {
                     Text("指定なし").tag(String?.none)

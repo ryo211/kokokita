@@ -34,3 +34,16 @@ extension Collection where Element == GroupTag {
             .sorted { $0.name.localizedCompare($1.name) == .orderedAscending }
     }
 }
+
+extension Collection where Element == MemberTag {
+    /// UUID -> 名前の辞書を作成
+    var nameMap: [UUID: String] {
+        Dictionary(uniqueKeysWithValues: map { ($0.id, $0.name) })
+    }
+
+    /// 名前でソート（空白除外済み）
+    var sortedByName: [MemberTag] {
+        filter { !$0.name.isBlankOrEmpty }
+            .sorted { $0.name.localizedCompare($1.name) == .orderedAscending }
+    }
+}

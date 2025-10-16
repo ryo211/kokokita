@@ -70,6 +70,7 @@ struct VisitDetails: Codable, Equatable {
     var comment: String?
     var labelIds: [UUID]
     var groupId: UUID?
+    var memberIds: [UUID]
     var resolvedAddress: String?
     var photoPaths: [String] = []
 
@@ -80,6 +81,7 @@ struct VisitDetails: Codable, Equatable {
                 comment: String? = nil,
                 labelIds: [UUID] = [],
                 groupId: UUID? = nil,
+                memberIds: [UUID] = [],
                 resolvedAddress: String? = nil,
                 photoPaths: [String] = []
     ) {
@@ -90,6 +92,7 @@ struct VisitDetails: Codable, Equatable {
         self.comment = comment
         self.labelIds = labelIds
         self.groupId = groupId
+        self.memberIds = memberIds
         self.resolvedAddress = resolvedAddress
         self.photoPaths = photoPaths
     }
@@ -97,6 +100,7 @@ struct VisitDetails: Codable, Equatable {
 
 struct LabelTag: Identifiable, Codable, Equatable { let id: UUID; var name: String }
 struct GroupTag: Identifiable, Codable, Equatable { let id: UUID; var name: String }
+struct MemberTag: Identifiable, Codable, Equatable { let id: UUID; var name: String }
 
 struct VisitAggregate: Identifiable, Codable, Equatable {
     let id: UUID

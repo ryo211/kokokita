@@ -164,6 +164,7 @@ struct VisitDetailData {
     var title: String
     var labels: [String]
     var group: String?
+    var members: [String]
     var timestamp: Date
     var address: String?
     var coordinate: CLLocationCoordinate2D?

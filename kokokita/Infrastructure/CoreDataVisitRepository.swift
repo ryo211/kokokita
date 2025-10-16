@@ -42,6 +42,8 @@ final class CoreDataVisitRepository: VisitRepository, TaxonomyRepository {
         d.resolvedAddress = details.resolvedAddress
         // to-many labels
         d.labels    = NSSet(array: try fetchLabelEntities(for: details.labelIds))
+        // to-many members
+        d.members   = NSSet(array: try fetchMemberEntities(for: details.memberIds))
 
         if !details.photoPaths.isEmpty {
             let ordered = NSMutableOrderedSet()
@@ -85,6 +87,7 @@ final class CoreDataVisitRepository: VisitRepository, TaxonomyRepository {
             comment: d.comment,
             labelIds: (d.labels as? Set<LabelEntity>)?.compactMap { $0.id } ?? [],
             groupId: d.groupId,
+            memberIds: (d.members as? Set<MemberEntity>)?.compactMap { $0.id } ?? [],
             resolvedAddress: d.resolvedAddress,
             photoPaths: photoEntities(from: d).compactMap { $0.filePath }
         )
@@ -135,6 +138,7 @@ final class CoreDataVisitRepository: VisitRepository, TaxonomyRepository {
         d.groupId   = cur.groupId
         d.resolvedAddress = cur.resolvedAddress
         d.labels    = NSSet(array: try fetchLabelEntities(for: cur.labelIds))
+        d.members   = NSSet(array: try fetchMemberEntities(for: cur.memberIds))
         d.photos    = ordered
 
         // 不変部は触っていないので d のみチェックで十分
@@ -239,6 +243,18 @@ final class CoreDataVisitRepository: VisitRepository, TaxonomyRepository {
         }
     }
 
+    func allMembers() throws -> [MemberTag] {
+        let req: NSFetchRequest<MemberEntity> = MemberEntity.fetchRequest()
+        req.sortDescriptors = [NSSortDescriptor(key: #keyPath(MemberEntity.name), ascending: true)]
+        return try ctx.fetch(req).compactMap { row in
+            guard let id = row.id, let name = row.name else {
+                Logger.warning("Member entity missing required fields (id or name)")
+                return nil
+            }
+            return MemberTag(id: id, name: name)
+        }
+    }
+
     func upsertLabel(name: String) throws -> LabelTag {
         let req: NSFetchRequest<LabelEntity> = LabelEntity.fetchRequest()
         req.predicate = NSPredicate(format: "name == %@", name)
@@ -273,6 +289,24 @@ final class CoreDataVisitRepository: VisitRepository, TaxonomyRepository {
             throw NSError(domain: "Repository", code: 2, userInfo: [NSLocalizedDescriptionKey: "グループの保存に失敗しました"])
         }
         return GroupTag(id: savedId, name: savedName)
+    }
+
+    func upsertMember(name: String) throws -> MemberTag {
+        let req: NSFetchRequest<MemberEntity> = MemberEntity.fetchRequest()
+        req.predicate = NSPredicate(format: "name == %@", name)
+        if let hit = try ctx.fetch(req).first, let id = hit.id, let nm = hit.name {
+            return MemberTag(id: id, name: nm)
+        }
+        let e = MemberEntity(context: ctx)
+        let newId = UUID()
+        e.id = newId
+        e.name = name
+        try ctx.save()
+        guard let savedId = e.id, let savedName = e.name else {
+            Logger.error("Failed to save member entity properly")
+            throw NSError(domain: "Repository", code: 2, userInfo: [NSLocalizedDescriptionKey: "メンバーの保存に失敗しました"])
+        }
+        return MemberTag(id: savedId, name: savedName)
     }
 
     // MARK: - Helpers
@@ -346,9 +380,12 @@ final class CoreDataVisitRepository: VisitRepository, TaxonomyRepository {
         let labelEntities = (d?.labels as? Set<LabelEntity>) ?? []
         let labelIds = labelEntities.compactMap { $0.id }
 
+        let memberEntities = (d?.members as? Set<MemberEntity>) ?? []
+        let memberIds = memberEntities.compactMap { $0.id }
+
         let photos = photoEntities(from: d)
         let photoPaths = photos.compactMap { $0.filePath }
-        
+
         let details = VisitDetails(
             title: d?.title,
             facilityName: d?.facilityName,
@@ -357,6 +394,7 @@ final class CoreDataVisitRepository: VisitRepository, TaxonomyRepository {
             comment: d?.comment,
             labelIds: labelIds,
             groupId: d?.groupId,
+            memberIds: memberIds,
             resolvedAddress: d?.resolvedAddress,
             photoPaths: photoPaths
         )
@@ -364,10 +402,19 @@ final class CoreDataVisitRepository: VisitRepository, TaxonomyRepository {
         return VisitAggregate(id: id, visit: visit, details: details)
     }
 
-    
+
     private func fetchLabelEntities(for ids: [UUID]) throws -> [LabelEntity] {
         guard !ids.isEmpty else { return [] }
         let req: NSFetchRequest<LabelEntity> = LabelEntity.fetchRequest()
+        req.predicate = NSPredicate(format: "id IN %@", ids)
+        let found = try ctx.fetch(req)
+        // 見つからない id があっても無視（スキップ）
+        return found
+    }
+
+    private func fetchMemberEntities(for ids: [UUID]) throws -> [MemberEntity] {
+        guard !ids.isEmpty else { return [] }
+        let req: NSFetchRequest<MemberEntity> = MemberEntity.fetchRequest()
         req.predicate = NSPredicate(format: "id IN %@", ids)
         let found = try ctx.fetch(req)
         // 見つからない id があっても無視（スキップ）
@@ -450,6 +497,32 @@ final class CoreDataVisitRepository: VisitRepository, TaxonomyRepository {
         try ctx.save()
     }
 
+    // MARK: - Taxonomy: Member
+
+    func renameMember(id: UUID, newName: String) throws {
+        guard let member = try fetchMemberEntity(id: id) else { return }
+        member.name = newName
+        try ctx.save()
+    }
+
+    func deleteMember(id: UUID) throws {
+        guard let member = try fetchMemberEntity(id: id) else { return }
+
+        // 関連から外す（安全のため）
+        let req = VisitDetailsEntity.fetchRequest()
+        req.predicate = NSPredicate(format: "ANY members == %@", member)
+        let affected = try ctx.fetch(req)
+        for d in affected {
+            if var set = d.members as? Set<MemberEntity> {
+                set.remove(member)
+                d.members = NSSet(set: set)
+            }
+        }
+
+        ctx.delete(member)
+        try ctx.save()
+    }
+
     // MARK: - Visit: 全削除（初期化）
 
     func deleteAllVisits() throws {
@@ -478,6 +551,10 @@ final class CoreDataVisitRepository: VisitRepository, TaxonomyRepository {
 
     private func fetchGroupEntity(id: UUID) throws -> GroupEntity? {
         try fetchEntity(GroupEntity.self, id: id)
+    }
+
+    private func fetchMemberEntity(id: UUID) throws -> MemberEntity? {
+        try fetchEntity(MemberEntity.self, id: id)
     }
 
     private func normalizedName(_ s: String) -> String {
@@ -518,6 +595,25 @@ final class CoreDataVisitRepository: VisitRepository, TaxonomyRepository {
         guard let savedId = e.id else {
             Logger.error("Group entity ID is nil after save")
             throw NSError(domain: "Repository", code: 2, userInfo: [NSLocalizedDescriptionKey: "グループの保存に失敗しました"])
+        }
+        return savedId
+    }
+
+    func createMember(name: String) throws -> UUID {
+        let trimmed = name.trimmed
+        guard !trimmed.isEmpty else {
+            Logger.warning("Attempted to create member with empty name")
+            throw NSError(domain: "Member", code: 1,
+                          userInfo: [NSLocalizedDescriptionKey: "空名は作成できません"])
+        }
+        let e = MemberEntity(context: ctx)
+        let newId = UUID()
+        e.id = newId
+        e.name = trimmed
+        try ctx.save()
+        guard let savedId = e.id else {
+            Logger.error("Member entity ID is nil after save")
+            throw NSError(domain: "Repository", code: 2, userInfo: [NSLocalizedDescriptionKey: "メンバーの保存に失敗しました"])
         }
         return savedId
     }
