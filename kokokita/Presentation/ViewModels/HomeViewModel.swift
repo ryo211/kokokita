@@ -65,7 +65,9 @@ final class HomeViewModel: ObservableObject {
                     sortAscending ? (a.visit.timestampUTC < b.visit.timestampUTC) : (a.visit.timestampUTC > b.visit.timestampUTC)
                 }
             )
-        }.sorted { $0.date > $1.date } // 常に新しい日付が上
+        }.sorted { a, b in
+            sortAscending ? (a.date < b.date) : (a.date > b.date)
+        }
     }
 
     // ユーザ操作用
