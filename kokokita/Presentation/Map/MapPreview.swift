@@ -16,6 +16,7 @@ struct MapPreview: View {
     var decimals: Int = AppConfig.coordinateDecimals
 
     @State private var position: MapCameraPosition
+    @State private var showMapAppSheet = false
 
 
     init(lat: Double, lon: Double, radius: CLLocationDistance = AppConfig.mapDisplayRadius,
@@ -48,7 +49,58 @@ struct MapPreview: View {
                     .padding(8)
             }
         }
+        .overlay(alignment: .bottomTrailing) {
+            Button {
+                showMapAppSheet = true
+            } label: {
+                HStack(spacing: 4) {
+                    Image(systemName: "map")
+                        .font(.callout)
+                    Text("地図アプリで開く")
+                        .font(.caption)
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(.ultraThinMaterial, in: Capsule())
+                .shadow(radius: 2)
+            }
+            .buttonStyle(.plain)
+            .padding(8)
+        }
         .clipShape(RoundedRectangle(cornerRadius: AppConfig.mapCornerRadius))
+        .confirmationDialog("地図アプリで開く", isPresented: $showMapAppSheet, titleVisibility: .visible) {
+            Button("Apple Maps") {
+                openInAppleMaps()
+            }
+            Button("Google Maps") {
+                openInGoogleMaps()
+            }
+            Button("キャンセル", role: .cancel) {}
+        }
+    }
+
+    private func openInAppleMaps() {
+        let latitude = coordinate.latitude
+        let longitude = coordinate.longitude
+        let urlString = "http://maps.apple.com/?ll=\(latitude),\(longitude)&q=ココキタ"
+        if let url = URL(string: urlString) {
+            UIApplication.shared.open(url)
+        }
+    }
+
+    private func openInGoogleMaps() {
+        let latitude = coordinate.latitude
+        let longitude = coordinate.longitude
+        // Google Mapsアプリがインストールされている場合
+        let googleMapsURL = "comgooglemaps://?q=\(latitude),\(longitude)&center=\(latitude),\(longitude)&zoom=15"
+        // ブラウザで開く場合のフォールバック
+        let webURL = "https://www.google.com/maps/search/?api=1&query=\(latitude),\(longitude)"
+
+        if let url = URL(string: googleMapsURL), UIApplication.shared.canOpenURL(url) {
+            UIApplication.shared.open(url)
+        } else if let url = URL(string: webURL) {
+            UIApplication.shared.open(url)
+        }
     }
 }
 
