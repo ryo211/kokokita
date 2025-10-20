@@ -60,37 +60,47 @@ struct HomeView: View {
     @ViewBuilder
     private func listContent() -> some View {
         List {
-            ForEach(vm.items) { agg in
-                NavigationLink {
-                    VisitDetailScreen(
-                        data: toDetailData(agg),
-                        onBack: {},                 // NavigationLink なので未使用
-                        onEdit: { editingTarget = agg },
-                        onShare: { /* 共有導線をここに（必要なら）*/ },
-                        onDelete: {
-                            withAnimation {
-                                vm.delete(id: agg.id)
-                            }
+            ForEach(vm.groupedByDate) { group in
+                Section {
+                    ForEach(group.items) { agg in
+                        NavigationLink {
+                            VisitDetailScreen(
+                                data: toDetailData(agg),
+                                onBack: {},                 // NavigationLink なので未使用
+                                onEdit: { editingTarget = agg },
+                                onShare: { /* 共有導線をここに（必要なら）*/ },
+                                onDelete: {
+                                    withAnimation {
+                                        vm.delete(id: agg.id)
+                                    }
+                                }
+                            )
+                        } label: {
+                            VisitListRow(agg: agg, labelMap: labelMap, groupMap: groupMap, memberMap: memberMap)
                         }
-                    )
-                } label: {
-                    VisitListRow(agg: agg, labelMap: labelMap, groupMap: groupMap, memberMap: memberMap)
-                }
-                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                    Button() {
-                        pendingDeleteId = agg.id
-                        showDeleteConfirm = true
-                    } label: {
-                        Label(L.Common.delete, systemImage: "trash")
+                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                            Button() {
+                                pendingDeleteId = agg.id
+                                showDeleteConfirm = true
+                            } label: {
+                                Label(L.Common.delete, systemImage: "trash")
+                            }
+                            .tint(.red)
+                        }
+                        // 行全体をほんのり強調（任意）
+                        .listRowBackground(
+                            (pendingDeleteId == agg.id && showDeleteConfirm)
+                            ? Color.red.opacity(0.06)
+                            : Color.clear
+                        )
                     }
-                    .tint(.red)
+                } header: {
+                    Text(formatDateHeader(group.date))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .textCase(nil)
                 }
-                // 行全体をほんのり強調（任意）
-                .listRowBackground(
-                    (pendingDeleteId == agg.id && showDeleteConfirm)
-                    ? Color.red.opacity(0.06)
-                    : Color.clear
-                )
             }
         }
 
@@ -125,6 +135,22 @@ struct HomeView: View {
         }
     }
     
+    private func formatDateHeader(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.calendar = Calendar(identifier: .gregorian)
+        formatter.locale = Locale(identifier: "ja_JP")
+        formatter.dateFormat = "yyyy年M月d日(E)"
+
+        let calendar = Calendar.current
+        if calendar.isDateInToday(date) {
+            return "今日"
+        } else if calendar.isDateInYesterday(date) {
+            return "昨日"
+        } else {
+            return formatter.string(from: date)
+        }
+    }
+
     private func toDetailData(_ agg: VisitAggregate) -> VisitDetailData {
         let title: String = {
             let t = agg.details.title?.trimmingCharacters(in: .whitespacesAndNewlines)
