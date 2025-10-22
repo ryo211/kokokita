@@ -13,6 +13,9 @@ struct VisitDetailContent: View {
     let data: VisitDetailData
     let mapSnapshot: UIImage?        // isSharingの時に使う
     var isSharing: Bool = false
+    var onLabelTap: (() -> Void)? = nil
+    var onGroupTap: (() -> Void)? = nil
+    var onMemberTap: (() -> Void)? = nil
 
     var body: some View {
         VStack(alignment: .leading, spacing: UIConstants.Spacing.large) {
@@ -55,6 +58,11 @@ struct VisitDetailContent: View {
                     if let group = data.group?.trimmed, !group.isEmpty {
                         FlowRow(spacing: 6, rowSpacing: 6) {
                             Chip(group, kind: .group, showRemoveButton: false)
+                                .onTapGesture {
+                                    if !isSharing {
+                                        onGroupTap?()
+                                    }
+                                }
                         }
                     }
 
@@ -65,6 +73,11 @@ struct VisitDetailContent: View {
                                 let t = name.trimmed
                                 if !t.isEmpty {
                                     Chip(t, kind: .label, showRemoveButton: false)
+                                        .onTapGesture {
+                                            if !isSharing {
+                                                onLabelTap?()
+                                            }
+                                        }
                                 }
                             }
                         }
@@ -85,6 +98,11 @@ struct VisitDetailContent: View {
                                     .padding(.horizontal, 10)
                                     .padding(.vertical, 6)
                                     .background(Color.blue.opacity(0.15), in: RoundedRectangle(cornerRadius: 8))
+                                    .onTapGesture {
+                                        if !isSharing {
+                                            onMemberTap?()
+                                        }
+                                    }
                                 }
                             }
                         }

@@ -13,6 +13,7 @@ struct MemberPickerSheet: View {
     @Binding var memberOptions: [MemberTag]
     @Binding var isPresented: Bool
     @Binding var showCreateSheet: Bool
+    var showDoneButton: Bool = true
 
     var body: some View {
         NavigationStack {
@@ -46,8 +47,10 @@ struct MemberPickerSheet: View {
             }
             .navigationTitle("メンバーを選択")
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(L.Common.done) { isPresented = false }
+                if showDoneButton {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button(L.Common.done) { isPresented = false }
+                    }
                 }
             }
         }

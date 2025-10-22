@@ -13,6 +13,8 @@ struct GroupPickerSheet: View {
     @Binding var groupOptions: [GroupTag]
     @Binding var isPresented: Bool
     @Binding var showCreateSheet: Bool
+    var showClearButton: Bool = true
+    var showDoneButton: Bool = true
 
     var body: some View {
         NavigationStack {
@@ -23,7 +25,9 @@ struct GroupPickerSheet: View {
                     } label: {
                         Label(L.VisitEdit.createNew, systemImage: "plus.circle")
                     }
-                    Button(L.VisitEdit.clearSelection) { selectedId = nil }
+                    if showClearButton {
+                        Button(L.VisitEdit.clearSelection) { selectedId = nil }
+                    }
                 }
                 Section {
                     ForEach(groupOptions) { t in
@@ -43,8 +47,10 @@ struct GroupPickerSheet: View {
             }
             .navigationTitle(L.VisitEdit.selectGroup)
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(L.Common.done) { isPresented = false }
+                if showDoneButton {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button(L.Common.done) { isPresented = false }
+                    }
                 }
             }
         }

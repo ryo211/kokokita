@@ -13,6 +13,7 @@ struct LabelPickerSheet: View {
     @Binding var labelOptions: [LabelTag]
     @Binding var isPresented: Bool
     @Binding var showCreateSheet: Bool
+    var showDoneButton: Bool = true
 
     var body: some View {
         NavigationStack {
@@ -46,8 +47,10 @@ struct LabelPickerSheet: View {
             }
             .navigationTitle(L.VisitEdit.selectLabel)
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(L.Common.done) { isPresented = false }
+                if showDoneButton {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button(L.Common.done) { isPresented = false }
+                    }
                 }
             }
         }

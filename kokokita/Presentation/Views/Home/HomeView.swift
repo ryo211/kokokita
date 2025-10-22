@@ -66,6 +66,7 @@ struct HomeView: View {
                         NavigationLink {
                             VisitDetailScreen(
                                 data: toDetailData(agg),
+                                visitId: agg.id,
                                 onBack: {},                 // NavigationLink なので未使用
                                 onEdit: { editingTarget = agg },
                                 onShare: { /* 共有導線をここに（必要なら）*/ },
@@ -73,6 +74,9 @@ struct HomeView: View {
                                     withAnimation {
                                         vm.delete(id: agg.id)
                                     }
+                                },
+                                onUpdate: {
+                                    Task { vm.reload() }
                                 }
                             )
                         } label: {
