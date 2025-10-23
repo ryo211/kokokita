@@ -1,6 +1,11 @@
 import SwiftUI
 import CoreLocation
 
+enum HomeDisplayMode {
+    case list
+    case map
+}
+
 struct HomeView: View {
     @EnvironmentObject private var ui: AppUIState
     @StateObject private var router = NavigationRouter()
@@ -8,11 +13,16 @@ struct HomeView: View {
 
     @State private var pendingDeleteId: UUID? = nil
     @State private var showDeleteConfirm = false
-    
+
     @State private var showSearchSheet = false
-    
+
     @State private var editingTarget: VisitAggregate? = nil
-    
+
+    @State private var displayMode: HomeDisplayMode = .list
+    @State private var selectedMapItemId: UUID? = nil
+    @State private var detailSheetItemId: UUID? = nil
+    @State private var mapSheetHeight: CGFloat = 0
+
     // 名前辞書（型を固定して軽くする）
     private var labelMap: [UUID: String] { vm.labels.nameMap }
     private var groupMap: [UUID: String] { vm.groups.nameMap }
@@ -20,15 +30,35 @@ struct HomeView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                HomeFilterHeader(vm: vm) {
-                    showSearchSheet = true
+            ZStack {
+                VStack(spacing: 0) {
+                    HomeFilterHeader(vm: vm) {
+                        showSearchSheet = true
+                    }
+                    .sheet(isPresented: $showSearchSheet) {
+                        NavigationStack { SearchFilterSheet(vm: vm) { showSearchSheet = false } }
+                        .presentationDetents([.fraction(0.8)])
+                    }
+
+                    // 表示モードで切り替え
+                    switch displayMode {
+                    case .list:
+                        listContent()
+                    case .map:
+                        mapContent()
+                    }
                 }
-                .sheet(isPresented: $showSearchSheet) {
-                    NavigationStack { SearchFilterSheet(vm: vm) { showSearchSheet = false } }
-                    .presentationDetents([.fraction(0.8)])
+
+                // 右下にトグルボタン（シート表示時は上にずらす）
+                VStack {
+                    Spacer()
+                    HStack {
+                        Spacer()
+                        modeToggleButton
+                            .padding(.trailing, 16)
+                            .padding(.bottom, mapSheetHeight > 0 ? mapSheetHeight + 16 : 16)
+                    }
                 }
-                listContent()
             }
         }
         .environmentObject(router)
@@ -44,6 +74,14 @@ struct HomeView: View {
         }
         .navigationTitle(L.Home.title)
         .toolbar(.hidden, for: .navigationBar)
+        .onChange(of: selectedMapItemId) { newValue in
+            if newValue == nil {
+                mapSheetHeight = 0
+            }
+        }
+        .onChange(of: displayMode) { _ in
+            mapSheetHeight = 0
+        }
         .sheet(item: $editingTarget) { agg in
             NavigationStack {
                 EditView(aggregate: agg) {
@@ -52,6 +90,37 @@ struct HomeView: View {
                 .navigationBarTitleDisplayMode(.inline)
             }
             .presentationDetents([.fraction(0.8)])   // お好みで
+            .presentationDragIndicator(.visible)
+        }
+        .sheet(item: Binding(
+            get: {
+                detailSheetItemId.flatMap { id in
+                    vm.items.first(where: { $0.id == id })
+                }
+            },
+            set: { newValue in
+                detailSheetItemId = newValue?.id
+            }
+        )) { agg in
+            NavigationStack {
+                VisitDetailScreen(
+                    data: toDetailData(agg),
+                    visitId: agg.id,
+                    onBack: {},
+                    onEdit: { editingTarget = agg },
+                    onShare: { /* 共有導線をここに（必要なら）*/ },
+                    onDelete: {
+                        withAnimation {
+                            vm.delete(id: agg.id)
+                        }
+                        detailSheetItemId = nil
+                    },
+                    onUpdate: {
+                        Task { vm.reload() }
+                    }
+                )
+            }
+            .presentationDetents([.large])
             .presentationDragIndicator(.visible)
         }
     }
@@ -139,6 +208,39 @@ struct HomeView: View {
         }
     }
     
+    // MARK: - Mode Toggle Button
+    private var modeToggleButton: some View {
+        Button {
+            withAnimation {
+                displayMode = displayMode == .list ? .map : .list
+            }
+        } label: {
+            Image(systemName: displayMode == .list ? "map" : "list.bullet")
+                .font(.title2)
+                .foregroundStyle(.white)
+                .frame(width: 56, height: 56)
+                .background(Color.blue, in: Circle())
+                .shadow(radius: 4)
+        }
+    }
+
+    // MARK: - Map Content
+    @ViewBuilder
+    private func mapContent() -> some View {
+        HomeMapView(
+            items: vm.items,
+            labelMap: labelMap,
+            groupMap: groupMap,
+            memberMap: memberMap,
+            selectedItemId: $selectedMapItemId,
+            sheetHeight: $mapSheetHeight,
+            onShowDetail: { id in
+                selectedMapItemId = nil
+                detailSheetItemId = id
+            }
+        )
+    }
+
     private func formatDateHeader(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.calendar = Calendar(identifier: .gregorian)
