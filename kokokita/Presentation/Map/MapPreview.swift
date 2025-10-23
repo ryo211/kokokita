@@ -37,9 +37,13 @@ struct MapPreview: View {
             // ピン（Annotation）
             Annotation("ココキタ！", coordinate: coordinate) {
                 ZStack {
-                    Image(systemName: "mappin.and.ellipse")
-                        .font(.title2.weight(.semibold))
-                        .foregroundStyle(.tint)
+//                    Image(systemName: "mappin.and.ellipse")
+//                        .font(.title2.weight(.semibold))
+//                        .foregroundStyle(.tint)
+                    Image("kokokita_irodori_blue")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 42, height: 42)
                 }
             }
         }

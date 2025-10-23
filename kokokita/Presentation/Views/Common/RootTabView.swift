@@ -154,16 +154,18 @@ private struct CustomBottomBar: View {
                                    height: UIConstants.Size.centerButtonSize)
                             .shadow(radius: UIConstants.Shadow.radiusMedium * 3, y: UIConstants.Shadow.radiusMedium)
 
-                        VStack(spacing: 2) {
-                            Image(systemName: "mappin.and.ellipse")
-                                .foregroundStyle(.white)
-                                .font(.title3.weight(.semibold))
+                        VStack(spacing: 0) {
+                            Image("kokokita_irodori_white")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 42, height: 42)
                                 .accessibilityHidden(true)
                             Text("ココキタ")
                                 .font(.caption2.weight(.bold))
                                 .foregroundStyle(.white)
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.7)
+                                .offset(y: -2)
                         }
                         .padding(.vertical, 6)
                         .padding(.horizontal, 8)

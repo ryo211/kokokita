@@ -22,9 +22,13 @@ struct PostKokokitaPromptSheet: View {
         VStack(spacing: 16) {
             // 見出し
             HStack(spacing: 10) {
-                Image(systemName: "mappin.and.ellipse")
-                    .font(.title2.weight(.semibold))
-                    .foregroundStyle(.tint)
+//                Image(systemName: "mappin.and.ellipse")
+//                    .font(.title2.weight(.semibold))
+//                    .foregroundStyle(.tint)
+                Image("kokokita_irodori_blue")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 42, height: 42)
                 Text("ココキタ！")
                     .font(.title2.bold())
             }
