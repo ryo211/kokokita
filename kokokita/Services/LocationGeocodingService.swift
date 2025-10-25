@@ -38,8 +38,11 @@ final class LocationGeocodingService {
 
     // MARK: - Request Location with Address
 
-    /// 位置情報を取得し、住所も逆引きする
-    func requestLocationWithAddress() async throws -> LocationResult {
+    /// 位置情報を取得し、住所も逆引きする（タイムアウト付き）
+    /// - Parameter onAddressResolved: バックグラウンドで住所が取得できた時のコールバック
+    func requestLocationWithAddress(
+        onAddressResolved: @escaping (String) -> Void = { _ in }
+    ) async throws -> LocationResult {
         // 位置情報を取得
         let (location, flags) = try await locationService.requestOneShotLocation()
 
@@ -48,8 +51,12 @@ final class LocationGeocodingService {
             throw LocationGeocodingError.simulatedOrAccessory
         }
 
-        // 住所を逆引き（失敗しても続行）
-        let address = await reverseGeocode(location)
+        // 住所を逆引き（2秒タイムアウト）
+        let address = await reverseGeocodeWithTimeout(
+            location,
+            timeout: 2.0,
+            onDelayedResult: onAddressResolved
+        )
 
         return LocationResult(
             timestamp: Date(),
@@ -62,6 +69,53 @@ final class LocationGeocodingService {
     }
 
     // MARK: - Reverse Geocoding
+
+    /// タイムアウト付きで住所を逆引きする
+    /// - Parameters:
+    ///   - location: 位置情報
+    ///   - timeout: タイムアウト時間（秒）
+    ///   - onDelayedResult: タイムアウト後に住所が取得できた場合のコールバック
+    /// - Returns: タイムアウト内に取得できた住所（タイムアウトした場合はnil）
+    private func reverseGeocodeWithTimeout(
+        _ location: CLLocation,
+        timeout: TimeInterval,
+        onDelayedResult: @escaping (String) -> Void
+    ) async -> String? {
+        // タイムアウトとジオコーディングを競争させる
+        let result = await withTaskGroup(of: String?.self) { group in
+            // ジオコーディングタスク
+            group.addTask {
+                await self.reverseGeocode(location)
+            }
+
+            // タイムアウトタスク
+            group.addTask {
+                try? await Task.sleep(nanoseconds: UInt64(timeout * 1_000_000_000))
+                return nil
+            }
+
+            // 最初に完了したタスクの結果を取得
+            if let firstResult = await group.next() {
+                // 残りのタスクをキャンセル
+                group.cancelAll()
+                return firstResult
+            }
+            return nil
+        }
+
+        // タイムアウトした場合、バックグラウンドで住所取得を継続
+        if result == nil {
+            Task {
+                if let address = await self.reverseGeocode(location) {
+                    await MainActor.run {
+                        onDelayedResult(address)
+                    }
+                }
+            }
+        }
+
+        return result
+    }
 
     /// 住所を逆引きする（内部用）
     private func reverseGeocode(_ location: CLLocation) async -> String? {

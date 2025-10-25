@@ -141,7 +141,11 @@ final class CreateEditViewModel: ObservableObject {
 
     func requestLocation() async {
         do {
-            let result = try await locationGeocodingService.requestLocationWithAddress()
+            let result = try await locationGeocodingService.requestLocationWithAddress { [weak self] address in
+                // バックグラウンドで住所が取得できた時の処理
+                guard let self = self else { return }
+                self.addressLine = address
+            }
 
             lastFlags = result.flags
             timestampDisplay = result.timestamp
