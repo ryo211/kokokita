@@ -2,7 +2,7 @@
 
 > **重要**: このドキュメントはプロジェクトの重要な指針です。すべてのコード変更時に参照してください。
 
-最終更新: 2025-10-24
+最終更新: 2025-10-25
 
 ## 目次
 
@@ -21,54 +21,89 @@
 
 ## アーキテクチャ原則
 
-### クリーンアーキテクチャの遵守
+### Feature-based MV アーキテクチャ
 
-プロジェクトは以下の層に分離されています：
+> **参照**: 詳細な設計判断は`doc/ADR/001-フォルダ構成とアーキテクチャの再設計.md`を参照してください。
+
+プロジェクトは**Feature-based MV**パターンを採用しています（2025年のSwiftベストプラクティスに準拠）：
 
 ```
 ┌─────────────────────────────────────┐
-│  Presentation Layer                 │  ← UI、ViewModel
+│  Features/                          │  ← 機能単位でコロケーション
+│  ├── [機能名]/                      │
+│  │   ├── Models/    (Store)         │  ← @Observable 状態管理
+│  │   ├── Views/                     │  ← SwiftUI View
+│  │   ├── Logic/     (純粋な関数)    │  ← 副作用なし
+│  │   └── Services/  (副作用)        │  ← DB、API、I/O
 ├─────────────────────────────────────┤
-│  Domain Layer                       │  ← ビジネスロジック、Model、Protocol
-├─────────────────────────────────────┤
-│  Infrastructure Layer               │  ← Repository、外部ライブラリ
+│  Shared/                            │  ← 共通コード
+│  ├── Models/                        │  ← ドメインモデル
+│  ├── Logic/                         │  ← 共通の純粋な関数
+│  ├── Services/                      │  ← 共通Service
+│  └── UIComponents/                  │  ← 共通UIコンポーネント
 └─────────────────────────────────────┘
 ```
 
 **原則**:
-- 上位層は下位層に依存してもよい
-- 下位層は上位層に依存してはならない
-- 依存性は常にプロトコル（抽象）を介する
+- **コロケーション最優先**: 機能に関連する全てのファイルを1つのフォルダにまとめる
+- **MVパターン**: ViewModelを排除し、@Observable Storeで状態管理
+- **純粋な関数とServiceを分離**: 副作用の有無で明確に区別
+- **iOS 17+をターゲット**: @Observableマクロを活用
 
 **例（良い）**:
 ```swift
-// ViewModel（Presentation層）がプロトコル（Domain層）に依存
-class HomeViewModel {
-    private let repo: VisitRepository  // プロトコル
+// Features/Home/Models/HomeStore.swift
+@Observable
+final class HomeStore {
+    var visits: [Visit] = []
+    var isLoading = false
+
+    private let visitService: VisitService
+
+    init(visitService: VisitService = .shared) {
+        self.visitService = visitService
+    }
+
+    func load() async {
+        isLoading = true
+        visits = try await visitService.fetchAll()
+        isLoading = false
+    }
 }
 
-// Repository（Infrastructure層）がプロトコルを実装
-class CoreDataVisitRepository: VisitRepository {
-    // 実装
+// Features/Home/Views/HomeView.swift
+struct HomeView: View {
+    @State private var store = HomeStore()
+
+    var body: some View {
+        List(store.visits) { visit in
+            VisitRow(visit: visit)
+        }
+        .task { await store.load() }
+    }
 }
 ```
 
-**例（悪い）**:
+**例（悪い - 旧MVVM）**:
 ```swift
-// Domain層がPresentation層に依存している（NG）
-struct Visit {
-    var viewModel: ViewModel  // ❌ Domain層にViewModelを持ち込まない
+// ❌ ObservableObject と @Published（旧パターン）
+class HomeViewModel: ObservableObject {
+    @Published var visits: [Visit] = []
+    // ...
 }
+
+// ❌ ViewModelという名前（MVでは使わない）
+@StateObject private var viewModel: HomeViewModel
 ```
 
 ### 単一責任原則（SRP）
 
 各クラス・構造体は**1つの責務**のみを持つ：
 
-- ✅ View: 表示のみ
-- ✅ ViewModel: 表示ロジックと状態管理のみ
-- ✅ Repository: データ永続化のみ
-- ✅ Service: 特定のビジネスロジックのみ
+- ✅ **View**: 表示のみ
+- ✅ **Store**: 状態管理とServiceとの結合のみ（@Observable）
+- ✅ **Service**: 副作用のある処理のみ（ステートレス）
+- ✅ **Logic**: 純粋な関数のみ（副作用なし）
 
 ---
 
@@ -78,8 +113,9 @@ struct Visit {
 
 **絶対に守るべきルール**:
 1. **Viewにビジネスロジックやデータアクセスロジックを書かない**
-2. **ViewModelにUIコンポーネントを持ち込まない**
-3. **Repositoryに表示ロジックを書かない**
+2. **StoreにUIコンポーネントを持ち込まない**
+3. **Serviceに表示ロジックを書かない**
+4. **Logicに副作用を持ち込まない**
 
 ### Viewの責務
 
@@ -88,14 +124,14 @@ Viewは**表示のみ**に集中します。
 **良い例**:
 ```swift
 struct HomeView: View {
-    @StateObject private var viewModel: HomeViewModel
+    @State private var store = HomeStore()
 
     var body: some View {
-        List(viewModel.items) { item in
-            VisitRow(visit: item)
+        List(store.visits) { visit in
+            VisitRow(visit: visit)
         }
-        .onAppear {
-            viewModel.reload()  // ロジックはViewModelに委譲
+        .task {
+            await store.load()  // ロジックはStoreに委譲
         }
     }
 }
@@ -116,26 +152,40 @@ struct HomeView: View {
 }
 ```
 
-### ViewModelの責務
+### Storeの責務
 
-ViewModelは**表示ロジックと状態管理**に集中します。
+Storeは**状態管理とServiceとの結合**に集中します。
 
 **良い例**:
 ```swift
-@MainActor
-final class HomeViewModel: ObservableObject {
-    @Published var items: [VisitAggregate] = []
-    @Published var isLoading = false
+import Foundation
+import Observation
 
-    private let repo: VisitRepository
+@Observable
+final class HomeStore {
+    // 状態
+    var visits: [Visit] = []
+    var isLoading = false
+    var errorMessage: String?
 
-    func reload() {
+    // 依存するService
+    private let visitService: VisitService
+
+    init(visitService: VisitService = .shared) {
+        self.visitService = visitService
+    }
+
+    // アクション
+    func load() async {
         isLoading = true
+        errorMessage = nil
+
         do {
-            items = try repo.fetchAll(...)
+            visits = try await visitService.fetchAll()
         } catch {
-            // エラーハンドリング
+            errorMessage = error.localizedDescription
         }
+
         isLoading = false
     }
 }
@@ -143,9 +193,10 @@ final class HomeViewModel: ObservableObject {
 
 **悪い例**:
 ```swift
-class HomeViewModel {
-    // ❌ ViewModelでCore Data操作を直接行う
-    func reload() {
+@Observable
+final class HomeStore {
+    // ❌ StoreでCore Data操作を直接行う
+    func load() {
         let context = CoreDataStack.shared.context
         let request = VisitEntity.fetchRequest()
         let results = try? context.fetch(request)
@@ -154,24 +205,103 @@ class HomeViewModel {
 }
 ```
 
+### Serviceの責務
+
+Serviceは**副作用のある処理**のみを行います（ステートレス）。
+
+**良い例**:
+```swift
+// Features/Home/Services/VisitService.swift
+final class VisitService {
+    static let shared = VisitService()
+
+    private let repository: VisitRepository
+
+    init(repository: VisitRepository = .shared) {
+        self.repository = repository
+    }
+
+    // DB操作 = 副作用
+    func fetchAll() async throws -> [Visit] {
+        try await repository.fetchAll()
+    }
+
+    func delete(_ visit: Visit) async throws {
+        try await repository.delete(visit)
+    }
+}
+```
+
+**悪い例**:
+```swift
+class VisitService {
+    // ❌ Serviceに状態を持つ（ステートレスにすべき）
+    var cachedVisits: [Visit] = []
+
+    func fetchAll() -> [Visit] {
+        if !cachedVisits.isEmpty {
+            return cachedVisits
+        }
+        // ...
+    }
+}
+```
+
+### Logicの責務
+
+Logicは**純粋な関数**のみを含みます（副作用なし）。
+
+**良い例**:
+```swift
+// Features/Home/Logic/VisitFilter.swift
+struct VisitFilter {
+    // 副作用なし、同じ入力 → 同じ出力
+    static func filterByDateRange(
+        visits: [Visit],
+        from: Date,
+        to: Date
+    ) -> [Visit] {
+        visits.filter { $0.timestamp >= from && $0.timestamp <= to }
+    }
+}
+```
+
+**悪い例**:
+```swift
+struct VisitFilter {
+    // ❌ 純粋な関数に副作用を持ち込む
+    static func filterByDateRange(
+        visits: [Visit],
+        from: Date,
+        to: Date
+    ) -> [Visit] {
+        Logger.info("フィルタリング開始")  // ❌ 副作用（ログ出力）
+        let result = visits.filter { ... }
+        UserDefaults.standard.set(result.count, forKey: "count")  // ❌ 副作用（永続化）
+        return result
+    }
+}
+```
+
 ### 依存性注入（DI）
 
-ViewModelは依存するサービスを**コンストラクタで受け取る**:
+Storeは依存するServiceを**コンストラクタで受け取る**:
 
 ```swift
-class CreateEditViewModel: ObservableObject {
+@Observable
+final class CreateStore {
     private let locationService: LocationService
-    private let repository: VisitRepository
+    private let visitService: VisitService
     private let integrityService: IntegrityService
 
     init(
-        loc: LocationService,
-        repo: VisitRepository,
-        integ: IntegrityService
+        locationService: LocationService = .shared,
+        visitService: VisitService = .shared,
+        integrityService: IntegrityService = .shared
     ) {
-        self.locationService = loc
-        self.repository = repo
-        self.integrityService = integ
+        self.locationService = locationService
+        self.visitService = visitService
+        self.integrityService = integrityService
     }
 }
 ```
@@ -184,121 +314,143 @@ class CreateEditViewModel: ObservableObject {
 
 ### 基本原則
 
-1. **機能単位でグループ化**: 関連するファイルは近くに配置
-2. **責務で分離**: 層ごとに明確に分ける
+1. **機能単位でグループ化**: 関連するファイルは近くに配置（コロケーション最優先）
+2. **Feature-based構成**: 各機能が独立したフォルダ
 3. **深すぎる階層は避ける**: 3階層程度が理想
 4. **純粋な関数とServiceを分離**: 副作用の有無で配置場所を変える
+5. **共通コードはShared/**: 複数機能で使用するコードはShared/に配置
 
-### 理想的なフォルダ構成（移行中）
+### フォルダ構成
 
 ```
 kokokita/
-├── Domain/                        # ビジネスロジック層
-│   ├── Models/                   # データ構造
+├── Features/                      # 機能単位（Feature-based）
+│   ├── Home/                      # ホーム画面機能
+│   │   ├── Models/
+│   │   │   └── HomeStore.swift   # @Observable（状態管理）
+│   │   ├── Logic/
+│   │   │   └── VisitFilter.swift # 純粋な関数
+│   │   ├── Services/
+│   │   │   └── VisitService.swift # 副作用（DB操作等）
+│   │   └── Views/
+│   │       ├── HomeView.swift    # エントリポイント
+│   │       └── Components/       # この機能専用のコンポーネント
+│   │           ├── VisitRow.swift
+│   │           └── FilterSheet.swift
+│   │
+│   ├── Create/                    # 訪問作成機能
+│   │   ├── Models/
+│   │   │   └── CreateStore.swift
+│   │   ├── Logic/
+│   │   │   ├── CoordinateValidator.swift
+│   │   │   └── AddressFormatter.swift
+│   │   ├── Services/
+│   │   │   ├── LocationService.swift
+│   │   │   ├── POIService.swift
+│   │   │   └── PhotoService.swift
+│   │   └── Views/
+│   │       ├── CreateView.swift
+│   │       └── Components/
+│   │           ├── LocationSection.swift
+│   │           ├── POISection.swift
+│   │           └── PhotoSection.swift
+│   │
+│   ├── Detail/                    # 訪問詳細機能
+│   │   ├── Models/
+│   │   │   └── DetailStore.swift
+│   │   ├── Services/
+│   │   │   └── DetailService.swift
+│   │   └── Views/
+│   │       ├── DetailView.swift
+│   │       └── Components/
+│   │           └── PhotoGrid.swift
+│   │
+│   └── Menu/                      # メニュー機能
+│       ├── Models/
+│       │   └── MenuStore.swift
+│       └── Views/
+│           └── MenuView.swift
+│
+├── Shared/                        # 複数機能で使用する共通コード
+│   ├── Models/                    # 共通のドメインモデル
 │   │   ├── Visit.swift
 │   │   ├── Taxonomy.swift
-│   │   └── Location.swift
+│   │   ├── Location.swift
+│   │   └── Member.swift
 │   │
-│   ├── Logic/                    # 純粋な関数（副作用なし）
-│   │   ├── Calculations/         # 計算ロジック
-│   │   ├── Formatting/           # フォーマット
-│   │   ├── Validation/           # バリデーション
-│   │   └── Filtering/            # フィルタリング
+│   ├── Logic/                     # 共通の純粋な関数
+│   │   ├── Calculations/
+│   │   │   └── DistanceCalculator.swift
+│   │   ├── Formatting/
+│   │   │   └── DateFormatter.swift
+│   │   └── Validation/
+│   │       └── InputValidator.swift
 │   │
-│   ├── Services/                 # 副作用のある処理
-│   │   ├── Location/
-│   │   │   ├── LocationService.swift
-│   │   │   └── LocationGeocodingService.swift
-│   │   ├── POI/
-│   │   │   ├── POIService.swift
-│   │   │   └── POICoordinatorService.swift
-│   │   ├── Photo/
-│   │   │   ├── PhotoEditService.swift
-│   │   │   └── ImageStore.swift
-│   │   └── Visit/
-│   │       ├── VisitRepository.swift
-│   │       └── TaxonomyRepository.swift
+│   ├── Services/                  # 共通のService
+│   │   ├── Persistence/
+│   │   │   ├── CoreDataStack.swift
+│   │   │   ├── VisitRepository.swift
+│   │   │   └── TaxonomyRepository.swift
+│   │   └── Security/
+│   │       └── IntegrityService.swift
 │   │
-│   └── Protocols/                # インターフェース定義
-│       └── ServiceProtocols.swift
+│   └── UIComponents/              # 共通UIコンポーネント
+│       ├── Buttons/
+│       │   └── BigFooterButton.swift
+│       ├── Forms/
+│       │   ├── LabelPicker.swift
+│       │   └── GroupPicker.swift
+│       └── Media/
+│           ├── PhotoPager.swift
+│           └── PhotoThumb.swift
 │
-├── Infrastructure/               # 技術的実装
-│   ├── CoreData/
-│   │   ├── CoreDataStack.swift
-│   │   └── Repositories/
-│   └── Security/
-│       └── DefaultIntegrityService.swift
-│
-├── Screens/                      # 画面単位（UI層）
-│   ├── Home/
-│   │   ├── HomeViewModel.swift   # 状態管理 + Service結合
-│   │   ├── HomeView.swift        # 表示（エントリポイント）
-│   │   └── Components/           # この画面専用のコンポーネント
-│   │       ├── VisitRow.swift
-│   │       └── FilterSheet.swift
-│   │
-│   ├── Create/
-│   │   ├── CreateEditViewModel.swift
-│   │   ├── CreateView.swift
-│   │   └── Components/
-│   │
-│   ├── Detail/
-│   │   ├── DetailViewModel.swift
-│   │   ├── DetailView.swift
-│   │   └── Components/
-│   │
-│   └── Menu/
-│       ├── MenuViewModel.swift
-│       └── MenuView.swift
-│
-├── UIComponents/                 # 共通UIコンポーネント
-│   ├── Buttons/
-│   ├── Forms/
-│   ├── Media/
-│   └── Navigation/
-│       └── RootTabView.swift
-│
-├── App/                          # アプリケーション設定
-│   ├── AppDelegate.swift
+├── App/                           # アプリケーション設定
 │   ├── KokokitaApp.swift
+│   ├── AppDelegate.swift
 │   ├── Config/
 │   │   ├── AppConfig.swift
 │   │   └── UIConstants.swift
 │   └── DI/
 │       └── DependencyContainer.swift
 │
-├── Resources/                    # リソース
+├── Resources/                     # リソース
 │   └── Localization/
 │       ├── LocalizedString.swift
 │       ├── ja.lproj/
 │       └── en.lproj/
 │
-└── Utilities/                    # 汎用ユーティリティ
+└── Utilities/                     # 汎用ユーティリティ
     ├── Extensions/
+    │   ├── Date+Extensions.swift
+    │   ├── String+Extensions.swift
+    │   └── Collection+Extensions.swift
     ├── Helpers/
     │   ├── Logger.swift
-    │   └── KeyboardHelpers.swift
+    │   ├── KeyboardHelpers.swift
+    │   └── NavigationRouter.swift
     └── Protocols/
+        └── MKPointOfInterestCategory+JP.swift
 ```
 
 ### 各層の責務と配置ルール
 
 | 層 | フォルダ | 役割 | 状態 | 副作用 |
 |----|---------|------|------|--------|
-| **Logic** | `Domain/Logic/` | 純粋な関数（計算、フォーマット） | なし | なし |
-| **Service** | `Domain/Services/` | 副作用のある処理（API、DB、I/O） | なし | あり |
-| **ViewModel** | `Screens/[機能]/` | 状態管理、Serviceとの結合 | あり | なし |
-| **View** | `Screens/[機能]/` | 表示、ユーザーイベント受付（エントリ） | なし | なし |
+| **Logic** | `Features/[機能]/Logic/` または `Shared/Logic/` | 純粋な関数（計算、フォーマット） | なし | なし |
+| **Service** | `Features/[機能]/Services/` または `Shared/Services/` | 副作用のある処理（API、DB、I/O） | なし | あり |
+| **Store** | `Features/[機能]/Models/` | 状態管理、Serviceとの結合（@Observable） | あり | なし |
+| **View** | `Features/[機能]/Views/` | 表示、ユーザーイベント受付（エントリ） | @State（Storeのみ） | なし |
 
 ### 純粋な関数とServiceの区別
 
-**純粋な関数（Domain/Logic/）**:
+**純粋な関数（Logic/）**:
 - 同じ入力 → 常に同じ出力
 - 副作用なし
 - テスト容易
+- 配置: `Features/[機能]/Logic/` または `Shared/Logic/`
 
 ```swift
-// ✅ Logic/Filtering/VisitFilter.swift
+// ✅ Features/Home/Logic/VisitFilter.swift
 struct VisitFilter {
     static func filterByDateRange(
         visits: [Visit],
@@ -310,50 +462,49 @@ struct VisitFilter {
 }
 ```
 
-**Service（Domain/Services/）**:
+**Service（Services/）**:
 - 副作用あり（DB、API、位置情報、ファイルI/O）
 - 状態は持たない（ステートレス）
+- 配置: `Features/[機能]/Services/` または `Shared/Services/`
 
 ```swift
-// ✅ Services/Visit/VisitService.swift
-class VisitService {
+// ✅ Features/Home/Services/VisitService.swift
+final class VisitService {
+    static let shared = VisitService()
+
     private let repository: VisitRepository
 
-    func fetchVisits() throws -> [Visit] {
-        try repository.fetchAll()  // DB操作 = 副作用
+    func fetchAll() async throws -> [Visit] {
+        try await repository.fetchAll()  // DB操作 = 副作用
     }
 }
 ```
 
-### 新機能追加時のフォルダ配置
+### 配置の判断基準
 
-新しい画面を追加する場合：
+**1つの機能でのみ使用する場合**:
+- `Features/[機能名]/` に配置
 
-1. **Screens/[機能名]/を作成**
-2. **ViewとViewModelを同じフォルダに配置**
-3. **画面専用コンポーネントはComponents/に**
-4. **複数画面で使うコンポーネントはUIComponents/に**
+**複数の機能で使用する場合**:
+- `Shared/` に配置
 
-**例: 統計機能を追加**
+**例: 新機能追加時のフォルダ配置**
+
 ```
-Screens/
+# 統計機能を追加
+Features/
 └── Statistics/
-    ├── StatisticsViewModel.swift
-    ├── StatisticsView.swift       ← エントリポイント
-    └── Components/
-        ├── ChartView.swift
-        └── SummaryCard.swift
-```
-
-**例: 新しいロジックを追加**
-```
-Domain/
-├── Logic/
-│   └── Statistics/
-│       └── VisitStatisticsCalculator.swift  ← 純粋な計算
-└── Services/
-    └── Statistics/
-        └── StatisticsService.swift          ← データ取得（副作用）
+    ├── Models/
+    │   └── StatisticsStore.swift
+    ├── Logic/
+    │   └── VisitStatisticsCalculator.swift  # 純粋な計算
+    ├── Services/
+    │   └── StatisticsService.swift          # データ取得（副作用）
+    └── Views/
+        ├── StatisticsView.swift
+        └── Components/
+            ├── ChartView.swift
+            └── SummaryCard.swift
 ```
 
 ---
@@ -374,7 +525,7 @@ Domain/
 - 名詞または名詞句
 
 ```swift
-class HomeViewModel { }
+class HomeStore { }          // ViewModel → Store
 struct VisitAggregate { }
 enum ViewState { }
 ```
@@ -385,8 +536,8 @@ enum ViewState { }
 
 ```swift
 func fetchVisits() { }
-func reload() { }
-var items: [Item] = []
+func load() { }
+var visits: [Visit] = []
 var isLoading: Bool = false
 ```
 
@@ -407,6 +558,42 @@ var isLoading: Bool
 var hasPhotos: Bool
 var shouldRefresh: Bool
 var canDelete: Bool
+```
+
+### MVパターンでの命名
+
+**Store**: `[機能名]Store.swift`
+```swift
+// ✅ 良い
+HomeStore.swift
+CreateStore.swift
+DetailStore.swift
+
+// ❌ 悪い（ViewModelという名前は使わない）
+HomeViewModel.swift
+CreateViewModel.swift
+```
+
+**View**: `[機能名]View.swift`
+```swift
+// ✅ 良い
+HomeView.swift
+CreateView.swift
+```
+
+**Service**: `[機能名]Service.swift`
+```swift
+// ✅ 良い
+VisitService.swift
+LocationService.swift
+```
+
+**Logic**: `[処理名].swift`
+```swift
+// ✅ 良い
+VisitFilter.swift
+DistanceCalculator.swift
+CoordinateValidator.swift
 ```
 
 ### 具体的で明確な命名
@@ -462,10 +649,10 @@ if #available(iOS 16, *) {
 **悪い例**:
 ```swift
 // 変数を定義
-var items: [Item] = []  // ❌ 読めば分かる
+var visits: [Visit] = []  // ❌ 読めば分かる
 
 // ループする
-for item in items {     // ❌ 意味がない
+for visit in visits {     // ❌ 意味がない
     // ...
 }
 ```
@@ -476,26 +663,27 @@ for item in items {     // ❌ 意味がない
 
 ```swift
 // ✅ 良い
-let items = [Visit]()
+let visits = [Visit]()
 let name = "テスト"
 
 // ❌ 冗長
-let items: [Visit] = [Visit]()
+let visits: [Visit] = [Visit]()
 let name: String = "テスト"
 ```
 
 #### 不要なselfを削除
 
 ```swift
-class ViewModel {
-    var items: [Item] = []
+@Observable
+final class HomeStore {
+    var visits: [Visit] = []
 
-    func reload() {
+    func load() {
         // ✅ selfは不要
-        items = []
+        visits = []
 
         // ❌ 冗長（曖昧でない場合）
-        self.items = []
+        self.visits = []
     }
 }
 ```
@@ -521,25 +709,71 @@ func process(value: String?) {
 
 ## 状態管理
 
-### @Published と Combine
+### @Observable マクロの使用
 
-ViewModelの状態は`@Published`で公開：
+iOS 17+では`@Observable`マクロを使用して状態管理を行います（`ObservableObject`や`@Published`は使いません）。
 
+**良い例（iOS 17+）**:
 ```swift
-@MainActor
-final class HomeViewModel: ObservableObject {
-    @Published var items: [VisitAggregate] = []
+import Foundation
+import Observation
+
+@Observable
+final class HomeStore {
+    var visits: [Visit] = []
+    var isLoading = false
+    var errorMessage: String?
+
+    private let visitService: VisitService
+
+    init(visitService: VisitService = .shared) {
+        self.visitService = visitService
+    }
+
+    func load() async {
+        isLoading = true
+        visits = try await visitService.fetchAll()
+        isLoading = false
+    }
+}
+
+// Viewでの使用
+struct HomeView: View {
+    @State private var store = HomeStore()
+
+    var body: some View {
+        List(store.visits) { visit in
+            VisitRow(visit: visit)
+        }
+        .task { await store.load() }
+    }
+}
+```
+
+**悪い例（旧パターン）**:
+```swift
+// ❌ ObservableObject と @Published（旧MVVM）
+class HomeViewModel: ObservableObject {
+    @Published var visits: [Visit] = []
     @Published var isLoading = false
-    @Published var errorMessage: String?
+
+    // ...
+}
+
+// ❌ @StateObject（旧パターン）
+struct HomeView: View {
+    @StateObject private var viewModel: HomeViewModel
+    // ...
 }
 ```
 
 ### 状態の単一方向フロー
 
 ```
-User Action → ViewModel → Repository → Domain Model
-     ↑                                      ↓
-     └──────────── View Update ←───────────┘
+User Action → View → Store → Service → Repository
+     ↑                 ↓
+     └─── UI Update ←──┘
+          (@Observable自動通知)
 ```
 
 ---
@@ -601,10 +835,10 @@ enum LocationServiceError: LocalizedError {
 
 ```swift
 do {
-    try repository.save(item)
+    try await visitService.save(visit)
 } catch {
-    Logger.error("アイテムの保存に失敗しました", error: error)
-    alert = error.localizedDescription
+    Logger.error("訪問の保存に失敗しました", error: error)
+    errorMessage = error.localizedDescription
 }
 ```
 
@@ -646,6 +880,28 @@ Logger.error("API呼び出し失敗", error: error)
 - 偽装検出（`isSimulatedBySoftware`）
 - 精度情報の記録
 - ユーザー許可の確認
+
+---
+
+## 移行ガイド
+
+### 旧MVVMから新MVへの移行
+
+| 項目 | MVVM（旧） | MV（新） |
+|------|-----------|---------|
+| 状態管理 | `ViewModel (ObservableObject)` | `Store (@Observable)` |
+| プロパティ宣言 | `@Published var items: [Item]` | `var items: [Item]` |
+| Viewでの保持 | `@StateObject private var viewModel` | `@State private var store` |
+| ボイラープレート | Combine、@Published | 最小限 |
+| 複雑性 | 中〜高 | 低 |
+| iOS要件 | iOS 13+ | iOS 17+ |
+
+**移行手順**:
+1. ViewModelをStoreにリネーム
+2. `ObservableObject` → `@Observable`
+3. `@Published` → 通常のプロパティ
+4. `@StateObject` → `@State`
+5. Combineの削除
 
 ---
 

@@ -2,7 +2,7 @@
 
 > **重要**: このガイドは実装時の具体的な手順とチェックリストです。実装前に必ず確認してください。
 
-最終更新: 2025-10-24
+最終更新: 2025-10-25
 
 ## 目次
 
@@ -12,6 +12,7 @@
 4. [タスク別ガイド](#タスク別ガイド)
 5. [実装チェックリスト](#実装チェックリスト)
 6. [トラブルシューティング](#トラブルシューティング)
+7. [フォルダ構成の移行](#フォルダ構成の移行)
 
 ---
 
@@ -23,8 +24,8 @@
 
 - [ ] `CLAUDE.md` - プロジェクト概要を理解
 - [ ] `doc/best-practices.md` - ベストプラクティスを確認
+- [ ] `doc/ADR/001-フォルダ構成とアーキテクチャの再設計.md` - Feature-based MVアーキテクチャを理解
 - [ ] `doc/design/[機能名].md` - 該当する設計書があれば読む
-- [ ] 関連する`doc/ADR/` - 技術的決定を確認
 
 ### 2. 既存コードの調査
 
@@ -35,7 +36,8 @@
 grep -r "キーワード" kokokita/
 
 # 関連ファイルを特定
-find kokokita/ -name "*ViewModel.swift"
+find kokokita/ -name "*Store.swift"
+find kokokita/ -name "*Service.swift"
 ```
 
 ### 3. 影響範囲の把握
@@ -68,51 +70,76 @@ cp doc/design/template.md doc/design/新機能名.md
 
 必要な部分だけ埋める（全部埋める必要はない）
 
-### Step 2: データモデルの定義
+### Step 2: フォルダ構成の決定
 
-#### 2.1 Domain Modelの作成
+#### 2.1 機能の配置先を決める
 
-`kokokita/Domain/Models.swift`に追加：
+**1つの機能でのみ使用する場合**:
+```
+Features/[機能名]/
+```
+
+**複数の機能で使用する場合**:
+```
+Shared/
+```
+
+#### 2.2 フォルダを作成
+
+```bash
+# 新機能（例: Statistics）
+mkdir -p Features/Statistics/{Models,Logic,Services,Views/Components}
+```
+
+### Step 3: データモデルの定義
+
+#### 3.1 Domain Modelの作成または確認
+
+**共通モデル**は`Shared/Models/`に配置：
 
 ```swift
-// ドメインモデル
-struct NewFeature: Identifiable, Codable, Equatable {
+// Shared/Models/Visit.swift
+struct Visit: Identifiable, Codable, Equatable {
     let id: UUID
-    var name: String
+    var title: String
+    var timestamp: Date
     // 必要なプロパティ
 }
 ```
+
+**機能固有モデル**は`Features/[機能名]/Models/`に配置
 
 **チェックポイント**:
 - [ ] `Identifiable`, `Codable`, `Equatable`を適切に実装
 - [ ] 不変部分と可変部分を分離
 - [ ] オプショナルは最小限に
 
-#### 2.2 Core Data Entity（必要な場合）
+#### 3.2 Core Data Entity（必要な場合）
 
 Core Dataで永続化する場合は`Kokokita.xcdatamodeld`にエンティティを追加
 
-### Step 3: Repositoryの実装
+### Step 4: Repositoryの実装（必要な場合）
 
-#### 3.1 プロトコル定義
+#### 4.1 プロトコル定義
 
-`kokokita/Domain/Protocols.swift`に追加：
+`Shared/Models/`またはプロトコル専用ファイルに追加：
 
 ```swift
-protocol NewFeatureRepository {
-    func create(_ item: NewFeature) throws
-    func fetchAll() throws -> [NewFeature]
-    func update(_ item: NewFeature) throws
-    func delete(id: UUID) throws
+protocol VisitRepository {
+    func create(_ item: Visit) async throws
+    func fetchAll() async throws -> [Visit]
+    func update(_ item: Visit) async throws
+    func delete(id: UUID) async throws
 }
 ```
 
-#### 3.2 Repository実装
+#### 4.2 Repository実装
 
-`kokokita/Infrastructure/CoreDataNewFeatureRepository.swift`を作成：
+`Shared/Services/Persistence/`に作成：
 
 ```swift
-final class CoreDataNewFeatureRepository: NewFeatureRepository {
+// Shared/Services/Persistence/CoreDataVisitRepository.swift
+final class CoreDataVisitRepository: VisitRepository {
     private let ctx: NSManagedObjectContext
 
     init(context: NSManagedObjectContext = CoreDataStack.shared.context) {
@@ -127,132 +154,196 @@ final class CoreDataNewFeatureRepository: NewFeatureRepository {
 - [ ] プロトコルに準拠
 - [ ] エラーハンドリング実装
 - [ ] 必須フィールドのバリデーション
+- [ ] async/awaitを使用
 
-### Step 4: Serviceの実装（必要な場合）
+### Step 5: Logicの実装（純粋な関数）
 
-ビジネスロジックがある場合は`kokokita/Services/`に作成：
+副作用のない計算やフォーマットは`Logic/`に配置：
 
 ```swift
-final class NewFeatureService {
-    // ビジネスロジック
-    func processData() {
-        // ...
+// Features/Statistics/Logic/VisitStatisticsCalculator.swift
+struct VisitStatisticsCalculator {
+    /// 訪問数を集計する（純粋な関数）
+    static func countByMonth(visits: [Visit]) -> [String: Int] {
+        // 副作用なし、同じ入力 → 同じ出力
+        var result: [String: Int] = [:]
+        // 計算ロジック
+        return result
     }
 }
 ```
 
 **チェックポイント**:
-- [ ] 単一責任原則に従っている
-- [ ] UIに依存していない
-- [ ] テスト可能な設計
+- [ ] 副作用がない（DB、API、ログ等を呼ばない）
+- [ ] 同じ入力で常に同じ出力
+- [ ] テスト容易
+- [ ] static funcとして実装
 
-### Step 5: ViewModelの実装
+### Step 6: Serviceの実装（副作用のある処理）
 
-#### 5.1 ViewModelの作成
-
-`kokokita/Presentation/ViewModels/NewFeatureViewModel.swift`を作成：
+副作用のある処理は`Services/`に配置：
 
 ```swift
-@MainActor
-final class NewFeatureViewModel: ObservableObject {
-    // MARK: - Published Properties
-    @Published var items: [NewFeature] = []
-    @Published var isLoading = false
-    @Published var errorMessage: String?
+// Features/Statistics/Services/StatisticsService.swift
+final class StatisticsService {
+    static let shared = StatisticsService()
 
-    // MARK: - Dependencies
-    private let repository: NewFeatureRepository
+    private let visitRepository: VisitRepository
 
-    // MARK: - Initialization
-    init(repository: NewFeatureRepository) {
-        self.repository = repository
+    init(visitRepository: VisitRepository = CoreDataVisitRepository()) {
+        self.visitRepository = visitRepository
     }
 
-    // MARK: - Public Methods
-    func loadData() {
+    /// 統計データを取得（副作用あり: DB操作）
+    func fetchStatistics() async throws -> [Visit] {
+        try await visitRepository.fetchAll()  // DB操作 = 副作用
+    }
+}
+```
+
+**チェックポイント**:
+- [ ] ステートレス（状態を持たない）
+- [ ] 単一責任原則に従っている
+- [ ] UIに依存していない
+- [ ] テスト可能な設計（DI可能）
+
+### Step 7: Storeの実装（@Observable）
+
+#### 7.1 Storeの作成
+
+`Features/[機能名]/Models/`に配置：
+
+```swift
+// Features/Statistics/Models/StatisticsStore.swift
+import Foundation
+import Observation
+
+@Observable
+final class StatisticsStore {
+    // MARK: - State
+    var visits: [Visit] = []
+    var statistics: [String: Int] = [:]
+    var isLoading = false
+    var errorMessage: String?
+
+    // MARK: - Dependencies
+    private let statisticsService: StatisticsService
+
+    // MARK: - Initialization
+    init(statisticsService: StatisticsService = .shared) {
+        self.statisticsService = statisticsService
+    }
+
+    // MARK: - Actions
+    func load() async {
         isLoading = true
+        errorMessage = nil
+
         do {
-            items = try repository.fetchAll()
+            // Serviceから副作用のある処理を実行
+            visits = try await statisticsService.fetchStatistics()
+
+            // Logicで純粋な計算を実行
+            statistics = VisitStatisticsCalculator.countByMonth(visits: visits)
         } catch {
-            Logger.error("データ読み込み失敗", error: error)
+            Logger.error("統計データ読み込み失敗", error: error)
             errorMessage = error.localizedDescription
         }
+
         isLoading = false
     }
 }
 ```
 
 **チェックポイント**:
-- [ ] `@MainActor`を付与
-- [ ] `ObservableObject`に準拠
-- [ ] 依存性注入でRepositoryを受け取る
-- [ ] `@Published`で状態を公開
-- [ ] ビジネスロジックはRepositoryに委譲
+- [ ] `@Observable`マクロを付与
+- [ ] 通常のプロパティ（`@Published`は不要）
+- [ ] 依存性注入でServiceを受け取る
+- [ ] ビジネスロジックはServiceとLogicに委譲
 - [ ] エラーハンドリング実装
+- [ ] async/awaitを使用
 
-### Step 6: Viewの実装
+### Step 8: Viewの実装
 
-#### 6.1 Viewファイルの作成
+#### 8.1 Viewファイルの作成
 
-`kokokita/Presentation/Views/NewFeature/NewFeatureView.swift`を作成：
+`Features/[機能名]/Views/`に配置：
 
 ```swift
-struct NewFeatureView: View {
-    @StateObject private var viewModel: NewFeatureViewModel
+// Features/Statistics/Views/StatisticsView.swift
+import SwiftUI
 
-    init() {
-        // 依存性注入
-        _viewModel = StateObject(wrappedValue: NewFeatureViewModel(
-            repository: AppContainer.shared.repo
-        ))
-    }
+struct StatisticsView: View {
+    @State private var store = StatisticsStore()
 
     var body: some View {
-        List(viewModel.items) { item in
-            Text(item.name)
-        }
-        .onAppear {
-            viewModel.loadData()
+        NavigationStack {
+            Group {
+                if store.isLoading {
+                    ProgressView("読み込み中...")
+                } else {
+                    List {
+                        ForEach(store.statistics.sorted(by: { $0.key < $1.key }), id: \.key) { month, count in
+                            HStack {
+                                Text(month)
+                                Spacer()
+                                Text("\(count)件")
+                            }
+                        }
+                    }
+                }
+            }
+            .navigationTitle("統計")
+            .task {
+                await store.load()
+            }
+            .alert("エラー",
+                   isPresented: .constant(store.errorMessage != nil),
+                   presenting: store.errorMessage) { _ in
+                Button("OK") {
+                    store.errorMessage = nil
+                }
+            } message: { message in
+                Text(message)
+            }
         }
     }
 }
 ```
 
 **チェックポイント**:
-- [ ] `@StateObject`でViewModelを保持
+- [ ] `@State`でStoreを保持（`@StateObject`ではない）
 - [ ] ビジネスロジックを書いていない
-- [ ] ViewModelのメソッド呼び出しのみ
-- [ ] 適切なライフサイクルフック（`onAppear`等）
+- [ ] Storeのメソッド呼び出しのみ
+- [ ] 適切なライフサイクルフック（`.task`等）
+- [ ] エラー表示の実装
 
-#### 6.2 共通コンポーネントの活用
+#### 8.2 コンポーネントの作成
 
-既存の共通コンポーネントを再利用：
-
-```swift
-// 既存コンポーネント例
-BigFooterButton("保存", action: { viewModel.save() })
-AlertMsg(message: viewModel.errorMessage)
-```
-
-### Step 7: DI Containerへの登録
-
-`kokokita/Support/DependencyContainer.swift`にサービスを追加（必要な場合）：
+機能専用のコンポーネントは`Components/`に配置：
 
 ```swift
-final class AppContainer {
-    static let shared = AppContainer()
+// Features/Statistics/Views/Components/ChartView.swift
+import SwiftUI
 
-    let newFeatureService = NewFeatureService()
-    // ...
+struct ChartView: View {
+    let data: [String: Int]
+
+    var body: some View {
+        // チャート表示
+    }
 }
 ```
 
-### Step 8: 動作確認
+共通コンポーネントは`Shared/UIComponents/`に配置
+
+### Step 9: 動作確認
 
 - [ ] ビルドが通る
 - [ ] 画面が表示される
 - [ ] データの取得・保存・更新・削除が動作する
 - [ ] エラーケースが適切に処理される
+- [ ] ローディング状態が表示される
 
 ---
 
@@ -277,8 +368,8 @@ grep -r "ClassName" kokokita/
 
 変更箇所に応じて実装：
 
-- Model変更 → Repository → ViewModel → View の順
-- UI変更 → View → ViewModel の順
+- Model変更 → Repository → Service → Store → View の順
+- UI変更 → View → Store の順
 
 ### Step 3: 設計書の更新
 
@@ -287,7 +378,7 @@ grep -r "ClassName" kokokita/
 ```markdown
 ## 変更履歴
 
-- 2025-10-24: [変更内容] - [理由]
+- 2025-10-25: [変更内容] - [理由]
 ```
 
 ### Step 4: 動作確認
@@ -302,43 +393,114 @@ grep -r "ClassName" kokokita/
 
 ### 新しい画面の追加
 
-1. **設計書を作成**（推奨）
-2. **ViewModelを作成**: `Presentation/ViewModels/`
-3. **Viewを作成**: `Presentation/Views/[機能名]/`
+1. **フォルダを作成**
+   ```bash
+   mkdir -p Features/Settings/{Models,Views/Components}
+   ```
+
+2. **Storeを作成**: `Features/Settings/Models/SettingsStore.swift`
+
+3. **Viewを作成**: `Features/Settings/Views/SettingsView.swift`
+
 4. **ナビゲーションに追加**: `RootTabView`または既存画面から遷移
 
 **ファイル構成例**:
 ```
-Presentation/
-├── ViewModels/
-│   └── SettingsViewModel.swift
-└── Views/
-    └── Settings/
+Features/
+└── Settings/
+    ├── Models/
+    │   └── SettingsStore.swift
+    └── Views/
         ├── SettingsView.swift
-        ├── SettingsRow.swift
-        └── AboutSection.swift
+        └── Components/
+            ├── SettingsRow.swift
+            └── AboutSection.swift
 ```
 
 ### 新しいドメインモデルの追加
 
-1. **`Domain/Models.swift`にモデル定義**
+1. **`Shared/Models/`にモデル定義**
 2. **必要に応じてCore Dataエンティティ追加**
-3. **Repositoryプロトコル定義**: `Domain/Protocols.swift`
-4. **Repository実装**: `Infrastructure/CoreData[Name]Repository.swift`
+3. **Repositoryプロトコル定義**
+4. **Repository実装**: `Shared/Services/Persistence/`
 5. **DIコンテナに登録**（必要なら）
 
-### 新しいサービスの追加
+### 新しいServiceの追加
 
-1. **プロトコル定義**: `Domain/Protocols.swift`
-2. **実装クラス作成**: `Services/[Name]Service.swift`
-3. **DIコンテナに登録**: `Support/DependencyContainer.swift`
-4. **ViewModelで使用**
+#### 機能固有のService
+
+```bash
+# 機能固有のServiceは機能フォルダ内に
+mkdir -p Features/[機能名]/Services
+```
+
+```swift
+// Features/Statistics/Services/StatisticsService.swift
+final class StatisticsService {
+    static let shared = StatisticsService()
+    // 実装
+}
+```
+
+#### 共通Service
+
+```bash
+# 共通Serviceは Shared/Services/
+mkdir -p Shared/Services/[カテゴリ名]
+```
+
+```swift
+// Shared/Services/Analytics/AnalyticsService.swift
+final class AnalyticsService {
+    static let shared = AnalyticsService()
+    // 実装
+}
+```
+
+### 新しい純粋な関数（Logic）の追加
+
+#### 機能固有のLogic
+
+```swift
+// Features/Home/Logic/VisitFilter.swift
+struct VisitFilter {
+    static func filterByDateRange(
+        visits: [Visit],
+        from: Date,
+        to: Date
+    ) -> [Visit] {
+        visits.filter { $0.timestamp >= from && $0.timestamp <= to }
+    }
+}
+```
+
+#### 共通Logic
+
+```swift
+// Shared/Logic/Calculations/DistanceCalculator.swift
+struct DistanceCalculator {
+    static func distance(from: CLLocation, to: CLLocation) -> Double {
+        from.distance(from: to)
+    }
+}
+```
 
 ### UIコンポーネントの追加
 
-1. **共通コンポーネント**: `Presentation/Views/Common/Components/`
-2. **機能固有コンポーネント**: `Presentation/Views/[機能名]/`
-3. **再利用性を考慮して設計**
+#### 機能専用コンポーネント
+
+```
+Features/[機能名]/Views/Components/
+```
+
+#### 共通コンポーネント
+
+```
+Shared/UIComponents/
+├── Buttons/
+├── Forms/
+└── Media/
+```
 
 ### Core Dataモデルの変更
 
@@ -350,11 +512,11 @@ Presentation/
 
 ### ローカライゼーションの追加
 
-1. **`Support/Localization/LocalizedString.swift`にキー追加**:
+1. **`Resources/Localization/LocalizedString.swift`にキー追加**:
    ```swift
    enum L {
-       enum NewFeature {
-           static let title = localized("newFeature.title")
+       enum Statistics {
+           static let title = localized("statistics.title")
        }
    }
    ```
@@ -365,7 +527,7 @@ Presentation/
 
 3. **Viewで使用**:
    ```swift
-   Text(L.NewFeature.title)
+   Text(L.Statistics.title)
    ```
 
 ---
@@ -376,17 +538,19 @@ Presentation/
 
 - [ ] ベストプラクティスに準拠している
 - [ ] UIとロジックが分離されている
-- [ ] 適切なフォルダに配置されている
-- [ ] 命名規約に従っている
+- [ ] 適切なフォルダに配置されている（Feature-based）
+- [ ] 命名規約に従っている（Store、Service、Logic）
 - [ ] コメントが適切に書かれている
 - [ ] 冗長なコードがない
 
-### アーキテクチャ
+### アーキテクチャ（Feature-based MV）
 
-- [ ] 層の責務が適切に分離されている
-- [ ] 依存の方向が正しい（上位→下位）
-- [ ] プロトコルを介して依存している
-- [ ] 単一責任原則に従っている
+- [ ] 機能単位でコロケーションされている
+- [ ] Viewは表示のみ
+- [ ] Storeは状態管理とServiceとの結合のみ
+- [ ] Serviceは副作用のみ（ステートレス）
+- [ ] Logicは純粋な関数のみ（副作用なし）
+- [ ] @Observableマクロを使用（ObservableObjectではない）
 
 ### エラーハンドリング
 
@@ -424,15 +588,19 @@ Presentation/
 #### "Cannot find type 'XXX' in scope"
 → importが足りないか、ファイルがターゲットに含まれているか確認
 
+#### "Property wrapper cannot be applied to a computed property"
+→ @Observableを使用している場合、@Publishedは不要。通常のプロパティに変更
+
 ### 実行時エラー
 
 #### Core Dataの保存エラー
 → 必須属性がnilになっていないか確認
 → `preflightValidate`メソッドでログ確認
 
-#### ViewModelがViewに反映されない
-→ `@Published`を付けているか確認
-→ `@MainActor`を付けているか確認
+#### StoreがViewに反映されない
+→ `@State`を使用しているか確認（`@StateObject`ではない）
+→ `@Observable`マクロを付けているか確認
+→ `import Observation`を忘れていないか確認
 
 ### パフォーマンス問題
 
@@ -446,37 +614,13 @@ Presentation/
 
 ---
 
-## 開発効率化のヒント
-
-### Xcodeスニペット
-
-よく使うコードをスニペット登録：
-
-- ViewModel template
-- View template
-- Repository template
-
-### ビルド時間の短縮
-
-- 増分ビルドを活用
-- 不要なimportを削除
-- コンパイル時間の長いファイルを特定して最適化
-
-### デバッグ効率化
-
-- `Logger`を積極的に使用
-- ブレークポイントの活用
-- Xcodeのメモリグラフで循環参照をチェック
-
----
-
 ## フォルダ構成の移行
 
 > **重要**: 詳細な設計判断は `doc/ADR/001-フォルダ構成とアーキテクチャの再設計.md` を参照してください。
 
 ### 移行の方針
 
-新しいフォルダ構成への移行は**段階的**に行います：
+新しいフォルダ構成（Feature-based MV）への移行は**段階的**に行います：
 
 1. **新規機能は新構成で実装**
 2. **既存機能は必要に応じて移行**
@@ -485,121 +629,215 @@ Presentation/
 ### Phase 1: 新しいフォルダ構造を作成
 
 ```bash
-# 新しいフォルダを作成
-mkdir -p kokokita/Domain/{Models,Logic,Services,Protocols}
-mkdir -p kokokita/Domain/Logic/{Calculations,Formatting,Validation,Filtering}
-mkdir -p kokokita/Domain/Services/{Location,POI,Photo,Visit}
-mkdir -p kokokita/Screens/{Home,Create,Detail,Menu}/Components
-mkdir -p kokokita/UIComponents/{Buttons,Forms,Media,Navigation}
-mkdir -p kokokita/App/{Config,DI}
-mkdir -p kokokita/Utilities/{Extensions,Helpers,Protocols}
-mkdir -p kokokita/Resources/Localization
+# Feature-based構成のフォルダを作成
+mkdir -p Features/{Home,Create,Detail,Menu}/{Models,Logic,Services,Views/Components}
+mkdir -p Shared/{Models,Logic,Services,UIComponents}
+mkdir -p Shared/Logic/{Calculations,Formatting,Validation}
+mkdir -p Shared/Services/{Persistence,Security}
+mkdir -p Shared/UIComponents/{Buttons,Forms,Media}
+mkdir -p App/{Config,DI}
+mkdir -p Utilities/{Extensions,Helpers,Protocols}
+mkdir -p Resources/Localization
 ```
 
-### Phase 2: Services の整理と移行（優先度：高）
+### Phase 2: Shared/の整理と移行（優先度：高）
 
-現在の`Services/`フォルダを`Domain/Services/`に機能別で再編成：
-
-#### 移行対象ファイル
+#### 2.1 共通モデルの移行
 
 | 現在の場所 | 移行先 | 作業 |
 |-----------|--------|------|
-| `Services/DefaultLocationService.swift` | `Domain/Services/Location/LocationService.swift` | 移動 + 名前変更 |
-| `Services/LocationGeocodingService.swift` | `Domain/Services/Location/` | 移動 |
-| `Services/MapKitPlaceLookupService.swift` | `Domain/Services/POI/POIService.swift` | 移動 + 名前変更 |
-| `Services/POICoordinatorService.swift` | `Domain/Services/POI/` | 移動 |
-| `Services/PhotoEditService.swift` | `Domain/Services/Photo/` | 移動 |
-| `Infrastructure/CoreDataVisitRepository.swift` | `Domain/Services/Visit/` ※ | 移動検討 |
+| `Domain/Models.swift` | `Shared/Models/` | 分割して移動 |
+| `Domain/Models.swift` 内の`Visit` | `Shared/Models/Visit.swift` | 抽出 |
+| `Domain/Models.swift` 内の`Taxonomy` | `Shared/Models/Taxonomy.swift` | 抽出 |
+| `Domain/Models.swift` 内の`Location` | `Shared/Models/Location.swift` | 抽出 |
 
-※ Repositoryは技術的実装なのでInfrastructureに残すか、Services/に移すか検討
-
-#### 移行手順
-
-```bash
-# 例: LocationServiceの移行
-git mv Services/DefaultLocationService.swift Domain/Services/Location/LocationService.swift
-```
-
-移行後、import文やファイルパスの参照を更新：
-```bash
-# 全ファイルで参照を検索
-grep -r "DefaultLocationService" kokokita/
-```
-
-### Phase 3: Presentation の移行（優先度：中）
-
-`Presentation/`を`Screens/`に再編成：
-
-#### 移行対象
+#### 2.2 共通Serviceの移行
 
 | 現在の場所 | 移行先 |
 |-----------|--------|
-| `Presentation/ViewModels/HomeViewModel.swift` | `Screens/Home/HomeViewModel.swift` |
-| `Presentation/Views/Home/HomeView.swift` | `Screens/Home/HomeView.swift` |
-| `Presentation/Views/Home/VisitRow.swift` | `Screens/Home/Components/VisitRow.swift` |
-| `Presentation/ViewModels/CreateEditViewModel.swift` | `Screens/Create/CreateEditViewModel.swift` |
-| `Presentation/Views/Create/CreateView.swift` | `Screens/Create/CreateView.swift` |
+| `Infrastructure/CoreDataVisitRepository.swift` | `Shared/Services/Persistence/VisitRepository.swift` |
+| `Infrastructure/CoreDataTaxonomyRepository.swift` | `Shared/Services/Persistence/TaxonomyRepository.swift` |
+| `Infrastructure/CoreDataStack.swift` | `Shared/Services/Persistence/CoreDataStack.swift` |
+| `Infrastructure/DefaultIntegrityService.swift` | `Shared/Services/Security/IntegrityService.swift` |
 
-#### 移行手順
+### Phase 3: Features/への移行（新規機能から）
 
-1. **Screens/Home/を作成**
-2. **ViewModelとViewを移動**
-   ```bash
-   git mv Presentation/ViewModels/HomeViewModel.swift Screens/Home/
-   git mv Presentation/Views/Home/HomeView.swift Screens/Home/
-   ```
-3. **コンポーネントをComponents/に**
-   ```bash
-   mkdir Screens/Home/Components
-   git mv Presentation/Views/Home/VisitRow.swift Screens/Home/Components/
-   ```
-4. **import文とパスを更新**
+#### 3.1 新規機能（優先度：高）
 
-### Phase 4: Support/Utilities の整理（優先度：低）
+**新機能は必ずFeatures/で実装**:
+```
+Features/
+└── [新機能名]/
+    ├── Models/
+    │   └── [機能名]Store.swift     # @Observable
+    ├── Logic/
+    │   └── [処理名].swift          # 純粋な関数
+    ├── Services/
+    │   └── [機能名]Service.swift   # 副作用
+    └── Views/
+        ├── [機能名]View.swift
+        └── Components/
+```
 
-`Support/`を`Utilities/`に整理：
+#### 3.2 既存機能の移行（優先度：中）
 
-| 現在の場所 | 移行先 |
-|-----------|--------|
-| `Support/Extensions/` | `Utilities/Extensions/` |
-| `Support/Logger.swift` | `Utilities/Helpers/Logger.swift` |
-| `Support/KeyboardHelpers.swift` | `Utilities/Helpers/` |
-| `Support/Localization/` | `Resources/Localization/` |
-| `Support/DependencyContainer.swift` | `App/DI/DependencyContainer.swift` |
-| `Config/` | `App/Config/` |
+小さい機能から順に移行：
 
-### Phase 5: 純粋な関数の切り出し（優先度：中）
+**例: Menu機能の移行**
 
-Serviceに混在している純粋なロジックを`Domain/Logic/`に切り出す：
+```bash
+# 1. フォルダ作成
+mkdir -p Features/Menu/{Models,Views}
 
-#### 切り出し候補の特定
+# 2. ViewModelをStoreに変換して移動
+# Presentation/ViewModels/MenuViewModel.swift → Features/Menu/Models/MenuStore.swift
+# - ObservableObject → @Observable
+# - @Published → 通常のプロパティ
 
-以下のようなコードを探す：
+# 3. Viewを移動
+git mv Presentation/Views/Menu/MenuView.swift Features/Menu/Views/
+```
+
+### Phase 4: ViewModelからStoreへの変換
+
+#### 4.1 変換手順
+
+**Before (旧MVVM)**:
 ```swift
-// ❌ Service内に純粋なロジックが混在
+// Presentation/ViewModels/HomeViewModel.swift
+import Foundation
+import Combine
+
+@MainActor
+final class HomeViewModel: ObservableObject {
+    @Published var visits: [Visit] = []
+    @Published var isLoading = false
+
+    private let repository: VisitRepository
+
+    init(repository: VisitRepository) {
+        self.repository = repository
+    }
+
+    func load() {
+        isLoading = true
+        visits = try repository.fetchAll()
+        isLoading = false
+    }
+}
+```
+
+**After (Feature-based MV)**:
+```swift
+// Features/Home/Models/HomeStore.swift
+import Foundation
+import Observation
+
+@Observable
+final class HomeStore {
+    var visits: [Visit] = []
+    var isLoading = false
+
+    private let visitService: VisitService
+
+    init(visitService: VisitService = .shared) {
+        self.visitService = visitService
+    }
+
+    func load() async {
+        isLoading = true
+        visits = try await visitService.fetchAll()
+        isLoading = false
+    }
+}
+```
+
+**変換チェックリスト**:
+- [ ] `ObservableObject` → `@Observable`
+- [ ] `@Published` を削除（通常のプロパティに）
+- [ ] `@MainActor` を削除（@Observableが自動対応）
+- [ ] Combineのimportを削除
+- [ ] `import Observation` を追加
+- [ ] ViewModelという名前 → Store
+- [ ] 同期処理 → async/await
+
+#### 4.2 Viewの変換
+
+**Before**:
+```swift
+struct HomeView: View {
+    @StateObject private var viewModel: HomeViewModel
+
+    var body: some View {
+        List(viewModel.visits) { visit in
+            VisitRow(visit: visit)
+        }
+        .onAppear {
+            viewModel.load()
+        }
+    }
+}
+```
+
+**After**:
+```swift
+struct HomeView: View {
+    @State private var store = HomeStore()
+
+    var body: some View {
+        List(store.visits) { visit in
+            VisitRow(visit: visit)
+        }
+        .task {
+            await store.load()
+        }
+    }
+}
+```
+
+**変換チェックリスト**:
+- [ ] `@StateObject` → `@State`
+- [ ] `viewModel` → `store`
+- [ ] `.onAppear` → `.task`（async処理の場合）
+
+### Phase 5: 純粋な関数の切り出し
+
+#### 5.1 切り出し候補の特定
+
+Serviceに混在している純粋なロジックを`Logic/`に切り出す：
+
+```bash
+# Serviceファイルを確認
+grep -r "func.*->.*{" Features/*/Services/
+```
+
+#### 5.2 切り出し例
+
+**Before**:
+```swift
+// Services/VisitService.swift
 class VisitService {
-    func fetchFiltered(from: Date, to: Date) -> [Visit] {
-        let visits = repository.fetchAll()
+    func fetchFiltered(from: Date, to: Date) async throws -> [Visit] {
+        let visits = try await repository.fetchAll()
         // ↓ これは純粋な関数として切り出すべき
         return visits.filter { $0.timestamp >= from && $0.timestamp <= to }
     }
 }
 ```
 
-#### 切り出し後
-
+**After**:
 ```swift
-// ✅ Domain/Logic/Filtering/VisitFilter.swift
+// Features/Home/Logic/VisitFilter.swift（または Shared/Logic/）
 struct VisitFilter {
     static func filterByDateRange(visits: [Visit], from: Date, to: Date) -> [Visit] {
         visits.filter { $0.timestamp >= from && $0.timestamp <= to }
     }
 }
 
-// ✅ Domain/Services/Visit/VisitService.swift
+// Features/Home/Services/VisitService.swift
 class VisitService {
-    func fetchFiltered(from: Date, to: Date) -> [Visit] {
-        let visits = repository.fetchAll()  // 副作用
+    func fetchFiltered(from: Date, to: Date) async throws -> [Visit] {
+        let visits = try await repository.fetchAll()  // 副作用
         return VisitFilter.filterByDateRange(visits: visits, from: from, to: to)  // 純粋
     }
 }
@@ -617,9 +855,8 @@ class VisitService {
 
 移動後、全ファイルで参照を検索：
 ```bash
-# 例: HomeViewModelを移動した場合
-grep -r "import.*HomeViewModel" kokokita/
-grep -r "HomeViewModel" kokokita/ | grep -v ".swift:"
+# 例: HomeStoreを移動した場合
+grep -r "HomeStore" kokokita/
 ```
 
 #### Xcode プロジェクトファイルの更新
@@ -627,8 +864,6 @@ grep -r "HomeViewModel" kokokita/ | grep -v ".swift:"
 ファイルを移動したら、Xcodeプロジェクトで：
 1. 古いファイルを削除（参照のみ）
 2. 新しい場所からファイルを追加
-
-または、プロジェクトファイルを直接編集（上級者向け）
 
 ### 移行チェックリスト
 
@@ -640,12 +875,18 @@ grep -r "HomeViewModel" kokokita/ | grep -v ".swift:"
 - [ ] import文が正しい
 - [ ] Xcodeプロジェクトファイルが更新されている
 - [ ] 移行内容をコミット
+- [ ] ViewModelではなくStoreを使用している
+- [ ] @Observableマクロを使用している
 
 ### トラブルシューティング
 
 #### "No such module" エラー
 
-→ import文を確認。相対パスから絶対パスに変更する必要がある場合も
+→ import文を確認。`import Observation`が必要
+
+#### "Property wrapper cannot be applied"
+
+→ @Observableと@Publishedは併用できない。@Publishedを削除
 
 #### ファイルが見つからない
 
@@ -657,8 +898,34 @@ grep -r "HomeViewModel" kokokita/ | grep -v ".swift:"
 
 ---
 
+## 開発効率化のヒント
+
+### Xcodeスニペット
+
+よく使うコードをスニペット登録：
+
+- Store template (@Observable)
+- View template
+- Service template
+- Logic template
+
+### ビルド時間の短縮
+
+- 増分ビルドを活用
+- 不要なimportを削除
+- コンパイル時間の長いファイルを特定して最適化
+
+### デバッグ効率化
+
+- `Logger`を積極的に使用
+- ブレークポイントの活用
+- Xcodeのメモリグラフで循環参照をチェック
+
+---
+
 ## 更新履歴
 
+- 2025-10-25: Feature-based MVアーキテクチャに対応
 - 2025-10-24: フォルダ構成の移行手順を追加
 - 初版作成
 
