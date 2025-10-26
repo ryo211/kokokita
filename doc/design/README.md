@@ -102,6 +102,6 @@ doc/design/
 ## 参考資料
 
 - `CLAUDE.md`: プロジェクト全体のガイド
-- `doc/best-practices.md`: ベストプラクティス
+- `doc/architecture-guide.md`: アーキテクチャガイド（設計方針）
 - `doc/implementation-guide.md`: 実装ガイド
 - `doc/ADR/`: 技術的決定の記録

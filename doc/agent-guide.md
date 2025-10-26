@@ -24,7 +24,7 @@ kokokitaプロジェクトでは、複数の専門エージェントが連携し
 
 **参照するドキュメント**:
 - `CLAUDE.md`: プロジェクト概要
-- `doc/best-practices.md`: ベストプラクティス
+- `doc/architecture-guide.md`: ベストプラクティス
 - `doc/implementation-guide.md`: 実装ガイド
 
 ### designer（今後実装予定）
@@ -160,7 +160,7 @@ prompt: "以下のコードをレビューしてください: [詳細]"
 すべてのエージェントが共通のドキュメントを参照します:
 
 - `CLAUDE.md`: プロジェクト全体の方針
-- `doc/best-practices.md`: コーディング規約
+- `doc/architecture-guide.md`: コーディング規約
 - `doc/implementation-guide.md`: 実装手順
 - `doc/ADR/`: 技術的決定
 - `doc/design/`: 設計書

@@ -23,7 +23,7 @@
 実装を始める前に以下を必ず読む：
 
 - [ ] `CLAUDE.md` - プロジェクト概要を理解
-- [ ] `doc/best-practices.md` - ベストプラクティスを確認
+- [ ] `doc/architecture-guide.md` - ベストプラクティスを確認
 - [ ] `doc/ADR/001-フォルダ構成とアーキテクチャの再設計.md` - Feature-based MVアーキテクチャを理解
 - [ ] `doc/design/[機能名].md` - 該当する設計書があれば読む
 
