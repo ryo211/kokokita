@@ -65,15 +65,7 @@ struct KokokitaHeaderLogo: View {
             Text("ココキタ")
                 .font(.system(size: size.fontSize, weight: .semibold, design: .rounded))
                 .tracking(1.2)  // 文字間隔を広げる
-                .foregroundStyle(
-                    LinearGradient(
-                        colors: [
-                            Color.accentColor.opacity(0.75)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
+                .foregroundColor(.accentColor)
         }
         .offset(x: size.opticalOffsetX)
     }
@@ -93,17 +85,7 @@ struct KokokitaHeaderLogoSimple: View {
             Text("ココキタ")
                 .font(.system(size: 20, weight: .semibold, design: .rounded))
                 .tracking(1.2)  // 文字間隔を広げる
-                .foregroundStyle(
-                    LinearGradient(
-                        colors: [
-                            Color.accentColor.opacity(0.95),
-                            Color.accentColor.opacity(0.75)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-//                .shadow(color: Color.accentColor.opacity(0.2), radius: 2, x: 0, y: 1)
+                .foregroundColor(.accentColor)
         }
     }
 }

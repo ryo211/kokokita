@@ -35,12 +35,9 @@ struct MapPreview: View {
     var body: some View {
         Map(position: $position, interactionModes: [.pan, .zoom, .rotate]) {
             // ピン（Annotation）
-            Annotation("ココキタ！", coordinate: coordinate) {
+            Annotation("ココキタ", coordinate: coordinate) {
                 ZStack {
-//                    Image(systemName: "mappin.and.ellipse")
-//                        .font(.title2.weight(.semibold))
-//                        .foregroundStyle(.tint)
-                    Image("kokokita_irodori_blue")
+                    Image("kokokita_irodori_map")
                         .resizable()
                         .scaledToFit()
                         .frame(width: 42, height: 42)

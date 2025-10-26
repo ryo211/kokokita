@@ -20,18 +20,20 @@ struct PostKokokitaPromptSheet: View {
     private var longitude: Double { locationData.longitude }
     private var canSave: Bool { latitude != 0 || longitude != 0 }
 
+    // 1%の確率でレア画像を表示
+    private var logoImageName: String {
+        Double.random(in: 0..<1) < 0.01 ? "kokokita_irodori" : "kokokita_irodori_blue"
+    }
+
     var body: some View {
         VStack(spacing: 16) {
             // 見出し
             HStack(spacing: 10) {
-//                Image(systemName: "mappin.and.ellipse")
-//                    .font(.title2.weight(.semibold))
-//                    .foregroundStyle(.tint)
-                Image("kokokita_irodori_blue")
+                Image(logoImageName)
                     .resizable()
                     .scaledToFit()
                     .frame(width: 42, height: 42)
-                Text("ココキタ！")
+                Text("ココキタ  ✅")
                     .font(.title2.bold())
             }
             .padding(.top, 8)
