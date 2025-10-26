@@ -19,7 +19,7 @@ struct PostKokokitaPromptSheet: View {
     private var latitude: Double { locationData.latitude }
     private var longitude: Double { locationData.longitude }
     private var canSave: Bool { latitude != 0 || longitude != 0 }
-
+    
     // 1%の確率でレア画像を表示
     private var logoImageName: String {
         Double.random(in: 0..<1) < 0.01 ? "kokokita_irodori" : "kokokita_irodori_blue"
@@ -34,7 +34,9 @@ struct PostKokokitaPromptSheet: View {
                     .scaledToFit()
                     .frame(width: 42, height: 42)
                 Text("ココキタ  ✅")
-                    .font(.title2.bold())
+                    .font(.system(size: 24, weight: .semibold, design: .rounded))
+                    .tracking(1.2)  // 文字間隔を広げる
+                    .foregroundColor(.accentColor)
             }
             .padding(.top, 8)
 

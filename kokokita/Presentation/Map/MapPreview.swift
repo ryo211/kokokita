@@ -35,8 +35,19 @@ struct MapPreview: View {
     var body: some View {
         Map(position: $position, interactionModes: [.pan, .zoom, .rotate]) {
             // ピン（Annotation）
-            Annotation("ココキタ", coordinate: coordinate) {
-                ZStack {
+            Annotation("", coordinate: coordinate) {
+                VStack(spacing: 2) {
+                    // カスタムラベル
+                    Text("ココキタ")
+                        .font(.caption.bold())
+                        .foregroundColor(.accentColor)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(.white)
+                        .cornerRadius(8)
+                        .shadow(color: .black.opacity(0.2), radius: 2, x: 0, y: 1)
+
+                    // ピン画像
                     Image("kokokita_irodori_map")
                         .resizable()
                         .scaledToFit()
