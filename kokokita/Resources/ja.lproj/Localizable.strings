@@ -24,7 +24,7 @@
 "visit.edit.editSection" = "編集";
 "visit.edit.saveButton" = "保存";
 "visit.edit.locationAcquiring" = "現在地を取得しています…";
-"visit.edit.kokokamo" = "ココカモ？";
+"visit.edit.kokokamo" = "ココカモ";
 "visit.edit.selectLabel" = "ラベルを選択";
 "visit.edit.selectGroup" = "グループを選択";
 "visit.edit.createNew" = "新規作成…";

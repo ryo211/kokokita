@@ -29,15 +29,18 @@ final class CreateEditViewModel: ObservableObject {
     @Published var shouldDismiss: Bool = false  // 権限拒否時に画面を閉じる
 
     // POI関連のUI状態（ViewからBindingするため@Publishedで公開）
-    @Published var showPOI: Bool = false {
-        didSet {
-            // ViewからshowPOIが変更されたらpoiCoordinatorにも反映
-            if showPOI != poiCoordinator.showPOI {
-                poiCoordinator.showPOI = showPOI
-            }
-        }
+    @Published private(set) var showPOI: Bool = false
+    @Published private(set) var poiList: [PlacePOI] = []
+
+    // POIシートを表示すべきかどうか（データが揃っている場合のみtrue）
+    var shouldShowPOISheet: Bool {
+        showPOI && !poiList.isEmpty
     }
-    @Published var poiList: [PlacePOI] = []
+
+    // POIシートを閉じる（View側から呼ばれる）
+    func closePOISheet() {
+        poiCoordinator.closePOI()
+    }
 
     // 測位フラグ（偽装/外部アクセサリ検知）
     private var lastFlags = LocationSourceFlags(
@@ -65,7 +68,8 @@ final class CreateEditViewModel: ObservableObject {
         loc: LocationService,
         poi: PlaceLookupService,
         integ: IntegrityService,
-        repo: VisitRepository & TaxonomyRepository
+        repo: VisitRepository & TaxonomyRepository,
+        initialLocationData: LocationData? = nil
     ) {
         self.integ = integ
         self.repo = repo
@@ -75,6 +79,16 @@ final class CreateEditViewModel: ObservableObject {
         self.locationGeocodingService = LocationGeocodingService(locationService: loc)
         self.poiCoordinator = POICoordinatorService(poiService: poi)
 
+        // 初期位置情報がある場合は設定
+        if let data = initialLocationData {
+            self.timestampDisplay = data.timestamp
+            self.latitude = data.latitude
+            self.longitude = data.longitude
+            self.accuracy = data.accuracy
+            self.addressLine = data.address
+            self.lastFlags = data.flags
+        }
+
         // POI状態の同期（poiCoordinatorの変更をViewModelに反映）
         setupPOIBinding()
 
@@ -82,12 +96,28 @@ final class CreateEditViewModel: ObservableObject {
         setupPhotoBinding()
     }
 
+    // 初期化後にPOIを開く（Viewから呼ばれる）
+    func openPOIIfNeeded(shouldOpenPOI: Bool) {
+        if shouldOpenPOI {
+            Task { @MainActor in
+                await openPOI()
+            }
+        }
+    }
+
     private func setupPOIBinding() {
         // poiCoordinatorのshowPOIとpoiListの変更を監視してViewModelに反映
         poiCoordinator.$showPOI
-            .assign(to: &$showPOI)
+            .sink { [weak self] value in
+                self?.showPOI = value
+            }
+            .store(in: &cancellables)
+
         poiCoordinator.$poiList
-            .assign(to: &$poiList)
+            .sink { [weak self] value in
+                self?.poiList = value
+            }
+            .store(in: &cancellables)
     }
 
     private func setupPhotoBinding() {

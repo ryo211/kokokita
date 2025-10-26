@@ -28,8 +28,6 @@ struct VisitEditScreen: View {
     
     // 状態管理（共通化）
     @State private var saving = false
-    @State private var locating = false
-    @State private var showActionPromptLocal = false
     @State private var showFacilityPopover = false
 
     // ラベル/グループ/メンバー候補
@@ -80,47 +78,10 @@ struct VisitEditScreen: View {
         let head = selectedMemberNames.prefix(2).joined(separator: ", ")
         return "\(head) ほか\(selectedMemberNames.count - 2)件"
     }
-    
-    private var actionPromptBinding: Binding<Bool> {
-        Binding<Bool>(
-            get: {
-                if case .create = mode { return vm.showActionPrompt }
-                return false
-            },
-            set: { newVal in
-                if case .create = mode { vm.showActionPrompt = newVal }
-                // edit のときは無視（= 常に false）
-            }
-        )
-    }
 
     var body: some View {
         NavigationStack {
-            ZStack {
-                formContent
-                    .disabled(locating)
-
-                if locating {
-                    VStack(spacing: UIConstants.Spacing.large) {
-                        ProgressView()
-                        Text(L.VisitEdit.locationAcquiring)
-                            .font(.footnote)
-                            .foregroundStyle(.secondary)
-                        if vm.alert != nil {
-                            Button(L.Common.retry) {
-                                Task {
-                                    locating = true
-                                    await vm.requestLocation()
-                                    locating = false
-                                }
-                            }
-                            .buttonStyle(.bordered)
-                        }
-                    }
-                    .padding()
-                    .background(.thinMaterial, in: RoundedRectangle(cornerRadius: UIConstants.CornerRadius.large))
-                }
-            }
+            formContent
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Group {
@@ -153,15 +114,7 @@ struct VisitEditScreen: View {
             .task {
                 await onAppearTask()
             }
-            
-            .onChange(of: vm.showActionPrompt) { newVal in
-                if case .create = mode {
-                    showActionPromptLocal = newVal
-                } else {
-                    showActionPromptLocal = false
-                }
-            }
-            
+
             .safeAreaInset(edge: .bottom) {
                 if focusedField == nil {
                     VStack(spacing: 0) {
@@ -184,8 +137,15 @@ struct VisitEditScreen: View {
                 }
             }
 
-            // POI 候補
-            .sheet(isPresented: $vm.showPOI) {
+            // POI 候補（データが揃っている場合のみ表示）
+            .sheet(isPresented: Binding(
+                get: { vm.shouldShowPOISheet },
+                set: { newValue in
+                    if !newValue {
+                        vm.closePOISheet()
+                    }
+                }
+            )) {
                 NavigationStack {
                     // ★ 明示的に型を固定してあげると安定します
                     let items: [PlacePOI] = vm.poiList
@@ -269,34 +229,6 @@ struct VisitEditScreen: View {
             }
         }
 
-        // 3択 "ココキタ！" プロンプト（create のときだけ）
-        .sheet(isPresented: $showActionPromptLocal) {
-            PostKokokitaPromptSheet(
-                timestamp: vm.timestampDisplay,
-                addressText: vm.addressLine,
-                latitude: vm.latitude,
-                longitude: vm.longitude,
-                canSave: (vm.latitude != 0 || vm.longitude != 0),
-                onSaveNow: {
-                    // ① 今は保存
-                    vm.showActionPrompt = false
-                    showActionPromptLocal = false
-                    saveTapped()
-                },
-                onManualInput: {
-                    // ② 自分で入力
-                    vm.showActionPrompt = false
-                    showActionPromptLocal = false
-                },
-                onPickPOI: {
-                    // ③ 周辺から
-                    vm.showActionPrompt = false
-                    showActionPromptLocal = false
-                    Task { await vm.openPOI() }
-                }
-            )
-            .presentationDetents([.large, .large])
-        }
         .ignoresSafeArea(.keyboard, edges: .bottom)
         .onDisappear {
             vm.discardPhotoEditingIfNeeded()
@@ -360,7 +292,7 @@ struct VisitEditScreen: View {
     private var disableSave: Bool {
         switch mode {
         case .create:
-            return locating || (vm.latitude == 0 && vm.longitude == 0)
+            return (vm.latitude == 0 && vm.longitude == 0)
         case .edit:
             return false
         }
@@ -384,15 +316,6 @@ struct VisitEditScreen: View {
         labelOptions = ((try? AppContainer.shared.repo.allLabels()) ?? []).sortedByName
         groupOptions = ((try? AppContainer.shared.repo.allGroups()) ?? []).sortedByName
         memberOptions = ((try? AppContainer.shared.repo.allMembers()) ?? []).sortedByName
-
-        // create だけ即測位
-        if case .create = mode {
-            locating = true
-            await vm.requestLocation()
-            locating = false
-            await MainActor.run { vm.presentPostKokokitaPromptIfReady() }
-            showActionPromptLocal = vm.showActionPrompt
-        }
     }
 
     private func createLabelAndSelect() {
