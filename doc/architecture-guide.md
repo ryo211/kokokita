@@ -1,21 +1,18 @@
 # アーキテクチャガイド
 
-> **重要**: このドキュメントはプロジェクトの設計方針とアーキテクチャの指針です。すべてのコード変更時に参照してください。
-
-最終更新: 2025-10-25
+> **重要**: このドキュメントはプロジェクトの設計方針とアーキテクチャの指針。Claudeはすべてのコード変更時に参照する。
 
 ## 目次
 
 1. [アーキテクチャ原則](#アーキテクチャ原則)
-2. [UIとロジックの分離](#uiとロジックの分離)
-3. [フォルダ構成とコロケーション](#フォルダ構成とコロケーション)
-4. [命名規約](#命名規約)
-5. [コーディングスタイル](#コーディングスタイル)
-6. [状態管理](#状態管理)
-7. [パフォーマンス](#パフォーマンス)
-8. [エラーハンドリング](#エラーハンドリング)
-9. [テストとデバッグ](#テストとデバッグ)
-10. [セキュリティ](#セキュリティ)
+2. [フォルダ構成とコロケーション](#フォルダ構成とコロケーション)
+3. [命名規約](#命名規約)
+4. [コーディングスタイル](#コーディングスタイル)
+5. [状態管理](#状態管理)
+6. [パフォーマンス](#パフォーマンス)
+7. [エラーハンドリング](#エラーハンドリング)
+8. [テストとデバッグ](#テストとデバッグ)
+9. [セキュリティ](#セキュリティ)
 
 ---
 
@@ -23,25 +20,23 @@
 
 ### Feature-based MV アーキテクチャ
 
-> **参照**: 詳細な設計判断は`doc/ADR/001-フォルダ構成とアーキテクチャの再設計.md`を参照してください。
+> **参照**: 詳細な設計判断は`doc/ADR/001-フォルダ構成とアーキテクチャの再設計.md`を参照。
 
 プロジェクトは**Feature-based MV**パターンを採用しています（2025年のSwiftベストプラクティスに準拠）：
 
 ```
-┌─────────────────────────────────────┐
-│  Features/                          │  ← 機能単位でコロケーション
-│  ├── [機能名]/                      │
-│  │   ├── Models/    (Store)         │  ← @Observable 状態管理
-│  │   ├── Views/                     │  ← SwiftUI View
-│  │   ├── Logic/     (純粋な関数)    │  ← 副作用なし
-│  │   └── Services/  (副作用)        │  ← DB、API、I/O
-├─────────────────────────────────────┤
-│  Shared/                            │  ← 共通コード
-│  ├── Models/                        │  ← ドメインモデル
-│  ├── Logic/                         │  ← 共通の純粋な関数
-│  ├── Services/                      │  ← 共通Service
-│  └── UIComponents/                  │  ← 共通UIコンポーネント
-└─────────────────────────────────────┘
+Features/                        # 機能単位でコロケーション
+├── [機能名]/
+│   ├── Models/                  # @Observable 状態管理
+│   ├── Views/                   # SwiftUI View
+│   ├── Logic/                   # 純粋な関数（副作用なし）
+│   └── Services/                # 副作用（DB、API、I/O）
+│
+Shared/                          # 共通コード
+├── Models/                      # ドメインモデル
+├── Logic/                       # 共通の純粋な関数
+├── Services/                    # 共通Service
+└── UIComponents/                # 共通UIコンポーネント
 ```
 
 **原則**:
@@ -100,29 +95,91 @@ class HomeViewModel: ObservableObject {
 
 各クラス・構造体は**1つの責務**のみを持つ：
 
-- ✅ **View**: 表示のみ
+- ✅ **View**: UI表示とユーザーイベントの受付のみ
 - ✅ **Store**: 状態管理とServiceとの結合のみ（@Observable）
-- ✅ **Service**: 副作用のある処理のみ（ステートレス）
-- ✅ **Logic**: 純粋な関数のみ（副作用なし）
+- ✅ **Service**: 副作用のある処理のみ（DB、API、I/O等）（ステートレス）
+- ✅ **Logic**: 純粋な関数のみ（計算、変換、フォーマット）（副作用なし）
+- ✅ **Model**: データ構造の定義とドメインロジックのみ（struct/class）
 
----
+### 各層の詳細な責務
 
-## UIとロジックの分離
+#### Model（モデル）
+**責務**: データ構造の定義とドメインロジック
 
-### 厳密な分離の原則
+**配置**: `Shared/Models/` または `Features/[機能名]/Models/[データ名].swift`
 
-**絶対に守るべきルール**:
-1. **Viewにビジネスロジックやデータアクセスロジックを書かない**
-2. **StoreにUIコンポーネントを持ち込まない**
-3. **Serviceに表示ロジックを書かない**
-4. **Logicに副作用を持ち込まない**
+**特徴**:
+- アプリケーションのコアとなるデータ構造を定義
+- ドメイン固有のビジネスルール（validation等）を含む
+- 永続化の詳細には依存しない（Core Dataエンティティとは別）
+- 不変（immutable）を推奨（structを優先）
 
-### Viewの責務
-
-Viewは**表示のみ**に集中します。
-
-**良い例**:
+**例**:
 ```swift
+// Shared/Models/Visit.swift
+struct Visit: Identifiable, Codable {
+    let id: UUID
+    let timestamp: Date
+    let location: Location
+    let accuracy: Double
+
+    // ドメインロジック: 位置情報の品質チェック
+    var isHighQuality: Bool {
+        accuracy <= 50.0
+    }
+
+    // ドメインロジック: シミュレートされた位置情報かどうか
+    var isSimulated: Bool {
+        location.isSimulatedBySoftware || location.isProducedByAccessory
+    }
+}
+
+// Shared/Models/Location.swift
+struct Location: Codable {
+    let latitude: Double
+    let longitude: Double
+    let isSimulatedBySoftware: Bool
+    let isProducedByAccessory: Bool
+
+    // ドメインロジック: 座標の妥当性チェック
+    var isValid: Bool {
+        (-90...90).contains(latitude) && (-180...180).contains(longitude)
+    }
+}
+```
+
+**悪い例**:
+```swift
+// ❌ ModelにUIロジックを含める
+struct Visit {
+    var displayTitle: String {  // ❌ 表示ロジックはViewで処理
+        // ...
+    }
+}
+
+// ❌ Modelで副作用を持つ処理
+struct Visit {
+    func save() async throws {  // ❌ 保存処理はServiceで処理
+        // ...
+    }
+}
+```
+
+#### View（ビュー）
+**責務**: UI表示とユーザーイベントの受付
+
+**配置**: `Features/[機能名]/Views/`
+
+**特徴**:
+- SwiftUIのViewプロトコルに準拠
+- UIの構造とレイアウトを定義
+- Storeから状態を受け取り、表示する
+- ユーザーアクションをStoreに伝える
+- ビジネスロジックやデータアクセスロジックを含まない
+
+**例**:
+```swift
+// Features/Home/Views/HomeView.swift
 struct HomeView: View {
     @State private var store = HomeStore()
 
@@ -130,34 +187,28 @@ struct HomeView: View {
         List(store.visits) { visit in
             VisitRow(visit: visit)
         }
-        .task {
-            await store.load()  // ロジックはStoreに委譲
-        }
+        .navigationTitle("訪問記録")
+        .task { await store.load() }
+        .refreshable { await store.refresh() }
     }
 }
 ```
 
-**悪い例**:
+#### Store（状態管理）
+**責務**: 状態管理とServiceとの結合
+
+**配置**: `Features/[機能名]/Models/[機能名]Store.swift`
+
+**特徴**:
+- @Observableマクロを使用
+- UI状態を保持（表示データ、ローディング状態、エラー等）
+- Serviceを呼び出してデータを取得・更新
+- 自身は副作用を持たない（Serviceに委譲）
+- ViewとServiceの橋渡し役
+
+**例**:
 ```swift
-struct HomeView: View {
-    var body: some View {
-        // ❌ Viewでデータ取得やビジネスロジック
-        let items = try? CoreDataStack.shared.context.fetch(...)
-        let filtered = items.filter { /* 複雑なロジック */ }
-
-        List(filtered) { item in
-            Text(item.title)
-        }
-    }
-}
-```
-
-### Storeの責務
-
-Storeは**状態管理とServiceとの結合**に集中します。
-
-**良い例**:
-```swift
+// Features/Home/Models/HomeStore.swift
 import Foundation
 import Observation
 
@@ -167,6 +218,7 @@ final class HomeStore {
     var visits: [Visit] = []
     var isLoading = false
     var errorMessage: String?
+    var selectedFilters: Set<String> = []
 
     // 依存するService
     private let visitService: VisitService
@@ -175,7 +227,7 @@ final class HomeStore {
         self.visitService = visitService
     }
 
-    // アクション
+    // アクション: Viewから呼ばれる
     func load() async {
         isLoading = true
         errorMessage = nil
@@ -188,28 +240,31 @@ final class HomeStore {
 
         isLoading = false
     }
-}
-```
 
-**悪い例**:
-```swift
-@Observable
-final class HomeStore {
-    // ❌ StoreでCore Data操作を直接行う
-    func load() {
-        let context = CoreDataStack.shared.context
-        let request = VisitEntity.fetchRequest()
-        let results = try? context.fetch(request)
-        // ...
+    func delete(_ visit: Visit) async {
+        do {
+            try await visitService.delete(visit)
+            visits.removeAll { $0.id == visit.id }
+        } catch {
+            errorMessage = error.localizedDescription
+        }
     }
 }
 ```
 
-### Serviceの責務
+#### Service（副作用のある処理）
+**責務**: 副作用のある処理（DB、API、位置情報、ファイルI/O等）
 
-Serviceは**副作用のある処理**のみを行います（ステートレス）。
+**配置**: `Features/[機能名]/Services/` または `Shared/Services/`
 
-**良い例**:
+**特徴**:
+- ステートレス（状態を持たない）
+- 外部システムとのやり取りを担当
+- Repository、API、位置情報サービス等を内部で使用
+- エラーハンドリングを行う
+- 複数のRepositoryやAPIを組み合わせることもある
+
+**例**:
 ```swift
 // Features/Home/Services/VisitService.swift
 final class VisitService {
@@ -217,7 +272,7 @@ final class VisitService {
 
     private let repository: VisitRepository
 
-    init(repository: VisitRepository = .shared) {
+    init(repository: VisitRepository = CoreDataVisitRepository.shared) {
         self.repository = repository
     }
 
@@ -229,33 +284,34 @@ final class VisitService {
     func delete(_ visit: Visit) async throws {
         try await repository.delete(visit)
     }
-}
-```
 
-**悪い例**:
-```swift
-class VisitService {
-    // ❌ Serviceに状態を持つ（ステートレスにすべき）
-    var cachedVisits: [Visit] = []
+    // 複数のリポジトリを組み合わせる例
+    func save(_ visit: Visit, photos: [UIImage]) async throws {
+        // 写真を保存（ファイルI/O = 副作用）
+        let photoPaths = try await savePhotos(photos)
 
-    func fetchAll() -> [Visit] {
-        if !cachedVisits.isEmpty {
-            return cachedVisits
-        }
-        // ...
+        // 訪問記録を保存（DB操作 = 副作用）
+        try await repository.save(visit, photoPaths: photoPaths)
     }
 }
 ```
 
-### Logicの責務
+#### Logic（純粋な関数）
+**責務**: 純粋な関数（計算、変換、フォーマット、バリデーション）
 
-Logicは**純粋な関数**のみを含みます（副作用なし）。
+**配置**: `Features/[機能名]/Logic/` または `Shared/Logic/`
 
-**良い例**:
+**特徴**:
+- 副作用なし（同じ入力 → 常に同じ出力）
+- 外部状態に依存しない
+- テストが容易
+- 計算、フィルタリング、フォーマット、バリデーション等
+
+**例**:
 ```swift
 // Features/Home/Logic/VisitFilter.swift
 struct VisitFilter {
-    // 副作用なし、同じ入力 → 同じ出力
+    // 純粋な関数: 副作用なし
     static func filterByDateRange(
         visits: [Visit],
         from: Date,
@@ -263,25 +319,89 @@ struct VisitFilter {
     ) -> [Visit] {
         visits.filter { $0.timestamp >= from && $0.timestamp <= to }
     }
-}
-```
 
-**悪い例**:
-```swift
-struct VisitFilter {
-    // ❌ 純粋な関数に副作用を持ち込む
-    static func filterByDateRange(
+    static func filterByLabels(
         visits: [Visit],
-        from: Date,
-        to: Date
+        labelIds: Set<UUID>
     ) -> [Visit] {
-        Logger.info("フィルタリング開始")  // ❌ 副作用（ログ出力）
-        let result = visits.filter { ... }
-        UserDefaults.standard.set(result.count, forKey: "count")  // ❌ 副作用（永続化）
-        return result
+        guard !labelIds.isEmpty else { return visits }
+        return visits.filter { visit in
+            !Set(visit.labels.map(\.id)).isDisjoint(with: labelIds)
+        }
+    }
+}
+
+// Shared/Logic/Formatting/DateFormatter.swift
+struct DateFormatHelper {
+    // 純粋な関数: 日付をフォーマット
+    static func formatVisitDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .short
+        formatter.locale = Locale(identifier: "ja_JP")
+        return formatter.string(from: date)
+    }
+}
+
+// Shared/Logic/Validation/CoordinateValidator.swift
+struct CoordinateValidator {
+    // 純粋な関数: 座標の妥当性チェック
+    static func isValid(latitude: Double, longitude: Double) -> Bool {
+        (-90...90).contains(latitude) && (-180...180).contains(longitude)
     }
 }
 ```
+
+#### Repository（データアクセス層）
+**責務**: データの永続化と取得（Core Data、UserDefaults等）
+
+**配置**: `Shared/Services/Persistence/`
+
+**特徴**:
+- データソースの詳細を隠蔽
+- Core Dataエンティティとドメインモデルの変換を行う
+- CRUD操作を提供
+- Serviceから呼ばれる
+
+**例**:
+```swift
+// Shared/Services/Persistence/VisitRepository.swift
+protocol VisitRepository {
+    func fetchAll() async throws -> [Visit]
+    func fetch(byId id: UUID) async throws -> Visit?
+    func save(_ visit: Visit) async throws
+    func delete(_ visit: Visit) async throws
+}
+
+// Shared/Services/Persistence/CoreDataVisitRepository.swift
+final class CoreDataVisitRepository: VisitRepository {
+    static let shared = CoreDataVisitRepository()
+
+    private let context: NSManagedObjectContext
+
+    init(context: NSManagedObjectContext = CoreDataStack.shared.context) {
+        self.context = context
+    }
+
+    func fetchAll() async throws -> [Visit] {
+        // Core Dataから取得してドメインモデルに変換
+        let request = VisitEntity.fetchRequest()
+        let entities = try context.fetch(request)
+        return entities.map { $0.toDomain() }
+    }
+
+    // ...
+}
+```
+
+### 厳密な分離の原則
+
+**守るべきルール**:
+1. **Viewにビジネスロジックやデータアクセスロジックを書かない**
+2. **StoreにUIコンポーネントや直接のデータアクセスを持ち込まない**
+3. **Serviceに表示ロジックや状態を持ち込まない**
+4. **Logicに副作用を持ち込まない**
+5. **Modelに副作用や表示ロジックを持ち込まない**
 
 ### 依存性注入（DI）
 
@@ -609,100 +729,6 @@ var selectedLabelIds: Set<UUID>
 func get()              // ❌ 何を取得するか不明
 var data: [Any]        // ❌ 型が曖昧
 var temp: String       // ❌ 一時変数でも意味のある名前を
-```
-
----
-
-## コーディングスタイル
-
-### インデントと整形
-
-- **インデント**: スペース4つ
-- **行の長さ**: 120文字を目安に
-- **空行**: 論理的なブロック間に1行
-
-### コメント
-
-#### コメントを書くべき箇所
-1. **なぜそうしたか**が明確でない箇所
-2. 複雑なロジック
-3. 回避策や一時的な処理
-4. パブリックAPI
-
-#### コメントを書かなくて良い箇所
-- コードを読めば分かる明白な内容
-- 関数名で十分説明できている処理
-
-**良い例**:
-```swift
-// ココカモAPIのレート制限を回避するため、3回リトライする
-for attempt in 1...3 {
-    // ...
-}
-
-// NOTE: iOS 15以前のバグ対応。iOS 16以降では不要な可能性あり
-if #available(iOS 16, *) {
-    // ...
-}
-```
-
-**悪い例**:
-```swift
-// 変数を定義
-var visits: [Visit] = []  // ❌ 読めば分かる
-
-// ループする
-for visit in visits {     // ❌ 意味がない
-    // ...
-}
-```
-
-### 冗長な記載の削除
-
-#### 型推論を活用
-
-```swift
-// ✅ 良い
-let visits = [Visit]()
-let name = "テスト"
-
-// ❌ 冗長
-let visits: [Visit] = [Visit]()
-let name: String = "テスト"
-```
-
-#### 不要なselfを削除
-
-```swift
-@Observable
-final class HomeStore {
-    var visits: [Visit] = []
-
-    func load() {
-        // ✅ selfは不要
-        visits = []
-
-        // ❌ 冗長（曖昧でない場合）
-        self.visits = []
-    }
-}
-```
-
-#### guard文とearly returnを活用
-
-```swift
-// ✅ 良い: early return
-func process(value: String?) {
-    guard let value = value else { return }
-    // メインロジック
-}
-
-// ❌ 悪い: ネストが深い
-func process(value: String?) {
-    if let value = value {
-        // メインロジック
-    }
-}
 ```
 
 ---
