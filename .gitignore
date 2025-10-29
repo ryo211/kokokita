@@ -100,8 +100,8 @@ iOSInjectionProject/
 .idea/
 
 # Claude Code
-.claude/
-CLAUDE.md
+# .claude/
+# CLAUDE.md
 
 # Documentation (一時的に追跡しない場合)
 # doc/
