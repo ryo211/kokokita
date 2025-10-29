@@ -12,10 +12,30 @@ enum RootTab: Hashable {
     case home, /* map, */ center, /* calendar, */ menu
 }
 
+/// 位置情報取得結果を保持する構造体
+struct LocationData: Identifiable {
+    var id: Date { timestamp }
+    let timestamp: Date
+    let latitude: Double
+    let longitude: Double
+    let accuracy: Double?
+    let address: String?
+    let flags: LocationSourceFlags
+}
+
+// Create画面に渡すデータ構造
+struct CreateScreenData: Identifiable {
+    var id: Date { locationData.timestamp }
+    let locationData: LocationData
+    let shouldOpenPOI: Bool
+}
+
 struct RootTabView: View {
     @State private var tab: RootTab = .home
-    @State private var showCreate = false
     @State private var showLocationPermissionAlert = false
+    @State private var showLocationLoading = false
+    @State private var promptSheetLocationData: LocationData?
+    @State private var createScreenData: CreateScreenData?
     @EnvironmentObject private var ui: AppUIState
 
     var body: some View {
@@ -82,11 +102,71 @@ struct RootTabView: View {
         // キーボードだけ下端を無視（入力用画面で下が切れないように）
         .ignoresSafeArea(.keyboard, edges: .bottom)
 
+        // ローディング画面（画面中央にオーバーレイ表示）
+        .overlay {
+            if showLocationLoading {
+                ZStack {
+                    Color.black.opacity(0.3)
+                        .ignoresSafeArea()
+
+                    VStack(spacing: 24) {
+                        ProgressView()
+                            .scaleEffect(1.5)
+                            .progressViewStyle(CircularProgressViewStyle(tint: .accentColor))
+
+                        VStack(spacing: 8) {
+                            Text("位置情報を取得中...")
+                                .font(.headline)
+
+                            Text("しばらくお待ちください")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .padding(32)
+                    .background(
+                        RoundedRectangle(cornerRadius: 20, style: .continuous)
+                            .fill(Color(.systemBackground))
+                            .shadow(radius: 20)
+                    )
+                    .padding(40)
+                }
+                .transition(.opacity)
+                .animation(.easeInOut(duration: 0.2), value: showLocationLoading)
+            }
+        }
+
+        // PostKokokitaPromptSheet
+        .sheet(item: $promptSheetLocationData) { data in
+            PostKokokitaPromptSheet(
+                locationData: data,
+                onQuickSave: {
+                    // 即保存
+                    quickSaveLocation(data)
+                    promptSheetLocationData = nil
+                },
+                onOpenEditor: {
+                    // 編集画面を開く
+                    promptSheetLocationData = nil
+                    createScreenData = CreateScreenData(locationData: data, shouldOpenPOI: false)
+                },
+                onOpenPOI: {
+                    // ココカモを開く
+                    promptSheetLocationData = nil
+                    createScreenData = CreateScreenData(locationData: data, shouldOpenPOI: true)
+                },
+                onCancel: {
+                    promptSheetLocationData = nil
+                }
+            )
+            .presentationDetents([.large])
+        }
+
         // 新規作成モーダル
-        .sheet(isPresented: $showCreate, onDismiss: {
+        .sheet(item: $createScreenData, onDismiss: {
             NotificationCenter.default.post(name: .visitsChanged, object: nil)
-        }) {
-            CreateView()
+        }) { screenData in
+            CreateView(initialLocationData: screenData.locationData, shouldOpenPOI: screenData.shouldOpenPOI)
                 .presentationDetents([.large])
                 .ignoresSafeArea(.keyboard, edges: .bottom)
         }
@@ -109,17 +189,117 @@ struct RootTabView: View {
 
         switch status {
         case .authorizedAlways, .authorizedWhenInUse:
-            // 権限あり：作成画面を開く
-            showCreate = true
+            // 権限あり：位置情報を取得
+            Task {
+                await fetchLocationAndShowPrompt()
+            }
         case .notDetermined:
-            // 未決定：システムダイアログが表示されるので作成画面を開く
-            showCreate = true
+            // 未決定：システムダイアログが表示されるので位置情報取得を試みる
+            Task {
+                await fetchLocationAndShowPrompt()
+            }
         case .denied, .restricted:
             // 拒否済み：設定誘導アラートを表示
             showLocationPermissionAlert = true
         @unknown default:
-            // 未知のステータス：念のため作成画面を開く
-            showCreate = true
+            // 未知のステータス：念のため位置情報取得を試みる
+            Task {
+                await fetchLocationAndShowPrompt()
+            }
+        }
+    }
+
+    @MainActor
+    private func fetchLocationAndShowPrompt() async {
+        // ローディング表示
+        showLocationLoading = true
+
+        do {
+            let locationService = LocationGeocodingService(
+                locationService: AppContainer.shared.loc
+            )
+
+            let result = try await locationService.requestLocationWithAddress { address in
+                // バックグラウンドで住所が取得できた時
+                Task { @MainActor in
+                    if var data = self.promptSheetLocationData {
+                        self.promptSheetLocationData = LocationData(
+                            timestamp: data.timestamp,
+                            latitude: data.latitude,
+                            longitude: data.longitude,
+                            accuracy: data.accuracy,
+                            address: address,
+                            flags: data.flags
+                        )
+                    }
+                }
+            }
+
+            let data = LocationData(
+                timestamp: result.timestamp,
+                latitude: result.latitude,
+                longitude: result.longitude,
+                accuracy: result.accuracy,
+                address: result.address,
+                flags: result.flags
+            )
+
+            // ローディング閉じてPromptSheet表示
+            showLocationLoading = false
+            promptSheetLocationData = data
+
+        } catch {
+            showLocationLoading = false
+            // エラー時は権限アラート表示
+            if case LocationServiceError.permissionDenied = error {
+                showLocationPermissionAlert = true
+            }
+        }
+    }
+
+    private func quickSaveLocation(_ data: LocationData) {
+        let repo = AppContainer.shared.repo
+        let integ = AppContainer.shared.integ
+
+        do {
+            let id = UUID()
+            let integrity = try integ.signImmutablePayload(
+                id: id,
+                timestampUTC: data.timestamp,
+                lat: data.latitude,
+                lon: data.longitude,
+                acc: data.accuracy,
+                flags: data.flags
+            )
+
+            let visit = Visit(
+                id: id,
+                timestampUTC: data.timestamp,
+                latitude: data.latitude,
+                longitude: data.longitude,
+                horizontalAccuracy: data.accuracy,
+                isSimulatedBySoftware: data.flags.isSimulatedBySoftware,
+                isProducedByAccessory: data.flags.isProducedByAccessory,
+                integrity: integrity
+            )
+
+            let details = VisitDetails(
+                title: nil,
+                facilityName: nil,
+                facilityAddress: nil,
+                facilityCategory: nil,
+                comment: nil,
+                labelIds: [],
+                groupId: nil,
+                memberIds: [],
+                resolvedAddress: data.address,
+                photoPaths: []
+            )
+
+            try repo.create(visit: visit, details: details)
+            NotificationCenter.default.post(name: .visitsChanged, object: nil)
+        } catch {
+            print("Quick save failed: \(error)")
         }
     }
 
@@ -154,16 +334,18 @@ private struct CustomBottomBar: View {
                                    height: UIConstants.Size.centerButtonSize)
                             .shadow(radius: UIConstants.Shadow.radiusMedium * 3, y: UIConstants.Shadow.radiusMedium)
 
-                        VStack(spacing: 2) {
-                            Image(systemName: "mappin.and.ellipse")
-                                .foregroundStyle(.white)
-                                .font(.title3.weight(.semibold))
+                        VStack(spacing: 0) {
+                            Image("kokokita_irodori_white")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 42, height: 42)
                                 .accessibilityHidden(true)
                             Text("ココキタ")
                                 .font(.caption2.weight(.bold))
                                 .foregroundStyle(.white)
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.7)
+                                .offset(y: -2)
                         }
                         .padding(.vertical, 6)
                         .padding(.horizontal, 8)

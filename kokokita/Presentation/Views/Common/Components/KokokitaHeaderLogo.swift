@@ -56,29 +56,16 @@ struct KokokitaHeaderLogo: View {
     var body: some View {
         HStack(spacing: size.spacing) {
             // アイコン部分
-            ZStack {
-                Circle()
-                    .fill(Color.accentColor)
-                    .frame(width: size.iconSize, height: size.iconSize)
-
-                Image(systemName: "mappin.and.ellipse")
-                    .foregroundStyle(.white)
-                    .font(.system(size: size.iconSize * 0.5, weight: .semibold))
-            }
+            Image("kokokita_irodori_blue")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 42, height: 42)
 
             // テキスト部分 - スマート＆おしゃれ
             Text("ココキタ")
                 .font(.system(size: size.fontSize, weight: .semibold, design: .rounded))
                 .tracking(1.2)  // 文字間隔を広げる
-                .foregroundStyle(
-                    LinearGradient(
-                        colors: [
-                            Color.accentColor.opacity(0.75)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
+                .foregroundColor(.accentColor)
         }
         .offset(x: size.opticalOffsetX)
     }
@@ -89,27 +76,16 @@ struct KokokitaHeaderLogoSimple: View {
     var body: some View {
         HStack(spacing: 6) {
             // アイコン
-            Image(systemName: "mappin.and.ellipse")
-                .foregroundStyle(.white)
-                .font(.callout.weight(.semibold))
-                .frame(width: 28, height: 28)
-                .background(Circle().fill(Color.accentColor))
+            Image("kokokita_irodori_blue")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 42, height: 42)
 
             // テキスト - スマート＆おしゃれ
             Text("ココキタ")
                 .font(.system(size: 20, weight: .semibold, design: .rounded))
                 .tracking(1.2)  // 文字間隔を広げる
-                .foregroundStyle(
-                    LinearGradient(
-                        colors: [
-                            Color.accentColor.opacity(0.95),
-                            Color.accentColor.opacity(0.75)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-                .shadow(color: Color.accentColor.opacity(0.2), radius: 2, x: 0, y: 1)
+                .foregroundColor(.accentColor)
         }
     }
 }

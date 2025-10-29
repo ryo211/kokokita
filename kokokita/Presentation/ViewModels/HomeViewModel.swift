@@ -7,6 +7,13 @@
 
 import Foundation
 
+// 日付グループ構造
+struct DateGroup: Identifiable {
+    let id: String
+    let date: Date
+    let items: [VisitAggregate]
+}
+
 @MainActor
 final class HomeViewModel: ObservableObject {
     @Published var items: [VisitAggregate] = []
@@ -39,6 +46,28 @@ final class HomeViewModel: ObservableObject {
         return labelFilter != nil || groupFilter != nil || memberFilter != nil || categoryFilter != nil ||
                !titleQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
                dateFrom != nil || dateTo != nil
+    }
+
+    // 日付ごとにグループ化
+    var groupedByDate: [DateGroup] {
+        let calendar = Calendar.current
+        let grouped = Dictionary(grouping: items) { item in
+            calendar.startOfDay(for: item.visit.timestampUTC)
+        }
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+
+        return grouped.map { (date, items) in
+            DateGroup(
+                id: dateFormatter.string(from: date),
+                date: date,
+                items: items.sorted { a, b in
+                    sortAscending ? (a.visit.timestampUTC < b.visit.timestampUTC) : (a.visit.timestampUTC > b.visit.timestampUTC)
+                }
+            )
+        }.sorted { a, b in
+            sortAscending ? (a.date < b.date) : (a.date > b.date)
+        }
     }
 
     // ユーザ操作用

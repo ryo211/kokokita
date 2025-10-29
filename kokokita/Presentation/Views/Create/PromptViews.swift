@@ -8,25 +8,35 @@
 import SwiftUI
 
 struct PostKokokitaPromptSheet: View {
-    let timestamp: Date?
-    let addressText: String?
-    let latitude: Double
-    let longitude: Double
-    let canSave: Bool
+    let locationData: LocationData
+    let onQuickSave: () -> Void
+    let onOpenEditor: () -> Void
+    let onOpenPOI: () -> Void
+    let onCancel: () -> Void
 
-    let onSaveNow: () -> Void
-    let onManualInput: () -> Void
-    let onPickPOI: () -> Void
+    private var timestamp: Date? { locationData.timestamp }
+    private var addressText: String? { locationData.address }
+    private var latitude: Double { locationData.latitude }
+    private var longitude: Double { locationData.longitude }
+    private var canSave: Bool { latitude != 0 || longitude != 0 }
+    
+    // 1%の確率でレア画像を表示
+    private var logoImageName: String {
+        Double.random(in: 0..<1) < 0.01 ? "kokokita_irodori" : "kokokita_irodori_blue"
+    }
 
     var body: some View {
         VStack(spacing: 16) {
             // 見出し
             HStack(spacing: 10) {
-                Image(systemName: "mappin.and.ellipse")
-                    .font(.title2.weight(.semibold))
-                    .foregroundStyle(.tint)
-                Text("ココキタ！")
-                    .font(.title2.bold())
+                Image(logoImageName)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 42, height: 42)
+                Text("ココキタ  ✅")
+                    .font(.system(size: 24, weight: .semibold, design: .rounded))
+                    .tracking(1.2)  // 文字間隔を広げる
+                    .foregroundColor(.accentColor)
             }
             .padding(.top, 8)
 
@@ -65,7 +75,7 @@ struct PostKokokitaPromptSheet: View {
                     title: "そのまま保存",
                     subtitle: "後で編集できます",
                     isDisabled: !canSave,
-                    action: onSaveNow
+                    action: onQuickSave
                 )
 
                 actionButton(
@@ -73,15 +83,15 @@ struct PostKokokitaPromptSheet: View {
                     systemImage: "square.and.pencil",
                     title: "情報を入力",
                     subtitle: "タイトル・メモなど",
-                    action: onManualInput
+                    action: onOpenEditor
                 )
 
                 actionButton(
                     primary: false,
                     systemImage: "building.2.crop.circle",
-                    title: "周囲から",
-                    subtitle: "場所の候補を表示・選択",
-                    action: onPickPOI
+                    title: "ココカモ",
+                    subtitle: "周囲の場所を表示・選択",
+                    action: onOpenPOI
                 )
             }
             .frame(height: 120)

@@ -13,32 +13,59 @@ import CoreLocation
 struct VisitDetailScreen: View {
     @Environment(\.dismiss) private var dismiss
     let data: VisitDetailData
+    let visitId: UUID  // 編集用にIDを追加
     let onBack: () -> Void
     let onEdit: () -> Void
     let onShare: () -> Void
     let onDelete: () -> Void
+    let onUpdate: () -> Void  // 更新時のコールバック
 
     // 地図カメラ
     @State private var camera: MapCameraPosition
-    
+
 //    @State private var shareImage: UIImage? = nil
 //    @State private var showShareSheet = false
     @State private var sharePayload: SharePayload? = nil
     @State private var showDeleteAlert = false
+
+    // チップ編集用の状態
+    @State private var labelPickerShown = false
+    @State private var groupPickerShown = false
+    @State private var memberPickerShown = false
+
+    @State private var labelCreateShown = false
+    @State private var groupCreateShown = false
+    @State private var memberCreateShown = false
+
+    @State private var newLabelName = ""
+    @State private var newGroupName = ""
+    @State private var newMemberName = ""
+
+    @State private var labelOptions: [LabelTag] = []
+    @State private var groupOptions: [GroupTag] = []
+    @State private var memberOptions: [MemberTag] = []
+
+    @State private var selectedLabelIds: Set<UUID> = []
+    @State private var selectedGroupId: UUID? = nil
+    @State private var selectedMemberIds: Set<UUID> = []
     // SNSカードの論理サイズ（表示用は1/3で描画、保存はscale=3で 1080x1350）
     private let logicalSize = CGSize(width: AppConfig.shareImageLogicalWidth,
                                       height: AppConfig.shareImageLogicalHeight)
     
     init(data: VisitDetailData,
+         visitId: UUID,
          onBack: @escaping () -> Void = {},
          onEdit: @escaping () -> Void = {},
          onShare: @escaping () -> Void = {},
-         onDelete: @escaping () -> Void = {}) {
+         onDelete: @escaping () -> Void = {},
+         onUpdate: @escaping () -> Void = {}) {
         self.data = data
+        self.visitId = visitId
         self.onBack = onBack
         self.onEdit = onEdit
         self.onShare = onShare
         self.onDelete = onDelete
+        self.onUpdate = onUpdate
 
         if let c = data.coordinate {
             let region = MKCoordinateRegion(center: c,
@@ -58,7 +85,14 @@ struct VisitDetailScreen: View {
                 .ignoresSafeArea()
 
             ScrollView {
-                VisitDetailContent(data: data, mapSnapshot: nil, isSharing: false)
+                VisitDetailContent(
+                    data: data,
+                    mapSnapshot: nil,
+                    isSharing: false,
+                    onLabelTap: { labelPickerShown = true },
+                    onGroupTap: { groupPickerShown = true },
+                    onMemberTap: { memberPickerShown = true }
+                )
             }
 
         }
@@ -106,6 +140,218 @@ struct VisitDetailScreen: View {
             Button("キャンセル", role: .cancel) { }
         } message: {
             Text("この操作は取り消せません。")
+        }
+        // ラベルピッカー
+        .sheet(isPresented: $labelPickerShown) {
+            NavigationStack {
+                LabelPickerSheet(
+                    selectedIds: $selectedLabelIds,
+                    labelOptions: $labelOptions,
+                    isPresented: $labelPickerShown,
+                    showCreateSheet: $labelCreateShown,
+                    showDoneButton: false
+                )
+                .navigationTitle("ラベルを選択")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("閉じる") { labelPickerShown = false }
+                    }
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("保存") {
+                            saveLabels()
+                            labelPickerShown = false
+                        }
+                    }
+                }
+            }
+            .sheet(isPresented: $labelCreateShown) {
+                LabelCreateSheet(
+                    newLabelName: $newLabelName,
+                    isPresented: $labelCreateShown,
+                    onCreate: createLabelAndSelect
+                )
+            }
+        }
+        // グループピッカー
+        .sheet(isPresented: $groupPickerShown) {
+            NavigationStack {
+                GroupPickerSheet(
+                    selectedId: $selectedGroupId,
+                    groupOptions: $groupOptions,
+                    isPresented: $groupPickerShown,
+                    showCreateSheet: $groupCreateShown,
+                    showClearButton: true,
+                    showDoneButton: false
+                )
+                .navigationTitle("グループを選択")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("閉じる") { groupPickerShown = false }
+                    }
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("保存") {
+                            saveGroup()
+                            groupPickerShown = false
+                        }
+                    }
+                }
+            }
+            .sheet(isPresented: $groupCreateShown) {
+                GroupCreateSheet(
+                    newGroupName: $newGroupName,
+                    isPresented: $groupCreateShown,
+                    onCreate: createGroupAndSelect
+                )
+            }
+        }
+        // メンバーピッカー
+        .sheet(isPresented: $memberPickerShown) {
+            NavigationStack {
+                MemberPickerSheet(
+                    selectedIds: $selectedMemberIds,
+                    memberOptions: $memberOptions,
+                    isPresented: $memberPickerShown,
+                    showCreateSheet: $memberCreateShown,
+                    showDoneButton: false
+                )
+                .navigationTitle("メンバーを選択")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("閉じる") { memberPickerShown = false }
+                    }
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("保存") {
+                            saveMembers()
+                            memberPickerShown = false
+                        }
+                    }
+                }
+            }
+            .sheet(isPresented: $memberCreateShown) {
+                MemberCreateSheet(
+                    newMemberName: $newMemberName,
+                    isPresented: $memberCreateShown,
+                    onCreate: createMemberAndSelect
+                )
+            }
+        }
+        .task {
+            await loadTaxonomyData()
+        }
+    }
+
+    // MARK: - データロード
+    private func loadTaxonomyData() async {
+        labelOptions = ((try? AppContainer.shared.repo.allLabels()) ?? []).sortedByName
+        groupOptions = ((try? AppContainer.shared.repo.allGroups()) ?? []).sortedByName
+        memberOptions = ((try? AppContainer.shared.repo.allMembers()) ?? []).sortedByName
+
+        // 現在の値を取得
+        if let agg = try? AppContainer.shared.repo.get(by: visitId) {
+            selectedLabelIds = Set(agg.details.labelIds)
+            selectedGroupId = agg.details.groupId
+            selectedMemberIds = Set(agg.details.memberIds)
+        }
+    }
+
+    // MARK: - 新規作成
+    private func createLabelAndSelect() {
+        let name = newLabelName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !name.isEmpty else { return }
+
+        if let exist = labelOptions.first(where: { $0.name == name }) {
+            selectedLabelIds.insert(exist.id)
+        } else {
+            do {
+                let id = try AppContainer.shared.repo.createLabel(name: name)
+                let tag = LabelTag(id: id, name: name)
+                labelOptions.append(tag)
+                selectedLabelIds.insert(id)
+                NotificationCenter.default.post(name: .taxonomyChanged, object: nil)
+            } catch {
+                print("Failed to create label: \(error)")
+            }
+        }
+        newLabelName = ""
+        labelCreateShown = false
+    }
+
+    private func createGroupAndSelect() {
+        let name = newGroupName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !name.isEmpty else { return }
+
+        if let exist = groupOptions.first(where: { $0.name == name }) {
+            selectedGroupId = exist.id
+        } else {
+            do {
+                let id = try AppContainer.shared.repo.createGroup(name: name)
+                let tag = GroupTag(id: id, name: name)
+                groupOptions.append(tag)
+                selectedGroupId = id
+                NotificationCenter.default.post(name: .taxonomyChanged, object: nil)
+            } catch {
+                print("Failed to create group: \(error)")
+            }
+        }
+        newGroupName = ""
+        groupCreateShown = false
+    }
+
+    private func createMemberAndSelect() {
+        let name = newMemberName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !name.isEmpty else { return }
+
+        if let exist = memberOptions.first(where: { $0.name == name }) {
+            selectedMemberIds.insert(exist.id)
+        } else {
+            do {
+                let id = try AppContainer.shared.repo.createMember(name: name)
+                let tag = MemberTag(id: id, name: name)
+                memberOptions.append(tag)
+                selectedMemberIds.insert(id)
+                NotificationCenter.default.post(name: .taxonomyChanged, object: nil)
+            } catch {
+                print("Failed to create member: \(error)")
+            }
+        }
+        newMemberName = ""
+        memberCreateShown = false
+    }
+
+    // MARK: - 保存処理
+    private func saveLabels() {
+        do {
+            try AppContainer.shared.repo.updateDetails(id: visitId) { details in
+                details.labelIds = Array(selectedLabelIds)
+            }
+            onUpdate()
+        } catch {
+            print("Failed to update labels: \(error)")
+        }
+    }
+
+    private func saveGroup() {
+        do {
+            try AppContainer.shared.repo.updateDetails(id: visitId) { details in
+                details.groupId = selectedGroupId
+            }
+            onUpdate()
+        } catch {
+            print("Failed to update group: \(error)")
+        }
+    }
+
+    private func saveMembers() {
+        do {
+            try AppContainer.shared.repo.updateDetails(id: visitId) { details in
+                details.memberIds = Array(selectedMemberIds)
+            }
+            onUpdate()
+        } catch {
+            print("Failed to update members: \(error)")
         }
     }
     

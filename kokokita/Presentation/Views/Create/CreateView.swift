@@ -2,13 +2,24 @@ import SwiftUI
 import Foundation
 
 struct CreateView: View {
+    let initialLocationData: LocationData
+    let shouldOpenPOI: Bool
+
     @Environment(\.dismiss) private var dismiss
-    @StateObject private var vm = CreateEditViewModel(
-        loc: AppContainer.shared.loc,
-        poi: AppContainer.shared.poi,
-        integ: AppContainer.shared.integ,
-        repo: AppContainer.shared.repo
-    )
+    @StateObject private var vm: CreateEditViewModel
+
+    init(initialLocationData: LocationData, shouldOpenPOI: Bool = false) {
+        self.initialLocationData = initialLocationData
+        self.shouldOpenPOI = shouldOpenPOI
+        let viewModel = CreateEditViewModel(
+            loc: AppContainer.shared.loc,
+            poi: AppContainer.shared.poi,
+            integ: AppContainer.shared.integ,
+            repo: AppContainer.shared.repo,
+            initialLocationData: initialLocationData
+        )
+        _vm = StateObject(wrappedValue: viewModel)
+    }
 
     var body: some View {
         VisitEditScreen(vm: vm, mode: .create) {
@@ -20,6 +31,10 @@ struct CreateView: View {
             if shouldDismiss {
                 dismiss()
             }
+        }
+        .onAppear {
+            // ViewModelが完全に初期化された後にPOIを開く
+            vm.openPOIIfNeeded(shouldOpenPOI: shouldOpenPOI)
         }
     }
 }
