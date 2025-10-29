@@ -1,0 +1,134 @@
+# language of the project (csharp, python, rust, java, typescript, go, cpp, or ruby)
+#  * For C, use cpp
+#  * For JavaScript, use typescript
+# Special requirements:
+#  * csharp: Requires the presence of a .sln file in the project folder.
+language: swift
+
+# the encoding used by text files in the project
+# For a list of possible encodings, see https://docs.python.org/3.11/library/codecs.html#standard-encodings
+encoding: "utf-8"
+
+# whether to use the project's gitignore file to ignore files
+# Added on 2025-04-07
+ignore_all_files_in_gitignore: true
+# list of additional paths to ignore
+# same syntax as gitignore, so you can use * and **
+# Was previously called `ignored_dirs`, please update your config if you are using that.
+# Added (renamed) on 2025-04-07
+ignored_paths: []
+
+# whether the project is in read-only mode
+# If set to true, all editing tools will be disabled and attempts to use them will result in an error
+# Added on 2025-04-18
+read_only: false
+
+# list of tool names to exclude. We recommend not excluding any tools, see the readme for more details.
+# Below is the complete list of tools for convenience.
+# To make sure you have the latest list of tools, and to view their descriptions, 
+# execute `uv run scripts/print_tool_overview.py`.
+#
+#  * `activate_project`: Activates a project by name.
+#  * `check_onboarding_performed`: Checks whether project onboarding was already performed.
+#  * `create_text_file`: Creates/overwrites a file in the project directory.
+#  * `delete_lines`: Deletes a range of lines within a file.
+#  * `delete_memory`: Deletes a memory from Serena's project-specific memory store.
+#  * `execute_shell_command`: Executes a shell command.
+#  * `find_referencing_code_snippets`: Finds code snippets in which the symbol at the given location is referenced.
+#  * `find_referencing_symbols`: Finds symbols that reference the symbol at the given location (optionally filtered by type).
+#  * `find_symbol`: Performs a global (or local) search for symbols with/containing a given name/substring (optionally filtered by type).
+#  * `get_current_config`: Prints the current configuration of the agent, including the active and available projects, tools, contexts, and modes.
+#  * `get_symbols_overview`: Gets an overview of the top-level symbols defined in a given file.
+#  * `initial_instructions`: Gets the initial instructions for the current project.
+#     Should only be used in settings where the system prompt cannot be set,
+#     e.g. in clients you have no control over, like Claude Desktop.
+#  * `insert_after_symbol`: Inserts content after the end of the definition of a given symbol.
+#  * `insert_at_line`: Inserts content at a given line in a file.
+#  * `insert_before_symbol`: Inserts content before the beginning of the definition of a given symbol.
+#  * `list_dir`: Lists files and directories in the given directory (optionally with recursion).
+#  * `list_memories`: Lists memories in Serena's project-specific memory store.
+#  * `onboarding`: Performs onboarding (identifying the project structure and essential tasks, e.g. for testing or building).
+#  * `prepare_for_new_conversation`: Provides instructions for preparing for a new conversation (in order to continue with the necessary context).
+#  * `read_file`: Reads a file within the project directory.
+#  * `read_memory`: Reads the memory with the given name from Serena's project-specific memory store.
+#  * `remove_project`: Removes a project from the Serena configuration.
+#  * `replace_lines`: Replaces a range of lines within a file with new content.
+#  * `replace_symbol_body`: Replaces the full definition of a symbol.
+#  * `restart_language_server`: Restarts the language server, may be necessary when edits not through Serena happen.
+#  * `search_for_pattern`: Performs a search for a pattern in the project.
+#  * `summarize_changes`: Provides instructions for summarizing the changes made to the codebase.
+#  * `switch_modes`: Activates modes by providing a list of their names
+#  * `think_about_collected_information`: Thinking tool for pondering the completeness of collected information.
+#  * `think_about_task_adherence`: Thinking tool for determining whether the agent is still on track with the current task.
+#  * `think_about_whether_you_are_done`: Thinking tool for determining whether the task is truly completed.
+#  * `write_memory`: Writes a named memory (for future reference) to Serena's project-specific memory store.
+excluded_tools: []
+
+# initial prompt for the project. It will always be given to the LLM upon activating the project
+# (contrary to the memories, which are loaded on demand).
+initial_prompt: |
+  # Serena活用ガイド
+
+  このプロジェクトではSerena（MCPサーバー）を積極的に活用してください。
+
+  ## 必須の動作
+
+  ### 1. 会話開始時
+  - **必ず最初に`check_onboarding_performed`を実行**してオンボーディング状態を確認
+  - **関連するメモリを`list_memories`で確認し、`read_memory`で読み込む**
+
+  ### 2. コード探索時
+  - **ファイル全体を読む前に、必ず`get_symbols_overview`でシンボル概要を取得**
+  - **特定のシンボルを探す場合は`find_symbol`を使用**
+  - **依存関係を調べる場合は`find_referencing_symbols`を使用**
+  - **パターン検索が必要な場合は`search_for_pattern`を使用**
+
+  ### 3. コード編集時
+  - **シンボル全体を置き換える場合は`replace_symbol_body`を使用**
+  - **新しいメソッドやクラスを追加する場合は`insert_after_symbol`または`insert_before_symbol`を使用**
+  - **行単位の編集が必要な場合のみ`replace_lines`を使用**
+
+  ### 4. 情報収集完了時
+  - **`think_about_collected_information`を呼び出して情報の十分性を確認**
+
+  ### 5. タスク完了前
+  - **`think_about_task_adherence`を呼び出してタスクに沿っているか確認**
+  - **`think_about_whether_you_are_done`を呼び出して完了を確認**
+
+  ## やってはいけないこと
+
+  ❌ **シンボル概要を見ずにいきなりファイル全体を読む**
+  ❌ **同じファイルを何度も読む**（一度読んだら、シンボリックツールで必要な部分だけ取得）
+  ❌ **find_symbolで見つけた後、同じ内容をread_fileで再度読む**
+
+  ## 効率的なワークフロー例
+
+  ### コード調査
+  1. `get_symbols_overview` → 概要把握
+  2. `find_symbol` → 必要なシンボルを特定
+  3. `find_referencing_symbols` → 依存関係確認
+  4. `think_about_collected_information` → 情報十分性確認
+
+  ### コード編集
+  1. `find_symbol` → 編集対象を特定
+  2. `replace_symbol_body` → シンボル置換
+  3. `find_referencing_symbols` → 影響範囲確認
+  4. `think_about_task_adherence` → タスク遵守確認
+  5. `think_about_whether_you_are_done` → 完了確認
+
+  ## メモリの活用
+
+  タスクに関連するメモリを積極的に読み込んでください：
+  - `project_overview.md`: プロジェクト概要
+  - `architecture_and_patterns.md`: アーキテクチャと設計パターン
+  - `code_style_conventions.md`: コーディング規約
+  - `important_guidelines.md`: 重要なガイドライン
+  - `suggested_commands.md`: よく使うコマンド
+  - `task_completion_checklist.md`: タスク完了チェックリスト
+  - `codebase_structure.md`: コードベース構造
+  - `tech_stack.md`: 技術スタック
+  - `agent_collaboration.md`: エージェント連携
+
+  必要に応じて`write_memory`で新しい知見を保存してください。
+
+project_name: "kokokita"
