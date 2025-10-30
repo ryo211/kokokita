@@ -1,18 +1,25 @@
 # 実装ガイド
 
-> **重要**: このガイドは実装時の具体的な手順とチェックリストです。実装前に必ず確認してください。
+> **重要**: このガイドは実装時の具体的な手順とチェックリストです。
 
-最終更新: 2025-10-25
+## このドキュメントについて
 
-## 目次
+このドキュメントは**「どうやって実装するか」**の具体的な手順を説明します。
 
-1. [実装前の準備](#実装前の準備)
-2. [新機能実装の手順](#新機能実装の手順)
-3. [既存機能の変更手順](#既存機能の変更手順)
-4. [タスク別ガイド](#タスク別ガイド)
-5. [実装チェックリスト](#実装チェックリスト)
-6. [トラブルシューティング](#トラブルシューティング)
-7. [フォルダ構成の移行](#フォルダ構成の移行)
+### 実装前に必ず読むこと
+
+**[アーキテクチャガイド](./architecture-guide.md) を先に読んで設計原則を理解してください。**
+
+- アーキテクチャガイド: 「なぜこの設計なのか」「何を守るべきか」を理解
+- 実装ガイド（本ドキュメント）: 「どうやって実装するか」の手順を確認
+
+### 関連ドキュメント
+
+- **設計原則とベストプラクティス** → [アーキテクチャガイド](./architecture-guide.md)
+- **既存コードの移行** → [MVVM→MV移行ガイド](./migration/mvvm-to-mv-migration-guide.md)
+- **設計判断の背景** → [ADR-001: フォルダ構成とアーキテクチャの再設計](./ADR/001-フォルダ構成とアーキテクチャの再設計.md)
+
+最終更新: 2025-10-30
 
 ---
 
@@ -22,9 +29,9 @@
 
 実装を始める前に以下を必ず読む：
 
+- [ ] [アーキテクチャガイド](./architecture-guide.md) - **必読**: 設計原則とベストプラクティスを理解
 - [ ] `CLAUDE.md` - プロジェクト概要を理解
-- [ ] `doc/architecture-guide.md` - ベストプラクティスを確認
-- [ ] `doc/ADR/001-フォルダ構成とアーキテクチャの再設計.md` - Feature-based MVアーキテクチャを理解
+- [ ] [ADR-001: フォルダ構成とアーキテクチャの再設計](./ADR/001-フォルダ構成とアーキテクチャの再設計.md) - Feature-based MVアーキテクチャの設計判断を理解
 - [ ] `doc/design/[機能名].md` - 該当する設計書があれば読む
 
 ### 2. 既存コードの調査
@@ -614,287 +621,11 @@ Shared/UIComponents/
 
 ---
 
-## フォルダ構成の移行
-
-> **重要**: 詳細な設計判断は `doc/ADR/001-フォルダ構成とアーキテクチャの再設計.md` を参照してください。
-
-### 移行の方針
-
-新しいフォルダ構成（Feature-based MV）への移行は**段階的**に行います：
-
-1. **新規機能は新構成で実装**
-2. **既存機能は必要に応じて移行**
-3. **一度に全部移行しない**（リスク軽減）
-
-### Phase 1: 新しいフォルダ構造を作成
-
-```bash
-# Feature-based構成のフォルダを作成
-mkdir -p Features/{Home,Create,Detail,Menu}/{Models,Logic,Services,Views/Components}
-mkdir -p Shared/{Models,Logic,Services,UIComponents}
-mkdir -p Shared/Logic/{Calculations,Formatting,Validation}
-mkdir -p Shared/Services/{Persistence,Security}
-mkdir -p Shared/UIComponents/{Buttons,Forms,Media}
-mkdir -p App/{Config,DI}
-mkdir -p Utilities/{Extensions,Helpers,Protocols}
-mkdir -p Resources/Localization
-```
-
-### Phase 2: Shared/の整理と移行（優先度：高）
-
-#### 2.1 共通モデルの移行
-
-| 現在の場所 | 移行先 | 作業 |
-|-----------|--------|------|
-| `Domain/Models.swift` | `Shared/Models/` | 分割して移動 |
-| `Domain/Models.swift` 内の`Visit` | `Shared/Models/Visit.swift` | 抽出 |
-| `Domain/Models.swift` 内の`Taxonomy` | `Shared/Models/Taxonomy.swift` | 抽出 |
-| `Domain/Models.swift` 内の`Location` | `Shared/Models/Location.swift` | 抽出 |
-
-#### 2.2 共通Serviceの移行
-
-| 現在の場所 | 移行先 |
-|-----------|--------|
-| `Infrastructure/CoreDataVisitRepository.swift` | `Shared/Services/Persistence/VisitRepository.swift` |
-| `Infrastructure/CoreDataTaxonomyRepository.swift` | `Shared/Services/Persistence/TaxonomyRepository.swift` |
-| `Infrastructure/CoreDataStack.swift` | `Shared/Services/Persistence/CoreDataStack.swift` |
-| `Infrastructure/DefaultIntegrityService.swift` | `Shared/Services/Security/IntegrityService.swift` |
-
-### Phase 3: Features/への移行（新規機能から）
-
-#### 3.1 新規機能（優先度：高）
-
-**新機能は必ずFeatures/で実装**:
-```
-Features/
-└── [新機能名]/
-    ├── Models/
-    │   └── [機能名]Store.swift     # @Observable
-    ├── Logic/
-    │   └── [処理名].swift          # 純粋な関数
-    ├── Services/
-    │   └── [機能名]Service.swift   # 副作用
-    └── Views/
-        ├── [機能名]View.swift
-        └── Components/
-```
-
-#### 3.2 既存機能の移行（優先度：中）
-
-小さい機能から順に移行：
-
-**例: Menu機能の移行**
-
-```bash
-# 1. フォルダ作成
-mkdir -p Features/Menu/{Models,Views}
-
-# 2. ViewModelをStoreに変換して移動
-# Presentation/ViewModels/MenuViewModel.swift → Features/Menu/Models/MenuStore.swift
-# - ObservableObject → @Observable
-# - @Published → 通常のプロパティ
-
-# 3. Viewを移動
-git mv Presentation/Views/Menu/MenuView.swift Features/Menu/Views/
-```
-
-### Phase 4: ViewModelからStoreへの変換
-
-#### 4.1 変換手順
-
-**Before (旧MVVM)**:
-```swift
-// Presentation/ViewModels/HomeViewModel.swift
-import Foundation
-import Combine
-
-@MainActor
-final class HomeViewModel: ObservableObject {
-    @Published var visits: [Visit] = []
-    @Published var isLoading = false
-
-    private let repository: VisitRepository
-
-    init(repository: VisitRepository) {
-        self.repository = repository
-    }
-
-    func load() {
-        isLoading = true
-        visits = try repository.fetchAll()
-        isLoading = false
-    }
-}
-```
-
-**After (Feature-based MV)**:
-```swift
-// Features/Home/Models/HomeStore.swift
-import Foundation
-import Observation
-
-@Observable
-final class HomeStore {
-    var visits: [Visit] = []
-    var isLoading = false
-
-    private let visitService: VisitService
-
-    init(visitService: VisitService = .shared) {
-        self.visitService = visitService
-    }
-
-    func load() async {
-        isLoading = true
-        visits = try await visitService.fetchAll()
-        isLoading = false
-    }
-}
-```
-
-**変換チェックリスト**:
-- [ ] `ObservableObject` → `@Observable`
-- [ ] `@Published` を削除（通常のプロパティに）
-- [ ] `@MainActor` を削除（@Observableが自動対応）
-- [ ] Combineのimportを削除
-- [ ] `import Observation` を追加
-- [ ] ViewModelという名前 → Store
-- [ ] 同期処理 → async/await
-
-#### 4.2 Viewの変換
-
-**Before**:
-```swift
-struct HomeView: View {
-    @StateObject private var viewModel: HomeViewModel
-
-    var body: some View {
-        List(viewModel.visits) { visit in
-            VisitRow(visit: visit)
-        }
-        .onAppear {
-            viewModel.load()
-        }
-    }
-}
-```
-
-**After**:
-```swift
-struct HomeView: View {
-    @State private var store = HomeStore()
-
-    var body: some View {
-        List(store.visits) { visit in
-            VisitRow(visit: visit)
-        }
-        .task {
-            await store.load()
-        }
-    }
-}
-```
-
-**変換チェックリスト**:
-- [ ] `@StateObject` → `@State`
-- [ ] `viewModel` → `store`
-- [ ] `.onAppear` → `.task`（async処理の場合）
-
-### Phase 5: 純粋な関数の切り出し
-
-#### 5.1 切り出し候補の特定
-
-Serviceに混在している純粋なロジックを`Logic/`に切り出す：
-
-```bash
-# Serviceファイルを確認
-grep -r "func.*->.*{" Features/*/Services/
-```
-
-#### 5.2 切り出し例
-
-**Before**:
-```swift
-// Services/VisitService.swift
-class VisitService {
-    func fetchFiltered(from: Date, to: Date) async throws -> [Visit] {
-        let visits = try await repository.fetchAll()
-        // ↓ これは純粋な関数として切り出すべき
-        return visits.filter { $0.timestamp >= from && $0.timestamp <= to }
-    }
-}
-```
-
-**After**:
-```swift
-// Features/Home/Logic/VisitFilter.swift（または Shared/Logic/）
-struct VisitFilter {
-    static func filterByDateRange(visits: [Visit], from: Date, to: Date) -> [Visit] {
-        visits.filter { $0.timestamp >= from && $0.timestamp <= to }
-    }
-}
-
-// Features/Home/Services/VisitService.swift
-class VisitService {
-    func fetchFiltered(from: Date, to: Date) async throws -> [Visit] {
-        let visits = try await repository.fetchAll()  // 副作用
-        return VisitFilter.filterByDateRange(visits: visits, from: from, to: to)  // 純粋
-    }
-}
-```
-
-### 移行時の注意点
-
-#### ビルドエラーを避ける
-
-- 移行は小さな単位で行う
-- 1ファイル移行したら必ずビルド確認
-- git commitを細かく実施
-
-#### インポート文の更新
-
-移動後、全ファイルで参照を検索：
-```bash
-# 例: HomeStoreを移動した場合
-grep -r "HomeStore" kokokita/
-```
-
-#### Xcode プロジェクトファイルの更新
-
-ファイルを移動したら、Xcodeプロジェクトで：
-1. 古いファイルを削除（参照のみ）
-2. 新しい場所からファイルを追加
-
-### 移行チェックリスト
-
-各Phase完了時に確認：
-
-- [ ] すべてのファイルが正しい場所に配置されている
-- [ ] ビルドが通る
-- [ ] 既存機能が動作する
-- [ ] import文が正しい
-- [ ] Xcodeプロジェクトファイルが更新されている
-- [ ] 移行内容をコミット
-- [ ] ViewModelではなくStoreを使用している
-- [ ] @Observableマクロを使用している
-
-### トラブルシューティング
-
-#### "No such module" エラー
-
-→ import文を確認。`import Observation`が必要
-
-#### "Property wrapper cannot be applied"
-
-→ @Observableと@Publishedは併用できない。@Publishedを削除
-
-#### ファイルが見つからない
-
-→ Xcodeで該当ファイルを削除し、新しい場所から再追加
-
-#### ビルドは通るが参照エラー
-
-→ Xcodeの「Clean Build Folder」を実行（Cmd+Shift+K）
+## 関連ドキュメント
+
+- [アーキテクチャガイド](./architecture-guide.md) - 設計原則とベストプラクティス
+- [MVVM→MV移行ガイド](./migration/mvvm-to-mv-migration-guide.md) - 既存コードの移行手順
+- [ADR-001: フォルダ構成とアーキテクチャの再設計](./ADR/001-フォルダ構成とアーキテクチャの再設計.md) - 設計判断の背景
 
 ---
 
@@ -920,13 +651,3 @@ grep -r "HomeStore" kokokita/
 - `Logger`を積極的に使用
 - ブレークポイントの活用
 - Xcodeのメモリグラフで循環参照をチェック
-
----
-
-## 更新履歴
-
-- 2025-10-25: Feature-based MVアーキテクチャに対応
-- 2025-10-24: フォルダ構成の移行手順を追加
-- 初版作成
-
-このドキュメントは継続的に更新されます。実装で得た知見は積極的に追加してください。

@@ -2,17 +2,26 @@
 
 > **重要**: このドキュメントはプロジェクトの設計方針とアーキテクチャの指針。Claudeはすべてのコード変更時に参照する。
 
-## 目次
+## このドキュメントの使い方
 
-1. [アーキテクチャ原則](#アーキテクチャ原則)
-2. [フォルダ構成とコロケーション](#フォルダ構成とコロケーション)
-3. [命名規約](#命名規約)
-4. [コーディングスタイル](#コーディングスタイル)
-5. [状態管理](#状態管理)
-6. [パフォーマンス](#パフォーマンス)
-7. [エラーハンドリング](#エラーハンドリング)
-8. [テストとデバッグ](#テストとデバッグ)
-9. [セキュリティ](#セキュリティ)
+### 用途別ガイド
+
+- **初めて読む場合**: 全体を通読してアーキテクチャの設計思想と原則を理解する
+- **実装中の参照**: 各層の責務、命名規約、ベストプラクティスをクイックリファレンスとして使用
+- **コードレビュー時**: チェックリストとして品質確認に使用（コーディングスタイル、アーキテクチャ準拠）
+- **設計判断時**: 新機能の設計時に原則に沿っているか確認
+
+### 実装時は実装ガイドも参照
+
+このドキュメントは**「なぜこの設計なのか」「何を守るべきか」**を説明します。
+
+**「どうやって実装するか」**の具体的な手順は [実装ガイド](./implementation-guide.md) を参照してください。
+
+### 関連ドキュメント
+
+- **実装の具体的手順** → [実装ガイド](./implementation-guide.md)
+- **既存コードの移行** → [MVVM→MV移行ガイド](./migration/mvvm-to-mv-migration-guide.md)
+- **設計判断の背景** → [ADR-001: フォルダ構成とアーキテクチャの再設計](./ADR/001-フォルダ構成とアーキテクチャの再設計.md)
 
 ---
 
@@ -114,6 +123,8 @@ class HomeViewModel: ObservableObject {
 - 永続化の詳細には依存しない（Core Dataエンティティとは別）
 - 不変（immutable）を推奨（structを優先）
 
+> **実装方法**: 具体的な実装手順は [実装ガイド - Step 3: データモデルの定義](./implementation-guide.md#step-3-データモデルの定義) を参照
+
 **例**:
 ```swift
 // Shared/Models/Visit.swift
@@ -177,6 +188,8 @@ struct Visit {
 - ユーザーアクションをStoreに伝える
 - ビジネスロジックやデータアクセスロジックを含まない
 
+> **実装方法**: 具体的な実装手順は [実装ガイド - Step 8: Viewの実装](./implementation-guide.md#step-8-viewの実装) を参照
+
 **例**:
 ```swift
 // Features/Home/Views/HomeView.swift
@@ -205,6 +218,8 @@ struct HomeView: View {
 - Serviceを呼び出してデータを取得・更新
 - 自身は副作用を持たない（Serviceに委譲）
 - ViewとServiceの橋渡し役
+
+> **実装方法**: 具体的な実装手順は [実装ガイド - Step 7: Storeの実装](./implementation-guide.md#step-7-storeの実装observable) を参照
 
 **例**:
 ```swift
@@ -264,6 +279,8 @@ final class HomeStore {
 - エラーハンドリングを行う
 - 複数のRepositoryやAPIを組み合わせることもある
 
+> **実装方法**: 具体的な実装手順は [実装ガイド - Step 6: Serviceの実装](./implementation-guide.md#step-6-serviceの実装副作用のある処理) を参照
+
 **例**:
 ```swift
 // Features/Home/Services/VisitService.swift
@@ -306,6 +323,8 @@ final class VisitService {
 - 外部状態に依存しない
 - テストが容易
 - 計算、フィルタリング、フォーマット、バリデーション等
+
+> **実装方法**: 具体的な実装手順は [実装ガイド - Step 5: Logicの実装](./implementation-guide.md#step-5-logicの実装純粋な関数) を参照
 
 **例**:
 ```swift
@@ -909,25 +928,11 @@ Logger.error("API呼び出し失敗", error: error)
 
 ---
 
-## 移行ガイド
+## 関連ドキュメント
 
-### 旧MVVMから新MVへの移行
-
-| 項目 | MVVM（旧） | MV（新） |
-|------|-----------|---------|
-| 状態管理 | `ViewModel (ObservableObject)` | `Store (@Observable)` |
-| プロパティ宣言 | `@Published var items: [Item]` | `var items: [Item]` |
-| Viewでの保持 | `@StateObject private var viewModel` | `@State private var store` |
-| ボイラープレート | Combine、@Published | 最小限 |
-| 複雑性 | 中〜高 | 低 |
-| iOS要件 | iOS 13+ | iOS 17+ |
-
-**移行手順**:
-1. ViewModelをStoreにリネーム
-2. `ObservableObject` → `@Observable`
-3. `@Published` → 通常のプロパティ
-4. `@StateObject` → `@State`
-5. Combineの削除
+- [実装ガイド](./implementation-guide.md) - 具体的な実装手順とタスク別ガイド
+- [MVVM→MV移行ガイド](./migration/mvvm-to-mv-migration-guide.md) - 既存コードの移行手順
+- [ADR-001: フォルダ構成とアーキテクチャの再設計](./ADR/001-フォルダ構成とアーキテクチャの再設計.md) - 設計判断の背景
 
 ---
 
