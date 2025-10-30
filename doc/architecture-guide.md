@@ -29,74 +29,44 @@
 
 ### Feature-based MV アーキテクチャ
 
-> **参照**: 詳細な設計判断は`doc/ADR/001-フォルダ構成とアーキテクチャの再設計.md`を参照。
+> **参照**: 詳細な設計判断は [ADR-001](./ADR/001-フォルダ構成とアーキテクチャの再設計.md) を参照
 
-プロジェクトは**Feature-based MV**パターンを採用しています（2025年のSwiftベストプラクティスに準拠）：
+プロジェクトは**Feature-based MV**パターンを採用（iOS 17+ @Observableマクロ活用）：
 
 ```
-Features/                        # 機能単位でコロケーション
-├── [機能名]/
-│   ├── Models/                  # @Observable 状態管理
-│   ├── Views/                   # SwiftUI View
-│   ├── Logic/                   # 純粋な関数（副作用なし）
-│   └── Services/                # 副作用（DB、API、I/O）
-│
-Shared/                          # 共通コード
-├── Models/                      # ドメインモデル
-├── Logic/                       # 共通の純粋な関数
-├── Services/                    # 共通Service
-└── UIComponents/                # 共通UIコンポーネント
+Features/[機能名]/          Shared/
+├── Models/  (@Observable)  ├── Models/  (ドメイン)
+├── Views/   (SwiftUI)      ├── Logic/   (共通関数)
+├── Logic/   (純粋関数)     ├── Services/ (共通Service)
+└── Services/ (副作用)      └── UIComponents/
 ```
 
-**原則**:
-- **コロケーション最優先**: 機能に関連する全てのファイルを1つのフォルダにまとめる
-- **MVパターン**: ViewModelを排除し、@Observable Storeで状態管理
-- **純粋な関数とServiceを分離**: 副作用の有無で明確に区別
-- **iOS 17+をターゲット**: @Observableマクロを活用
+**4つの原則**:
+1. **コロケーション**: 関連ファイルを機能単位でまとめる
+2. **MVパターン**: @Observable Store（ViewModelは使わない）
+3. **副作用の分離**: Logic（純粋）とService（副作用）を明確に区別
+4. **iOS 17+**: @Observableマクロで状態管理
 
-**例（良い）**:
+**コード例**:
 ```swift
-// Features/Home/Models/HomeStore.swift
-@Observable
-final class HomeStore {
+// ✅ Store
+@Observable final class HomeStore {
     var visits: [Visit] = []
-    var isLoading = false
-
-    private let visitService: VisitService
-
-    init(visitService: VisitService = .shared) {
-        self.visitService = visitService
-    }
-
-    func load() async {
-        isLoading = true
-        visits = try await visitService.fetchAll()
-        isLoading = false
-    }
+    private let service: VisitService
+    func load() async { visits = try await service.fetchAll() }
 }
 
-// Features/Home/Views/HomeView.swift
+// ✅ View
 struct HomeView: View {
     @State private var store = HomeStore()
-
     var body: some View {
-        List(store.visits) { visit in
-            VisitRow(visit: visit)
-        }
+        List(store.visits) { /* ... */ }
         .task { await store.load() }
     }
 }
-```
 
-**例（悪い - 旧MVVM）**:
-```swift
-// ❌ ObservableObject と @Published（旧パターン）
-class HomeViewModel: ObservableObject {
-    @Published var visits: [Visit] = []
-    // ...
-}
-
-// ❌ ViewModelという名前（MVでは使わない）
+// ❌ 旧MVVM（使わない）
+class HomeViewModel: ObservableObject { @Published var visits... }
 @StateObject private var viewModel: HomeViewModel
 ```
 
@@ -113,303 +83,119 @@ class HomeViewModel: ObservableObject {
 ### 各層の詳細な責務
 
 #### Model（モデル）
-**責務**: データ構造の定義とドメインロジック
+**責務**: データ構造とドメインロジック | **配置**: `Shared/Models/` または `Features/[機能名]/Models/`
 
-**配置**: `Shared/Models/` または `Features/[機能名]/Models/[データ名].swift`
+**特徴**: structで不変、永続化に依存しない、ドメインルール（validation等）を含む
 
-**特徴**:
-- アプリケーションのコアとなるデータ構造を定義
-- ドメイン固有のビジネスルール（validation等）を含む
-- 永続化の詳細には依存しない（Core Dataエンティティとは別）
-- 不変（immutable）を推奨（structを優先）
+> **実装方法**: [実装ガイド - Step 3](./implementation-guide.md#step-3-データモデルの定義)
 
-> **実装方法**: 具体的な実装手順は [実装ガイド - Step 3: データモデルの定義](./implementation-guide.md#step-3-データモデルの定義) を参照
-
-**例**:
 ```swift
-// Shared/Models/Visit.swift
+// ✅ 良い例
 struct Visit: Identifiable, Codable {
     let id: UUID
     let timestamp: Date
-    let location: Location
-    let accuracy: Double
-
-    // ドメインロジック: 位置情報の品質チェック
-    var isHighQuality: Bool {
-        accuracy <= 50.0
-    }
-
-    // ドメインロジック: シミュレートされた位置情報かどうか
-    var isSimulated: Bool {
-        location.isSimulatedBySoftware || location.isProducedByAccessory
-    }
+    var isHighQuality: Bool { accuracy <= 50.0 }  // ドメインロジック
 }
 
-// Shared/Models/Location.swift
-struct Location: Codable {
-    let latitude: Double
-    let longitude: Double
-    let isSimulatedBySoftware: Bool
-    let isProducedByAccessory: Bool
-
-    // ドメインロジック: 座標の妥当性チェック
-    var isValid: Bool {
-        (-90...90).contains(latitude) && (-180...180).contains(longitude)
-    }
-}
-```
-
-**悪い例**:
-```swift
-// ❌ ModelにUIロジックを含める
+// ❌ 避ける
 struct Visit {
-    var displayTitle: String {  // ❌ 表示ロジックはViewで処理
-        // ...
-    }
-}
-
-// ❌ Modelで副作用を持つ処理
-struct Visit {
-    func save() async throws {  // ❌ 保存処理はServiceで処理
-        // ...
-    }
+    var displayTitle: String { /* UI */ }  // ❌ UIロジック
+    func save() async throws { /* DB */ }  // ❌ 副作用
 }
 ```
 
 #### View（ビュー）
-**責務**: UI表示とユーザーイベントの受付
+**責務**: UI表示とイベント受付 | **配置**: `Features/[機能名]/Views/`
 
-**配置**: `Features/[機能名]/Views/`
+**特徴**: SwiftUI、Storeから状態を受取り表示、ビジネスロジック含まず
 
-**特徴**:
-- SwiftUIのViewプロトコルに準拠
-- UIの構造とレイアウトを定義
-- Storeから状態を受け取り、表示する
-- ユーザーアクションをStoreに伝える
-- ビジネスロジックやデータアクセスロジックを含まない
+> **実装方法**: [実装ガイド - Step 8](./implementation-guide.md#step-8-viewの実装)
 
-> **実装方法**: 具体的な実装手順は [実装ガイド - Step 8: Viewの実装](./implementation-guide.md#step-8-viewの実装) を参照
-
-**例**:
 ```swift
-// Features/Home/Views/HomeView.swift
 struct HomeView: View {
     @State private var store = HomeStore()
-
     var body: some View {
-        List(store.visits) { visit in
-            VisitRow(visit: visit)
-        }
-        .navigationTitle("訪問記録")
+        List(store.visits) { visit in VisitRow(visit: visit) }
         .task { await store.load() }
-        .refreshable { await store.refresh() }
     }
 }
 ```
 
 #### Store（状態管理）
-**責務**: 状態管理とServiceとの結合
+**責務**: 状態管理とService結合 | **配置**: `Features/[機能名]/Models/[機能名]Store.swift`
 
-**配置**: `Features/[機能名]/Models/[機能名]Store.swift`
+**特徴**: @Observable、UI状態保持、副作用はServiceに委譲、ViewとServiceの橋渡し
 
-**特徴**:
-- @Observableマクロを使用
-- UI状態を保持（表示データ、ローディング状態、エラー等）
-- Serviceを呼び出してデータを取得・更新
-- 自身は副作用を持たない（Serviceに委譲）
-- ViewとServiceの橋渡し役
+> **実装方法**: [実装ガイド - Step 7](./implementation-guide.md#step-7-storeの実装observable)
 
-> **実装方法**: 具体的な実装手順は [実装ガイド - Step 7: Storeの実装](./implementation-guide.md#step-7-storeの実装observable) を参照
-
-**例**:
 ```swift
-// Features/Home/Models/HomeStore.swift
-import Foundation
-import Observation
-
 @Observable
 final class HomeStore {
-    // 状態
     var visits: [Visit] = []
     var isLoading = false
-    var errorMessage: String?
-    var selectedFilters: Set<String> = []
-
-    // 依存するService
     private let visitService: VisitService
 
-    init(visitService: VisitService = .shared) {
-        self.visitService = visitService
-    }
-
-    // アクション: Viewから呼ばれる
     func load() async {
         isLoading = true
-        errorMessage = nil
-
         do {
             visits = try await visitService.fetchAll()
         } catch {
             errorMessage = error.localizedDescription
         }
-
         isLoading = false
-    }
-
-    func delete(_ visit: Visit) async {
-        do {
-            try await visitService.delete(visit)
-            visits.removeAll { $0.id == visit.id }
-        } catch {
-            errorMessage = error.localizedDescription
-        }
     }
 }
 ```
 
 #### Service（副作用のある処理）
-**責務**: 副作用のある処理（DB、API、位置情報、ファイルI/O等）
+**責務**: 副作用（DB/API/I/O） | **配置**: `Features/[機能名]/Services/` または `Shared/Services/`
 
-**配置**: `Features/[機能名]/Services/` または `Shared/Services/`
+**特徴**: ステートレス、外部システム連携、エラーハンドリング
 
-**特徴**:
-- ステートレス（状態を持たない）
-- 外部システムとのやり取りを担当
-- Repository、API、位置情報サービス等を内部で使用
-- エラーハンドリングを行う
-- 複数のRepositoryやAPIを組み合わせることもある
+> **実装方法**: [実装ガイド - Step 6](./implementation-guide.md#step-6-serviceの実装副作用のある処理)
 
-> **実装方法**: 具体的な実装手順は [実装ガイド - Step 6: Serviceの実装](./implementation-guide.md#step-6-serviceの実装副作用のある処理) を参照
-
-**例**:
 ```swift
-// Features/Home/Services/VisitService.swift
 final class VisitService {
     static let shared = VisitService()
-
     private let repository: VisitRepository
 
-    init(repository: VisitRepository = CoreDataVisitRepository.shared) {
-        self.repository = repository
-    }
-
-    // DB操作 = 副作用
     func fetchAll() async throws -> [Visit] {
-        try await repository.fetchAll()
-    }
-
-    func delete(_ visit: Visit) async throws {
-        try await repository.delete(visit)
-    }
-
-    // 複数のリポジトリを組み合わせる例
-    func save(_ visit: Visit, photos: [UIImage]) async throws {
-        // 写真を保存（ファイルI/O = 副作用）
-        let photoPaths = try await savePhotos(photos)
-
-        // 訪問記録を保存（DB操作 = 副作用）
-        try await repository.save(visit, photoPaths: photoPaths)
+        try await repository.fetchAll()  // DB操作 = 副作用
     }
 }
 ```
 
 #### Logic（純粋な関数）
-**責務**: 純粋な関数（計算、変換、フォーマット、バリデーション）
+**責務**: 純粋関数（計算/変換/フォーマット） | **配置**: `Features/[機能名]/Logic/` または `Shared/Logic/`
 
-**配置**: `Features/[機能名]/Logic/` または `Shared/Logic/`
+**特徴**: 副作用なし、同じ入力→同じ出力、外部状態に非依存、テスト容易
 
-**特徴**:
-- 副作用なし（同じ入力 → 常に同じ出力）
-- 外部状態に依存しない
-- テストが容易
-- 計算、フィルタリング、フォーマット、バリデーション等
+> **実装方法**: [実装ガイド - Step 5](./implementation-guide.md#step-5-logicの実装純粋な関数)
 
-> **実装方法**: 具体的な実装手順は [実装ガイド - Step 5: Logicの実装](./implementation-guide.md#step-5-logicの実装純粋な関数) を参照
-
-**例**:
 ```swift
-// Features/Home/Logic/VisitFilter.swift
 struct VisitFilter {
-    // 純粋な関数: 副作用なし
-    static func filterByDateRange(
-        visits: [Visit],
-        from: Date,
-        to: Date
-    ) -> [Visit] {
+    static func filterByDateRange(visits: [Visit], from: Date, to: Date) -> [Visit] {
         visits.filter { $0.timestamp >= from && $0.timestamp <= to }
-    }
-
-    static func filterByLabels(
-        visits: [Visit],
-        labelIds: Set<UUID>
-    ) -> [Visit] {
-        guard !labelIds.isEmpty else { return visits }
-        return visits.filter { visit in
-            !Set(visit.labels.map(\.id)).isDisjoint(with: labelIds)
-        }
-    }
-}
-
-// Shared/Logic/Formatting/DateFormatter.swift
-struct DateFormatHelper {
-    // 純粋な関数: 日付をフォーマット
-    static func formatVisitDate(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        formatter.timeStyle = .short
-        formatter.locale = Locale(identifier: "ja_JP")
-        return formatter.string(from: date)
-    }
-}
-
-// Shared/Logic/Validation/CoordinateValidator.swift
-struct CoordinateValidator {
-    // 純粋な関数: 座標の妥当性チェック
-    static func isValid(latitude: Double, longitude: Double) -> Bool {
-        (-90...90).contains(latitude) && (-180...180).contains(longitude)
     }
 }
 ```
 
 #### Repository（データアクセス層）
-**責務**: データの永続化と取得（Core Data、UserDefaults等）
+**責務**: データ永続化/取得 | **配置**: `Shared/Services/Persistence/`
 
-**配置**: `Shared/Services/Persistence/`
+**特徴**: データソース隠蔽、Core Data↔ドメインモデル変換、CRUD提供
 
-**特徴**:
-- データソースの詳細を隠蔽
-- Core Dataエンティティとドメインモデルの変換を行う
-- CRUD操作を提供
-- Serviceから呼ばれる
-
-**例**:
 ```swift
-// Shared/Services/Persistence/VisitRepository.swift
 protocol VisitRepository {
     func fetchAll() async throws -> [Visit]
-    func fetch(byId id: UUID) async throws -> Visit?
     func save(_ visit: Visit) async throws
-    func delete(_ visit: Visit) async throws
 }
 
-// Shared/Services/Persistence/CoreDataVisitRepository.swift
 final class CoreDataVisitRepository: VisitRepository {
-    static let shared = CoreDataVisitRepository()
-
-    private let context: NSManagedObjectContext
-
-    init(context: NSManagedObjectContext = CoreDataStack.shared.context) {
-        self.context = context
-    }
-
     func fetchAll() async throws -> [Visit] {
-        // Core Dataから取得してドメインモデルに変換
-        let request = VisitEntity.fetchRequest()
-        let entities = try context.fetch(request)
+        let entities = try context.fetch(VisitEntity.fetchRequest())
         return entities.map { $0.toDomain() }
     }
-
-    // ...
 }
 ```
 
@@ -463,112 +249,34 @@ final class CreateStore {
 
 ```
 kokokita/
-├── Features/                      # 機能単位（Feature-based）
-│   ├── Home/                      # ホーム画面機能
-│   │   ├── Models/
-│   │   │   └── HomeStore.swift   # @Observable（状態管理）
-│   │   ├── Logic/
-│   │   │   └── VisitFilter.swift # 純粋な関数
-│   │   ├── Services/
-│   │   │   └── VisitService.swift # 副作用（DB操作等）
-│   │   └── Views/
-│   │       ├── HomeView.swift    # エントリポイント
-│   │       └── Components/       # この機能専用のコンポーネント
-│   │           ├── VisitRow.swift
-│   │           └── FilterSheet.swift
-│   │
-│   ├── Create/                    # 訪問作成機能
-│   │   ├── Models/
-│   │   │   └── CreateStore.swift
-│   │   ├── Logic/
-│   │   │   ├── CoordinateValidator.swift
-│   │   │   └── AddressFormatter.swift
-│   │   ├── Services/
-│   │   │   ├── LocationService.swift
-│   │   │   ├── POIService.swift
-│   │   │   └── PhotoService.swift
-│   │   └── Views/
-│   │       ├── CreateView.swift
-│   │       └── Components/
-│   │           ├── LocationSection.swift
-│   │           ├── POISection.swift
-│   │           └── PhotoSection.swift
-│   │
-│   ├── Detail/                    # 訪問詳細機能
-│   │   ├── Models/
-│   │   │   └── DetailStore.swift
-│   │   ├── Services/
-│   │   │   └── DetailService.swift
-│   │   └── Views/
-│   │       ├── DetailView.swift
-│   │       └── Components/
-│   │           └── PhotoGrid.swift
-│   │
-│   └── Menu/                      # メニュー機能
-│       ├── Models/
-│       │   └── MenuStore.swift
-│       └── Views/
-│           └── MenuView.swift
+├── Features/                    # 機能単位（コロケーション）
+│   ├── Home/
+│   │   ├── Models/             # HomeStore.swift (@Observable)
+│   │   ├── Logic/              # VisitFilter.swift (純粋関数)
+│   │   ├── Services/           # VisitService.swift (副作用)
+│   │   └── Views/              # HomeView.swift, Components/
+│   ├── Create/                 # 同様の構成
+│   ├── Detail/
+│   └── Menu/
 │
-├── Shared/                        # 複数機能で使用する共通コード
-│   ├── Models/                    # 共通のドメインモデル
-│   │   ├── Visit.swift
-│   │   ├── Taxonomy.swift
-│   │   ├── Location.swift
-│   │   └── Member.swift
-│   │
-│   ├── Logic/                     # 共通の純粋な関数
-│   │   ├── Calculations/
-│   │   │   └── DistanceCalculator.swift
-│   │   ├── Formatting/
-│   │   │   └── DateFormatter.swift
-│   │   └── Validation/
-│   │       └── InputValidator.swift
-│   │
-│   ├── Services/                  # 共通のService
-│   │   ├── Persistence/
-│   │   │   ├── CoreDataStack.swift
-│   │   │   ├── VisitRepository.swift
-│   │   │   └── TaxonomyRepository.swift
-│   │   └── Security/
-│   │       └── IntegrityService.swift
-│   │
-│   └── UIComponents/              # 共通UIコンポーネント
-│       ├── Buttons/
-│       │   └── BigFooterButton.swift
-│       ├── Forms/
-│       │   ├── LabelPicker.swift
-│       │   └── GroupPicker.swift
-│       └── Media/
-│           ├── PhotoPager.swift
-│           └── PhotoThumb.swift
+├── Shared/                      # 共通コード
+│   ├── Models/                 # Visit.swift, Taxonomy.swift...
+│   ├── Logic/                  # Calculations/, Formatting/, Validation/
+│   ├── Services/               # Persistence/, Security/
+│   └── UIComponents/           # Buttons/, Forms/, Media/
 │
-├── App/                           # アプリケーション設定
+├── App/                         # アプリ設定
 │   ├── KokokitaApp.swift
-│   ├── AppDelegate.swift
-│   ├── Config/
-│   │   ├── AppConfig.swift
-│   │   └── UIConstants.swift
-│   └── DI/
-│       └── DependencyContainer.swift
+│   ├── Config/                 # AppConfig, UIConstants
+│   └── DI/                     # DependencyContainer
 │
-├── Resources/                     # リソース
+├── Resources/                   # リソース
 │   └── Localization/
-│       ├── LocalizedString.swift
-│       ├── ja.lproj/
-│       └── en.lproj/
 │
-└── Utilities/                     # 汎用ユーティリティ
+└── Utilities/                   # 汎用ユーティリティ
     ├── Extensions/
-    │   ├── Date+Extensions.swift
-    │   ├── String+Extensions.swift
-    │   └── Collection+Extensions.swift
     ├── Helpers/
-    │   ├── Logger.swift
-    │   ├── KeyboardHelpers.swift
-    │   └── NavigationRouter.swift
     └── Protocols/
-        └── MKPointOfInterestCategory+JP.swift
 ```
 
 ### 各層の責務と配置ルール
@@ -582,69 +290,33 @@ kokokita/
 
 ### 純粋な関数とServiceの区別
 
-**純粋な関数（Logic/）**:
-- 同じ入力 → 常に同じ出力
-- 副作用なし
-- テスト容易
-- 配置: `Features/[機能]/Logic/` または `Shared/Logic/`
+| 特徴 | Logic（純粋関数） | Service（副作用） |
+|------|-----------------|-----------------|
+| 副作用 | なし | あり（DB/API/I/O） |
+| 状態 | なし | ステートレス |
+| テスト | 容易 | モック必要 |
+| 配置 | `Logic/` | `Services/` |
 
 ```swift
-// ✅ Features/Home/Logic/VisitFilter.swift
+// Logic: 純粋関数
 struct VisitFilter {
-    static func filterByDateRange(
-        visits: [Visit],
-        from: Date,
-        to: Date
-    ) -> [Visit] {
+    static func filterByDateRange(visits: [Visit], from: Date, to: Date) -> [Visit] {
         visits.filter { $0.timestamp >= from && $0.timestamp <= to }
     }
 }
-```
 
-**Service（Services/）**:
-- 副作用あり（DB、API、位置情報、ファイルI/O）
-- 状態は持たない（ステートレス）
-- 配置: `Features/[機能]/Services/` または `Shared/Services/`
-
-```swift
-// ✅ Features/Home/Services/VisitService.swift
+// Service: 副作用
 final class VisitService {
-    static let shared = VisitService()
-
-    private let repository: VisitRepository
-
     func fetchAll() async throws -> [Visit] {
-        try await repository.fetchAll()  // DB操作 = 副作用
+        try await repository.fetchAll()  // DB = 副作用
     }
 }
 ```
 
 ### 配置の判断基準
 
-**1つの機能でのみ使用する場合**:
-- `Features/[機能名]/` に配置
-
-**複数の機能で使用する場合**:
-- `Shared/` に配置
-
-**例: 新機能追加時のフォルダ配置**
-
-```
-# 統計機能を追加
-Features/
-└── Statistics/
-    ├── Models/
-    │   └── StatisticsStore.swift
-    ├── Logic/
-    │   └── VisitStatisticsCalculator.swift  # 純粋な計算
-    ├── Services/
-    │   └── StatisticsService.swift          # データ取得（副作用）
-    └── Views/
-        ├── StatisticsView.swift
-        └── Components/
-            ├── ChartView.swift
-            └── SummaryCard.swift
-```
+- **1つの機能のみ**: `Features/[機能名]/`
+- **複数機能で共有**: `Shared/`
 
 ---
 
@@ -754,136 +426,60 @@ var temp: String       // ❌ 一時変数でも意味のある名前を
 
 ## 状態管理
 
-### @Observable マクロの使用
+### @Observable マクロ（iOS 17+）
 
-iOS 17+では`@Observable`マクロを使用して状態管理を行います（`ObservableObject`や`@Published`は使いません）。
+`@Observable`で状態管理（`ObservableObject`/`@Published`は使わない）
 
-**良い例（iOS 17+）**:
 ```swift
-import Foundation
-import Observation
-
-@Observable
-final class HomeStore {
+// ✅ 正しい
+@Observable final class HomeStore {
     var visits: [Visit] = []
-    var isLoading = false
-    var errorMessage: String?
-
-    private let visitService: VisitService
-
-    init(visitService: VisitService = .shared) {
-        self.visitService = visitService
-    }
-
-    func load() async {
-        isLoading = true
-        visits = try await visitService.fetchAll()
-        isLoading = false
-    }
+    func load() async { visits = try await service.fetchAll() }
 }
-
-// Viewでの使用
 struct HomeView: View {
     @State private var store = HomeStore()
-
-    var body: some View {
-        List(store.visits) { visit in
-            VisitRow(visit: visit)
-        }
-        .task { await store.load() }
-    }
-}
-```
-
-**悪い例（旧パターン）**:
-```swift
-// ❌ ObservableObject と @Published（旧MVVM）
-class HomeViewModel: ObservableObject {
-    @Published var visits: [Visit] = []
-    @Published var isLoading = false
-
-    // ...
 }
 
-// ❌ @StateObject（旧パターン）
-struct HomeView: View {
-    @StateObject private var viewModel: HomeViewModel
-    // ...
-}
+// ❌ 旧MVVM（使わない）
+class HomeViewModel: ObservableObject { @Published var visits... }
+@StateObject private var viewModel: HomeViewModel
 ```
 
 ### 状態の単一方向フロー
 
 ```
 User Action → View → Store → Service → Repository
-     ↑                 ↓
-     └─── UI Update ←──┘
-          (@Observable自動通知)
+     ↑                ↓
+     └── UI Update ←──┘ (@Observable自動通知)
 ```
 
 ---
 
 ## パフォーマンス
 
-### Core Dataの効率的な使用
-
-1. **フェッチ時は必要な属性のみ**
-2. **述語（Predicate）でフィルタリング**
-3. **バッチ操作を活用**
-4. **バックグラウンドコンテキストを使用**（大量データ処理時）
+- **Core Data**: 述語でフィルタ（全取得後フィルタは×）、バッチ操作活用
+- **リスト**: LazyVStack使用、大量データはページング
+- **メモリ**: 画像リサイズ、weak/unownedで循環参照防止
 
 ```swift
-// ✅ 良い: 述語でフィルタ
-let request = VisitEntity.fetchRequest()
-request.predicate = NSPredicate(format: "timestampUTC >= %@", date as NSDate)
-let results = try context.fetch(request)
-
-// ❌ 悪い: 全取得後にフィルタ
-let all = try context.fetch(VisitEntity.fetchRequest())
-let filtered = all.filter { $0.timestampUTC >= date }
+// ✅ 述語でフィルタ
+request.predicate = NSPredicate(format: "timestampUTC >= %@", date)
 ```
-
-### リスト表示の最適化
-
-- LazyVStack/LazyHStackを使用
-- 大量データはページング実装を検討
-
-### メモリ管理
-
-- 大きな画像は適切にリサイズ
-- 不要なキャッシュは削除
-- weak/unownedで循環参照を防ぐ
 
 ---
 
 ## エラーハンドリング
 
-### エラー型の定義
-
 ```swift
-enum LocationServiceError: LocalizedError {
+enum ServiceError: LocalizedError {
     case permissionDenied
-    case other(Error)
-
-    var errorDescription: String? {
-        switch self {
-        case .permissionDenied:
-            return "位置情報の権限がありません"
-        case .other(let error):
-            return error.localizedDescription
-        }
-    }
+    var errorDescription: String? { "権限がありません" }
 }
-```
 
-### エラーのログ記録
-
-```swift
 do {
-    try await visitService.save(visit)
+    try await service.save(visit)
 } catch {
-    Logger.error("訪問の保存に失敗しました", error: error)
-    errorMessage = error.localizedDescription
+    Logger.error("保存失敗", error: error)
 }
 ```
 
@@ -891,40 +487,20 @@ do {
 
 ## テストとデバッグ
 
-### Logger の活用
-
 ```swift
-Logger.info("位置情報取得を開始")
-Logger.success("データ保存完了")
-Logger.warning("キャッシュが見つかりません")
-Logger.error("API呼び出し失敗", error: error)
+Logger.info("処理開始")
+Logger.error("失敗", error: error)
 ```
 
-### デバッグ時の注意点
-
-- 本番環境では詳細ログを出さない
-- センシティブ情報（座標、個人情報）はログに出さない
+**注意**: 本番では詳細ログ×、センシティブ情報（座標等）ログ×
 
 ---
 
 ## セキュリティ
 
-### 改ざん検出
-
-- 重要データ（位置情報）は署名付きで保存
-- 署名の検証を必ず行う
-
-### 機密情報の管理
-
-- API KeyはKeychainに保存
-- ハードコーディング禁止
-- Gitにコミットしない
-
-### 位置情報の取り扱い
-
-- 偽装検出（`isSimulatedBySoftware`）
-- 精度情報の記録
-- ユーザー許可の確認
+- **改ざん検出**: 重要データは署名付き保存・検証
+- **機密情報**: Keychain保存、ハードコード禁止
+- **位置情報**: 偽装検出（`isSimulatedBySoftware`）、ユーザー許可確認
 
 ---
 
