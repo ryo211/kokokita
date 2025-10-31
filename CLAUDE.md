@@ -55,7 +55,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **VisitPhotoEntity**: 写真ファイルパスの順序付き関係
 - **LabelEntity**、**GroupEntity**、**MemberEntity**: 多対多関係を持つタクソノミーエンティティ
 
-写真はファイルシステムにファイルパスとして保存され、`ImageStore` (kokokita/Share/Media/) で管理されます。
+写真はファイルシステムにファイルパスとして保存され、`ImageStore` (kokokita/Shared/Media/) で管理されます。
 
 ### 位置情報ソース検出
 アプリは偽装された位置情報を検出して防止します:

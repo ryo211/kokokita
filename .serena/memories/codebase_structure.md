@@ -17,7 +17,7 @@ kokokita/
 
 ```
 
-## メインソースコード構造（現在の構成）
+## メインソースコード構造（最新の構成）
 
 ```
 kokokita/
@@ -40,6 +40,51 @@ kokokita/
 │   ├── kokokita_icon.imageset/
 │   └── AccentColor.colorset/
 │
+├── Features/                    # 機能単位（Feature-based MV）
+│   ├── Home/
+│   │   ├── Models/
+│   │   │   └── HomeStore.swift  # @Observable（状態管理）
+│   │   └── Views/
+│   │       ├── HomeView.swift
+│   │       ├── HomeMapView.swift
+│   │       ├── VisitRow.swift
+│   │       └── Filter/
+│   │           ├── HomeFilterHeader.swift
+│   │           ├── SearchFilterSheet.swift
+│   │           └── FlowRow.swift
+│   ├── Create/
+│   │   ├── Models/
+│   │   │   └── CreateEditStore.swift
+│   │   └── Views/
+│   │       ├── CreateView.swift
+│   │       ├── PromptViews.swift
+│   │       ├── PhotoAttachmentSection.swift
+│   │       └── LocationLoadingView.swift
+│   ├── Detail/
+│   │   └── Views/
+│   │       ├── VisitDetailScreen.swift
+│   │       ├── VisitDetailContent.swift
+│   │       ├── EditView.swift
+│   │       └── PhotoReadOnlyGrid.swift
+│   └── Menu/
+│       └── Views/
+│           ├── MenuHomeView.swift
+│           ├── LabelListView.swift
+│           ├── GroupListView.swift
+│           ├── MemberListView.swift
+│           └── ResetAllView.swift
+│
+├── Shared/                      # 共通コード（Share/から統合）
+│   ├── AppMedia.swift
+│   ├── Media/
+│   │   ├── ImageStore.swift     # 画像ファイル管理
+│   │   ├── PhotoPager.swift
+│   │   └── PhotoThumb.swift
+│   ├── Services/
+│   │   └── RateLimiter.swift    # レート制限
+│   └── Components/
+│       └── ActivityView.swift   # 共有UI
+│
 ├── Support/                     # サポートユーティリティ
 │   ├── DependencyContainer.swift  # DIコンテナ
 │   ├── NavigationRouter.swift     # ナビゲーション
@@ -59,7 +104,6 @@ kokokita/
 ├── Infrastructure/              # インフラ層（Repository実装）
 │   ├── CoreDataStack.swift      # Core Data管理
 │   ├── CoreDataVisitRepository.swift
-│   ├── CoreDataTaxonomyRepository.swift
 │   └── DefaultIntegrityService.swift  # 改ざん検出
 │
 ├── Domain/                      # ドメイン層
@@ -67,38 +111,11 @@ kokokita/
 │   └── Protocols.swift          # プロトコル定義
 │
 ├── Presentation/                # プレゼンテーション層
-│   ├── ViewModels/              # ViewModel（将来的にStoreに移行）
-│   │   ├── HomeViewModel.swift
-│   │   └── CreateEditViewModel.swift
 │   ├── Map/
 │   │   ├── MapPreview.swift
 │   │   └── MapSnapshotService.swift
-│   └── Views/                   # SwiftUI View
-│       ├── Home/
-│       │   ├── HomeView.swift
-│       │   ├── VisitRow.swift
-│       │   └── Filter/
-│       │       ├── HomeFilterHeader.swift
-│       │       ├── SearchFilterSheet.swift
-│       │       └── FlowRow.swift
-│       ├── Create/
-│       │   ├── CreateView.swift
-│       │   ├── PromptViews.swift
-│       │   └── PhotoAttachmentSection.swift
-│       ├── Detail/
-│       │   ├── VisitDetailScreen.swift
-│       │   ├── VisitDetailContent.swift
-│       │   ├── EditView.swift
-│       │   ├── PhotoReadOnlyGrid.swift
-│       │   └── Share/
-│       │       └── ActivityView.swift
-│       ├── Menu/
-│       │   ├── MenuHomeView.swift
-│       │   ├── LabelListView.swift
-│       │   ├── GroupListView.swift
-│       │   ├── MemberListView.swift
-│       │   └── ResetAllView.swift
-│       └── Common/
+│   └── Views/
+│       └── Common/              # 共通コンポーネント
 │           ├── RootTabView.swift      # タブナビゲーション
 │           ├── AppUIState.swift       # グローバルUI状態
 │           ├── VisitEditScreen.swift
@@ -126,13 +143,6 @@ kokokita/
 │   ├── MapKitPlaceLookupService.swift  # MapKit POI
 │   └── PhotoEditService.swift          # 写真管理
 │
-├── Share/                       # 共有コンポーネント
-│   ├── AppMedia.swift
-│   └── Media/
-│       ├── ImageStore.swift     # 画像ファイル管理
-│       ├── PhotoPager.swift
-│       └── PhotoThumb.swift
-│
 ├── ContentView.swift            # ルートビュー
 ├── Info.plist                   # アプリ情報
 └── Preview Content/             # プレビュー用
@@ -152,48 +162,11 @@ doc/
 │   ├── template.md
 │   ├── 001-フォルダ構成とアーキテクチャの再設計.md
 │   ├── 002-MVVM-MV移行評価.md
-│   └── 003-Observable-マクロ移行評価.md
+│   ├── 003-Observable-マクロ移行評価.md
+│   └── 004-class最小化と関数型パターンの採用.md
 └── design/                     # 設計書
     ├── README.md
     └── template.md
-```
-
-## 目指している構造（Feature-based MV）
-
-将来的には以下の構造に移行予定:
-
-```
-kokokita/
-├── Features/                    # 機能単位（Feature-based）
-│   ├── Home/
-│   │   ├── Models/              # HomeStore.swift
-│   │   ├── Logic/               # 純粋な関数
-│   │   ├── Services/            # 副作用
-│   │   └── Views/               # UI
-│   │       └── Components/
-│   ├── Create/
-│   ├── Detail/
-│   └── Menu/
-│
-├── Shared/                      # 共通コード
-│   ├── Models/                  # ドメインモデル
-│   ├── Logic/                   # 共通Logic
-│   ├── Services/                # 共通Service
-│   │   ├── Persistence/         # Repository
-│   │   └── Security/            # セキュリティ
-│   └── UIComponents/            # 共通UI
-│
-├── App/                         # アプリ設定
-│   ├── Config/
-│   └── DI/
-│
-├── Resources/                   # リソース
-│   └── Localization/
-│
-└── Utilities/                   # 汎用ユーティリティ
-    ├── Extensions/
-    ├── Helpers/
-    └── Protocols/
 ```
 
 ## 重要なファイル
@@ -228,26 +201,18 @@ kokokita/
 ```
 Features/[機能名]/
 ```
-（移行後）
-
-現在は機能ごとに`Presentation/Views/[機能名]/`
 
 ### 複数の機能で使用する場合
 ```
 Shared/
 ```
-（移行後）
-
-現在は`Support/`、`Domain/`、`Services/`等に分散
 
 ### UI定数と設定
 ```
-App/Config/
+Config/
 ├── AppConfig.swift      # アプリ全体の設定
 └── UIConstants.swift    # UI定数
 ```
-
-現在は`Config/`
 
 ## Xcodeプロジェクト構成
 
@@ -255,6 +220,9 @@ App/Config/
 - **Scheme**: kokokita
 - **Deployment Target**: iOS 17+
 - **Swift Version**: 最新
+- **Project Format**: Xcode 15+ (PBXFileSystemSynchronizedRootGroup)
+  - kokokita/ フォルダ内のファイルは自動的にビルドに含まれる
+  - 手動での"Add to target"は不要
 
 ## Core Dataエンティティ
 
@@ -263,13 +231,42 @@ App/Config/
 - VisitPhotoEntity: 写真ファイルパス
 - LabelEntity, GroupEntity, MemberEntity: タクソノミー
 
-## 注意点
+## アーキテクチャパターン
 
-### 移行中の構造
-現在、旧構造（Domain/、Presentation/、Infrastructure/）から新構造（Features/、Shared/）への移行中。新規機能は新構造で実装すること。
+### MVパターン（iOS 17+ @Observable）
+- **Store**: @Observableで状態管理（旧ViewModel）
+- **View**: SwiftUI View
+- **Service**: 副作用のある処理（struct推奨）
+- **Logic**: 純粋な関数
 
-### ファイル命名
-- Store: `[機能名]Store.swift`（ViewModelは使わない）
+### 命名規則
+- Store: `[機能名]Store.swift`（例：HomeStore.swift）
 - View: `[機能名]View.swift`
 - Service: `[機能名]Service.swift`
 - Logic: `[処理名].swift`
+
+## 最近の変更（Phase 3完了）
+
+### Features/構造への移行
+- Home機能: `HomeViewModel` → `HomeStore`に変更、Features/Home/に移行
+- Create機能: `CreateEditViewModel` → `CreateEditStore`に変更、Features/Create/に移行
+- Detail機能: Features/Detail/に移行
+- Menu機能: Features/Menu/に移行
+- Presentation/ViewModels/ディレクトリは削除（空になったため）
+
+### Share/とShared/の統合
+- `Share/`を`Shared/`に統合
+- `Features/Detail/Views/Share/ActivityView.swift`を`Shared/Components/`に移動
+- メディア関連ファイル（ImageStore、PhotoPager、PhotoThumb）を`Shared/Media/`に配置
+
+## 注意点
+
+### コンパイラエラー対策
+- SwiftUIのbodyプロパティが複雑すぎる場合は、ヘルパープロパティやViewBuilderメソッドに分割する
+- @Observableオブジェクトには`$`バインディングが使えるのは`@Bindable`または`@State`のプロパティのみ
+- 計算プロパティ（`var vm: Store { store }`）には`$`バインディングは使えない
+
+### ファイル配置
+- 機能固有のファイル → `Features/[機能名]/`
+- 複数機能で共有 → `Shared/`
+- 汎用ユーティリティ → `Support/`
