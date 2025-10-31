@@ -9,7 +9,7 @@ enum HomeDisplayMode {
 struct HomeView: View {
     @Environment(AppUIState.self) private var ui
     @State private var router = NavigationRouter()
-    @State private var vm = HomeViewModel(repo: AppContainer.shared.repo)
+    @State private var store = HomeStore(repo: AppContainer.shared.repo)
 
     @State private var pendingDeleteId: UUID? = nil
     @State private var showDeleteConfirm = false
@@ -24,112 +24,26 @@ struct HomeView: View {
     @State private var mapSheetHeight: CGFloat = 0
 
     // 名前辞書（型を固定して軽くする）
-    private var labelMap: [UUID: String] { vm.labels.nameMap }
-    private var groupMap: [UUID: String] { vm.groups.nameMap }
-    private var memberMap: [UUID: String] { vm.members.nameMap }
+    private var labelMap: [UUID: String] { store.labels.nameMap }
+    private var groupMap: [UUID: String] { store.groups.nameMap }
+    private var memberMap: [UUID: String] { store.members.nameMap }
 
     var body: some View {
-        NavigationStack {
-            ZStack {
-                VStack(spacing: 0) {
-                    HomeFilterHeader(vm: vm) {
-                        showSearchSheet = true
-                    }
-                    .sheet(isPresented: $showSearchSheet) {
-                        NavigationStack { SearchFilterSheet(vm: vm) { showSearchSheet = false } }
-                        .presentationDetents([.fraction(0.8)])
-                    }
-
-                    // 表示モードで切り替え
-                    switch displayMode {
-                    case .list:
-                        listContent()
-                    case .map:
-                        mapContent()
-                    }
-                }
-
-                // 右下にトグルボタン（シート表示時は上にずらす）
-                VStack {
-                    Spacer()
-                    HStack {
-                        Spacer()
-                        modeToggleButton
-                            .padding(.trailing, 16)
-                            .padding(.bottom, mapSheetHeight > 0 ? mapSheetHeight + 16 : 16)
-                    }
-                }
+        mainContent
+            .environment(router)
+            .sheet(item: $editingTarget) { agg in
+                editSheet(for: agg)
             }
-        }
-        .environment(router)
-        .alert(
-            item: Binding(
-                get: { vm.alert.map { AlertMsg(id: UUID(), text: $0) } },
-                set: { _ in vm.alert = nil }
-            )
-        ) { msg in
-            Alert(title: Text(L.Common.error),
-                  message: Text(msg.text),
-                  dismissButton: .default(Text(L.Common.ok)))
-        }
-        .navigationTitle(L.Home.title)
-        .toolbar(.hidden, for: .navigationBar)
-        .onChange(of: selectedMapItemId) { newValue in
-            if newValue == nil {
-                mapSheetHeight = 0
+            .sheet(item: detailSheetBinding) { agg in
+                detailSheet(for: agg)
             }
-        }
-        .onChange(of: displayMode) { _ in
-            mapSheetHeight = 0
-        }
-        .sheet(item: $editingTarget) { agg in
-            NavigationStack {
-                EditView(aggregate: agg) {
-                    Task { vm.reload() }
-                }
-                .navigationBarTitleDisplayMode(.inline)
-            }
-            .presentationDetents([.fraction(0.8)])   // お好みで
-            .presentationDragIndicator(.visible)
-        }
-        .sheet(item: Binding(
-            get: {
-                detailSheetItemId.flatMap { id in
-                    vm.items.first(where: { $0.id == id })
-                }
-            },
-            set: { newValue in
-                detailSheetItemId = newValue?.id
-            }
-        )) { agg in
-            NavigationStack {
-                VisitDetailScreen(
-                    data: toDetailData(agg),
-                    visitId: agg.id,
-                    onBack: {},
-                    onEdit: { editingTarget = agg },
-                    onShare: { /* 共有導線をここに（必要なら）*/ },
-                    onDelete: {
-                        withAnimation {
-                            vm.delete(id: agg.id)
-                        }
-                        detailSheetItemId = nil
-                    },
-                    onUpdate: {
-                        Task { vm.reload() }
-                    }
-                )
-            }
-            .presentationDetents([.large])
-            .presentationDragIndicator(.visible)
-        }
     }
 
     // MARK: - List（分離して軽く）
     @ViewBuilder
     private func listContent() -> some View {
         List {
-            ForEach(vm.groupedByDate) { group in
+            ForEach(store.groupedByDate) { group in
                 Section {
                     ForEach(group.items) { agg in
                         NavigationLink {
@@ -141,11 +55,11 @@ struct HomeView: View {
                                 onShare: { /* 共有導線をここに（必要なら）*/ },
                                 onDelete: {
                                     withAnimation {
-                                        vm.delete(id: agg.id)
+                                        store.delete(id: agg.id)
                                     }
                                 },
                                 onUpdate: {
-                                    Task { vm.reload() }
+                                    Task { store.reload() }
                                 }
                             )
                         } label: {
@@ -178,12 +92,12 @@ struct HomeView: View {
         }
 
         .listStyle(.plain)
-        .task { vm.reload() }
+        .task { store.reload() }
         .onReceive(NotificationCenter.default.publisher(for: .visitsChanged)) { _ in
-            Task { vm.reload() }
+            Task { store.reload() }
         }
         .onReceive(NotificationCenter.default.publisher(for: .taxonomyChanged)) { _ in
-            Task { await vm.reloadTaxonomyThenData() }
+            Task { await store.reloadTaxonomyThenData() }
         }
         .alert(
             L.Home.deleteConfirmTitle,
@@ -195,7 +109,7 @@ struct HomeView: View {
             Button(L.Common.delete, role: .destructive) {
                 if let id = pendingDeleteId {
                     withAnimation {
-                        vm.delete(id: id)
+                        store.delete(id: id)
                     }
                 }
                 pendingDeleteId = nil
@@ -207,8 +121,119 @@ struct HomeView: View {
             Text(L.Home.deleteConfirmMessage)
         }
     }
+
+    // MARK: - Main Content
+
+    private var mainContent: some View {
+        NavigationStack {
+            contentStack
+        }
+        .alert(
+            item: Binding(
+                get: { store.alert.map { AlertMsg(id: UUID(), text: $0) } },
+                set: { _ in store.alert = nil }
+            )
+        ) { msg in
+            Alert(title: Text(L.Common.error),
+                  message: Text(msg.text),
+                  dismissButton: .default(Text(L.Common.ok)))
+        }
+        .navigationTitle(L.Home.title)
+        .toolbar(.hidden, for: .navigationBar)
+        .onChange(of: selectedMapItemId) { newValue in
+            if newValue == nil {
+                mapSheetHeight = 0
+            }
+        }
+        .onChange(of: displayMode) { _ in
+            mapSheetHeight = 0
+        }
+    }
     
+    private var contentStack: some View {
+        ZStack {
+            VStack(spacing: 0) {
+                HomeFilterHeader(store: store) {
+                    showSearchSheet = true
+                }
+                .sheet(isPresented: $showSearchSheet) {
+                    NavigationStack { SearchFilterSheet(store: store) { showSearchSheet = false } }
+                    .presentationDetents([.fraction(0.8)])
+                }
+
+                // 表示モードで切り替え
+                switch displayMode {
+                case .list:
+                    listContent()
+                case .map:
+                    mapContent()
+                }
+            }
+
+            // 右下にトグルボタン（シート表示時は上にずらす）
+            VStack {
+                Spacer()
+                HStack {
+                    Spacer()
+                    modeToggleButton
+                        .padding(.trailing, 16)
+                        .padding(.bottom, mapSheetHeight > 0 ? mapSheetHeight + 16 : 16)
+                }
+            }
+        }
+    }
+    
+    private var detailSheetBinding: Binding<VisitAggregate?> {
+        Binding(
+            get: {
+                detailSheetItemId.flatMap { id in
+                    store.items.first(where: { $0.id == id })
+                }
+            },
+            set: { newValue in
+                detailSheetItemId = newValue?.id
+            }
+        )
+    }
+    
+    @ViewBuilder
+    private func editSheet(for agg: VisitAggregate) -> some View {
+        NavigationStack {
+            EditView(aggregate: agg) {
+                Task { store.reload() }
+            }
+            .navigationBarTitleDisplayMode(.inline)
+        }
+        .presentationDetents([.fraction(0.8)])
+        .presentationDragIndicator(.visible)
+    }
+    
+    @ViewBuilder
+    private func detailSheet(for agg: VisitAggregate) -> some View {
+        NavigationStack {
+            VisitDetailScreen(
+                data: toDetailData(agg),
+                visitId: agg.id,
+                onBack: {},
+                onEdit: { editingTarget = agg },
+                onShare: { /* 共有導線をここに（必要なら）*/ },
+                onDelete: {
+                    withAnimation {
+                        store.delete(id: agg.id)
+                    }
+                    detailSheetItemId = nil
+                },
+                onUpdate: {
+                    Task { store.reload() }
+                }
+            )
+        }
+        .presentationDetents([.large])
+        .presentationDragIndicator(.visible)
+    }
+
     // MARK: - Mode Toggle Button
+
     private var modeToggleButton: some View {
         Button {
             withAnimation {
@@ -228,7 +253,7 @@ struct HomeView: View {
     @ViewBuilder
     private func mapContent() -> some View {
         HomeMapView(
-            items: vm.items,
+            items: store.items,
             labelMap: labelMap,
             groupMap: groupMap,
             memberMap: memberMap,

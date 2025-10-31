@@ -1,5 +1,5 @@
 //
-//  HomeViewModel.swift
+//  HomeStore.swift
 //  kokokita
 //
 //  Created by 橋本遼 on 2025/09/20.
@@ -17,7 +17,7 @@ struct DateGroup: Identifiable {
 
 @MainActor
 @Observable
-final class HomeViewModel {
+final class HomeStore {
     var items: [VisitAggregate] = []
     var labelFilter: UUID? = nil
     var groupFilter: UUID? = nil

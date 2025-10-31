@@ -10,8 +10,10 @@ import SwiftUI
 import MapKit
 
 struct HomeFilterHeader: View {
-    @Bindable var vm: HomeViewModel
+    @Bindable var store: HomeStore
     var onTapSearch: () -> Void
+
+    private var vm: HomeStore { store }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
