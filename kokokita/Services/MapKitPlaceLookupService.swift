@@ -10,11 +10,16 @@ import Foundation
 import MapKit
 import Contacts
 
-final class MapKitPlaceLookupService: PlaceLookupService {
+struct MapKitPlaceLookupService: PlaceLookupService {
 
-    // 前回のリクエスト時刻を記録（レート制限対策）
-    private var lastRequestTime: Date?
-    private let minimumInterval: TimeInterval = 0.5  // 最小500ms間隔
+    // レート制限を管理するActor（DI可能）
+    private let rateLimiter: RateLimiter
+
+    /// 初期化
+    /// - Parameter rateLimiter: レート制限を管理するActor（デフォルト: 500ms間隔）
+    init(rateLimiter: RateLimiter = RateLimiter(minimumInterval: 0.5)) {
+        self.rateLimiter = rateLimiter
+    }
 
     func nearbyPOI(center: CLLocationCoordinate2D, radius: CLLocationDistance) async throws -> [PlacePOI] {
 
@@ -25,14 +30,8 @@ final class MapKitPlaceLookupService: PlaceLookupService {
                          userInfo: [NSLocalizedDescriptionKey: "位置情報が不正です"])
         }
 
-        // レート制限チェック
-        if let lastTime = lastRequestTime {
-            let elapsed = Date().timeIntervalSince(lastTime)
-            if elapsed < minimumInterval {
-                try await Task.sleep(nanoseconds: UInt64((minimumInterval - elapsed) * 1_000_000_000))
-            }
-        }
-        lastRequestTime = Date()
+        // レート制限チェック（Actor経由）
+        try await rateLimiter.waitIfNeeded()
 
         // 正: center/radius で初期化（init() は使わない）
         let poiRequest = MKLocalPointsOfInterestRequest(center: center, radius: radius)

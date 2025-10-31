@@ -14,9 +14,12 @@ final class AppContainer {
     // Repository はプロトコル型で公開（テストや差し替え容易）
     let repo: (VisitRepository & TaxonomyRepository) = CoreDataVisitRepository()
 
+    // Rate Limiter (共有インスタンス)
+    let rateLimiter = RateLimiter(minimumInterval: 0.5)
+
     // Services
     let loc = DefaultLocationService()
-    let poi = MapKitPlaceLookupService()
+    lazy var poi: MapKitPlaceLookupService = MapKitPlaceLookupService(rateLimiter: rateLimiter)
     let integ = DefaultIntegrityService()
 
     private init() {}

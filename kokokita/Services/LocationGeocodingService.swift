@@ -11,7 +11,7 @@ import Contacts
 
 /// 位置情報取得と住所逆引きを組み合わせたサービス
 @MainActor
-final class LocationGeocodingService {
+struct LocationGeocodingService {
 
     // MARK: - Dependencies
 
