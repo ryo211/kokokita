@@ -70,15 +70,36 @@ class HomeViewModel: ObservableObject { @Published var visits... }
 @StateObject private var viewModel: HomeViewModel
 ```
 
+### struct優先・class最小化の原則
+
+> **参照**: 詳細は [ADR-004: class最小化と関数型パターンの採用](./ADR/004-class最小化と関数型パターンの採用.md)
+
+**デフォルトはstruct、必要最小限のみclass**:
+
+| 層 | 型 | 理由 |
+|----|----|----|
+| Model | **struct** | 値型、不変性、メモリ安全 |
+| View | **struct** | SwiftUI要件 |
+| Logic | **struct** | 純粋関数、副作用なし |
+| Store | **class** | @Observable必須（iOS 17+） |
+| Service | **struct優先** | ステートレスならstruct、状態保持ならclass |
+| Repository | **class** | Core Data制約 |
+
+**struct優先の利点**:
+- ✅ メモリ安全（参照サイクル×）
+- ✅ パフォーマンス（Stack確保、ARCなし）
+- ✅ テスト容易（値型は予測可能）
+- ✅ マルチスレッド安全
+
 ### 単一責任原則（SRP）
 
-各クラス・構造体は**1つの責務**のみを持つ：
+各構造体・クラスは**1つの責務**のみ：
 
-- ✅ **View**: UI表示とユーザーイベントの受付のみ
-- ✅ **Store**: 状態管理とServiceとの結合のみ（@Observable）
-- ✅ **Service**: 副作用のある処理のみ（DB、API、I/O等）（ステートレス）
-- ✅ **Logic**: 純粋な関数のみ（計算、変換、フォーマット）（副作用なし）
-- ✅ **Model**: データ構造の定義とドメインロジックのみ（struct/class）
+- ✅ **View**: UI表示とイベント受付（struct）
+- ✅ **Store**: 状態管理とService結合（class - @Observable必須）
+- ✅ **Service**: 副作用のみ（struct優先、ステートレス）
+- ✅ **Logic**: 純粋関数のみ（struct、副作用なし）
+- ✅ **Model**: データ構造とドメインロジック（struct）
 
 ### 各層の詳細な責務
 
@@ -150,18 +171,24 @@ final class HomeStore {
 #### Service（副作用のある処理）
 **責務**: 副作用（DB/API/I/O） | **配置**: `Features/[機能名]/Services/` または `Shared/Services/`
 
-**特徴**: ステートレス、外部システム連携、エラーハンドリング
+**型**: **struct優先**（ステートレス）、状態保持が必要ならclass
 
 > **実装方法**: [実装ガイド - Step 6](./implementation-guide.md#step-6-serviceの実装副作用のある処理)
 
 ```swift
-final class VisitService {
-    static let shared = VisitService()
-    private let repository: VisitRepository
+// ✅ ステートレス → struct
+struct VisitService: VisitServiceProtocol {
+    private let repository: any VisitRepository
 
     func fetchAll() async throws -> [Visit] {
-        try await repository.fetchAll()  // DB操作 = 副作用
+        try await repository.fetchAll()
     }
+}
+
+// ⚠️ 状態保持 → class（例: トランザクション）
+final class PhotoEditService {
+    private var editingPhotos: [Photo] = []  // 状態
+    func beginEditing() { }
 }
 ```
 

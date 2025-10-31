@@ -105,19 +105,25 @@ struct VisitFilter {
 
 ### Step 6: Serviceの実装（副作用のある処理）
 
+> **重要**: ステートレスなら**struct**、状態保持ならclass（[ADR-004](./ADR/004-class最小化と関数型パターンの採用.md)参照）
+
 ```swift
-// Features/[機能]/Services/ または Shared/Services/
-final class VisitService {
-    static let shared = VisitService()
-    private let repository: VisitRepository
+// ✅ ステートレス → struct（推奨）
+struct VisitService: VisitServiceProtocol {
+    private let repository: any VisitRepository
 
     func fetchAll() async throws -> [Visit] {
-        try await repository.fetchAll()  // DB = 副作用
+        try await repository.fetchAll()
     }
+}
+
+// ⚠️ 状態保持 → class
+final class PhotoEditService {
+    private var editingPhotos: [Photo] = []
 }
 ```
 
-**チェック**: ステートレス、単一責任、UIに非依存、DI可能
+**チェック**: ステートレスならstruct、単一責任、UIに非依存、DI可能
 
 ### Step 7: Storeの実装（@Observable）
 
