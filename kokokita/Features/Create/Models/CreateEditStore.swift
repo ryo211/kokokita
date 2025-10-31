@@ -6,7 +6,7 @@ import Observation
 
 @MainActor
 @Observable
-final class CreateEditViewModel {
+final class CreateEditStore {
 
     // MARK: - Inputs (表示・編集用)
     var timestampDisplay: Date = Date()

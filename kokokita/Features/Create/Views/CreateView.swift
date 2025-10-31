@@ -6,12 +6,12 @@ struct CreateView: View {
     let shouldOpenPOI: Bool
 
     @Environment(\.dismiss) private var dismiss
-    @State private var vm: CreateEditViewModel
+    @State private var vm: CreateEditStore
 
     init(initialLocationData: LocationData, shouldOpenPOI: Bool = false) {
         self.initialLocationData = initialLocationData
         self.shouldOpenPOI = shouldOpenPOI
-        _vm = State(initialValue: CreateEditViewModel(
+        _vm = State(initialValue: CreateEditStore(
             loc: AppContainer.shared.loc,
             poi: AppContainer.shared.poi,
             integ: AppContainer.shared.integ,

@@ -6,7 +6,7 @@ struct EditView: View {
     var onSaved: () -> Void = {}
 
     @Environment(\.dismiss) private var dismiss
-    @State private var vm = CreateEditViewModel(
+    @State private var vm = CreateEditStore(
         loc: AppContainer.shared.loc,
         poi: AppContainer.shared.poi,
         integ: AppContainer.shared.integ,
