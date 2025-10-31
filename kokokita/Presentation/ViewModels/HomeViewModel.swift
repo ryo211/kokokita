@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import Observation
 
 // 日付グループ構造
 struct DateGroup: Identifiable {
@@ -15,22 +16,23 @@ struct DateGroup: Identifiable {
 }
 
 @MainActor
-final class HomeViewModel: ObservableObject {
-    @Published var items: [VisitAggregate] = []
-    @Published var labelFilter: UUID? = nil
-    @Published var groupFilter: UUID? = nil
-    @Published var memberFilter: UUID? = nil
-    @Published var categoryFilter: String? = nil  // カテゴリフィルタ (rawValue)
-    @Published var titleQuery: String = ""         // タイトル部分一致
-    @Published var dateFrom: Date? = nil          // 範囲: 開始
-    @Published var dateTo: Date? = nil            // 範囲: 終了
+@Observable
+final class HomeViewModel {
+    var items: [VisitAggregate] = []
+    var labelFilter: UUID? = nil
+    var groupFilter: UUID? = nil
+    var memberFilter: UUID? = nil
+    var categoryFilter: String? = nil  // カテゴリフィルタ (rawValue)
+    var titleQuery: String = ""         // タイトル部分一致
+    var dateFrom: Date? = nil          // 範囲: 開始
+    var dateTo: Date? = nil            // 範囲: 終了
 
-    @Published var labels: [LabelTag] = []
-    @Published var groups: [GroupTag] = []
-    @Published var members: [MemberTag] = []
-    @Published var alert: String?
-    
-    @Published var sortAscending: Bool = false {            // ★ 既定は「降順 = 最新が上」
+    var labels: [LabelTag] = []
+    var groups: [GroupTag] = []
+    var members: [MemberTag] = []
+    var alert: String?
+
+    var sortAscending: Bool = false {            // ★ 既定は「降順 = 最新が上」
         didSet { saveSortPref() }
     }
 
@@ -40,7 +42,7 @@ final class HomeViewModel: ObservableObject {
     private func loadSortPref() {
         sortAscending = UserDefaults.standard.bool(forKey: "home.sortAscending")
     }
-    
+
     // 適用中のフィルタがあるか
     var hasActiveFilters: Bool {
         return labelFilter != nil || groupFilter != nil || memberFilter != nil || categoryFilter != nil ||
@@ -80,9 +82,9 @@ final class HomeViewModel: ObservableObject {
         dateFrom = nil
         dateTo = nil
     }
-    
+
     private let repo: VisitRepository & TaxonomyRepository
-    
+
     init(repo: VisitRepository & TaxonomyRepository) {
         self.repo = repo
         loadSortPref()
@@ -143,7 +145,7 @@ final class HomeViewModel: ObservableObject {
         do { try repo.delete(id: id); reload() }
         catch { alert = error.localizedDescription }
     }
-    
+
     func applyAndReload() {
         reload()
     }
@@ -152,7 +154,7 @@ final class HomeViewModel: ObservableObject {
         sortAscending.toggle()
         reload()
     }
-    
+
     @MainActor
     func loadTaxonomy() {
         do {

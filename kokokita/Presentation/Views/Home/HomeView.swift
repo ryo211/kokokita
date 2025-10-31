@@ -7,9 +7,9 @@ enum HomeDisplayMode {
 }
 
 struct HomeView: View {
-    @EnvironmentObject private var ui: AppUIState
-    @StateObject private var router = NavigationRouter()
-    @StateObject private var vm = HomeViewModel(repo: AppContainer.shared.repo)
+    @Environment(AppUIState.self) private var ui
+    @State private var router = NavigationRouter()
+    @State private var vm = HomeViewModel(repo: AppContainer.shared.repo)
 
     @State private var pendingDeleteId: UUID? = nil
     @State private var showDeleteConfirm = false
@@ -61,7 +61,7 @@ struct HomeView: View {
                 }
             }
         }
-        .environmentObject(router)
+        .environment(router)
         .alert(
             item: Binding(
                 get: { vm.alert.map { AlertMsg(id: UUID(), text: $0) } },

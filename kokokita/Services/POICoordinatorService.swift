@@ -7,18 +7,20 @@
 
 import Foundation
 import CoreLocation
+import Observation
 
 /// POI検索とデータ適用を調整するサービス
 @MainActor
-final class POICoordinatorService: ObservableObject {
+@Observable
+final class POICoordinatorService {
 
-    // MARK: - Published State
+    // MARK: - State
 
     /// POIリスト表示フラグ
-    @Published var showPOI = false
+    var showPOI = false
 
     /// 検索結果のPOIリスト
-    @Published var poiList: [PlacePOI] = []
+    var poiList: [PlacePOI] = []
 
     // MARK: - Dependencies
 

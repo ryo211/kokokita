@@ -7,21 +7,23 @@
 
 import UIKit
 import Foundation
+import Observation
 
 /// 写真の追加・削除・ドラフト管理を担当するサービス
 @MainActor
-final class PhotoEditService: ObservableObject {
+@Observable
+final class PhotoEditService {
 
-    // MARK: - Published State
+    // MARK: - State
 
     /// 表示用の写真パス（新規作成時）
-    @Published var photoPaths: [String] = []
+    var photoPaths: [String] = []
 
     /// 編集用の一時コピー（編集モード時）
-    @Published var photoPathsEditing: [String] = []
+    var photoPathsEditing: [String] = []
 
     /// 保存済みフラグ
-    @Published var didSave: Bool = false
+    var didSave: Bool = false
 
     // MARK: - Private State
 

@@ -10,7 +10,7 @@ import SwiftUI
 import MapKit
 
 struct SearchFilterSheet: View {
-    @ObservedObject var vm: HomeViewModel
+    @Bindable var vm: HomeViewModel
     var onClose: () -> Void
 
     // 編集用ローカル状態（キャンセルで破棄できるように別持ち）

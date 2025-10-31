@@ -2,45 +2,32 @@ import Foundation
 import CoreLocation
 import Contacts
 import UIKit
-import Combine
+import Observation
 
 @MainActor
-final class CreateEditViewModel: ObservableObject {
+@Observable
+final class CreateEditViewModel {
 
     // MARK: - Inputs (表示・編集用)
-    @Published var timestampDisplay: Date = Date()
-    @Published var latitude: Double = 0
-    @Published var longitude: Double = 0
-    @Published var accuracy: Double?
-    @Published var addressLine: String? = nil
+    var timestampDisplay: Date = Date()
+    var latitude: Double = 0
+    var longitude: Double = 0
+    var accuracy: Double?
+    var addressLine: String? = nil
 
-    @Published var title: String = ""
-    @Published var facilityName: String? = nil
-    @Published var facilityAddress: String? = nil
-    @Published var facilityCategory: String? = nil
-    @Published var comment: String = ""
-    @Published var labelIds: Set<UUID> = []
-    @Published var groupId: UUID?
-    @Published var memberIds: Set<UUID> = []
+    var title: String = ""
+    var facilityName: String? = nil
+    var facilityAddress: String? = nil
+    var facilityCategory: String? = nil
+    var comment: String = ""
+    var labelIds: Set<UUID> = []
+    var groupId: UUID?
+    var memberIds: Set<UUID> = []
 
     // MARK: - UI State
-    @Published var alert: String?
-    @Published var showActionPrompt: Bool = false
-    @Published var shouldDismiss: Bool = false  // 権限拒否時に画面を閉じる
-
-    // POI関連のUI状態（ViewからBindingするため@Publishedで公開）
-    @Published private(set) var showPOI: Bool = false
-    @Published private(set) var poiList: [PlacePOI] = []
-
-    // POIシートを表示すべきかどうか（データが揃っている場合のみtrue）
-    var shouldShowPOISheet: Bool {
-        showPOI && !poiList.isEmpty
-    }
-
-    // POIシートを閉じる（View側から呼ばれる）
-    func closePOISheet() {
-        poiCoordinator.closePOI()
-    }
+    var alert: String?
+    var showActionPrompt: Bool = false
+    var shouldDismiss: Bool = false  // 権限拒否時に画面を閉じる
 
     // 測位フラグ（偽装/外部アクセサリ検知）
     private var lastFlags = LocationSourceFlags(
@@ -51,7 +38,6 @@ final class CreateEditViewModel: ObservableObject {
     // MARK: - Dependencies (Services)
     private let integ: IntegrityService
     private let repo: VisitRepository & TaxonomyRepository
-    private var cancellables = Set<AnyCancellable>()
 
     /// 写真管理サービス
     let photoService: PhotoEditService
@@ -60,7 +46,7 @@ final class CreateEditViewModel: ObservableObject {
     private let locationGeocodingService: LocationGeocodingService
 
     /// POI検索・調整サービス
-    private let poiCoordinator: POICoordinatorService
+    let poiCoordinator: POICoordinatorService
 
     // MARK: - Initialization
 
@@ -88,12 +74,6 @@ final class CreateEditViewModel: ObservableObject {
             self.addressLine = data.address
             self.lastFlags = data.flags
         }
-
-        // POI状態の同期（poiCoordinatorの変更をViewModelに反映）
-        setupPOIBinding()
-
-        // PhotoService の変更をViewModelに伝播
-        setupPhotoBinding()
     }
 
     // 初期化後にPOIを開く（Viewから呼ばれる）
@@ -105,28 +85,16 @@ final class CreateEditViewModel: ObservableObject {
         }
     }
 
-    private func setupPOIBinding() {
-        // poiCoordinatorのshowPOIとpoiListの変更を監視してViewModelに反映
-        poiCoordinator.$showPOI
-            .sink { [weak self] value in
-                self?.showPOI = value
-            }
-            .store(in: &cancellables)
+    // MARK: - Computed Properties (POI)
 
-        poiCoordinator.$poiList
-            .sink { [weak self] value in
-                self?.poiList = value
-            }
-            .store(in: &cancellables)
+    /// POIシートを表示すべきかどうか（データが揃っている場合のみtrue）
+    var shouldShowPOISheet: Bool {
+        poiCoordinator.showPOI && !poiCoordinator.poiList.isEmpty
     }
 
-    private func setupPhotoBinding() {
-        // photoServiceの変更をこのViewModelの変更として伝播
-        photoService.objectWillChange
-            .sink { [weak self] _ in
-                self?.objectWillChange.send()
-            }
-            .store(in: &cancellables)
+    /// POIシートを閉じる（View側から呼ばれる）
+    func closePOISheet() {
+        poiCoordinator.closePOI()
     }
 
     // MARK: - Load Existing

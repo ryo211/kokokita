@@ -36,7 +36,7 @@ struct RootTabView: View {
     @State private var showLocationLoading = false
     @State private var promptSheetLocationData: LocationData?
     @State private var createScreenData: CreateScreenData?
-    @EnvironmentObject private var ui: AppUIState
+    @Environment(AppUIState.self) private var ui
 
     var body: some View {
         // ← 重ねずに“占有する”縦積みレイアウトに変更

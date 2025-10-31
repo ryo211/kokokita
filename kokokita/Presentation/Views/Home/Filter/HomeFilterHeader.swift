@@ -10,7 +10,7 @@ import SwiftUI
 import MapKit
 
 struct HomeFilterHeader: View {
-    @ObservedObject var vm: HomeViewModel
+    @Bindable var vm: HomeViewModel
     var onTapSearch: () -> Void
 
     var body: some View {

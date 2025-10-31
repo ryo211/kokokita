@@ -13,14 +13,14 @@ struct KokokitaApp: App {
         // Core Data スタック初期化は CoreDataStack.shared が内部で行うので特に何も不要
         // もし起動時にマイグレーションや初期データが必要ならここで呼ぶ
     }
-    
-    @StateObject private var uiState = AppUIState()
+
+    @State private var uiState = AppUIState()
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     
     var body: some Scene {
         WindowGroup {
             RootTabView()
-                .environmentObject(uiState)
+                .environment(uiState)
                 .environment(\.managedObjectContext, CoreDataStack.shared.context)
         }
     }

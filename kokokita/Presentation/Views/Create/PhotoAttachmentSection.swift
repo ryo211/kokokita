@@ -12,7 +12,7 @@ import UIKit
 
 @available(iOS 16.0, *)
 struct PhotoAttachmentSection: View {
-    @ObservedObject var vm: CreateEditViewModel
+    @Bindable var vm: CreateEditViewModel
     var allowDelete: Bool = true
     var thumbSize: CGFloat = 64
 

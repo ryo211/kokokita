@@ -16,7 +16,7 @@ enum VisitEditMode {
 
 struct VisitEditScreen: View {
     // 共有 ViewModel
-    @ObservedObject var vm: CreateEditViewModel
+    @Bindable var vm: CreateEditViewModel
     let mode: VisitEditMode
     let onClose: () -> Void
     var showsCloseButton: Bool = true
@@ -148,7 +148,7 @@ struct VisitEditScreen: View {
             )) {
                 NavigationStack {
                     // ★ 明示的に型を固定してあげると安定します
-                    let items: [PlacePOI] = vm.poiList
+                    let items: [PlacePOI] = vm.poiCoordinator.poiList
                     let name: (PlacePOI) -> String = { $0.name }
                     let address: (PlacePOI) -> String? = { $0.address }
                     let poiCategory: (PlacePOI) -> MKPointOfInterestCategory? = { poi in
