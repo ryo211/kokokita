@@ -315,7 +315,7 @@ final class AppContainer {
 
 ```
 kokokita/
-├── Features/                    # 機能単位（コロケーション）
+├── Features/                    # アプリ機能（Feature-based）
 │   ├── Home/
 │   │   ├── Models/             # HomeStore.swift (@Observable)
 │   │   ├── Logic/              # VisitFilter.swift, VisitSorter.swift (純粋関数)
@@ -329,21 +329,39 @@ kokokita/
 │   └── Menu/
 │
 ├── Shared/                      # 共通コード
-│   ├── Models/                 # Visit.swift, VisitDetails.swift, Taxonomy.swift...
-│   ├── Services/               # 共通インフラサービス
-│   │   ├── Persistence/        # CoreDataStack, CoreDataVisitRepository...
+│   ├── Features/               # 共有機能（Feature-based）
+│   │   ├── Map/
+│   │   │   ├── Views/          # MapPreview, CoordinateBadge
+│   │   │   └── Logic/          # MapURLBuilder
+│   │   ├── Taxonomy/           # Label/Group/Member
+│   │   │   ├── Models/         # Taxonomy.swift
+│   │   │   ├── Services/       # CoreDataTaxonomyRepository
+│   │   │   └── Views/          # Pickers/, Forms/
+│   │   └── Visit/
+│   │       ├── Models/         # Visit, VisitDetails, VisitAggregate, PlacePOI
+│   │       ├── Services/       # CoreDataVisitRepository
+│   │       └── Views/          # VisitEditScreen
+│   │
+│   ├── Infrastructure/         # 共有インフラ（技術層）
+│   │   ├── Persistence/        # CoreDataStack
 │   │   ├── Location/           # DefaultLocationService, MapKitPlaceLookupService
-│   │   └── Security/           # DefaultIntegrityService
-│   ├── Media/                  # ImageStore, PhotoPager, PhotoThumb
-│   └── UIComponents/           # 共通UIコンポーネント
+│   │   ├── Security/           # DefaultIntegrityService
+│   │   ├── Map/                # MapSnapshotService
+│   │   └── RateLimiter.swift
+│   │
+│   ├── UIComponents/           # 汎用UIコンポーネント
+│   │   ├── Chip.swift
+│   │   ├── EditFooterBar.swift
+│   │   └── ...
+│   │
+│   ├── Config/
+│   ├── DI/
+│   └── Utilities/
 │
 ├── App/                         # アプリ設定
 │   ├── KokokitaApp.swift
-│   ├── Config/                 # AppConfig, UIConstants
-│   └── DI/                     # DependencyContainer (直接依存)
-│
-├── Resources/                   # リソース
-│   └── Localization/
+│   ├── RootTabView.swift
+│   └── AppUIState.swift
 │
 └── Support/                     # サポートユーティリティ
     ├── Extensions/

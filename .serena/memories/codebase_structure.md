@@ -17,13 +17,15 @@ kokokita/
 
 ```
 
-## メインソースコード構造（Phase 8完了後の最新構成）
+## メインソースコード構造（最新の構成 - Shared/Features導入後）
 
 ```
 kokokita/
 ├── App/                         # アプリケーション設定
 │   ├── KokokitaApp.swift        # エントリポイント
 │   ├── AppDelegate.swift        # アプリデリゲート
+│   ├── RootTabView.swift        # タブナビゲーション
+│   ├── AppUIState.swift         # グローバルUI状態
 │   ├── Config/
 │   │   ├── UIConstants.swift    # UI定数
 │   │   └── AppConfig.swift      # アプリ設定
@@ -41,7 +43,7 @@ kokokita/
 │   ├── kokokita_icon.imageset/
 │   └── AccentColor.colorset/
 │
-├── Features/                    # 機能単位（Feature-based MV + Logic/Effects分離）
+├── Features/                    # アプリ機能（Feature-based MV + Logic/Effects分離）
 │   ├── Home/
 │   │   ├── Models/
 │   │   │   └── HomeStore.swift           # @Observable（状態管理）
@@ -91,76 +93,96 @@ kokokita/
 │           └── ResetAllView.swift
 │
 ├── Shared/                      # 共通コード
-│   ├── Models/                  # ドメインモデル（Domain/から移行）
-│   │   ├── Visit.swift          # 不変な訪問データ + Integrity
-│   │   ├── VisitDetails.swift   # 可変なメタデータ + FacilityInfo
-│   │   ├── VisitAggregate.swift # 集約ルート（Visit + VisitDetails）
-│   │   ├── Taxonomy.swift       # LabelTag, GroupTag, MemberTag
-│   │   └── PlacePOI.swift       # POI検索結果
+│   ├── Features/                # 共有機能（Feature-based）
+│   │   ├── Map/                 # 地図機能
+│   │   │   ├── Views/
+│   │   │   │   ├── MapPreview.swift      # 地図プレビューコンポーネント
+│   │   │   │   └── CoordinateBadge.swift # 座標バッジコンポーネント
+│   │   │   └── Logic/
+│   │   │       └── MapURLBuilder.swift   # 地図アプリURL生成（純粋関数）
+│   │   │
+│   │   ├── Taxonomy/            # タクソノミー機能（Label/Group/Member）
+│   │   │   ├── Models/
+│   │   │   │   └── Taxonomy.swift        # LabelTag, GroupTag, MemberTag
+│   │   │   ├── Services/
+│   │   │   │   └── CoreDataTaxonomyRepository.swift
+│   │   │   └── Views/
+│   │   │       ├── Pickers/
+│   │   │       │   ├── LabelPickerSheet.swift
+│   │   │       │   ├── GroupPickerSheet.swift
+│   │   │       │   └── MemberPickerSheet.swift
+│   │   │       └── Forms/
+│   │   │           ├── LabelCreateSheet.swift
+│   │   │           ├── GroupCreateSheet.swift
+│   │   │           └── MemberCreateSheet.swift
+│   │   │
+│   │   └── Visit/               # 訪問記録機能
+│   │       ├── Models/
+│   │       │   ├── Visit.swift           # 不変な訪問データ + Integrity
+│   │       │   ├── VisitDetails.swift    # 可変なメタデータ + FacilityInfo
+│   │       │   ├── VisitAggregate.swift  # 集約ルート（Visit + VisitDetails）
+│   │       │   └── PlacePOI.swift        # POI検索結果
+│   │       ├── Services/
+│   │       │   └── CoreDataVisitRepository.swift
+│   │       └── Views/
+│   │           └── VisitEditScreen.swift # 共通編集画面
 │   │
-│   ├── Services/                # 共通サービス（Infrastructure/を統合）
-│   │   ├── Persistence/         # データ永続化（旧Infrastructure/Persistence/）
-│   │   │   ├── CoreDataStack.swift
-│   │   │   ├── CoreDataVisitRepository.swift
-│   │   │   └── CoreDataTaxonomyRepository.swift
-│   │   ├── Location/            # 位置情報関連（旧Infrastructure/Location/）
+│   ├── Infrastructure/          # 共有インフラ（技術層）
+│   │   ├── Persistence/
+│   │   │   └── CoreDataStack.swift       # Core Data管理
+│   │   ├── Location/
 │   │   │   ├── DefaultLocationService.swift
-│   │   │   └── MapKitPlaceLookupService.swift
-│   │   ├── Security/            # セキュリティ関連（旧Infrastructure/Security/）
+│   │   │   ├── MapKitPlaceLookupService.swift
+│   │   │   └── LocationGeocodingService.swift
+│   │   ├── Security/
 │   │   │   └── DefaultIntegrityService.swift
-│   │   ├── LocationGeocodingService.swift  # 位置情報+ジオコーディング
-│   │   └── RateLimiter.swift    # レート制限
+│   │   ├── Map/
+│   │   │   └── MapSnapshotService.swift  # 地図スナップショット生成
+│   │   └── RateLimiter.swift
 │   │
-│   ├── Media/                   # メディア管理
-│   │   ├── ImageStore.swift     # 画像ファイル管理
-│   │   ├── PhotoPager.swift     # 写真フルスクリーン
-│   │   └── PhotoThumb.swift     # 写真サムネイル
+│   ├── UIComponents/            # 汎用UIコンポーネント
+│   │   ├── Chip.swift
+│   │   ├── EditFooterBar.swift
+│   │   ├── KokokitaHeaderLogo.swift
+│   │   ├── CameraPicker.swift
+│   │   ├── AlertMsg.swift
+│   │   ├── BannerAdView.swift
+│   │   ├── BigFooterButton.swift
+│   │   ├── FacilityInfoButton.swift
+│   │   └── KokokamoPOISheet.swift
 │   │
-│   ├── UIComponents/            # 共通UIコンポーネント
-│   │   └── ActivityView.swift   # 共有UI
+│   ├── UI/                      # UIユーティリティ
+│   │   ├── Components/
+│   │   │   └── ActivityView.swift
+│   │   ├── Keyboard/
+│   │   │   ├── KeyboardAwareTextView.swift
+│   │   │   └── KeyboardDismissHelpers.swift
+│   │   └── Media/
+│   │       ├── PhotoPager.swift
+│   │       ├── PhotoThumb.swift
+│   │       └── ImageStore.swift
 │   │
-│   └── AppMedia.swift           # メディア定数
+│   ├── Config/
+│   │   ├── AppMedia.swift
+│   │   └── Localization/
+│   │       └── LocalizedString.swift
+│   │
+│   ├── DI/
+│   │   └── DependencyContainer.swift
+│   │
+│   └── Utilities/
+│       ├── NavigationRouter.swift
+│       ├── Logger.swift
+│       ├── ShareImageRenderer.swift
+│       ├── MKPointOfInterestCategory+JP.swift
+│       └── Extensions/
+│           ├── DateExtensions.swift
+│           ├── StringExtensions.swift
+│           ├── CollectionExtensions.swift
+│           └── NotificationExtensions.swift
 │
 ├── Support/                     # サポートユーティリティ
-│   ├── NavigationRouter.swift   # ナビゲーション
-│   ├── Logger.swift             # ログユーティリティ
-│   ├── Extensions/              # 拡張機能
-│   │   ├── DateExtensions.swift
-│   │   ├── StringExtensions.swift
-│   │   ├── CollectionExtensions.swift
-│   │   └── NotificationExtensions.swift
-│   ├── Localization/
-│   │   └── LocalizedString.swift  # ローカライズ定義（L列挙型）
-│   ├── ShareImageRenderer.swift
-│   ├── KeyboardAwareTextView.swift
-│   ├── KeyboardDismissHelpers.swift
-│   └── MKPointOfInterestCategory+JP.swift
-│
-├── Presentation/                # プレゼンテーション層（共通コンポーネントのみ残存）
-│   ├── Map/
-│   │   ├── MapPreview.swift
-│   │   └── MapSnapshotService.swift
-│   └── Views/
-│       └── Common/              # 共通コンポーネント
-│           ├── RootTabView.swift      # タブナビゲーション
-│           ├── AppUIState.swift       # グローバルUI状態
-│           ├── VisitEditScreen.swift  # 共通編集画面
-│           ├── FacilityInfoButton.swift
-│           ├── KokokamoPOISheet.swift
-│           └── Components/
-│               ├── Chip.swift
-│               ├── EditFooterBar.swift
-│               ├── KokokitaHeaderLogo.swift
-│               ├── CameraPicker.swift
-│               ├── LabelPickerSheet.swift
-│               ├── GroupPickerSheet.swift
-│               ├── MemberPickerSheet.swift
-│               ├── LabelCreateSheet.swift
-│               ├── GroupCreateSheet.swift
-│               ├── MemberCreateSheet.swift
-│               ├── AlertMsg.swift
-│               ├── BannerAdView.swift
-│               └── BigFooterButton.swift
+│   （現在は空またはShared/に統合済み）
 │
 ├── ContentView.swift            # ルートビュー
 ├── Info.plist                   # アプリ情報
@@ -195,34 +217,34 @@ doc/
 - `doc/architecture-guide.md`: コーディング規約とベストプラクティス
 - `doc/implementation-guide.md`: 実装手順とチェックリスト
 
-### ドメインモデル（Phase 6で分割）
-- `Shared/Models/Visit.swift`: 不変な訪問データ + Integrity + LocationSourceFlags
-- `Shared/Models/VisitDetails.swift`: 可変なメタデータ + FacilityInfo
-- `Shared/Models/VisitAggregate.swift`: 集約ルート（Visit + VisitDetails）
-- `Shared/Models/Taxonomy.swift`: LabelTag、GroupTag、MemberTag
-- `Shared/Models/PlacePOI.swift`: POI検索結果
+### ドメインモデル（Shared/Features/配下に整理）
+- `Shared/Features/Visit/Models/Visit.swift`: 不変な訪問データ + Integrity + LocationSourceFlags
+- `Shared/Features/Visit/Models/VisitDetails.swift`: 可変なメタデータ + FacilityInfo
+- `Shared/Features/Visit/Models/VisitAggregate.swift`: 集約ルート（Visit + VisitDetails）
+- `Shared/Features/Taxonomy/Models/Taxonomy.swift`: LabelTag、GroupTag、MemberTag
+- `Shared/Features/Visit/Models/PlacePOI.swift`: POI検索結果
 
-### Core Data（Phase 8でShared/Services/Persistence/に統合）
+### Core Data（Shared/Infrastructure/Persistence/に統合）
 - `Kokokita.xcdatamodeld/`: Core Dataモデル定義
-- `Shared/Services/Persistence/CoreDataStack.swift`: Core Data管理
-- `Shared/Services/Persistence/CoreDataVisitRepository.swift`: 訪問記録リポジトリ
-- `Shared/Services/Persistence/CoreDataTaxonomyRepository.swift`: タクソノミーリポジトリ
+- `Shared/Infrastructure/Persistence/CoreDataStack.swift`: Core Data管理
+- `Shared/Features/Visit/Services/CoreDataVisitRepository.swift`: 訪問記録リポジトリ
+- `Shared/Features/Taxonomy/Services/CoreDataTaxonomyRepository.swift`: タクソノミーリポジトリ
 
-### 依存性注入（Phase 7で直接依存に変更）
-- `App/DI/DependencyContainer.swift`: DIコンテナ（AppContainer.shared）
+### 依存性注入（直接依存）
+- `Shared/DI/DependencyContainer.swift`: DIコンテナ（AppContainer.shared）
 - Protocolベース抽象化は廃止、具体実装への直接依存
 
 ### ローカライゼーション
-- `Support/Localization/LocalizedString.swift`: L列挙型で定義
+- `Shared/Config/Localization/LocalizedString.swift`: L列挙型で定義
 - `Resources/ja.lproj/Localizable.strings`: 日本語
 - `Resources/en.lproj/Localizable.strings`: 英語
 
 ### ナビゲーション
-- `Presentation/Views/Common/RootTabView.swift`: タブナビゲーション
+- `App/RootTabView.swift`: タブナビゲーション
 
 ## ファイル配置のルール
 
-### 機能固有のファイル
+### アプリ機能
 ```
 Features/[機能名]/
 ├── Models/              # @Observable Store
@@ -231,13 +253,22 @@ Features/[機能名]/
 └── Views/              # UIコンポーネント
 ```
 
-### 複数の機能で使用する場合
+### 共有機能（Feature-based）
 ```
-Shared/
+Shared/Features/[機能名]/
 ├── Models/             # ドメインモデル
-├── Services/           # 共通インフラサービス
-├── Media/              # メディア管理
-└── UIComponents/       # 共通UIコンポーネント
+├── Services/           # 機能固有のサービス
+├── Logic/              # 純粋な関数
+└── Views/              # UIコンポーネント
+```
+
+### 共有インフラ（技術層）
+```
+Shared/Infrastructure/
+├── Persistence/        # Core Data
+├── Location/           # 位置情報
+├── Security/           # セキュリティ
+└── Map/                # 地図関連サービス
 ```
 
 ### UI定数と設定
@@ -271,12 +302,12 @@ App/Config/
 - **View**: SwiftUI View
 - **Logic**: 純粋な関数（Functional Core）
 - **Effects**: 機能固有の副作用（Imperative Shell）
-- **Services**: 共通インフラの副作用（Shared/Services/）
+- **Infrastructure**: 共通インフラの副作用（Shared/Infrastructure/）
 
 ### 命名規則
 - Store: `[機能名]Store.swift`（例：HomeStore.swift）
 - View: `[機能名]View.swift`
-- Logic: `[処理名].swift`（例：VisitFilter.swift）
+- Logic: `[処理名].swift`（例：VisitFilter.swift、MapURLBuilder.swift）
 - Effects: `[対象]Effects.swift`（例：POIEffects.swift）
 - Services: `[機能名]Service.swift`（例：DefaultLocationService.swift）
 
@@ -289,66 +320,67 @@ App/Config/
 - @Observable導入
 
 ### Phase 4: Logic層の分離（完了）
-- HomeStoreから純粋関数を抽出:
-  - `Features/Home/Logic/VisitFilter.swift`
-  - `Features/Home/Logic/VisitSorter.swift`
-  - `Features/Home/Logic/VisitGrouper.swift`
-  - `Features/Home/Logic/DateHelper.swift`
-- CreateEditStoreから純粋関数を抽出:
-  - `Features/Create/Logic/StringValidator.swift`
-  - `Features/Create/Logic/LocationValidator.swift`
+- HomeStoreから純粋関数を抽出
+- CreateEditStoreから純粋関数を抽出
 
 ### Phase 5: Services → Effects リネーム（完了）
-- 機能固有のServiceをEffectsに改名:
-  - `POICoordinatorService.swift` → `Features/Create/Effects/POIEffects.swift`
-  - `PhotoEditService.swift` → `Features/Create/Effects/PhotoEffects.swift`
-- TCAパターンとの整合性向上
+- 機能固有のServiceをEffectsに改名
 
 ### Phase 6: Domain層の削除とモデル分割（完了）
-- `Domain/Models.swift` を5つのファイルに分割してShared/Models/に配置:
-  - `Visit.swift`（不変な訪問データ + LocationSourceFlags）
-  - `VisitDetails.swift`（可変メタデータ + FacilityInfo）
-  - `VisitAggregate.swift`（集約ルート）
-  - `Taxonomy.swift`（タグ類）
-  - `PlacePOI.swift`（POI検索結果）
-- `Domain/`ディレクトリ削除（Phase 7で完全削除）
+- Domain/Models.swift を5つのファイルに分割してShared/Models/に配置
 
 ### Phase 7: Protocol削除と直接依存（完了）
-- すべてのProtocolベースDIを削除:
-  - `VisitRepository` → `CoreDataVisitRepository`
-  - `TaxonomyRepository` → `CoreDataTaxonomyRepository`
-  - `LocationService` → `DefaultLocationService`
-  - `PlaceLookupService` → `MapKitPlaceLookupService`
-  - `IntegrityService` → `DefaultIntegrityService`
-- `Domain/Protocols.swift` 削除
-- `Domain/`ディレクトリ完全削除
+- すべてのProtocolベースDIを削除
 - Storeのinitでデフォルト引数を使用してDI実現
 
 ### Phase 8: Infrastructure統合（完了）
-- Infrastructure/をShared/Services/に統合:
-  - `Infrastructure/Persistence/` → `Shared/Services/Persistence/`
-  - `Infrastructure/Location/` → `Shared/Services/Location/`
-  - `Infrastructure/Security/` → `Shared/Services/Security/`
-- `Infrastructure/`ディレクトリ削除
-- 3層アーキテクチャから実用的な2層構成へ
+- Infrastructure/をShared/Services/に統合
 
-## 現在の状態（Phase 8完了）
+### Phase 9: Presentation統合（完了）
+- Presentation/フォルダを削除
+- アプリレベルコンポーネントをApp/に移動
+- 共通UIコンポーネントをShared/UIComponents/に移動
+- Map関連をShared/Map/に移動（後にShared/Features/Map/に再構成）
 
-✅ **完全に新構成に移行完了**
+### Phase 10: Shared/Features構造導入（完了）
+- **Shared/Features/Map/** 作成
+  - Views/: MapPreview、CoordinateBadge
+  - Logic/: MapURLBuilder（純粋関数）
+- **Shared/Features/Taxonomy/** 作成
+  - Models/: Taxonomy.swift
+  - Services/: CoreDataTaxonomyRepository
+  - Views/Pickers/: Label/Group/MemberPickerSheet
+  - Views/Forms/: Label/Group/MemberCreateSheet
+- **Shared/Features/Visit/** 作成
+  - Models/: Visit、VisitDetails、VisitAggregate、PlacePOI
+  - Services/: CoreDataVisitRepository
+  - Views/: VisitEditScreen
+- **Shared/Infrastructure/** 再編成
+  - Persistence/、Location/、Security/、Map/に整理
+  - Services/ディレクトリ削除
+
+## 現在の状態（Phase 10完了）
+
+✅ **完全に新構成に移行完了 + Shared/Features導入**
 
 **新構成（現在）**:
-- `Features/[機能名]/`: 機能ごとにコロケーション（Models/Logic/Effects/Views）
-- `Shared/Models/`: 分割された明確なドメインモデル
-- `Shared/Services/`: インフラ層を統合した共通サービス
-  - Persistence/、Location/、Security/のサブディレクトリで整理
+- `Features/[機能名]/`: アプリ機能（Models/Logic/Effects/Views）
+- `Shared/Features/[機能名]/`: 共有機能（Models/Services/Logic/Views）
+- `Shared/Infrastructure/`: 共有インフラ（Persistence/、Location/、Security/、Map/）
+- `Shared/UIComponents/`: 汎用UIコンポーネント（機能に属さない）
 - Store使用（ViewModelなし）
 - @Observableマクロ（ObservableObjectなし）
 - 直接依存（Protocolなし）
 - Logic/Effects分離（Functional Core, Imperative Shell）
+- Feature-based構造の一貫性（Features/とShared/Features/で同じ構造）
 
 **削除された旧構成**:
 - ❌ `Domain/`（Phase 6-7で削除）
 - ❌ `Infrastructure/`（Phase 8で削除）
+- ❌ `Presentation/`（Phase 9で削除）
+- ❌ `Shared/Models/`（Phase 10でShared/Features/*/Models/に分散）
+- ❌ `Shared/Services/`（Phase 10でShared/Infrastructure/に改名）
+- ❌ `Shared/Map/`（Phase 10でShared/Features/Map/に再構成）
 - ❌ `Features/Create/Services/`（Phase 5でEffects/に統合）
 - ❌ Protocolベース抽象化（Phase 7で削除）
 - ❌ ObservableObject（Phase 1-3で@Observableに置換）
@@ -360,7 +392,9 @@ App/Config/
 - @Observableオブジェクトには`$`バインディングが使えるのは`@Bindable`または`@State`のプロパティのみ
 - 計算プロパティ（`var vm: Store { store }`）には`$`バインディングは使えない
 
-### ファイル配置
-- 機能固有のファイル → `Features/[機能名]/`（Models、Logic、Effects、Viewsに分類）
-- 複数機能で共有 → `Shared/`（Models、Services、Media、UIComponentsに分類）
-- 汎用ユーティリティ → `Support/`
+### ファイル配置の判断基準
+- **アプリ機能**: `Features/[機能名]/`（Models、Logic、Effects、Viewsに分類）
+- **共有機能**: `Shared/Features/[機能名]/`（Models、Services、Logic、Viewsに分類）
+- **共有インフラ**: `Shared/Infrastructure/`（Persistence、Location、Security、Map等）
+- **汎用UI**: `Shared/UIComponents/`（機能に属さない共通コンポーネント）
+- **サポート**: `Support/`（汎用ユーティリティ）
