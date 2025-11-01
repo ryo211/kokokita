@@ -1,5 +1,5 @@
 //
-//  PhotoEditService.swift
+//  PhotoEffects.swift
 //  kokokita
 //
 //  Created by Claude on 2025/10/11.
@@ -9,10 +9,10 @@ import UIKit
 import Foundation
 import Observation
 
-/// 写真の追加・削除・ドラフト管理を担当するサービス
+/// 写真の追加・削除・ドラフト管理の副作用を担当
 @MainActor
 @Observable
-final class PhotoEditService {
+final class PhotoEffects {
 
     // MARK: - State
 
@@ -67,7 +67,7 @@ final class PhotoEditService {
         isEditing = true
     }
 
-    // MARK: - Add Photos
+    // MARK: - Add Photos (Side Effect)
 
     /// 写真を追加する
     func addPhotos(_ images: [UIImage]) {
@@ -86,7 +86,7 @@ final class PhotoEditService {
         }
     }
 
-    // MARK: - Remove Photo
+    // MARK: - Remove Photo (Side Effect)
 
     /// 写真を削除する
     func removePhoto(at index: Int) {
@@ -106,7 +106,7 @@ final class PhotoEditService {
         }
     }
 
-    // MARK: - Save/Discard
+    // MARK: - Save/Discard (Side Effect)
 
     /// 編集を確定する（削除予約を実行）
     func commitEdits() {

@@ -20,14 +20,14 @@ struct PhotoAttachmentSection: View {
     @State private var showCamera = false
     @State private var fullScreenIndex: Int? = nil
 
-    private var canAddMore: Bool { vm.photoService.photoPathsEditing.count < AppConfig.maxPhotosPerVisit }
+    private var canAddMore: Bool { vm.photoEffects.photoPathsEditing.count < AppConfig.maxPhotosPerVisit }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
 
             LazyVGrid(columns: [GridItem(.adaptive(minimum: thumbSize), spacing: 5)], spacing: 5)  {
-                ForEach(vm.photoService.photoPathsEditing.indices, id: \.self) { idx in
-                    let path = vm.photoService.photoPathsEditing[idx]
+                ForEach(vm.photoEffects.photoPathsEditing.indices, id: \.self) { idx in
+                    let path = vm.photoEffects.photoPathsEditing[idx]
                     PhotoThumb(
                         path: path,
                         size: thumbSize,
@@ -44,7 +44,7 @@ struct PhotoAttachmentSection: View {
                 HStack(spacing: 12) {
                     PhotosPicker(
                         selection: $libSelection,
-                        maxSelectionCount: AppConfig.maxPhotosPerVisit - vm.photoService.photoPathsEditing.count,
+                        maxSelectionCount: AppConfig.maxPhotosPerVisit - vm.photoEffects.photoPathsEditing.count,
                         matching: .images
                     ) {
                         Label(L.Photo.photo, systemImage: "photo.on.rectangle")
@@ -78,7 +78,7 @@ struct PhotoAttachmentSection: View {
             get: { fullScreenIndex.map { PhotoPager.IndexWrapper(index: $0) } },
             set: { fullScreenIndex = $0?.index }
         )) { wrapper in
-            PhotoPager(paths: vm.photoService.photoPathsEditing, startIndex: wrapper.index)
+            PhotoPager(paths: vm.photoEffects.photoPathsEditing, startIndex: wrapper.index)
         }
     }
 

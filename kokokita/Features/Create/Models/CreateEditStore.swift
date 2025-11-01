@@ -39,14 +39,16 @@ final class CreateEditStore {
     private let integ: IntegrityService
     private let repo: VisitRepository & TaxonomyRepository
 
-    /// 写真管理サービス
-    let photoService: PhotoEditService
-
     /// 位置情報・住所逆引きサービス
     private let locationGeocodingService: LocationGeocodingService
 
-    /// POI検索・調整サービス
-    let poiCoordinator: POICoordinatorService
+    // MARK: - Dependencies (Effects)
+
+    /// 写真管理の副作用
+    let photoEffects: PhotoEffects
+
+    /// POI検索の副作用
+    let poiEffects: POIEffects
 
     // MARK: - Dependencies (Logic)
 
@@ -65,10 +67,12 @@ final class CreateEditStore {
         self.integ = integ
         self.repo = repo
 
-        // サービスを初期化
-        self.photoService = PhotoEditService()
+        // Effectsを初期化
+        self.photoEffects = PhotoEffects()
+        self.poiEffects = POIEffects(poiService: poi)
+
+        // Servicesを初期化
         self.locationGeocodingService = LocationGeocodingService(locationService: loc)
-        self.poiCoordinator = POICoordinatorService(poiService: poi)
 
         // 初期位置情報がある場合は設定
         if let data = initialLocationData {
@@ -94,12 +98,12 @@ final class CreateEditStore {
 
     /// POIシートを表示すべきかどうか（データが揃っている場合のみtrue）
     var shouldShowPOISheet: Bool {
-        poiCoordinator.showPOI && !poiCoordinator.poiList.isEmpty
+        poiEffects.showPOI && !poiEffects.poiList.isEmpty
     }
 
     /// POIシートを閉じる（View側から呼ばれる）
     func closePOISheet() {
-        poiCoordinator.closePOI()
+        poiEffects.closePOI()
     }
 
     // MARK: - Load Existing
@@ -119,8 +123,8 @@ final class CreateEditStore {
         memberIds = Set(agg.details.memberIds)
         addressLine = agg.details.resolvedAddress
 
-        // 写真はサービス経由で管理
-        photoService.loadForEdit(agg.details.photoPaths)
+        // 写真はEffects経由で管理
+        photoEffects.loadForEdit(agg.details.photoPaths)
     }
 
     // MARK: - UI Actions
@@ -174,19 +178,19 @@ final class CreateEditStore {
 
     func openPOI() async {
         do {
-            try await poiCoordinator.searchAndShowPOI(latitude: latitude, longitude: longitude)
+            try await poiEffects.searchAndShowPOI(latitude: latitude, longitude: longitude)
         } catch {
             alert = error.localizedDescription
         }
     }
 
     func applyPOI(_ poi: PlacePOI) {
-        let data = poiCoordinator.getApplicableData(from: poi)
+        let data = poiEffects.getApplicableData(from: poi)
         self.title = data.title
         self.facilityName = data.facilityName
         self.facilityAddress = data.facilityAddress
         self.facilityCategory = data.facilityCategory
-        poiCoordinator.closePOI()
+        poiEffects.closePOI()
     }
 
     // MARK: - Create / Update
@@ -233,7 +237,7 @@ final class CreateEditStore {
                 groupId: groupId,
                 memberIds: Array(memberIds),
                 resolvedAddress: addressLine,
-                photoPaths: photoService.getCurrentPaths()
+                photoPaths: photoEffects.getCurrentPaths()
             )
 
             try repo.create(visit: visit, details: details)
@@ -259,12 +263,12 @@ final class CreateEditStore {
                 if let addr = addressLine, !addr.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                     cur.resolvedAddress = addr
                 }
-                // 写真はサービスから取得
-                cur.photoPaths = photoService.getCurrentPaths()
+                // 写真はEffectsから取得
+                cur.photoPaths = photoEffects.getCurrentPaths()
             }
 
             // 写真編集を確定
-            photoService.commitEdits()
+            photoEffects.commitEdits()
 
             return true
         } catch {
@@ -330,14 +334,14 @@ final class CreateEditStore {
     // MARK: - Photo Delegation (便利メソッド)
 
     func addPhotos(_ images: [UIImage]) {
-        photoService.addPhotos(images)
+        photoEffects.addPhotos(images)
     }
 
     func removePhoto(at index: Int) {
-        photoService.removePhoto(at: index)
+        photoEffects.removePhoto(at: index)
     }
 
     func discardPhotoEditingIfNeeded() {
-        photoService.discardEditingIfNeeded()
+        photoEffects.discardEditingIfNeeded()
     }
 }

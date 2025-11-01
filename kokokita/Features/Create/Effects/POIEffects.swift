@@ -1,5 +1,5 @@
 //
-//  POICoordinatorService.swift
+//  POIEffects.swift
 //  kokokita
 //
 //  Created by Claude on 2025/10/11.
@@ -9,10 +9,10 @@ import Foundation
 import CoreLocation
 import Observation
 
-/// POI検索とデータ適用を調整するサービス
+/// POI検索とデータ適用の副作用を管理
 @MainActor
 @Observable
-final class POICoordinatorService {
+final class POIEffects {
 
     // MARK: - State
 
@@ -32,7 +32,7 @@ final class POICoordinatorService {
         self.poiService = poiService
     }
 
-    // MARK: - Search POI
+    // MARK: - Search POI (Side Effect)
 
     /// 周辺のPOIを検索してシートを表示（リトライ機能付き）
     func searchAndShowPOI(latitude: Double, longitude: Double) async throws {
@@ -64,7 +64,7 @@ final class POICoordinatorService {
 
     // MARK: - Apply POI
 
-    /// 選択されたPOIの情報を返す（適用はViewModel側で行う）
+    /// 選択されたPOIの情報を返す（適用はStore側で行う）
     func getApplicableData(from poi: PlacePOI) -> (title: String, facilityName: String, facilityAddress: String?, facilityCategory: String?) {
         return (
             title: poi.name,
