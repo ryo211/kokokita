@@ -2,7 +2,7 @@ import Foundation
 import CryptoKit
 import Security
 
-struct DefaultIntegrityService: IntegrityService {
+struct DefaultIntegrityService {
     // Keychain に保存するタグ
     private let keyTag = "jp.kokokita.signingkey.soft"
 

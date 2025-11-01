@@ -16,7 +16,7 @@ enum LocationServiceError: LocalizedError {
     }
 }
 
-final class DefaultLocationService: NSObject, LocationService, CLLocationManagerDelegate {
+final class DefaultLocationService: NSObject, CLLocationManagerDelegate {
     private let manager = CLLocationManager()
     private var cont: CheckedContinuation<(CLLocation, LocationSourceFlags), Error>?
     private var authCont: CheckedContinuation<Bool, Never>?

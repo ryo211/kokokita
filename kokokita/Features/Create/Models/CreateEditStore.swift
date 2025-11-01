@@ -36,8 +36,8 @@ final class CreateEditStore {
     )
 
     // MARK: - Dependencies (Services)
-    private let integ: IntegrityService
-    private let repo: VisitRepository & TaxonomyRepository
+    private let integ: DefaultIntegrityService
+    private let repo: CoreDataVisitRepository
 
     /// 位置情報・住所逆引きサービス
     private let locationGeocodingService: LocationGeocodingService
@@ -58,10 +58,10 @@ final class CreateEditStore {
     // MARK: - Initialization
 
     init(
-        loc: LocationService,
-        poi: PlaceLookupService,
-        integ: IntegrityService,
-        repo: VisitRepository & TaxonomyRepository,
+        loc: DefaultLocationService = AppContainer.shared.loc,
+        poi: MapKitPlaceLookupService = AppContainer.shared.poi,
+        integ: DefaultIntegrityService = AppContainer.shared.integ,
+        repo: CoreDataVisitRepository = AppContainer.shared.repo,
         initialLocationData: LocationData? = nil
     ) {
         self.integ = integ

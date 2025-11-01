@@ -1,7 +1,7 @@
 import Foundation
 import CoreData
 
-final class CoreDataVisitRepository: VisitRepository, TaxonomyRepository {
+final class CoreDataVisitRepository {
     private let ctx: NSManagedObjectContext
 
     init(context: NSManagedObjectContext = CoreDataStack.shared.context) {

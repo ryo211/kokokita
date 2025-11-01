@@ -24,11 +24,11 @@ final class POIEffects {
 
     // MARK: - Dependencies
 
-    private let poiService: PlaceLookupService
+    private let poiService: MapKitPlaceLookupService
 
     // MARK: - Initialization
 
-    init(poiService: PlaceLookupService) {
+    init(poiService: MapKitPlaceLookupService) {
         self.poiService = poiService
     }
 

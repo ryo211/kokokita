@@ -10,7 +10,7 @@ import Foundation
 import MapKit
 import Contacts
 
-struct MapKitPlaceLookupService: PlaceLookupService {
+struct MapKitPlaceLookupService {
 
     // レート制限を管理するActor（DI可能）
     private let rateLimiter: RateLimiter

@@ -15,12 +15,12 @@ struct LocationGeocodingService {
 
     // MARK: - Dependencies
 
-    private let locationService: LocationService
+    private let locationService: DefaultLocationService
     private let geocoder: CLGeocoder
 
     // MARK: - Initialization
 
-    init(locationService: LocationService, geocoder: CLGeocoder = CLGeocoder()) {
+    init(locationService: DefaultLocationService, geocoder: CLGeocoder = CLGeocoder()) {
         self.locationService = locationService
         self.geocoder = geocoder
     }

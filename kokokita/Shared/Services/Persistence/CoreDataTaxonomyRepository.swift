@@ -9,7 +9,7 @@ import Foundation
 import CoreData
 
 /// Label と Group のCRUD操作を担当するリポジトリ
-final class CoreDataTaxonomyRepository: TaxonomyRepository {
+final class CoreDataTaxonomyRepository {
     private let ctx: NSManagedObjectContext
 
     init(context: NSManagedObjectContext = CoreDataStack.shared.context) {

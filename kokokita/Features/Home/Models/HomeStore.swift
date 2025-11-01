@@ -82,11 +82,11 @@ final class HomeStore {
 
     // MARK: - Dependencies (Repository)
 
-    private let repo: VisitRepository & TaxonomyRepository
+    private let repo: CoreDataVisitRepository
 
     // MARK: - Initialization
 
-    init(repo: VisitRepository & TaxonomyRepository) {
+    init(repo: CoreDataVisitRepository = AppContainer.shared.repo) {
         self.repo = repo
         loadSortPref()
         reload()
