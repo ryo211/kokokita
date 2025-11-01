@@ -11,13 +11,31 @@ struct TaxonomyValidator {
         return trimmed.isEmpty ? nil : trimmed
     }
 
-    /// 重複チェック
+    /// ラベル名の重複チェック
     /// - Parameters:
     ///   - name: チェックする名前
-    ///   - existingItems: 既存のアイテムリスト
+    ///   - existingLabels: 既存のラベルリスト
     /// - Returns: 重複している場合はtrue
-    static func isDuplicate<T: TaxonomyTag>(_ name: String, in existingItems: [T]) -> Bool {
-        return existingItems.contains(where: { $0.name == name })
+    static func isDuplicateLabel(_ name: String, in existingLabels: [LabelTag]) -> Bool {
+        return existingLabels.contains(where: { $0.name == name })
+    }
+
+    /// グループ名の重複チェック
+    /// - Parameters:
+    ///   - name: チェックする名前
+    ///   - existingGroups: 既存のグループリスト
+    /// - Returns: 重複している場合はtrue
+    static func isDuplicateGroup(_ name: String, in existingGroups: [GroupTag]) -> Bool {
+        return existingGroups.contains(where: { $0.name == name })
+    }
+
+    /// メンバー名の重複チェック
+    /// - Parameters:
+    ///   - name: チェックする名前
+    ///   - existingMembers: 既存のメンバーリスト
+    /// - Returns: 重複している場合はtrue
+    static func isDuplicateMember(_ name: String, in existingMembers: [MemberTag]) -> Bool {
+        return existingMembers.contains(where: { $0.name == name })
     }
 
     /// 名前が空でないかチェック
@@ -27,14 +45,3 @@ struct TaxonomyValidator {
         return !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 }
-
-/// TaxonomyTag プロトコル（共通インターフェース）
-protocol TaxonomyTag: Identifiable where ID == UUID {
-    var id: UUID { get }
-    var name: String { get }
-}
-
-// LabelTag, GroupTag, MemberTag を TaxonomyTag に準拠させる
-extension LabelTag: TaxonomyTag {}
-extension GroupTag: TaxonomyTag {}
-extension MemberTag: TaxonomyTag {}

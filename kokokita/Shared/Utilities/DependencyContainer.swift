@@ -6,6 +6,7 @@ final class AppContainer {
 
     // Repository（具体的な実装に直接依存）
     let repo = CoreDataVisitRepository()
+    let taxonomyRepo = CoreDataTaxonomyRepository()
 
     // Rate Limiter (共有インスタンス)
     let rateLimiter = RateLimiter(minimumInterval: 0.5)

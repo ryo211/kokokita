@@ -3,24 +3,54 @@ import Foundation
 /// タクソノミー（ラベル/グループ/メンバー）のソート・フィルタリングロジック
 struct TaxonomySorter {
 
-    /// 名前の空白をトリミングして空でないアイテムのみフィルタ
-    /// - Parameter items: フィルタ対象のアイテムリスト
-    /// - Returns: 空名でないアイテムのリスト
-    static func filterEmptyNames<T: TaxonomyTag>(_ items: [T]) -> [T] {
+    // MARK: - Label
+
+    /// ラベルの空名フィルタ
+    static func filterEmptyLabels(_ items: [LabelTag]) -> [LabelTag] {
         return items.filter { !$0.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
     }
 
-    /// 名前でローカライズされた昇順ソート
-    /// - Parameter items: ソート対象のアイテムリスト
-    /// - Returns: ソート済みのアイテムリスト
-    static func sortByName<T: TaxonomyTag>(_ items: [T]) -> [T] {
+    /// ラベルのソート
+    static func sortLabels(_ items: [LabelTag]) -> [LabelTag] {
         return items.sorted { $0.name.localizedCompare($1.name) == .orderedAscending }
     }
 
-    /// フィルタリングとソートを一度に実行
-    /// - Parameter items: 処理対象のアイテムリスト
-    /// - Returns: フィルタリング＆ソート済みのアイテムリスト
-    static func filterAndSort<T: TaxonomyTag>(_ items: [T]) -> [T] {
-        return sortByName(filterEmptyNames(items))
+    /// ラベルのフィルタリング＆ソート
+    static func filterAndSort(_ items: [LabelTag]) -> [LabelTag] {
+        return sortLabels(filterEmptyLabels(items))
+    }
+
+    // MARK: - Group
+
+    /// グループの空名フィルタ
+    static func filterEmptyGroups(_ items: [GroupTag]) -> [GroupTag] {
+        return items.filter { !$0.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+    }
+
+    /// グループのソート
+    static func sortGroups(_ items: [GroupTag]) -> [GroupTag] {
+        return items.sorted { $0.name.localizedCompare($1.name) == .orderedAscending }
+    }
+
+    /// グループのフィルタリング＆ソート
+    static func filterAndSort(_ items: [GroupTag]) -> [GroupTag] {
+        return sortGroups(filterEmptyGroups(items))
+    }
+
+    // MARK: - Member
+
+    /// メンバーの空名フィルタ
+    static func filterEmptyMembers(_ items: [MemberTag]) -> [MemberTag] {
+        return items.filter { !$0.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+    }
+
+    /// メンバーのソート
+    static func sortMembers(_ items: [MemberTag]) -> [MemberTag] {
+        return items.sorted { $0.name.localizedCompare($1.name) == .orderedAscending }
+    }
+
+    /// メンバーのフィルタリング＆ソート
+    static func filterAndSort(_ items: [MemberTag]) -> [MemberTag] {
+        return sortMembers(filterEmptyMembers(items))
     }
 }

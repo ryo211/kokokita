@@ -46,7 +46,7 @@ final class MemberListStore {
         }
 
         // 重複チェック
-        if TaxonomyValidator.isDuplicate(validName, in: items) {
+        if TaxonomyValidator.isDuplicateMember(validName, in: items) {
             alert = "同じ名前のメンバーが既にあります。"
             return false
         }
@@ -57,7 +57,7 @@ final class MemberListStore {
             // リストに追加してソート
             let newItem = MemberTag(id: id, name: validName)
             items.append(newItem)
-            items = TaxonomySorter.sortByName(items)
+            items = TaxonomySorter.sortMembers(items)
 
             // 通知送信
             NotificationCenter.default.post(name: .taxonomyChanged, object: nil)

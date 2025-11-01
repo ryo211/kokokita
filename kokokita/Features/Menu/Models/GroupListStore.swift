@@ -46,7 +46,7 @@ final class GroupListStore {
         }
 
         // 重複チェック
-        if TaxonomyValidator.isDuplicate(validName, in: items) {
+        if TaxonomyValidator.isDuplicateGroup(validName, in: items) {
             alert = "同じ名前のグループが既にあります。"
             return false
         }
@@ -57,7 +57,7 @@ final class GroupListStore {
             // リストに追加してソート
             let newItem = GroupTag(id: id, name: validName)
             items.append(newItem)
-            items = TaxonomySorter.sortByName(items)
+            items = TaxonomySorter.sortGroups(items)
 
             // 通知送信
             NotificationCenter.default.post(name: .taxonomyChanged, object: nil)
