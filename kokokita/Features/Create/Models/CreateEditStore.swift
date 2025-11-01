@@ -126,8 +126,7 @@ final class CreateEditStore {
     // MARK: - UI Actions
 
     @MainActor
-    @MainActor
-    func presentPostKokokitaPromptIfReady() {
+    func presentPostKококitaPromptIfReady() {
         // 座標検証（純粋関数）
         if locationValidator.isValidCoordinate(latitude: latitude, longitude: longitude) {
             showActionPrompt = true
@@ -192,7 +191,6 @@ final class CreateEditStore {
 
     // MARK: - Create / Update
 
-    @discardableResult
     @discardableResult
     func createNew() -> Bool {
         do {
@@ -341,12 +339,5 @@ final class CreateEditStore {
 
     func discardPhotoEditingIfNeeded() {
         photoService.discardEditingIfNeeded()
-    }
-}
-
-// MARK: - Helpers
-private extension String {
-    var nilIfBlank: String? {
-        trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : self
     }
 }
