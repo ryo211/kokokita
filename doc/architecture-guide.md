@@ -349,14 +349,26 @@ kokokita/
 │   │   ├── Map/                # MapSnapshotService
 │   │   └── RateLimiter.swift
 │   │
-│   ├── UIComponents/           # 汎用UIコンポーネント
+│   ├── Components/             # UIコンポーネント（統合）
+│   │   ├── Buttons/            # BigFooterButton, EditFooterBar
+│   │   ├── Media/              # PhotoPager, PhotoThumb, ImageStore
+│   │   ├── Keyboard/           # KeyboardAwareTextView, KeyboardDismissHelpers
+│   │   ├── Sharing/            # ActivityView
 │   │   ├── Chip.swift
-│   │   ├── EditFooterBar.swift
+│   │   ├── KokokitaHeaderLogo.swift
 │   │   └── ...
 │   │
-│   ├── Config/
-│   ├── DI/
-│   └── Utilities/
+│   ├── Config/                 # 設定（統合）
+│   │   ├── AppConfig.swift
+│   │   ├── UIConstants.swift
+│   │   ├── AppMedia.swift
+│   │   └── Localization/
+│   │
+│   └── Utilities/              # ユーティリティ
+│       ├── DependencyContainer.swift
+│       ├── NavigationRouter.swift
+│       ├── Logger.swift
+│       └── Extensions/
 │
 ├── App/                         # アプリ設定
 │   ├── KokokitaApp.swift
