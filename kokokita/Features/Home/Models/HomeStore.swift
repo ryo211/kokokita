@@ -8,13 +8,6 @@
 import Foundation
 import Observation
 
-// 日付グループ構造
-struct DateGroup: Identifiable {
-    let id: String
-    let date: Date
-    let items: [VisitAggregate]
-}
-
 @MainActor
 @Observable
 final class HomeStore {
@@ -43,36 +36,40 @@ final class HomeStore {
         sortAscending = UserDefaults.standard.bool(forKey: "home.sortAscending")
     }
 
-    // 適用中のフィルタがあるか
+    // MARK: - Dependencies (Logic)
+    
+    private let filter = VisitFilter()
+    private let sorter = VisitSorter()
+    private let grouper = VisitGrouper()
+    private let dateHelper = DateHelper()
+
+    // MARK: - Computed Properties (Pure Functions)
+
+    /// 適用中のフィルタがあるか
     var hasActiveFilters: Bool {
-        return labelFilter != nil || groupFilter != nil || memberFilter != nil || categoryFilter != nil ||
-               !titleQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
-               dateFrom != nil || dateTo != nil
+        return filter.hasActiveFilters(currentCriteria)
     }
 
-    // 日付ごとにグループ化
+    /// 日付ごとにグループ化
     var groupedByDate: [DateGroup] {
-        let calendar = Calendar.current
-        let grouped = Dictionary(grouping: items) { item in
-            calendar.startOfDay(for: item.visit.timestampUTC)
-        }
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy-MM-dd"
-
-        return grouped.map { (date, items) in
-            DateGroup(
-                id: dateFormatter.string(from: date),
-                date: date,
-                items: items.sorted { a, b in
-                    sortAscending ? (a.visit.timestampUTC < b.visit.timestampUTC) : (a.visit.timestampUTC > b.visit.timestampUTC)
-                }
-            )
-        }.sorted { a, b in
-            sortAscending ? (a.date < b.date) : (a.date > b.date)
-        }
+        return grouper.groupByDate(items, ascending: sortAscending)
     }
 
-    // ユーザ操作用
+    /// 現在のフィルタ条件
+    private var currentCriteria: FilterCriteria {
+        FilterCriteria(
+            labelId: labelFilter,
+            groupId: groupFilter,
+            memberId: memberFilter,
+            category: categoryFilter,
+            titleQuery: titleQuery,
+            dateFrom: dateFrom,
+            dateTo: dateTo
+        )
+    }
+
+    // MARK: - User Actions
+
     func clearAllFilters() {
         labelFilter = nil
         groupFilter = nil
@@ -83,13 +80,19 @@ final class HomeStore {
         dateTo = nil
     }
 
+    // MARK: - Dependencies (Repository)
+
     private let repo: VisitRepository & TaxonomyRepository
+
+    // MARK: - Initialization
 
     init(repo: VisitRepository & TaxonomyRepository) {
         self.repo = repo
         loadSortPref()
         reload()
     }
+
+    // MARK: - Data Loading (Side Effects)
 
     func reload() {
         do {
@@ -98,8 +101,8 @@ final class HomeStore {
             let title = q.isEmpty ? nil : q
 
             // 日付は日単位で扱いたいなら startOfDay / endOfDay+1 を使う
-            let from = dateFrom.map { Calendar.current.startOfDay(for: $0) }
-            let toExclusive = dateTo.map { calEndExclusive($0) }
+            let from = dateFrom.map { dateHelper.startOfDay($0) }
+            let toExclusive = dateTo.map { dateHelper.calculateEndExclusive($0) }
 
             var rows = try repo.fetchAll(
                 filterLabel: labelFilter,
@@ -109,23 +112,11 @@ final class HomeStore {
                 dateToExclusive: toExclusive
             )
 
-            // カテゴリフィルタ（クライアントサイド）
-            if let catFilter = categoryFilter {
-                rows = rows.filter { $0.details.facilityCategory == catFilter }
-            }
+            // クライアントサイドフィルタ適用（カテゴリ、メンバー）
+            rows = filter.applyClientSideFilters(rows, criteria: currentCriteria)
 
-            // メンバーフィルタ（クライアントサイド）
-            if let memberFilter = memberFilter {
-                rows = rows.filter { $0.details.memberIds.contains(memberFilter) }
-            }
-
-            // ★ ここでソートを一元管理（timestampUTC がない場合は適宜プロパティ名を合わせる）
-            rows.sort { a, b in
-                let ta = a.visit.timestampUTC
-                let tb = b.visit.timestampUTC
-                return sortAscending ? (ta < tb) : (ta > tb)
-            }
-            items = rows
+            // ソート適用
+            items = sorter.sort(rows, ascending: sortAscending)
 
             labels = try repo.allLabels()
             groups = try repo.allGroups()
@@ -134,12 +125,6 @@ final class HomeStore {
             alert = error.localizedDescription
         }
     }
-    private func calEndExclusive(_ d: Date) -> Date {
-        let cal = Calendar.current
-        let endOfDay = cal.date(bySettingHour: 23, minute: 59, second: 59, of: d) ?? d
-        return cal.date(byAdding: .second, value: 1, to: endOfDay) ?? endOfDay
-    }
-
 
     func delete(id: UUID) {
         do { try repo.delete(id: id); reload() }

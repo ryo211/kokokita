@@ -48,6 +48,11 @@ final class CreateEditStore {
     /// POI検索・調整サービス
     let poiCoordinator: POICoordinatorService
 
+    // MARK: - Dependencies (Logic)
+
+    /// 位置情報検証ロジック（純粋関数）
+    private let locationValidator = LocationValidator()
+
     // MARK: - Initialization
 
     init(
@@ -121,9 +126,10 @@ final class CreateEditStore {
     // MARK: - UI Actions
 
     @MainActor
+    @MainActor
     func presentPostKokokitaPromptIfReady() {
-        // 緯度経度が入っていれば出す（0,0 のときは出さない）
-        if latitude != 0 || longitude != 0 {
+        // 座標検証（純粋関数）
+        if locationValidator.isValidCoordinate(latitude: latitude, longitude: longitude) {
             showActionPrompt = true
         }
     }
@@ -187,9 +193,11 @@ final class CreateEditStore {
     // MARK: - Create / Update
 
     @discardableResult
+    @discardableResult
     func createNew() -> Bool {
         do {
-            if lastFlags.isSimulatedBySoftware == true || lastFlags.isProducedByAccessory == true {
+            // 位置情報検証（純粋関数）
+            if locationValidator.isSimulated(lastFlags) {
                 alert = L.Error.locationSimulated
                 return false
             }
