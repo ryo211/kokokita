@@ -1,10 +1,3 @@
-//
-//  GroupPickerSheet.swift
-//  kokokita
-//
-//  Created by Claude on 2025/10/11.
-//
-
 import SwiftUI
 
 /// グループ単一選択シート

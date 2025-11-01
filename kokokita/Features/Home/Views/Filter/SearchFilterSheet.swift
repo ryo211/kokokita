@@ -1,11 +1,3 @@
-//
-//  Untitled.swift
-//  kokokita
-//
-//  Created by 橋本遼 on 2025/09/29.
-//
-
-// SearchFilterSheet.swift
 import SwiftUI
 import MapKit
 

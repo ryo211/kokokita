@@ -1,11 +1,3 @@
-//
-//  ImageStore.swift
-//  kokokita
-//
-//  Created by 橋本遼 on 2025/10/07.
-//
-
-// Shared/Media/ImageStore.swift
 import UIKit
 
 enum ImageStore {

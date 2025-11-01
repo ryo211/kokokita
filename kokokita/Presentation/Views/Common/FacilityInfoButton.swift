@@ -1,10 +1,3 @@
-//
-//  FacilityInfoButton.swift
-//  kokokita
-//
-//  Created by 橋本遼 on 2025/10/04.
-//
-
 import SwiftUI
 import MapKit
 

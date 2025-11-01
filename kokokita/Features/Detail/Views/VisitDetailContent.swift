@@ -1,11 +1,3 @@
-//
-//  VisitDetailContent.swift
-//  kokokita
-//
-//  Created by 橋本遼 on 2025/10/05.
-//
-
-// VisitDetailContent.swift
 import SwiftUI
 import MapKit
 

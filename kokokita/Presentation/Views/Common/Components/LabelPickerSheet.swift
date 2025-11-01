@@ -1,10 +1,3 @@
-//
-//  LabelPickerSheet.swift
-//  kokokita
-//
-//  Created by Claude on 2025/10/11.
-//
-
 import SwiftUI
 
 /// ラベル複数選択シート

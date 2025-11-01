@@ -1,10 +1,3 @@
-//
-//  UIConstants.swift
-//  kokokita
-//
-//  Created by Claude on 2025/10/11.
-//
-
 import SwiftUI
 
 /// UI全体で使用する定数（スペーシング、サイズ、パディング、角丸など）

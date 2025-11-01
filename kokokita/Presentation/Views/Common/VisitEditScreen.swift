@@ -1,10 +1,3 @@
-//
-//  VisitEditScreen.swift
-//  kokokita
-//
-//  Created by 橋本遼 on 2025/09/21.
-//
-
 import SwiftUI
 import Foundation
 import MapKit

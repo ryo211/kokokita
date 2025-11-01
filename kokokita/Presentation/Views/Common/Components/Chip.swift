@@ -1,10 +1,3 @@
-//
-//  Chip.swift
-//  kokokita
-//
-//  Created by 橋本遼 on 2025/10/05.
-//
-
 import SwiftUI
 
 struct Chip: View {

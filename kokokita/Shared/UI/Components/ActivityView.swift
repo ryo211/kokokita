@@ -1,11 +1,3 @@
-//
-//  ActivityView.swift
-//  kokokita
-//
-//  Created by 橋本遼 on 2025/10/04.
-//
-
-// ActivityView.swift
 import SwiftUI
 
 struct ActivityView: UIViewControllerRepresentable {

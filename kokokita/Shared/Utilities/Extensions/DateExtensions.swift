@@ -1,10 +1,3 @@
-//
-//  DateExtensions.swift
-//  kokokita
-//
-//  Created by Claude on 2025/10/11.
-//
-
 import Foundation
 
 // MARK: - DateFormatter Extensions

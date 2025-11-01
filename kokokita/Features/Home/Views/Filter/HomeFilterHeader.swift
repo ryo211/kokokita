@@ -1,11 +1,3 @@
-//
-//  HomeFilterHeader.swift
-//  kokokita
-//
-//  Created by 橋本遼 on 2025/09/30.
-//
-
-// HomeFilterHeader.swift（新規）
 import SwiftUI
 import MapKit
 

@@ -1,10 +1,3 @@
-//
-//  PlacePOI.swift
-//  kokokita
-//
-//  Created by 橋本遼 on 2025/09/20.
-//
-
 import Foundation
 
 /// 周辺施設（POI）データ

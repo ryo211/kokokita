@@ -1,10 +1,3 @@
-//
-//  KeyboardDismissHelpers.swift
-//  kokokita
-//
-//  Created by 橋本遼 on 2025/09/24.
-//
-
 import SwiftUI
 
 struct DismissKeyboardBackground: UIViewRepresentable {

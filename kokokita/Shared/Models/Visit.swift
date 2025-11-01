@@ -1,10 +1,3 @@
-//
-//  Visit.swift
-//  kokokita
-//
-//  Created by 橋本遼 on 2025/09/20.
-//
-
 import Foundation
 
 /// 訪問記録の不変データ（改ざん検出用署名付き）

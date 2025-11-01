@@ -1,11 +1,3 @@
-//
-//  PhotoThumb.swift
-//  kokokita
-//
-//  Created by 橋本遼 on 2025/10/07.
-//
-
-// Shared/Media/PhotoThumb.swift
 import SwiftUI
 
 struct PhotoThumb: View {

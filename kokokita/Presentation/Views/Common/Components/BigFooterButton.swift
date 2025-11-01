@@ -1,10 +1,3 @@
-//
-//  Untitled.swift
-//  kokokita
-//
-//  Created by 橋本遼 on 2025/10/05.
-//
-
 import SwiftUI
 
 /// 画面下部に固定表示する大ボタン（PayPay風）

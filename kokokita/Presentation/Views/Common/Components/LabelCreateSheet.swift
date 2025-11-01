@@ -1,10 +1,3 @@
-//
-//  LabelCreateSheet.swift
-//  kokokita
-//
-//  Created by Claude on 2025/10/11.
-//
-
 import SwiftUI
 
 /// ラベル新規作成シート

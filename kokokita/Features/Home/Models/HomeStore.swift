@@ -1,10 +1,3 @@
-//
-//  HomeStore.swift
-//  kokokita
-//
-//  Created by 橋本遼 on 2025/09/20.
-//
-
 import Foundation
 import Observation
 

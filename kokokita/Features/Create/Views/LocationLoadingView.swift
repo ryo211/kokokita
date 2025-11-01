@@ -1,10 +1,3 @@
-//
-//  LocationLoadingView.swift
-//  kokokita
-//
-//  Created by Claude on 2025/10/25.
-//
-
 import SwiftUI
 
 /// 位置情報取得中のローディング画面

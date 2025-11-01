@@ -1,10 +1,3 @@
-//
-//  HomeMapView.swift
-//  kokokita
-//
-//  Created by Claude on 2025/10/22.
-//
-
 import SwiftUI
 import MapKit
 

@@ -1,10 +1,3 @@
-//
-//  LocalizedString.swift
-//  kokokita
-//
-//  Created by Claude on 2025/10/11.
-//
-
 import Foundation
 
 /// ローカライゼーション用のキー管理と簡潔なアクセス

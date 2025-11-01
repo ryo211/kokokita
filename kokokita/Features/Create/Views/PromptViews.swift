@@ -1,10 +1,3 @@
-//
-//  PromptViews.swift
-//  kokokita
-//
-//  Created by 橋本遼 on 2025/09/23.
-//
-
 import SwiftUI
 
 struct PostKokokitaPromptSheet: View {

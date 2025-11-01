@@ -1,10 +1,3 @@
-//
-//  KokokamoPOISheet.swift
-//  kokokita
-//
-//  Created by 橋本遼 on 2025/09/29.
-//
-
 import SwiftUI
 import Foundation
 import MapKit

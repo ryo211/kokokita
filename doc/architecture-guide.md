@@ -35,17 +35,18 @@
 
 ```
 Features/[機能名]/          Shared/
-├── Models/  (@Observable)  ├── Models/  (ドメイン)
-├── Views/   (SwiftUI)      ├── Logic/   (共通関数)
-├── Logic/   (純粋関数)     ├── Services/ (共通Service)
-└── Services/ (副作用)      └── UIComponents/
+├── Models/  (@Observable)  ├── Models/  (ドメインモデル)
+├── Views/   (SwiftUI)      ├── Services/ (共通インフラ)
+├── Logic/   (純粋関数)     ├── Media/    (メディア管理)
+└── Effects/ (副作用)       └── UIComponents/ (共通UI)
 ```
 
-**4つの原則**:
+**5つの原則**:
 1. **コロケーション**: 関連ファイルを機能単位でまとめる
 2. **MVパターン**: @Observable Store（ViewModelは使わない）
-3. **副作用の分離**: Logic（純粋）とService（副作用）を明確に区別
-4. **iOS 17+**: @Observableマクロで状態管理
+3. **Functional Core, Imperative Shell**: Logic（純粋）とEffects（副作用）を明確に区別
+4. **直接依存**: Protocolを使わず具体実装に直接依存（デフォルト引数でDI）
+5. **iOS 17+**: @Observableマクロで状態管理
 
 **コード例**:
 ```swift
@@ -168,27 +169,64 @@ final class HomeStore {
 }
 ```
 
-#### Service（副作用のある処理）
-**責務**: 副作用（DB/API/I/O） | **配置**: `Features/[機能名]/Services/` または `Shared/Services/`
+#### Effects（機能固有の副作用）
+**責務**: 機能固有の副作用（POI検索、写真管理など） | **配置**: `Features/[機能名]/Effects/`
 
-**型**: **struct優先**（ステートレス）、状態保持が必要ならclass
+**特徴**: @Observableマクロ使用（状態を持つ場合）、UIロジックに密接、Imperative Shell（命令型シェル）
 
 > **実装方法**: [実装ガイド - Step 6](./implementation-guide.md#step-6-serviceの実装副作用のある処理)
 
 ```swift
-// ✅ ステートレス → struct
-struct VisitService: VisitServiceProtocol {
-    private let repository: any VisitRepository
+// ✅ POI検索Effects（リトライロジック付き）
+@MainActor
+@Observable
+final class POIEffects {
+    var showPOI = false
+    var poiList: [PlacePOI] = []
+    private let poiService: MapKitPlaceLookupService
 
-    func fetchAll() async throws -> [Visit] {
-        try await repository.fetchAll()
+    func searchAndShowPOI(latitude: Double, longitude: Double) async throws {
+        // リトライロジック、UI状態管理
     }
 }
 
-// ⚠️ 状態保持 → class（例: トランザクション）
-final class PhotoEditService {
-    private var editingPhotos: [Photo] = []  // 状態
-    func beginEditing() { }
+// ✅ 写真管理Effects（トランザクション型）
+@MainActor
+@Observable
+final class PhotoEffects {
+    var photoPaths: [String] = []
+    var photoPathsEditing: [String] = []
+
+    func addPhotos(_ images: [UIImage]) { }
+    func commitEdits() { }
+    func discardEditingIfNeeded() { }
+}
+```
+
+#### Services（共通インフラの副作用）
+**責務**: 複数機能で共有される副作用（DB、位置情報、セキュリティ） | **配置**: `Shared/Services/`
+
+**サブディレクトリ**:
+- `Persistence/`: Core Data関連（Stack、Repository）
+- `Location/`: 位置情報とPOI検索
+- `Security/`: 暗号署名と検証
+
+**特徴**: ステートレスまたは最小限の状態、UIに依存しない、直接依存（Protocolなし）
+
+```swift
+// ✅ Repository（Core Data）
+final class CoreDataVisitRepository {
+    func fetchAll() async throws -> [Visit] {
+        let entities = try context.fetch(VisitEntity.fetchRequest())
+        return entities.map { $0.toDomain() }
+    }
+}
+
+// ✅ Location Service
+final class DefaultLocationService {
+    func requestLocation() async throws -> LocationData {
+        // 位置情報取得
+    }
 }
 ```
 
@@ -207,24 +245,6 @@ struct VisitFilter {
 }
 ```
 
-#### Repository（データアクセス層）
-**責務**: データ永続化/取得 | **配置**: `Shared/Services/Persistence/`
-
-**特徴**: データソース隠蔽、Core Data↔ドメインモデル変換、CRUD提供
-
-```swift
-protocol VisitRepository {
-    func fetchAll() async throws -> [Visit]
-    func save(_ visit: Visit) async throws
-}
-
-final class CoreDataVisitRepository: VisitRepository {
-    func fetchAll() async throws -> [Visit] {
-        let entities = try context.fetch(VisitEntity.fetchRequest())
-        return entities.map { $0.toDomain() }
-    }
-}
-```
 
 ### 厳密な分離の原則
 
@@ -237,24 +257,43 @@ final class CoreDataVisitRepository: VisitRepository {
 
 ### 依存性注入（DI）
 
-Storeは依存するServiceを**コンストラクタで受け取る**:
+**方針**: Protocol-based DIを廃止し、具体実装への直接依存
+
+**理由**:
+- 実装が1つしかないProtocolは不要な抽象化
+- 型安全性とコード追跡性の向上
+- ボイラープレートコード削減
+
+Storeは依存するServiceを**コンストラクタで受け取り、デフォルト引数で注入**:
 
 ```swift
 @Observable
-final class CreateStore {
-    private let locationService: LocationService
-    private let visitService: VisitService
-    private let integrityService: IntegrityService
+final class CreateEditStore {
+    private let loc: DefaultLocationService
+    private let integ: DefaultIntegrityService
+    private let repo: CoreDataVisitRepository
 
     init(
-        locationService: LocationService = .shared,
-        visitService: VisitService = .shared,
-        integrityService: IntegrityService = .shared
+        loc: DefaultLocationService = AppContainer.shared.loc,
+        integ: DefaultIntegrityService = AppContainer.shared.integ,
+        repo: CoreDataVisitRepository = AppContainer.shared.repo
     ) {
-        self.locationService = locationService
-        self.visitService = visitService
-        self.integrityService = integrityService
+        self.loc = loc
+        self.integ = integ
+        self.repo = repo
     }
+}
+```
+
+**AppContainer（DependencyContainer）**:
+```swift
+final class AppContainer {
+    static let shared = AppContainer()
+
+    let repo = CoreDataVisitRepository()
+    let loc = DefaultLocationService()
+    lazy var poi: MapKitPlaceLookupService = MapKitPlaceLookupService(rateLimiter: rateLimiter)
+    let integ = DefaultIntegrityService()
 }
 ```
 
@@ -269,7 +308,7 @@ final class CreateStore {
 1. **機能単位でグループ化**: 関連するファイルは近くに配置（コロケーション最優先）
 2. **Feature-based構成**: 各機能が独立したフォルダ
 3. **深すぎる階層は避ける**: 3階層程度が理想
-4. **純粋な関数とServiceを分離**: 副作用の有無で配置場所を変える
+4. **Logic/Effects分離**: 純粋関数（Logic）と副作用（Effects）を明確に区別
 5. **共通コードはShared/**: 複数機能で使用するコードはShared/に配置
 
 ### フォルダ構成
@@ -279,61 +318,81 @@ kokokita/
 ├── Features/                    # 機能単位（コロケーション）
 │   ├── Home/
 │   │   ├── Models/             # HomeStore.swift (@Observable)
-│   │   ├── Logic/              # VisitFilter.swift (純粋関数)
-│   │   ├── Services/           # VisitService.swift (副作用)
+│   │   ├── Logic/              # VisitFilter.swift, VisitSorter.swift (純粋関数)
 │   │   └── Views/              # HomeView.swift, Components/
-│   ├── Create/                 # 同様の構成
+│   ├── Create/
+│   │   ├── Models/             # CreateEditStore.swift (@Observable)
+│   │   ├── Logic/              # StringValidator.swift, LocationValidator.swift
+│   │   ├── Effects/            # POIEffects.swift, PhotoEffects.swift (副作用)
+│   │   └── Views/              # CreateScreen.swift, Components/
 │   ├── Detail/
 │   └── Menu/
 │
 ├── Shared/                      # 共通コード
-│   ├── Models/                 # Visit.swift, Taxonomy.swift...
-│   ├── Logic/                  # Calculations/, Formatting/, Validation/
-│   ├── Services/               # Persistence/, Security/
-│   └── UIComponents/           # Buttons/, Forms/, Media/
+│   ├── Models/                 # Visit.swift, VisitDetails.swift, Taxonomy.swift...
+│   ├── Services/               # 共通インフラサービス
+│   │   ├── Persistence/        # CoreDataStack, CoreDataVisitRepository...
+│   │   ├── Location/           # DefaultLocationService, MapKitPlaceLookupService
+│   │   └── Security/           # DefaultIntegrityService
+│   ├── Media/                  # ImageStore, PhotoPager, PhotoThumb
+│   └── UIComponents/           # 共通UIコンポーネント
 │
 ├── App/                         # アプリ設定
 │   ├── KokokitaApp.swift
 │   ├── Config/                 # AppConfig, UIConstants
-│   └── DI/                     # DependencyContainer
+│   └── DI/                     # DependencyContainer (直接依存)
 │
 ├── Resources/                   # リソース
 │   └── Localization/
 │
-└── Utilities/                   # 汎用ユーティリティ
+└── Support/                     # サポートユーティリティ
     ├── Extensions/
-    ├── Helpers/
-    └── Protocols/
+    ├── Localization/
+    └── Logger.swift
 ```
 
 ### 各層の責務と配置ルール
 
 | 層 | フォルダ | 役割 | 状態 | 副作用 |
 |----|---------|------|------|--------|
-| **Logic** | `Features/[機能]/Logic/` または `Shared/Logic/` | 純粋な関数（計算、フォーマット） | なし | なし |
-| **Service** | `Features/[機能]/Services/` または `Shared/Services/` | 副作用のある処理（API、DB、I/O） | なし | あり |
-| **Store** | `Features/[機能]/Models/` | 状態管理、Serviceとの結合（@Observable） | あり | なし |
-| **View** | `Features/[機能]/Views/` | 表示、ユーザーイベント受付（エントリ） | @State（Storeのみ） | なし |
+| **Logic** | `Features/[機能]/Logic/` | 純粋な関数（計算、フィルタリング、検証） | なし | なし |
+| **Effects** | `Features/[機能]/Effects/` | 機能固有の副作用（POI検索、写真管理） | あり（@Observable） | あり |
+| **Services** | `Shared/Services/` | 共通インフラの副作用（DB、位置情報、セキュリティ） | 最小限 | あり |
+| **Store** | `Features/[機能]/Models/` | 状態管理、LogicとEffectsの結合（@Observable） | あり | なし |
+| **View** | `Features/[機能]/Views/` | 表示、ユーザーイベント受付 | @State（Storeのみ） | なし |
 
-### 純粋な関数とServiceの区別
+### Logic vs Effects vs Services の区別
 
-| 特徴 | Logic（純粋関数） | Service（副作用） |
-|------|-----------------|-----------------|
-| 副作用 | なし | あり（DB/API/I/O） |
-| 状態 | なし | ステートレス |
-| テスト | 容易 | モック必要 |
-| 配置 | `Logic/` | `Services/` |
+| 特徴 | Logic（純粋関数） | Effects（機能固有副作用） | Services（共通インフラ） |
+|------|-----------------|---------------------|-------------------|
+| 副作用 | なし | あり（POI、写真等） | あり（DB/Location等） |
+| 状態 | なし | あり（@Observable） | 最小限 |
+| スコープ | 機能固有 | 機能固有 | 複数機能で共有 |
+| テスト | 容易 | モック必要 | モック必要 |
+| 配置 | `Logic/` | `Effects/` | `Shared/Services/` |
 
 ```swift
-// Logic: 純粋関数
+// Logic: 純粋関数（Functional Core）
 struct VisitFilter {
-    static func filterByDateRange(visits: [Visit], from: Date, to: Date) -> [Visit] {
+    func filterByDateRange(_ visits: [Visit], from: Date, to: Date) -> [Visit] {
         visits.filter { $0.timestamp >= from && $0.timestamp <= to }
     }
 }
 
-// Service: 副作用
-final class VisitService {
+// Effects: 機能固有の副作用（Imperative Shell）
+@MainActor
+@Observable
+final class POIEffects {
+    var showPOI = false
+    var poiList: [PlacePOI] = []
+
+    func searchAndShowPOI(latitude: Double, longitude: Double) async throws {
+        // POI検索、リトライロジック、UI状態管理
+    }
+}
+
+// Services: 共通インフラ
+final class CoreDataVisitRepository {
     func fetchAll() async throws -> [Visit] {
         try await repository.fetchAll()  // DB = 副作用
     }
@@ -419,19 +478,27 @@ HomeView.swift
 CreateView.swift
 ```
 
-**Service**: `[機能名]Service.swift`
+**Effects**: `[対象]Effects.swift`
 ```swift
-// ✅ 良い
-VisitService.swift
-LocationService.swift
+// ✅ 良い（機能固有の副作用）
+POIEffects.swift
+PhotoEffects.swift
 ```
 
 **Logic**: `[処理名].swift`
 ```swift
-// ✅ 良い
+// ✅ 良い（純粋関数）
 VisitFilter.swift
-DistanceCalculator.swift
-CoordinateValidator.swift
+StringValidator.swift
+LocationValidator.swift
+```
+
+**Services**: `[機能名]Service.swift`
+```swift
+// ✅ 良い（共通インフラ）
+CoreDataVisitRepository.swift
+DefaultLocationService.swift
+DefaultIntegrityService.swift
 ```
 
 ### 具体的で明確な命名

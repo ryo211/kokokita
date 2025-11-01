@@ -1,10 +1,3 @@
-//
-//  FlowRow.swift
-//  kokokita
-//
-//  Created by 橋本遼 on 2025/09/30.
-//
-
 import SwiftUI
 
 struct FlowRow: Layout {

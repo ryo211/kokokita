@@ -1,11 +1,3 @@
-//
-//  PhotoReadOnlyGrid.swift
-//  kokokita
-//
-//  Created by 橋本遼 on 2025/10/07.
-//
-
-// Presentation/Detail/PhotoReadOnlyGrid.swift
 import SwiftUI
 
 struct PhotoReadOnlyGrid: View {

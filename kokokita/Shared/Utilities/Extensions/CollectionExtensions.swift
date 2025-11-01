@@ -1,10 +1,3 @@
-//
-//  CollectionExtensions.swift
-//  kokokita
-//
-//  Created by Claude on 2025/10/11.
-//
-
 import Foundation
 
 // MARK: - Taxonomy Collection Extensions

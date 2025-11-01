@@ -1,10 +1,3 @@
-//
-//  GroupCreateSheet.swift
-//  kokokita
-//
-//  Created by Claude on 2025/10/11.
-//
-
 import SwiftUI
 
 /// グループ新規作成シート

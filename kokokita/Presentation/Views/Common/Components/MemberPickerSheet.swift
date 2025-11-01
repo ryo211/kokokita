@@ -1,10 +1,3 @@
-//
-//  MemberPickerSheet.swift
-//  kokokita
-//
-//  Created by Claude on 2025/10/16.
-//
-
 import SwiftUI
 
 /// メンバー複数選択シート

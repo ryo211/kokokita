@@ -1,10 +1,3 @@
-//
-//  BannerAdView.swift
-//  kokokita
-//
-//  Created by 橋本遼 on 2025/10/09.
-//
-
 import SwiftUI
 import GoogleMobileAds
 

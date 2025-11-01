@@ -1,10 +1,3 @@
-//
-//  EditFooterBar.swift
-//  kokokita
-//
-//  Created by Claude on 2025/10/11.
-//
-
 import SwiftUI
 
 /// 編集画面の下部固定ボタンバー

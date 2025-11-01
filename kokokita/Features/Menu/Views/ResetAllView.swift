@@ -1,10 +1,3 @@
-//
-//  ResetAllView.swift
-//  kokokita
-//
-//  Created by 橋本遼 on 2025/09/22.
-//
-
 import SwiftUI
 
 struct ResetAllView: View {

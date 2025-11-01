@@ -1,10 +1,3 @@
-//
-//  KokokitaHeaderLogo.swift
-//  kokokita
-//
-//  Created by Claude on 2025/10/11.
-//
-
 import SwiftUI
 
 /// ホーム画面用のヘッダーロゴ

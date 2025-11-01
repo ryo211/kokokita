@@ -1,11 +1,3 @@
-//
-//  MapKitPlaceLookupService.swift
-//  kokokita
-//
-//  Created by 橋本遼 on 2025/09/20.
-//
-
-// Services/MapKitPlaceLookupService.swift
 import Foundation
 import MapKit
 import Contacts

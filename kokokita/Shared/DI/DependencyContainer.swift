@@ -1,10 +1,3 @@
-//
-//  DependencyContainer.swift
-//  kokokita
-//
-//  Created by Claude on 2025/10/11.
-//
-
 import Foundation
 
 /// 簡易DIコンテナ（依存性注入）
