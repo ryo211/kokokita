@@ -178,7 +178,8 @@ struct RootTabView: View {
     // MARK: - Helper Methods
 
     private func checkLocationPermissionAndCreate() {
-        let status = CLLocationManager.authorizationStatus()
+        let locationManager = CLLocationManager()
+        let status = locationManager.authorizationStatus
 
         switch status {
         case .authorizedAlways, .authorizedWhenInUse:
@@ -215,7 +216,7 @@ struct RootTabView: View {
             let result = try await locationService.requestLocationWithAddress { address in
                 // バックグラウンドで住所が取得できた時
                 Task { @MainActor in
-                    if var data = self.promptSheetLocationData {
+                    if let data = self.promptSheetLocationData {
                         self.promptSheetLocationData = LocationData(
                             timestamp: data.timestamp,
                             latitude: data.latitude,

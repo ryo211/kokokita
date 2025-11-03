@@ -3,7 +3,7 @@ import UIKit
 enum ImageStore {
     private static var dir: URL {
         let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
-        var url = base.appendingPathComponent(AppConfig.photoDirectoryName, isDirectory: true)
+        let url = base.appendingPathComponent(AppConfig.photoDirectoryName, isDirectory: true)
         if !FileManager.default.fileExists(atPath: url.path) {
             do {
                 try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)

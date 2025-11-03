@@ -29,7 +29,7 @@ final class DefaultLocationService: NSObject, CLLocationManagerDelegate {
 
     func requestOneShotLocation() async throws -> (CLLocation, LocationSourceFlags) {
         // 権限確認
-        let status = CLLocationManager.authorizationStatus()
+        let status = manager.authorizationStatus
 
         if status == .notDetermined {
             Logger.info("Location permission not determined, requesting authorization")

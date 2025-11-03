@@ -133,7 +133,6 @@ final class VisitListStore {
         reload()
     }
 
-    @MainActor
     func loadTaxonomy() {
         do {
             self.labels = try repo.allLabels()
@@ -144,10 +143,9 @@ final class VisitListStore {
         }
     }
 
-    @MainActor
     func reloadTaxonomyThenData() async {
         loadTaxonomy()
-        await reload()
+        reload()
     }
 
 }

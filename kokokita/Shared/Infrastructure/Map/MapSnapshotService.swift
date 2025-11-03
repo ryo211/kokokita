@@ -21,7 +21,7 @@ enum MapSnapshotService {
         let options = MKMapSnapshotter.Options()
         options.region = region
         options.size = size
-        options.scale = UIScreen.main.scale
+        options.scale = await MainActor.run { UIScreen.main.scale }
         options.showsBuildings = true
         options.pointOfInterestFilter = .includingAll
 
