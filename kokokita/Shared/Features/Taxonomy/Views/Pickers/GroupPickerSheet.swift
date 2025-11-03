@@ -1,0 +1,51 @@
+import SwiftUI
+
+/// グループ単一選択シート
+struct GroupPickerSheet: View {
+    @Binding var selectedId: UUID?
+    @Binding var groupOptions: [GroupTag]
+    @Binding var isPresented: Bool
+    @Binding var showCreateSheet: Bool
+    var showClearButton: Bool = true
+    var showDoneButton: Bool = true
+
+    var body: some View {
+        NavigationStack {
+            List {
+                Section {
+                    Button {
+                        showCreateSheet = true
+                    } label: {
+                        Label(L.VisitEdit.createNew, systemImage: "plus.circle")
+                    }
+                    if showClearButton {
+                        Button(L.VisitEdit.clearSelection) { selectedId = nil }
+                    }
+                }
+                Section {
+                    ForEach(groupOptions) { t in
+                        Button {
+                            selectedId = t.id
+                        } label: {
+                            HStack {
+                                Text(t.name)
+                                Spacer()
+                                if selectedId == t.id {
+                                    Image(systemName: "checkmark")
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            .navigationTitle(L.VisitEdit.selectGroup)
+            .toolbar {
+                if showDoneButton {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button(L.Common.done) { isPresented = false }
+                    }
+                }
+            }
+        }
+    }
+}
