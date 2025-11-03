@@ -213,7 +213,8 @@ struct RootTabView: View {
                 locationService: AppContainer.shared.loc
             )
 
-            let result = try await locationService.requestLocationWithAddress { address in
+            // Phase 1: 低精度で素早く取得（1秒未満）
+            let quickResult = try await locationService.requestQuickLocation { address in
                 // バックグラウンドで住所が取得できた時
                 Task { @MainActor in
                     if let data = self.promptSheetLocationData {
@@ -229,18 +230,57 @@ struct RootTabView: View {
                 }
             }
 
-            let data = LocationData(
-                timestamp: result.timestamp,
-                latitude: result.latitude,
-                longitude: result.longitude,
-                accuracy: result.accuracy,
-                address: result.address,
-                flags: result.flags
+            let quickData = LocationData(
+                timestamp: quickResult.timestamp,
+                latitude: quickResult.latitude,
+                longitude: quickResult.longitude,
+                accuracy: quickResult.accuracy,
+                address: quickResult.address,
+                flags: quickResult.flags
             )
 
-            // ローディング閉じてPromptSheet表示
+            // すぐにローディングを閉じてPromptSheet表示（素早いフィードバック）
             showLocationLoading = false
-            promptSheetLocationData = data
+            promptSheetLocationData = quickData
+
+            // Phase 2: バックグラウンドで高精度取得
+            Task {
+                do {
+                    let refinedResult = try await locationService.refineLocation { address in
+                        // バックグラウンドで住所が取得できた時
+                        Task { @MainActor in
+                            if let data = self.promptSheetLocationData {
+                                self.promptSheetLocationData = LocationData(
+                                    timestamp: data.timestamp,
+                                    latitude: data.latitude,
+                                    longitude: data.longitude,
+                                    accuracy: data.accuracy,
+                                    address: address,
+                                    flags: data.flags
+                                )
+                            }
+                        }
+                    }
+                    
+                    // 高精度の結果で更新
+                    await MainActor.run {
+                        if self.promptSheetLocationData != nil {
+                            self.promptSheetLocationData = LocationData(
+                                timestamp: refinedResult.timestamp,
+                                latitude: refinedResult.latitude,
+                                longitude: refinedResult.longitude,
+                                accuracy: refinedResult.accuracy,
+                                address: refinedResult.address ?? quickData.address,
+                                flags: refinedResult.flags
+                            )
+                            Logger.info("Location refined to higher accuracy: \(refinedResult.accuracy ?? 0)m")
+                        }
+                    }
+                } catch {
+                    // 高精度取得失敗しても低精度の結果があるので問題なし
+                    Logger.warning("Failed to refine location, using quick result: \(error.localizedDescription)")
+                }
+            }
 
         } catch {
             showLocationLoading = false

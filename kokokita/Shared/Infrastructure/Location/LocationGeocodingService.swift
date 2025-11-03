@@ -61,6 +61,54 @@ struct LocationGeocodingService {
         )
     }
 
+    // MARK: - Quick Location Request
+    
+    /// 低精度で素早く位置情報を取得（デュアルマネージャー方式の初期取得用）
+    /// - Parameter onAddressResolved: バックグラウンドで住所が取得できた時のコールバック
+    /// - Returns: 低精度（±100m）の位置情報、1秒未満で取得
+    func requestQuickLocation(
+        onAddressResolved: @escaping (String) -> Void = { _ in }
+    ) async throws -> LocationResult {
+        // 低精度で位置情報を取得（±100m、高速）
+        let (location, flags) = try await locationService.requestOneShotLocation(
+            accuracy: kCLLocationAccuracyHundredMeters,
+            timeout: 5.0  // 短いタイムアウト
+        )
+        
+        // シミュレーション／アクセサリチェック
+        if flags.isSimulatedBySoftware == true || flags.isProducedByAccessory == true {
+            throw LocationGeocodingError.simulatedOrAccessory
+        }
+        
+        // 住所を逆引き（0.5秒の短いタイムアウト、失敗してもOK）
+        let address = await reverseGeocodeWithTimeout(
+            location,
+            timeout: 0.5,
+            onDelayedResult: onAddressResolved
+        )
+        
+        Logger.info("Quick location acquired: \(location.coordinate.latitude), \(location.coordinate.longitude), accuracy: \(location.horizontalAccuracy)m")
+        
+        return LocationResult(
+            timestamp: Date(),
+            latitude: location.coordinate.latitude,
+            longitude: location.coordinate.longitude,
+            accuracy: location.horizontalAccuracy,
+            address: address,
+            flags: flags
+        )
+    }
+
+    /// 高精度で位置情報を再取得（デュアルマネージャー方式の精度改善用）
+    /// - Parameter onAddressResolved: バックグラウンドで住所が取得できた時のコールバック
+    /// - Returns: 高精度（±10m）の位置情報
+    func refineLocation(
+        onAddressResolved: @escaping (String) -> Void = { _ in }
+    ) async throws -> LocationResult {
+        // デフォルト精度（±10m）で再取得
+        return try await requestLocationWithAddress(onAddressResolved: onAddressResolved)
+    }
+
     // MARK: - Reverse Geocoding
 
     /// タイムアウト付きで住所を逆引きする

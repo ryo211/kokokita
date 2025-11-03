@@ -4,12 +4,15 @@ import CoreLocation
 /// 位置情報サービスのエラー
 enum LocationServiceError: LocalizedError {
     case permissionDenied
+    case timeout
     case other(Error)
 
     var errorDescription: String? {
         switch self {
         case .permissionDenied:
             return "位置情報の権限がありません"
+        case .timeout:
+            return "位置情報の取得がタイムアウトしました"
         case .other(let error):
             return error.localizedDescription
         }
@@ -27,7 +30,17 @@ final class DefaultLocationService: NSObject, CLLocationManagerDelegate {
         manager.delegate = self
     }
 
-    func requestOneShotLocation() async throws -> (CLLocation, LocationSourceFlags) {
+    func requestOneShotLocation(
+        accuracy: CLLocationAccuracy? = nil,
+        timeout: TimeInterval = AppConfig.locationTimeout
+    ) async throws -> (CLLocation, LocationSourceFlags) {
+        // 精度設定（指定がなければデフォルト値を使用）
+        if let accuracy = accuracy {
+            manager.desiredAccuracy = accuracy
+        } else {
+            manager.desiredAccuracy = AppConfig.locationAccuracy
+        }
+        
         // 権限確認
         let status = manager.authorizationStatus
 
@@ -49,13 +62,35 @@ final class DefaultLocationService: NSObject, CLLocationManagerDelegate {
             throw LocationServiceError.permissionDenied
         }
 
-        do {
-            return try await withCheckedThrowingContinuation { (c: CheckedContinuation<(CLLocation, LocationSourceFlags), Error>) in
-                self.cont = c
-                self.manager.requestLocation()
+        // タイムアウト付き位置情報取得
+        return try await withThrowingTaskGroup(of: (CLLocation, LocationSourceFlags).self) { group in
+            // 位置情報取得タスク
+            group.addTask {
+                try await withCheckedThrowingContinuation { (c: CheckedContinuation<(CLLocation, LocationSourceFlags), Error>) in
+                    self.cont = c
+                    Logger.info("Starting location updates with accuracy: \(self.manager.desiredAccuracy)m...")
+                    self.manager.startUpdatingLocation()
+                }
             }
-        } catch {
-            throw LocationServiceError.other(error)
+            
+            // タイムアウトタスク
+            group.addTask {
+                try await Task.sleep(nanoseconds: UInt64(timeout * 1_000_000_000))
+                Logger.warning("Location request timed out after \(timeout) seconds")
+                throw LocationServiceError.timeout
+            }
+            
+            // 最初に完了したタスクの結果を返す
+            guard let result = try await group.next() else {
+                throw LocationServiceError.other(NSError(domain: "DefaultLocationService", code: -1, userInfo: [NSLocalizedDescriptionKey: "No result returned"]))
+            }
+            
+            // 残りのタスクをキャンセルして位置情報更新を停止
+            group.cancelAll()
+            self.manager.stopUpdatingLocation()
+            Logger.info("Location updates stopped")
+            
+            return result
         }
     }
 
@@ -66,18 +101,33 @@ final class DefaultLocationService: NSObject, CLLocationManagerDelegate {
             Logger.warning("Location update received but no locations available")
             return
         }
-        let src = loc.sourceInformation
-        let flags = LocationSourceFlags(
-            isSimulatedBySoftware: src?.isSimulatedBySoftware,
-            isProducedByAccessory: src?.isProducedByAccessory
-        )
-        Logger.success("Location acquired: \(loc.coordinate.latitude), \(loc.coordinate.longitude)")
-        cont?.resume(returning: (loc, flags))
-        cont = nil
+        
+        // 精度チェック：desiredAccuracyを満たしていれば即座に返す
+        // horizontalAccuracyが負の値の場合は無効な測定値
+        if loc.horizontalAccuracy > 0 && 
+           loc.horizontalAccuracy <= manager.desiredAccuracy {
+            
+            let src = loc.sourceInformation
+            let flags = LocationSourceFlags(
+                isSimulatedBySoftware: src?.isSimulatedBySoftware,
+                isProducedByAccessory: src?.isProducedByAccessory
+            )
+            
+            Logger.success("Location acquired: \(loc.coordinate.latitude), \(loc.coordinate.longitude), accuracy: \(loc.horizontalAccuracy)m")
+            
+            manager.stopUpdatingLocation()
+            cont?.resume(returning: (loc, flags))
+            cont = nil
+        } else {
+            // 精度が不十分な場合は待機
+            let accuracyStatus = loc.horizontalAccuracy <= 0 ? "invalid" : "\(loc.horizontalAccuracy)m"
+            Logger.debug("Waiting for better accuracy: current \(accuracyStatus), desired \(manager.desiredAccuracy)m")
+        }
     }
 
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
         Logger.error("Location manager failed", error: error)
+        manager.stopUpdatingLocation()
         cont?.resume(throwing: error)
         cont = nil
     }

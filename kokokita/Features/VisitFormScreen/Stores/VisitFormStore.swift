@@ -166,6 +166,8 @@ final class VisitFormStore {
             case .permissionDenied:
                 // 権限が拒否された場合は画面を閉じる
                 shouldDismiss = true
+            case .timeout:
+                alert = error.localizedDescription
             case .other:
                 alert = error.localizedDescription
             }
