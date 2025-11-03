@@ -84,7 +84,7 @@ struct SearchFilterSheet: View {
             TextField("タイトルまたは住所に含む語", text: $titleDraft)
                 .textInputAutocapitalization(.never)
                 .submitLabel(.done)
-                .onChange(of: titleDraft) { new in
+                .onChange(of: titleDraft) { _, new in
                     // 入力中は 250ms デバウンスで反映
                     debounceTask?.cancel()
                     debounceTask = Task { @MainActor in
@@ -99,7 +99,7 @@ struct SearchFilterSheet: View {
     private var periodSection: some View {
         Section("期間") {
             Toggle("日付で絞り込む", isOn: $useDateRange)
-                .onChange(of: useDateRange) { on in
+                .onChange(of: useDateRange) { _, on in
                     if on {
                         if vm.dateFrom == nil { vm.dateFrom = stripTime(Date()) }
                         if vm.dateTo   == nil { vm.dateTo   = stripTime(Date()) }
@@ -143,7 +143,7 @@ struct SearchFilterSheet: View {
                 }
             } label: { EmptyView() }
             .labelsHidden()
-            .onChange(of: store.labelFilter) { _ in vm.applyAndReload() }
+            .onChange(of: store.labelFilter) { vm.applyAndReload() }
         }
     }
 
@@ -160,7 +160,7 @@ struct SearchFilterSheet: View {
                 }
             } label: { EmptyView() }
             .labelsHidden()
-            .onChange(of: store.groupFilter) { _ in vm.applyAndReload() }
+            .onChange(of: store.groupFilter) { vm.applyAndReload() }
         }
     }
 
@@ -177,7 +177,7 @@ struct SearchFilterSheet: View {
                 }
             } label: { EmptyView() }
             .labelsHidden()
-            .onChange(of: store.memberFilter) { _ in vm.applyAndReload() }
+            .onChange(of: store.memberFilter) { vm.applyAndReload() }
         }
     }
 
@@ -190,7 +190,7 @@ struct SearchFilterSheet: View {
                 }
             } label: { EmptyView() }
             .labelsHidden()
-            .onChange(of: store.categoryFilter) { _ in vm.applyAndReload() }
+            .onChange(of: store.categoryFilter) { vm.applyAndReload() }
         }
     }
 

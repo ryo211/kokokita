@@ -146,14 +146,14 @@ struct KeyboardAwareTextView: UIViewRepresentable {
             let overlap = max(0, tvFrameInWindow.maxY - kbEnd.origin.y)
 
             tv.contentInset.bottom = overlap + 8
-            tv.scrollIndicatorInsets.bottom = overlap + 8
+            tv.verticalScrollIndicatorInsets.bottom = overlap + 8
             tv.scrollRangeToVisible(tv.selectedRange)
         }
 
         @objc func keyboardWillHide(_ note: Notification) {
             guard let tv = (placeholder?.superview as? UITextView) else { return }
             tv.contentInset.bottom = 0
-            tv.scrollIndicatorInsets.bottom = 0
+            tv.verticalScrollIndicatorInsets.bottom = 0
         }
     }
 }

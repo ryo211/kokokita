@@ -41,7 +41,7 @@ struct PhotoAttachmentSection: View {
                     ) {
                         Label(L.Photo.photo, systemImage: "photo.on.rectangle")
                     }
-                    .onChange(of: libSelection) { _ in
+                    .onChange(of: libSelection) {
                         Task { await loadSelectedLibraryItems() }
                     }
 

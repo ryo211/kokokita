@@ -140,12 +140,12 @@ struct VisitListScreen: View {
         }
         .navigationTitle(L.Home.title)
         .toolbar(.hidden, for: .navigationBar)
-        .onChange(of: selectedMapItemId) { newValue in
+        .onChange(of: selectedMapItemId) { _, newValue in
             if newValue == nil {
                 mapSheetHeight = 0
             }
         }
-        .onChange(of: displayMode) { _ in
+        .onChange(of: displayMode) {
             mapSheetHeight = 0
         }
     }

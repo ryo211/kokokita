@@ -27,7 +27,7 @@ struct VisitFormScreen: View {
     }
     .presentationDetents([.large])
     .ignoresSafeArea(.keyboard, edges: .bottom)
-    .onChange(of: vm.shouldDismiss) { shouldDismiss in
+    .onChange(of: vm.shouldDismiss) { _, shouldDismiss in
       if shouldDismiss {
         dismiss()
       }

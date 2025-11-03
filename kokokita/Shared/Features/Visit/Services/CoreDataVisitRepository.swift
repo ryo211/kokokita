@@ -318,17 +318,14 @@ final class CoreDataVisitRepository {
         return try ctx.fetch(req).first
     }
 
-    /// 写真エンティティを取得（NSOrderedSet または Set から配列に変換）
+    /// 写真エンティティを取得（NSOrderedSet から配列に変換）
     private func photoEntities(from details: VisitDetailsEntity?) -> [VisitPhotoEntity] {
-        guard let details = details else { return [] }
-
-        if let ordered = details.photos as? NSOrderedSet,
-           let casted = ordered.array as? [VisitPhotoEntity] {
-            return casted
-        } else if let set = details.photos as? Set<VisitPhotoEntity> {
-            return set.sorted { $0.orderIndex < $1.orderIndex }
+        guard let details = details,
+              let ordered = details.photos,
+              let casted = ordered.array as? [VisitPhotoEntity] else {
+            return []
         }
-        return []
+        return casted
     }
 
     /// ジェネリックなエンティティ取得ヘルパー
@@ -360,10 +357,9 @@ final class CoreDataVisitRepository {
             timestampUTC: ts,
             latitude: v.latitude,
             longitude: v.longitude,
-            // ★ Data Model を NSNumber? にしている場合はこちら
-            horizontalAccuracy: (v.horizontalAccuracy as? NSNumber)?.doubleValue,
-            isSimulatedBySoftware: (v.isSimulatedBySoftware as? NSNumber)?.boolValue,
-            isProducedByAccessory: (v.isProducedByAccessory as? NSNumber)?.boolValue,
+            horizontalAccuracy: v.horizontalAccuracy?.doubleValue,
+            isSimulatedBySoftware: v.isSimulatedBySoftware?.boolValue,
+            isProducedByAccessory: v.isProducedByAccessory?.boolValue,
             // ↓ Integrity
             integrity: .init(
                 algo: algo,

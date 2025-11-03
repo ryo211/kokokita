@@ -64,7 +64,7 @@ struct VisitMapView: View {
         .task {
             updateCameraPosition()
         }
-        .onChange(of: items) { _ in
+        .onChange(of: items) {
             updateCameraPosition()
         }
     }
