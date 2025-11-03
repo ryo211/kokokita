@@ -17,7 +17,7 @@ kokokita/
 
 ```
 
-## メインソースコード構造（最新の構成 - Shared/Features導入後）
+## メインソースコード構造（Screen-based構成）
 
 ```
 kokokita/
@@ -43,27 +43,27 @@ kokokita/
 │   ├── kokokita_icon.imageset/
 │   └── AccentColor.colorset/
 │
-├── Features/                    # アプリ機能（Feature-based MV + Logic/Effects分離）
-│   ├── Home/
-│   │   ├── Models/
-│   │   │   └── HomeStore.swift           # @Observable（状態管理）
+├── Features/                    # アプリ機能（Screen-based MV + Logic/Effects分離）
+│   ├── VisitListScreen/         # 訪問記録一覧画面（旧 Home/）
+│   │   ├── Stores/              # 状態管理
+│   │   │   └── VisitListStore.swift      # @Observable（状態管理）
 │   │   ├── Logic/                        # 純粋な関数（Functional Core）
 │   │   │   ├── VisitFilter.swift         # フィルタリングロジック
 │   │   │   ├── VisitSorter.swift         # ソートロジック
 │   │   │   ├── VisitGrouper.swift        # 日付グルーピング
 │   │   │   └── DateHelper.swift          # 日付計算ユーティリティ
 │   │   └── Views/
-│   │       ├── HomeView.swift
-│   │       ├── HomeMapView.swift
+│   │       ├── VisitListScreen.swift
+│   │       ├── VisitMapView.swift
 │   │       ├── VisitRow.swift
 │   │       └── Filter/
 │   │           ├── HomeFilterHeader.swift
 │   │           ├── SearchFilterSheet.swift
 │   │           └── FlowRow.swift
 │   │
-│   ├── Create/
-│   │   ├── Models/
-│   │   │   └── CreateEditStore.swift     # @Observable（状態管理）
+│   ├── VisitFormScreen/         # 訪問記録作成画面（旧 Create/）
+│   │   ├── Stores/
+│   │   │   └── VisitFormStore.swift      # @Observable（状態管理）
 │   │   ├── Logic/                        # 純粋な関数（Functional Core）
 │   │   │   ├── StringValidator.swift     # 文字列検証
 │   │   │   └── LocationValidator.swift   # 位置情報検証
@@ -71,26 +71,50 @@ kokokita/
 │   │   │   ├── POIEffects.swift          # POI検索（リトライロジック付き）
 │   │   │   └── PhotoEffects.swift        # 写真管理（トランザクション型）
 │   │   └── Views/
-│   │       ├── CreateScreen.swift
+│   │       ├── VisitFormScreen.swift
 │   │       ├── PromptViews.swift
 │   │       ├── PhotoAttachmentSection.swift
-│   │       ├── LocationLoadingView.swift
-│   │       └── POIListView.swift
+│   │       └── LocationLoadingView.swift
 │   │
-│   ├── Detail/
+│   ├── VisitDetailScreen/       # 訪問記録詳細画面（旧 Detail/）
+│   │   ├── Stores/              # （現在は空）
 │   │   └── Views/
 │   │       ├── VisitDetailScreen.swift
 │   │       ├── VisitDetailContent.swift
 │   │       ├── EditView.swift
 │   │       └── PhotoReadOnlyGrid.swift
 │   │
-│   └── Menu/
+│   ├── LabelManagementScreen/   # ラベル管理画面（旧 Menu/Label）
+│   │   ├── Stores/
+│   │   │   └── LabelListStore.swift
+│   │   ├── Logic/
+│   │   │   └── LabelValidator.swift
+│   │   └── Views/
+│   │       ├── LabelListScreen.swift
+│   │       └── LabelDetailView.swift
+│   │
+│   ├── GroupManagementScreen/   # グループ管理画面（旧 Menu/Group）
+│   │   ├── Stores/
+│   │   │   └── GroupListStore.swift
+│   │   ├── Logic/
+│   │   │   └── GroupValidator.swift
+│   │   └── Views/
+│   │       ├── GroupListScreen.swift
+│   │       └── GroupDetailView.swift
+│   │
+│   ├── MemberManagementScreen/  # メンバー管理画面（旧 Menu/Member）
+│   │   ├── Stores/
+│   │   │   └── MemberListStore.swift
+│   │   ├── Logic/
+│   │   │   └── MemberValidator.swift
+│   │   └── Views/
+│   │       ├── MemberListScreen.swift
+│   │       └── MemberDetailView.swift
+│   │
+│   └── SettingsScreen/          # 設定画面（旧 Menu/）
 │       └── Views/
-│           ├── MenuHomeView.swift
-│           ├── LabelListView.swift
-│           ├── GroupListView.swift
-│           ├── MemberListView.swift
-│           └── ResetAllView.swift
+│           ├── SettingsHomeScreen.swift
+│           └── ResetAllScreen.swift
 │
 ├── Shared/                      # 共通コード
 │   ├── Features/                # 共有機能（Feature-based）
@@ -140,7 +164,7 @@ kokokita/
 │   │   │   └── MapSnapshotService.swift  # 地図スナップショット生成
 │   │   └── RateLimiter.swift
 │   │
-│   ├── UIComponents/            # 汎用UIコンポーネント
+│   ├── Components/              # 汎用UIコンポーネント
 │   │   ├── Chip.swift
 │   │   ├── EditFooterBar.swift
 │   │   ├── KokokitaHeaderLogo.swift
@@ -151,38 +175,27 @@ kokokita/
 │   │   ├── FacilityInfoButton.swift
 │   │   └── KokokamoPOISheet.swift
 │   │
-│   ├── UI/                      # UIユーティリティ
-│   │   ├── Components/
-│   │   │   └── ActivityView.swift
-│   │   ├── Keyboard/
-│   │   │   ├── KeyboardAwareTextView.swift
-│   │   │   └── KeyboardDismissHelpers.swift
-│   │   └── Media/
-│   │       ├── PhotoPager.swift
-│   │       ├── PhotoThumb.swift
-│   │       └── ImageStore.swift
-│   │
 │   ├── Config/
 │   │   ├── AppMedia.swift
 │   │   └── Localization/
 │   │       └── LocalizedString.swift
 │   │
-│   ├── DI/
-│   │   └── DependencyContainer.swift
+│   ├── Media/
+│   │   ├── PhotoPager.swift
+│   │   ├── PhotoThumb.swift
+│   │   └── ImageStore.swift
 │   │
 │   └── Utilities/
 │       ├── NavigationRouter.swift
 │       ├── Logger.swift
 │       ├── ShareImageRenderer.swift
+│       ├── DependencyContainer.swift
 │       ├── MKPointOfInterestCategory+JP.swift
 │       └── Extensions/
 │           ├── DateExtensions.swift
 │           ├── StringExtensions.swift
 │           ├── CollectionExtensions.swift
 │           └── NotificationExtensions.swift
-│
-├── Support/                     # サポートユーティリティ
-│   （現在は空またはShared/に統合済み）
 │
 ├── ContentView.swift            # ルートビュー
 ├── Info.plist                   # アプリ情報
@@ -231,7 +244,7 @@ doc/
 - `Shared/Features/Taxonomy/Services/CoreDataTaxonomyRepository.swift`: タクソノミーリポジトリ
 
 ### 依存性注入（直接依存）
-- `Shared/DI/DependencyContainer.swift`: DIコンテナ（AppContainer.shared）
+- `Shared/Utilities/DependencyContainer.swift`: DIコンテナ（AppContainer.shared）
 - Protocolベース抽象化は廃止、具体実装への直接依存
 
 ### ローカライゼーション
@@ -244,19 +257,23 @@ doc/
 
 ## ファイル配置のルール
 
-### アプリ機能
+### アプリ機能（Screen-based）
 ```
-Features/[機能名]/
-├── Models/              # @Observable Store
+Features/[Screen名]/
+├── Stores/             # @Observable Store（状態管理）
 ├── Logic/              # 純粋な関数（Functional Core）
 ├── Effects/            # 副作用（Imperative Shell）
 └── Views/              # UIコンポーネント
 ```
 
+**重要**: `Models/`ではなく`Stores/`を使用
+- **Models**: 純粋なデータ構造（struct、不変オブジェクト）
+- **Stores**: 状態管理クラス（@Observable）
+
 ### 共有機能（Feature-based）
 ```
 Shared/Features/[機能名]/
-├── Models/             # ドメインモデル
+├── Models/             # ドメインモデル（データ構造）
 ├── Services/           # 機能固有のサービス
 ├── Logic/              # 純粋な関数
 └── Views/              # UIコンポーネント
@@ -305,85 +322,58 @@ App/Config/
 - **Infrastructure**: 共通インフラの副作用（Shared/Infrastructure/）
 
 ### 命名規則
-- Store: `[機能名]Store.swift`（例：HomeStore.swift）
-- View: `[機能名]View.swift`
+- Store: `[機能名]Store.swift`（例：VisitListStore.swift、GroupListStore.swift）
+- View: `[画面名]Screen.swift` または `[コンポーネント名]View.swift`
 - Logic: `[処理名].swift`（例：VisitFilter.swift、MapURLBuilder.swift）
 - Effects: `[対象]Effects.swift`（例：POIEffects.swift）
 - Services: `[機能名]Service.swift`（例：DefaultLocationService.swift）
 
+### ディレクトリ命名の理由
+- **Stores/**（Models/ではない）: 状態管理を明示、データ構造（Model）との混同を避ける
+- **Views/**: SwiftUIの標準的な命名
+- **Logic/**: 純粋な関数（Functional Core）
+- **Effects/**: 副作用（Imperative Shell）
+
 ## アーキテクチャ進化の歴史
 
-### Phase 1-3（前セッション完了）
+### Phase 1-10（過去）
 - MVVM → MV移行
-- ViewModel → Store リネーム
-- Features/構造への移行
 - @Observable導入
+- Logic/Effects分離
+- Protocol削除と直接依存
+- Shared/Features構造導入
 
-### Phase 4: Logic層の分離（完了）
-- HomeStoreから純粋関数を抽出
-- CreateEditStoreから純粋関数を抽出
+### Phase 11: Screen-based リネーム（完了）
+- Home → VisitListScreen
+- Create → VisitFormScreen
+- Detail → VisitDetailScreen
+- Menu → LabelManagementScreen、GroupManagementScreen、MemberManagementScreen、SettingsScreen
+- 画面単位でFeatureを分割
 
-### Phase 5: Services → Effects リネーム（完了）
-- 機能固有のServiceをEffectsに改名
+### Phase 12: Models → Stores リネーム（完了）
+- 全機能の`Models/`ディレクトリを`Stores/`にリネーム
+- 状態管理（Store）とデータ構造（Model）の明確な分離
+- 業界標準（TCA、Redux）と一致
 
-### Phase 6: Domain層の削除とモデル分割（完了）
-- Domain/Models.swift を5つのファイルに分割してShared/Models/に配置
+## 現在の状態（Phase 12完了）
 
-### Phase 7: Protocol削除と直接依存（完了）
-- すべてのProtocolベースDIを削除
-- Storeのinitでデフォルト引数を使用してDI実現
-
-### Phase 8: Infrastructure統合（完了）
-- Infrastructure/をShared/Services/に統合
-
-### Phase 9: Presentation統合（完了）
-- Presentation/フォルダを削除
-- アプリレベルコンポーネントをApp/に移動
-- 共通UIコンポーネントをShared/UIComponents/に移動
-- Map関連をShared/Map/に移動（後にShared/Features/Map/に再構成）
-
-### Phase 10: Shared/Features構造導入（完了）
-- **Shared/Features/Map/** 作成
-  - Views/: MapPreview、CoordinateBadge
-  - Logic/: MapURLBuilder（純粋関数）
-- **Shared/Features/Taxonomy/** 作成
-  - Models/: Taxonomy.swift
-  - Services/: CoreDataTaxonomyRepository
-  - Views/Pickers/: Label/Group/MemberPickerSheet
-  - Views/Forms/: Label/Group/MemberCreateSheet
-- **Shared/Features/Visit/** 作成
-  - Models/: Visit、VisitDetails、VisitAggregate、PlacePOI
-  - Services/: CoreDataVisitRepository
-  - Views/: VisitEditScreen
-- **Shared/Infrastructure/** 再編成
-  - Persistence/、Location/、Security/、Map/に整理
-  - Services/ディレクトリ削除
-
-## 現在の状態（Phase 10完了）
-
-✅ **完全に新構成に移行完了 + Shared/Features導入**
+✅ **Screen-based + Stores命名に移行完了**
 
 **新構成（現在）**:
-- `Features/[機能名]/`: アプリ機能（Models/Logic/Effects/Views）
-- `Shared/Features/[機能名]/`: 共有機能（Models/Services/Logic/Views）
-- `Shared/Infrastructure/`: 共有インフラ（Persistence/、Location/、Security/、Map/）
-- `Shared/UIComponents/`: 汎用UIコンポーネント（機能に属さない）
+- `Features/[Screen名]/Stores/`: 状態管理（Models/から変更）
+- `Features/[Screen名]/Logic/`: 純粋関数
+- `Features/[Screen名]/Effects/`: 副作用
+- `Features/[Screen名]/Views/`: UI
+- `Shared/Features/[機能名]/Models/`: ドメインモデル（データ構造）
 - Store使用（ViewModelなし）
-- @Observableマクロ（ObservableObjectなし）
+- @Observableマクロ
 - 直接依存（Protocolなし）
-- Logic/Effects分離（Functional Core, Imperative Shell）
-- Feature-based構造の一貫性（Features/とShared/Features/で同じ構造）
 
 **削除された旧構成**:
-- ❌ `Domain/`（Phase 6-7で削除）
-- ❌ `Infrastructure/`（Phase 8で削除）
-- ❌ `Presentation/`（Phase 9で削除）
-- ❌ `Shared/Models/`（Phase 10でShared/Features/*/Models/に分散）
-- ❌ `Shared/Services/`（Phase 10でShared/Infrastructure/に改名）
-- ❌ `Shared/Map/`（Phase 10でShared/Features/Map/に再構成）
-- ❌ `Features/Create/Services/`（Phase 5でEffects/に統合）
-- ❌ Protocolベース抽象化（Phase 7で削除）
-- ❌ ObservableObject（Phase 1-3で@Observableに置換）
+- ❌ `Features/*/Models/`（Stores/にリネーム）
+- ❌ `Domain/`、`Infrastructure/`、`Presentation/`（過去のPhaseで削除）
+- ❌ Protocolベース抽象化
+- ❌ ObservableObject
 
 ## 注意点
 
@@ -393,8 +383,7 @@ App/Config/
 - 計算プロパティ（`var vm: Store { store }`）には`$`バインディングは使えない
 
 ### ファイル配置の判断基準
-- **アプリ機能**: `Features/[機能名]/`（Models、Logic、Effects、Viewsに分類）
+- **アプリ画面**: `Features/[Screen名]/`（Stores、Logic、Effects、Viewsに分類）
 - **共有機能**: `Shared/Features/[機能名]/`（Models、Services、Logic、Viewsに分類）
 - **共有インフラ**: `Shared/Infrastructure/`（Persistence、Location、Security、Map等）
-- **汎用UI**: `Shared/UIComponents/`（機能に属さない共通コンポーネント）
-- **サポート**: `Support/`（汎用ユーティリティ）
+- **汎用UI**: `Shared/Components/`（機能に属さない共通コンポーネント）

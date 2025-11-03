@@ -38,7 +38,7 @@ struct RootTabView: View {
             ZStack { // （必要なければ Group でもOK）
                 switch tab {
                 case .home:
-                    NavigationStack { HomeView() }
+                    NavigationStack { VisitListScreen() }
 
                 // case .map:
                 //     NavigationStack {
@@ -61,7 +61,7 @@ struct RootTabView: View {
                 //     }
 
                 case .menu:
-                    NavigationStack { MenuHomeView() }
+                    NavigationStack { SettingsHomeScreen() }
 
                 case .center:
                     Color.clear // 中央ボタンは別途 sheet 起動
@@ -159,7 +159,7 @@ struct RootTabView: View {
         .sheet(item: $createScreenData, onDismiss: {
             NotificationCenter.default.post(name: .visitsChanged, object: nil)
         }) { screenData in
-            CreateView(initialLocationData: screenData.locationData, shouldOpenPOI: screenData.shouldOpenPOI)
+            VisitFormScreen(initialLocationData: screenData.locationData, shouldOpenPOI: screenData.shouldOpenPOI)
                 .presentationDetents([.large])
                 .ignoresSafeArea(.keyboard, edges: .bottom)
         }

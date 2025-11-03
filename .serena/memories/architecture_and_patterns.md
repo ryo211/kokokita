@@ -1,34 +1,37 @@
 # アーキテクチャと設計パターン
 
-## Feature-based MV アーキテクチャ
+## Screen-based MV アーキテクチャ
 
 ### 基本原則
-- **コロケーション最優先**: 機能に関連する全てのファイルを1つのフォルダにまとめる
+- **Screen-based構成**: 画面単位でFeatureを分割
 - **MVパターン**: ViewModelを排除し、@Observable Storeで状態管理
 - **純粋な関数とEffectsを分離**: 副作用の有無で明確に区別（TCAパターン）
 - **直接依存**: プロトコルを使わず具体実装に直接依存
 - **iOS 17+をターゲット**: @Observableマクロを活用
+- **Models vs Stores**: データ構造はModels/、状態管理はStores/に明確に分離
 
 ### フォルダ構成
 
 ```
 kokokita/
-├── Features/                      # 機能単位（Feature-based）
-│   ├── Home/                      # ホーム画面機能
-│   │   ├── Models/                # @Observable Store
-│   │   │   └── HomeStore.swift
+├── Features/                      # 画面単位（Screen-based）
+│   ├── VisitListScreen/           # 訪問記録一覧画面
+│   │   ├── Stores/                # @Observable Store（状態管理）
+│   │   │   └── VisitListStore.swift
 │   │   ├── Logic/                 # 純粋な関数（ビジネスロジック）
 │   │   │   ├── VisitFilter.swift
 │   │   │   ├── VisitSorter.swift
 │   │   │   ├── VisitGrouper.swift
 │   │   │   └── DateHelper.swift
 │   │   └── Views/                 # UIコンポーネント
-│   │       ├── HomeView.swift
-│   │       └── SearchFilterSheet.swift
+│   │       ├── VisitListScreen.swift
+│   │       ├── VisitMapView.swift
+│   │       └── Filter/
+│   │           └── SearchFilterSheet.swift
 │   │
-│   ├── Create/                    # 訪問作成機能
-│   │   ├── Models/
-│   │   │   └── CreateEditStore.swift
+│   ├── VisitFormScreen/           # 訪問作成画面
+│   │   ├── Stores/
+│   │   │   └── VisitFormStore.swift
 │   │   ├── Logic/                 # 純粋な関数
 │   │   │   ├── StringValidator.swift
 │   │   │   └── LocationValidator.swift
@@ -36,52 +39,96 @@ kokokita/
 │   │   │   ├── POIEffects.swift
 │   │   │   └── PhotoEffects.swift
 │   │   └── Views/
-│   │       ├── CreateScreen.swift
-│   │       ├── PhotoAttachmentSection.swift
-│   │       └── POIListView.swift
+│   │       ├── VisitFormScreen.swift
+│   │       └── PhotoAttachmentSection.swift
 │   │
-│   ├── Detail/                    # 訪問詳細機能
+│   ├── VisitDetailScreen/         # 訪問詳細画面
+│   │   ├── Stores/                # （現在は空）
 │   │   └── Views/
-│   │       └── VisitDetailView.swift
+│   │       └── VisitDetailScreen.swift
 │   │
-│   └── Menu/                      # メニュー機能
+│   ├── LabelManagementScreen/     # ラベル管理画面
+│   │   ├── Stores/
+│   │   │   └── LabelListStore.swift
+│   │   ├── Logic/
+│   │   │   └── LabelValidator.swift
+│   │   └── Views/
+│   │       ├── LabelListScreen.swift
+│   │       └── LabelDetailView.swift
+│   │
+│   ├── GroupManagementScreen/     # グループ管理画面
+│   │   ├── Stores/
+│   │   │   └── GroupListStore.swift
+│   │   ├── Logic/
+│   │   │   └── GroupValidator.swift
+│   │   └── Views/
+│   │       ├── GroupListScreen.swift
+│   │       └── GroupDetailView.swift
+│   │
+│   ├── MemberManagementScreen/    # メンバー管理画面
+│   │   ├── Stores/
+│   │   │   └── MemberListStore.swift
+│   │   ├── Logic/
+│   │   │   └── MemberValidator.swift
+│   │   └── Views/
+│   │       ├── MemberListScreen.swift
+│   │       └── MemberDetailView.swift
+│   │
+│   └── SettingsScreen/            # 設定画面
 │       └── Views/
-│           └── MenuView.swift
+│           ├── SettingsHomeScreen.swift
+│           └── ResetAllScreen.swift
 │
 ├── Shared/                        # 複数機能で使用する共通コード
-│   ├── Models/                    # 共通のドメインモデル
-│   │   ├── Visit.swift            # 不変な訪問データ + Integrity
-│   │   ├── VisitDetails.swift     # 可変なメタデータ + FacilityInfo
-│   │   ├── VisitAggregate.swift   # Visit + VisitDetails の集約ルート
-│   │   ├── Taxonomy.swift         # LabelTag, GroupTag, MemberTag
-│   │   └── PlacePOI.swift         # POI検索結果
+│   ├── Features/                  # 共有機能（Feature-based）
+│   │   ├── Visit/
+│   │   │   ├── Models/            # ドメインモデル（データ構造）
+│   │   │   │   ├── Visit.swift            # 不変な訪問データ + Integrity
+│   │   │   │   ├── VisitDetails.swift     # 可変なメタデータ + FacilityInfo
+│   │   │   │   ├── VisitAggregate.swift   # 集約ルート
+│   │   │   │   └── PlacePOI.swift         # POI検索結果
+│   │   │   ├── Services/
+│   │   │   │   └── CoreDataVisitRepository.swift
+│   │   │   └── Views/
+│   │   │       └── VisitEditScreen.swift
+│   │   │
+│   │   ├── Taxonomy/
+│   │   │   ├── Models/
+│   │   │   │   └── Taxonomy.swift         # LabelTag, GroupTag, MemberTag
+│   │   │   ├── Services/
+│   │   │   │   └── CoreDataTaxonomyRepository.swift
+│   │   │   └── Views/
+│   │   │       └── Pickers/
+│   │   │
+│   │   └── Map/
+│   │       ├── Views/
+│   │       │   └── MapPreview.swift
+│   │       └── Logic/
+│   │           └── MapURLBuilder.swift
 │   │
-│   ├── Services/                  # 共通Service（インフラ層を統合）
+│   ├── Infrastructure/            # 共通インフラ（技術層）
 │   │   ├── Persistence/           # データ永続化
-│   │   │   ├── CoreDataStack.swift
-│   │   │   ├── CoreDataVisitRepository.swift
-│   │   │   └── CoreDataTaxonomyRepository.swift
+│   │   │   └── CoreDataStack.swift
 │   │   ├── Location/              # 位置情報関連
 │   │   │   ├── DefaultLocationService.swift
 │   │   │   └── MapKitPlaceLookupService.swift
-│   │   ├── Security/              # セキュリティ関連
-│   │   │   └── DefaultIntegrityService.swift
-│   │   └── LocationGeocodingService.swift
+│   │   └── Security/              # セキュリティ関連
+│   │       └── DefaultIntegrityService.swift
 │   │
-│   ├── UIComponents/              # 共通UIコンポーネント
+│   ├── Components/                # 共通UIコンポーネント
 │   │   ├── PhotoThumb.swift
 │   │   └── PhotoPager.swift
 │   │
-│   └── Media/                     # メディア管理
-│       └── ImageStore.swift
+│   └── Utilities/                 # ユーティリティ
+│       ├── DependencyContainer.swift
+│       └── Extensions/
 │
 ├── App/                           # アプリケーション設定
 │   ├── KokokitaApp.swift
 │   ├── AppDelegate.swift
-│   ├── Config/
-│   │   └── AppConfig.swift
-│   └── DI/
-│       └── DependencyContainer.swift
+│   ├── RootTabView.swift
+│   └── Config/
+│       └── AppConfig.swift
 │
 └── Resources/                     # リソース
     └── Localization/
@@ -89,21 +136,19 @@ kokokita/
 
 ### 各層の責務
 
-#### Model（モデル）
-- **配置**: `Shared/Models/` 
+#### Model（モデル）- データ構造
+- **配置**: `Shared/Features/[機能名]/Models/` 
 - **責務**: データ構造の定義
 - **特徴**: 不変（immutable）を推奨、structを優先
-- **例**: Visit（改ざん防止署名付き不変データ）、VisitDetails（可変メタデータ）、VisitAggregate（集約ルート）、Taxonomy（タグ）
+- **型**: `struct`
+- **例**: Visit（改ざん防止署名付き不変データ）、VisitDetails（可変メタデータ）、Taxonomy（タグ）
 
-#### View（ビュー）
-- **配置**: `Features/[機能名]/Views/`
-- **責務**: UI表示とユーザーイベントの受付
-- **特徴**: ビジネスロジックを含まない、Storeのメソッド呼び出しのみ
-- **使用方法**: `@State private var store = [機能名]Store()`
+**重要**: `Stores/`ディレクトリには配置しない
 
 #### Store（状態管理）
-- **配置**: `Features/[機能名]/Models/[機能名]Store.swift`
-- **責務**: 状態管理とLogic/Effectsとの結合
+- **配置**: `Features/[Screen名]/Stores/[機能名]Store.swift`
+- **責務**: 状態管理とLogic/Effectsとの結合（オーケストレーション）
+- **型**: `@Observable class`
 - **特徴**: 
   - @Observableマクロを使用（ObservableObjectは使わない）
   - 通常のプロパティ（@Publishedは不要）
@@ -112,8 +157,16 @@ kokokita/
 - **命名**: `[機能名]Store.swift`（ViewModelは使わない）
 - **依存**: デフォルト引数でAppContainer.sharedから注入
 
+**重要**: `Models/`ディレクトリには配置しない（状態管理はStores/）
+
+#### View（ビュー）
+- **配置**: `Features/[Screen名]/Views/`
+- **責務**: UI表示とユーザーイベントの受付
+- **特徴**: ビジネスロジックを含まない、Storeのメソッド呼び出しのみ
+- **使用方法**: `@State private var store = [機能名]Store()`
+
 #### Logic（純粋な関数）
-- **配置**: `Features/[機能名]/Logic/`
+- **配置**: `Features/[Screen名]/Logic/`
 - **責務**: 純粋なビジネスロジック（計算、変換、フォーマット、バリデーション、フィルタリング、ソート）
 - **特徴**: 
   - 副作用なし、同じ入力で常に同じ出力
@@ -121,11 +174,12 @@ kokokita/
   - テスト容易
   - Functional Core（関数型コア）を構成
 - **例**: 
-  - Home機能: VisitFilter、VisitSorter、VisitGrouper、DateHelper
-  - Create機能: StringValidator、LocationValidator
+  - VisitListScreen: VisitFilter、VisitSorter、VisitGrouper、DateHelper
+  - VisitFormScreen: StringValidator、LocationValidator
+  - *ManagementScreen: *Validator
 
 #### Effects（副作用のある処理）
-- **配置**: `Features/[機能名]/Effects/`
+- **配置**: `Features/[Screen名]/Effects/`
 - **責務**: 機能固有の副作用（POI検索、写真管理など）
 - **特徴**: 
   - @Observableマクロを使用（状態を持つ場合）
@@ -133,15 +187,28 @@ kokokita/
   - UIロジックに密接に関連
 - **例**: POIEffects（POI検索とリトライ）、PhotoEffects（写真追加/削除/トランザクション）
 
-#### Services（共通インフラ層）
-- **配置**: `Shared/Services/`
+#### Infrastructure（共通インフラ層）
+- **配置**: `Shared/Infrastructure/`
 - **責務**: 複数機能で共有される副作用（DB、位置情報、セキュリティ）
 - **サブディレクトリ**:
   - `Persistence/`: Core Data関連（Stack、Repository）
   - `Location/`: 位置情報とPOI検索
   - `Security/`: 暗号署名と検証
 - **特徴**: ステートレスまたは最小限の状態、UIに依存しない
-- **例**: CoreDataVisitRepository、DefaultLocationService、DefaultIntegrityService
+- **例**: CoreDataStack、DefaultLocationService、DefaultIntegrityService
+
+### Models/ vs Stores/ の使い分け
+
+| ディレクトリ | 用途 | 型 | 例 | 配置場所 |
+|------------|------|-----|-----|----------|
+| **Models/** | データ構造 | `struct` | Visit, VisitDetails, LabelTag | `Shared/Features/*/Models/` |
+| **Stores/** | 状態管理 | `@Observable class` | VisitListStore, GroupListStore | `Features/*/Stores/` |
+
+**理由**:
+- 状態管理（Store）とデータ構造（Model）の明確な分離
+- 業界標準（TCA、Redux）と一致
+- ViewModelという用語を避ける（MVパターン）
+- 混同を防ぐ
 
 ### 依存性注入（DI）
 - **方針**: Protocol-based DIを廃止し、具体実装への直接依存
@@ -157,7 +224,7 @@ kokokita/
 **例**:
 ```swift
 @Observable
-final class HomeStore {
+final class VisitListStore {
     private let repo: CoreDataVisitRepository
     
     init(repo: CoreDataVisitRepository = AppContainer.shared.repo) {
@@ -170,7 +237,7 @@ final class HomeStore {
 ```
 User Action → View → Store → Logic (純粋関数)
                        ↓
-                    Effects → Services → Repository
+                    Effects → Infrastructure → Repository
                        ↓
      ← UI Update ←─────┘
      (@Observable自動通知)
@@ -180,8 +247,27 @@ User Action → View → Store → Logic (純粋関数)
 
 ### Functional Core, Imperative Shell
 - **Functional Core**: Logic/で純粋関数として実装
-- **Imperative Shell**: Effects/とServices/で副作用を実装
+- **Imperative Shell**: Effects/とInfrastructure/で副作用を実装
 - **参考**: The Composable Architecture (TCA) パターン
+
+### Storeの役割（2025年版）
+
+**Store = State（状態） + Orchestration（オーケストレーション）**
+
+#### ✅ Storeが持つべきもの
+- 状態管理: `items`, `loading`, `alert`
+- 依存性管理: Repository注入
+- オーケストレーション: 純粋関数とEffectsを組み合わせてワークフローを制御
+
+#### ❌ Storeが持つべきでないもの
+- 複雑なビジネスロジック → Logic層に分離
+- 副作用の実装 → Effects/Infrastructureに委譲
+
+#### 簡易なヘルパーはStoreに残してOK
+- 1-2行の簡単なソート・フィルタリング
+- 単純な計算処理
+
+過度な分離は避け、実用性を優先する。
 
 ### 改ざん検出システム
 - P256 ECDSA署名をDER形式(base64)で保存
@@ -194,7 +280,7 @@ User Action → View → Store → Logic (純粋関数)
 - `CLLocation.sourceInformation`から検出
 - `isSimulatedBySoftware`、`isProducedByAccessory`をチェック
 - LocationValidatorで検証ロジックを分離
-- シミュレート位置情報の場合は訪問記録作成を拒否（CreateEditStore）
+- シミュレート位置情報の場合は訪問記録作成を拒否（VisitFormStore）
 
 ### POI統合（ココカモ）
 - 検索半径: 100m（AppConfig.poiSearchRadius）
@@ -221,78 +307,71 @@ User Action → View → Store → Logic (純粋関数)
 - Bool型: is、has、should、can で始める
 
 ### MVパターンでの命名
-- Store: `[機能名]Store.swift`（例: HomeStore.swift）
-- View: `[機能名]View.swift`（例: HomeView.swift）
-- Logic: `[処理名].swift`（例: VisitFilter.swift）
+- Store: `[機能名]Store.swift`（例: VisitListStore.swift、GroupListStore.swift）
+- View: `[画面名]Screen.swift` または `[コンポーネント名]View.swift`
+- Logic: `[処理名].swift`（例: VisitFilter.swift、GroupValidator.swift）
 - Effects: `[対象]Effects.swift`（例: POIEffects.swift、PhotoEffects.swift）
 - Services: `[機能名]Service.swift`（例: DefaultLocationService.swift）
 
+### ディレクトリ命名
+- **Stores/**: 状態管理クラス（@Observable）
+- **Models/**: データ構造（struct）
+- **Views/**: UIコンポーネント
+- **Logic/**: 純粋関数
+- **Effects/**: 副作用
+
 ## アーキテクチャ進化の歴史
 
-### Phase 1-3（前セッションで完了）
+### Phase 1-10（過去）
 - MVVM → MV移行
 - @Observable導入
-- Feature-based構成へ
+- Logic/Effects分離
+- Protocol削除と直接依存
+- Infrastructure統合
 
-### Phase 4: Logic層の分離（完了）
-- HomeStoreから純粋関数を抽出:
-  - VisitFilter（フィルタリング）
-  - VisitSorter（ソート）
-  - VisitGrouper（日付グルーピング）
-  - DateHelper（日付計算）
-- CreateEditStoreから純粋関数を抽出:
-  - StringValidator（文字列検証）
-  - LocationValidator（位置情報検証）
+### Phase 11: Screen-based リネーム（完了）
+- Home → VisitListScreen
+- Create → VisitFormScreen
+- Detail → VisitDetailScreen
+- Menu → 各種ManagementScreen + SettingsScreen
+- 画面単位でFeatureを分割
 
-### Phase 5: Services → Effects リネーム（完了）
-- 機能固有のServiceをEffectsに改名:
-  - POICoordinatorService → POIEffects
-  - PhotoEditService → PhotoEffects
-- TCAパターンとの整合性向上
+### Phase 12: Models → Stores リネーム（完了）
+- **動機**: 状態管理（Store）とデータ構造（Model）の混同を避ける
+- **変更内容**: 全機能の`Models/`ディレクトリを`Stores/`にリネーム
+- **理由**:
+  - Storeは@Observableクラスで状態管理を行う
+  - Modelはstructでデータ構造を定義する
+  - 業界標準（TCA、Redux）で"Store"が状態管理に使われる
+  - MVパターンの命名規約と一致
+- **影響範囲**: Features/配下の全7機能
+  - GroupManagementScreen/Stores/
+  - LabelManagementScreen/Stores/
+  - MemberManagementScreen/Stores/
+  - VisitListScreen/Stores/
+  - VisitFormScreen/Stores/
+  - VisitDetailScreen/Stores/（空）
+  - SettingsScreen/（Storesなし）
 
-### Phase 6: Domain層の削除とモデル分割（完了）
-- Domain/Models.swift を5つのファイルに分割:
-  - Visit.swift（不変な訪問データ + LocationSourceFlags）
-  - VisitDetails.swift（可変メタデータ + FacilityInfo）
-  - VisitAggregate.swift（集約ルート）
-  - Taxonomy.swift（タグ類）
-  - PlacePOI.swift（POI検索結果）
-- Shared/Models/に配置
+## 現在の状態（Phase 12完了）
 
-### Phase 7: Protocol削除と直接依存（完了）
-- すべてのProtocolベースDIを削除:
-  - VisitRepository → CoreDataVisitRepository
-  - TaxonomyRepository → CoreDataTaxonomyRepository
-  - LocationService → DefaultLocationService
-  - PlaceLookupService → MapKitPlaceLookupService
-  - IntegrityService → DefaultIntegrityService
-- Domain/Protocols.swift 削除
-- Domain/ディレクトリ削除
-- デフォルト引数でDI実現
+✅ **Screen-based + Stores命名に移行完了**
 
-### Phase 8: Infrastructure統合（完了）
-- Infrastructure/をShared/Services/に統合:
-  - Infrastructure/Persistence/ → Shared/Services/Persistence/
-  - Infrastructure/Location/ → Shared/Services/Location/
-  - Infrastructure/Security/ → Shared/Services/Security/
-- Infrastructure/ディレクトリ削除
-- 3層アーキテクチャから実用的な2層構成へ
-
-## 現在の状態
-
-✅ **完全に新構成に移行完了**
-
-**新構成**:
-- `Features/[機能名]/`: 機能ごとにコロケーション（Models/Logic/Effects/Views）
-- `Shared/Models/`: 分割された明確なドメインモデル
-- `Shared/Services/`: インフラ層を統合した共通サービス
+**新構成（現在）**:
+- `Features/[Screen名]/Stores/`: 状態管理（Models/から変更）
+- `Features/[Screen名]/Logic/`: 純粋関数
+- `Features/[Screen名]/Effects/`: 副作用
+- `Features/[Screen名]/Views/`: UI
+- `Shared/Features/[機能名]/Models/`: ドメインモデル（データ構造）
+- `Shared/Infrastructure/`: 共通インフラ
 - Store使用（ViewModelなし）
 - @Observableマクロ（ObservableObjectなし）
 - 直接依存（Protocolなし）
 - Logic/Effects分離（Functional Core, Imperative Shell）
 
 **削除された旧構成**:
-- ❌ Domain/（削除済み）
-- ❌ Infrastructure/（削除済み）
-- ❌ Protocolベース抽象化（削除済み）
-- ❌ ObservableObject（@Observableに置換済み）
+- ❌ `Features/*/Models/`（Stores/にリネーム）
+- ❌ `Domain/`、`Infrastructure/`（Shared/に統合）
+- ❌ `Presentation/`（App/とShared/に分散）
+- ❌ Protocolベース抽象化
+- ❌ ObservableObject

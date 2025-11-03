@@ -9,7 +9,7 @@ enum VisitEditMode {
 
 struct VisitEditScreen: View {
     // 共有 ViewModel
-    @Bindable var vm: CreateEditStore
+    @Bindable var vm: VisitFormStore
     let mode: VisitEditMode
     let onClose: () -> Void
     var showsCloseButton: Bool = true
