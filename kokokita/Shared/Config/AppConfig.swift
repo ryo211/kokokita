@@ -24,7 +24,9 @@ struct AppConfig {
 
     // MARK: - Location Services
     /// 位置情報の精度設定
-    static let locationAccuracy: CLLocationAccuracy = kCLLocationAccuracyBest
+    /// - kCLLocationAccuracyBest: ±5m精度、取得に5-10秒（高精度ナビゲーション用）
+    /// - kCLLocationAccuracyNearestTenMeters: ±10m精度、取得に1-3秒（訪問記録に最適）
+    static let locationAccuracy: CLLocationAccuracy = kCLLocationAccuracyNearestTenMeters
     /// 位置情報取得のタイムアウト（秒）
     static let locationTimeout: TimeInterval = 30
 
