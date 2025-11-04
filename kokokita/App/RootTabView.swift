@@ -130,29 +130,43 @@ struct RootTabView: View {
         }
 
         // PostKokokitaPromptSheet
-        .sheet(item: $promptSheetLocationData) { data in
-            PostKokokitaPromptSheet(
-                locationData: data,
-                onQuickSave: {
-                    // 即保存
-                    quickSaveLocation(data)
-                    promptSheetLocationData = nil
-                },
-                onOpenEditor: {
-                    // 編集画面を開く
-                    promptSheetLocationData = nil
-                    createScreenData = CreateScreenData(locationData: data, shouldOpenPOI: false)
-                },
-                onOpenPOI: {
-                    // ココカモを開く
-                    promptSheetLocationData = nil
-                    createScreenData = CreateScreenData(locationData: data, shouldOpenPOI: true)
-                },
-                onCancel: {
-                    promptSheetLocationData = nil
-                }
-            )
-            .presentationDetents([.large])
+        .sheet(isPresented: Binding(
+            get: { promptSheetLocationData != nil },
+            set: { if !$0 { promptSheetLocationData = nil } }
+        )) {
+            if promptSheetLocationData != nil {
+                PostKokokitaPromptSheet(
+                    locationData: Binding(
+                        get: { promptSheetLocationData ?? LocationData(timestamp: Date(), latitude: 0, longitude: 0, accuracy: nil, address: nil, flags: LocationSourceFlags(isSimulatedBySoftware: nil, isProducedByAccessory: nil)) },
+                        set: { promptSheetLocationData = $0 }
+                    ),
+                    onQuickSave: {
+                        // 即保存
+                        if let data = promptSheetLocationData {
+                            quickSaveLocation(data)
+                        }
+                        promptSheetLocationData = nil
+                    },
+                    onOpenEditor: {
+                        // 編集画面を開く
+                        if let data = promptSheetLocationData {
+                            createScreenData = CreateScreenData(locationData: data, shouldOpenPOI: false)
+                        }
+                        promptSheetLocationData = nil
+                    },
+                    onOpenPOI: {
+                        // ココカモを開く
+                        if let data = promptSheetLocationData {
+                            createScreenData = CreateScreenData(locationData: data, shouldOpenPOI: true)
+                        }
+                        promptSheetLocationData = nil
+                    },
+                    onCancel: {
+                        promptSheetLocationData = nil
+                    }
+                )
+                .presentationDetents([.large])
+            }
         }
 
         // 新規作成モーダル

@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct PostKokokitaPromptSheet: View {
-    let locationData: LocationData
+    @Binding var locationData: LocationData  // ← `let`から`@Binding`に変更
     let onQuickSave: () -> Void
     let onOpenEditor: () -> Void
     let onOpenPOI: () -> Void
@@ -123,7 +123,7 @@ struct PostKokokitaPromptSheet: View {
             }
             .frame(maxWidth: .infinity, minHeight: 56)
 
-            // ★ Button は“必ず1つだけ”作る
+            // ★ Button は"必ず1つだけ"作る
             if #available(iOS 15.0, *) {
                 if primary {
                     Button(action: action) { content }
