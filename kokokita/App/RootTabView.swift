@@ -213,13 +213,13 @@ struct RootTabView: View {
                 locationService: AppContainer.shared.loc
             )
 
-            // Phase 1: 低精度で素早く取得（1秒未満）
+            // 低精度で素早く取得（1秒未満）
             let quickResult = try await locationService.requestQuickLocation { address in
                 // バックグラウンドで住所が取得できた時
                 Task { @MainActor in
                     if let data = self.promptSheetLocationData {
                         self.promptSheetLocationData = LocationData(
-                            timestamp: data.timestamp,
+                            timestamp: data.timestamp,  // 同じtimestampを保持
                             latitude: data.latitude,
                             longitude: data.longitude,
                             accuracy: data.accuracy,
@@ -243,7 +243,7 @@ struct RootTabView: View {
             showLocationLoading = false
             promptSheetLocationData = quickData
 
-            // Phase 2: バックグラウンドで高精度取得
+            // バックグラウンドで高精度取得
             Task {
                 do {
                     let refinedResult = try await locationService.refineLocation { address in
@@ -251,7 +251,7 @@ struct RootTabView: View {
                         Task { @MainActor in
                             if let data = self.promptSheetLocationData {
                                 self.promptSheetLocationData = LocationData(
-                                    timestamp: data.timestamp,
+                                    timestamp: data.timestamp,  // 同じtimestampを保持
                                     latitude: data.latitude,
                                     longitude: data.longitude,
                                     accuracy: data.accuracy,
@@ -262,11 +262,12 @@ struct RootTabView: View {
                         }
                     }
                     
-                    // 高精度の結果で更新
+                    // 高精度の結果で更新（シートが表示されている場合のみ）
                     await MainActor.run {
                         if self.promptSheetLocationData != nil {
+                            // 同じtimestampを使用してIDを保持
                             self.promptSheetLocationData = LocationData(
-                                timestamp: refinedResult.timestamp,
+                                timestamp: quickData.timestamp,  // 初回のtimestamp
                                 latitude: refinedResult.latitude,
                                 longitude: refinedResult.longitude,
                                 accuracy: refinedResult.accuracy,
