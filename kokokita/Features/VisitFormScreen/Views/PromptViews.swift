@@ -55,7 +55,7 @@ struct PostKokokitaPromptSheet: View {
                     showCoordinateOverlay: true,
                     decimals: 5
                 )
-                    .frame(height: 180)
+                    .frame(height: 400)  // マップの高さをさらに拡大（ボタンを下に配置して地図を広く）
             } else {
                 Text("位置情報がありません")
                     .foregroundStyle(.secondary)
@@ -87,7 +87,7 @@ struct PostKokokitaPromptSheet: View {
                     action: onOpenPOI
                 )
             }
-            .frame(height: 120)
+            .frame(height: 120)  // ボタン(80) + 説明(32) + spacing(4) + 余裕(4)
             .padding(.horizontal, 8)
 
 
@@ -115,13 +115,20 @@ struct PostKokokitaPromptSheet: View {
         isDisabled: Bool = false,
         action: @escaping () -> Void
     ) -> some View {
-        VStack(spacing: 6) {
-            // 中身（アイコン＋タイトル）は一度だけ組む
+        VStack(spacing: 4) {
+            // ボタン本体を固定高さにして位置を揃える（アイコンを上に配置、タイトルは改行可能）
             let content = VStack(spacing: 6) {
-                Image(systemName: systemImage).font(.title2)
-                Text(title).font(.subheadline.bold())
+                Image(systemName: systemImage)
+                    .font(.title2)
+                    .frame(height: 28)  // アイコンの高さを固定
+                Text(title)
+                    .font(.subheadline.bold())
+                    .lineLimit(2)  // 2行まで改行可能にして「そのまま保存」を2行表示
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
             }
-            .frame(maxWidth: .infinity, minHeight: 56)
+            .frame(maxWidth: .infinity)
+            .frame(height: 56)  // タイトル改行対応のため高さを拡大
 
             // ★ Button は"必ず1つだけ"作る
             if #available(iOS 15.0, *) {
@@ -131,14 +138,12 @@ struct PostKokokitaPromptSheet: View {
                         .controlSize(.large)
                         .buttonBorderShape(.roundedRectangle(radius: 14))
                         .disabled(isDisabled)
-                        .lineLimit(2)
                 } else {
                     Button(action: action) { content }
                         .buttonStyle(BorderedButtonStyle())
                         .controlSize(.large)
                         .buttonBorderShape(.roundedRectangle(radius: 14))
                         .disabled(isDisabled)
-                        .lineLimit(2)
                 }
             } else {
                 // フォールバック（旧OS向け）
@@ -154,14 +159,15 @@ struct PostKokokitaPromptSheet: View {
                     )
                     .clipShape(RoundedRectangle(cornerRadius: 14))
                     .disabled(isDisabled)
-                    .lineLimit(2) 
             }
 
+            // 説明文を固定高さの領域に配置（改行されてもボタンの位置に影響しない）
             Text(subtitle)
                 .font(.caption2)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
                 .lineLimit(2)
+                .frame(height: 32, alignment: .top)  // 固定高さで説明文用の領域を確保
         }
         .frame(maxWidth: .infinity)
     }
