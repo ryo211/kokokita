@@ -19,81 +19,85 @@ struct PostKokokitaPromptSheet: View {
     }
 
     var body: some View {
-        VStack(spacing: 16) {
-            // 見出し
-            HStack(spacing: 10) {
-                Image(logoImageName)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 42, height: 42)
-                Text("ココキタ  ✅")
-                    .font(.system(size: 24, weight: .semibold, design: .rounded))
-                    .tracking(1.2)  // 文字間隔を広げる
-                    .foregroundColor(.accentColor)
-            }
-            .padding(.top, 8)
-
-            // 最低限の情報（小さく）
-            VStack(spacing: 4) {
-                Text(formattedTimestamp)
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-                if let addr = addressText, !addr.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                    Text(addr)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                        .lineLimit(2)
-                        .padding(.horizontal, 16)
+        GeometryReader { geometry in
+            VStack(spacing: 16) {
+                // 見出し
+                HStack(spacing: 10) {
+                    Image(logoImageName)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 42, height: 42)
+                    Text("ココキタ  ✅")
+                        .font(.system(size: 24, weight: .semibold, design: .rounded))
+                        .tracking(1.2)  // 文字間隔を広げる
+                        .foregroundColor(.accentColor)
                 }
+                .padding(.top, 8)
+
+                // 最低限の情報（小さく）
+                VStack(spacing: 4) {
+                    Text(formattedTimestamp)
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                    if let addr = addressText, !addr.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                        Text(addr)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+                            .lineLimit(2)
+                            .padding(.horizontal, 16)
+                    }
+                }
+             
+                // マップ（相対サイズ: 画面の55% = iPhone 12 miniと同じサイズ感）
+                if latitude != 0 || longitude != 0 {
+                    MapPreview(
+                        lat: latitude,
+                        lon: longitude,
+                        showCoordinateOverlay: true,
+                        decimals: 5
+                    )
+                    .frame(height: max(200, min(500, geometry.size.height * 0.55)))
+                } else {
+                    Text("位置情報がありません")
+                        .foregroundStyle(.secondary)
+                }
+                
+                // 3つの選択肢（同列）
+                HStack(spacing: 12) {
+                    actionButton(
+                        primary: true,
+                        systemImage: "checkmark.circle.fill",
+                        title: "そのまま保存",
+                        subtitle: "後で編集できます",
+                        isDisabled: !canSave,
+                        action: onQuickSave
+                    )
+
+                    actionButton(
+                        primary: false,
+                        systemImage: "square.and.pencil",
+                        title: "情報を入力",
+                        subtitle: "タイトル・メモなど",
+                        action: onOpenEditor
+                    )
+
+                    actionButton(
+                        primary: false,
+                        systemImage: "building.2.crop.circle",
+                        title: "ココカモ",
+                        subtitle: "周囲の場所を表示・選択",
+                        action: onOpenPOI
+                    )
+                }
+                .frame(height: 120)  // ボタン(80) + 説明(32) + spacing(4) + 余裕(4)
+                .padding(.horizontal, 8)
+
+
+                Spacer(minLength: 8)
             }
-         
-            if latitude != 0 || longitude != 0 {
-                MapPreview(
-                    lat: latitude,
-                    lon: longitude,
-                    showCoordinateOverlay: true,
-                    decimals: 5
-                )
-                    .frame(height: 400)  // マップの高さをさらに拡大（ボタンを下に配置して地図を広く）
-            } else {
-                Text("位置情報がありません")
-                    .foregroundStyle(.secondary)
-            }
-            // 3つの選択肢（同列）
-            HStack(spacing: 12) {
-                actionButton(
-                    primary: true,
-                    systemImage: "checkmark.circle.fill",
-                    title: "そのまま保存",
-                    subtitle: "後で編集できます",
-                    isDisabled: !canSave,
-                    action: onQuickSave
-                )
-
-                actionButton(
-                    primary: false,
-                    systemImage: "square.and.pencil",
-                    title: "情報を入力",
-                    subtitle: "タイトル・メモなど",
-                    action: onOpenEditor
-                )
-
-                actionButton(
-                    primary: false,
-                    systemImage: "building.2.crop.circle",
-                    title: "ココカモ",
-                    subtitle: "周囲の場所を表示・選択",
-                    action: onOpenPOI
-                )
-            }
-            .frame(height: 120)  // ボタン(80) + 説明(32) + spacing(4) + 余裕(4)
-            .padding(.horizontal, 8)
-
-
-            Spacer(minLength: 8)
+            .padding()
         }
-        .padding()
         .background(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
                 .fill(.regularMaterial)
