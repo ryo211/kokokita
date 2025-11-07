@@ -19,81 +19,85 @@ struct PostKokokitaPromptSheet: View {
     }
 
     var body: some View {
-        VStack(spacing: 16) {
-            // 見出し
-            HStack(spacing: 10) {
-                Image(logoImageName)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 42, height: 42)
-                Text("ココキタ  ✅")
-                    .font(.system(size: 24, weight: .semibold, design: .rounded))
-                    .tracking(1.2)  // 文字間隔を広げる
-                    .foregroundColor(.accentColor)
-            }
-            .padding(.top, 8)
-
-            // 最低限の情報（小さく）
-            VStack(spacing: 4) {
-                Text(formattedTimestamp)
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-                if let addr = addressText, !addr.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                    Text(addr)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                        .lineLimit(2)
-                        .padding(.horizontal, 16)
+        GeometryReader { geometry in
+            VStack(spacing: 16) {
+                // 見出し
+                HStack(spacing: 10) {
+                    Image(logoImageName)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 42, height: 42)
+                    Text("ココキタ  ✅")
+                        .font(.system(size: 24, weight: .semibold, design: .rounded))
+                        .tracking(1.2)  // 文字間隔を広げる
+                        .foregroundColor(.accentColor)
                 }
+                .padding(.top, 8)
+
+                // 最低限の情報（小さく）
+                VStack(spacing: 4) {
+                    Text(formattedTimestamp)
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                    if let addr = addressText, !addr.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                        Text(addr)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+                            .lineLimit(2)
+                            .padding(.horizontal, 16)
+                    }
+                }
+             
+                // マップ（相対サイズ: 画面の55% = iPhone 12 miniと同じサイズ感）
+                if latitude != 0 || longitude != 0 {
+                    MapPreview(
+                        lat: latitude,
+                        lon: longitude,
+                        showCoordinateOverlay: true,
+                        decimals: 5
+                    )
+                    .frame(height: max(200, min(500, geometry.size.height * 0.55)))
+                } else {
+                    Text("位置情報がありません")
+                        .foregroundStyle(.secondary)
+                }
+                
+                // 3つの選択肢（同列）
+                HStack(spacing: 12) {
+                    actionButton(
+                        primary: true,
+                        systemImage: "checkmark.circle.fill",
+                        title: "そのまま保存",
+                        subtitle: "後で編集できます",
+                        isDisabled: !canSave,
+                        action: onQuickSave
+                    )
+
+                    actionButton(
+                        primary: false,
+                        systemImage: "square.and.pencil",
+                        title: "情報を入力",
+                        subtitle: "タイトル・メモなど",
+                        action: onOpenEditor
+                    )
+
+                    actionButton(
+                        primary: false,
+                        systemImage: "building.2.crop.circle",
+                        title: "ココカモ",
+                        subtitle: "周囲の場所を表示・選択",
+                        action: onOpenPOI
+                    )
+                }
+                .frame(height: 120)  // ボタン(80) + 説明(32) + spacing(4) + 余裕(4)
+                .padding(.horizontal, 8)
+
+
+                Spacer(minLength: 8)
             }
-         
-            if latitude != 0 || longitude != 0 {
-                MapPreview(
-                    lat: latitude,
-                    lon: longitude,
-                    showCoordinateOverlay: true,
-                    decimals: 5
-                )
-                    .frame(height: 180)
-            } else {
-                Text("位置情報がありません")
-                    .foregroundStyle(.secondary)
-            }
-            // 3つの選択肢（同列）
-            HStack(spacing: 12) {
-                actionButton(
-                    primary: true,
-                    systemImage: "checkmark.circle.fill",
-                    title: "そのまま保存",
-                    subtitle: "後で編集できます",
-                    isDisabled: !canSave,
-                    action: onQuickSave
-                )
-
-                actionButton(
-                    primary: false,
-                    systemImage: "square.and.pencil",
-                    title: "情報を入力",
-                    subtitle: "タイトル・メモなど",
-                    action: onOpenEditor
-                )
-
-                actionButton(
-                    primary: false,
-                    systemImage: "building.2.crop.circle",
-                    title: "ココカモ",
-                    subtitle: "周囲の場所を表示・選択",
-                    action: onOpenPOI
-                )
-            }
-            .frame(height: 120)
-            .padding(.horizontal, 8)
-
-
-            Spacer(minLength: 8)
+            .padding()
         }
-        .padding()
         .background(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
                 .fill(.regularMaterial)
@@ -115,13 +119,20 @@ struct PostKokokitaPromptSheet: View {
         isDisabled: Bool = false,
         action: @escaping () -> Void
     ) -> some View {
-        VStack(spacing: 6) {
-            // 中身（アイコン＋タイトル）は一度だけ組む
+        VStack(spacing: 4) {
+            // ボタン本体を固定高さにして位置を揃える（アイコンを上に配置、タイトルは改行可能）
             let content = VStack(spacing: 6) {
-                Image(systemName: systemImage).font(.title2)
-                Text(title).font(.subheadline.bold())
+                Image(systemName: systemImage)
+                    .font(.title2)
+                    .frame(height: 28)  // アイコンの高さを固定
+                Text(title)
+                    .font(.subheadline.bold())
+                    .lineLimit(2)  // 2行まで改行可能にして「そのまま保存」を2行表示
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
             }
-            .frame(maxWidth: .infinity, minHeight: 56)
+            .frame(maxWidth: .infinity)
+            .frame(height: 56)  // タイトル改行対応のため高さを拡大
 
             // ★ Button は"必ず1つだけ"作る
             if #available(iOS 15.0, *) {
@@ -131,14 +142,12 @@ struct PostKokokitaPromptSheet: View {
                         .controlSize(.large)
                         .buttonBorderShape(.roundedRectangle(radius: 14))
                         .disabled(isDisabled)
-                        .lineLimit(2)
                 } else {
                     Button(action: action) { content }
                         .buttonStyle(BorderedButtonStyle())
                         .controlSize(.large)
                         .buttonBorderShape(.roundedRectangle(radius: 14))
                         .disabled(isDisabled)
-                        .lineLimit(2)
                 }
             } else {
                 // フォールバック（旧OS向け）
@@ -154,14 +163,15 @@ struct PostKokokitaPromptSheet: View {
                     )
                     .clipShape(RoundedRectangle(cornerRadius: 14))
                     .disabled(isDisabled)
-                    .lineLimit(2) 
             }
 
+            // 説明文を固定高さの領域に配置（改行されてもボタンの位置に影響しない）
             Text(subtitle)
                 .font(.caption2)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
                 .lineLimit(2)
+                .frame(height: 32, alignment: .top)  // 固定高さで説明文用の領域を確保
         }
         .frame(maxWidth: .infinity)
     }
