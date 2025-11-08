@@ -82,6 +82,7 @@ struct Chip: View {
 enum ChipKind {
     case label        // ラベル
     case group        // グループ
+    case member       // メンバー
     case category     // カテゴリフィルタ
     case keyword      // キーワード/タイトル検索
     case period       // 期間（From〜To）
@@ -92,6 +93,7 @@ enum ChipKind {
         switch self {
         case .label:       return "tag"
         case .group:       return "folder"
+        case .member:      return "person"
         case .category:    return "building.2"
         case .keyword:     return "magnifyingglass"
         case .period:      return "calendar"
@@ -105,8 +107,9 @@ enum ChipKind {
         switch self {
         case .label:       return .purple
         case .group:       return .teal
+        case .member:      return .blue
         case .category:    return .green
-        case .keyword:     return .blue
+        case .keyword:     return .red
         case .period:      return .orange
         case .poiCategory: return .green
         case .other:       return .secondary

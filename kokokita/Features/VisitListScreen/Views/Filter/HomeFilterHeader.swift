@@ -89,25 +89,9 @@ struct HomeFilterHeader: View {
                 let mmap = Dictionary(uniqueKeysWithValues: vm.members.map { ($0.id, $0.name) })
                 let name = (mmap[mid] ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
                 FlowRow(spacing: 6, rowSpacing: 6) {
-                    HStack(spacing: 4) {
-                        Image(systemName: "person")
-                            .font(.caption2)
-                        Text(name)
-                            .font(.caption)
-                    }
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
-                    .background(Color.blue.opacity(0.15), in: RoundedRectangle(cornerRadius: 8))
-                    .overlay(alignment: .topTrailing) {
-                        Button {
-                            vm.memberFilter = nil
-                            vm.reload()
-                        } label: {
-                            Image(systemName: "xmark.circle.fill")
-                                .font(.system(size: 16))
-                                .foregroundStyle(.secondary)
-                        }
-                        .offset(x: 6, y: -6)
+                    Chip(name, kind: .member) {
+                        vm.memberFilter = nil
+                        vm.reload()
                     }
                 }
             }
