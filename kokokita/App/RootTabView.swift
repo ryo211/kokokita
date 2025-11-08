@@ -430,6 +430,6 @@ private var bannerAdUnitID: String {
     #if DEBUG
     return "ca-app-pub-3940256099942544/2934735716"
     #else
-    return "ca-app-pub-xxxxxxxxxxxxxxxx/zzzzzzzzzz"
+    return "ca-app-pub-7495977536865069/2544041585"
     #endif
 }
