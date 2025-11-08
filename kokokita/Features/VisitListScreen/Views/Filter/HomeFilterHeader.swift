@@ -59,51 +59,61 @@ struct HomeFilterHeader: View {
                 }
             }
 
-            // 3) ラベル（単一）
-            if let lid = vm.labelFilter {
+            // 3) ラベル（複数）
+            if !vm.labelFilters.isEmpty {
                 let lmap = Dictionary(uniqueKeysWithValues: vm.labels.map { ($0.id, $0.name) })
-                let name = (lmap[lid] ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-
                 FlowRow(spacing: 6, rowSpacing: 6) {
-                    Chip(name, kind: .label) {
-                        vm.labelFilter = nil
-                        vm.reload()
+                    ForEach(vm.labelFilters, id: \.self) { lid in
+                        if let name = lmap[lid]?.trimmingCharacters(in: .whitespacesAndNewlines), !name.isEmpty {
+                            Chip(name, kind: .label) {
+                                vm.labelFilters.removeAll { $0 == lid }
+                                vm.reload()
+                            }
+                        }
                     }
                 }
             }
 
-            // 4) グループ（単一）
-            if let gid = vm.groupFilter {
+            // 4) グループ（複数）
+            if !vm.groupFilters.isEmpty {
                 let gmap = Dictionary(uniqueKeysWithValues: vm.groups.map { ($0.id, $0.name) })
-                let name = (gmap[gid] ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
                 FlowRow(spacing: 6, rowSpacing: 6) {
-                    Chip(name, kind: .group) {
-                        vm.groupFilter = nil
-                        vm.reload()
+                    ForEach(vm.groupFilters, id: \.self) { gid in
+                        if let name = gmap[gid]?.trimmingCharacters(in: .whitespacesAndNewlines), !name.isEmpty {
+                            Chip(name, kind: .group) {
+                                vm.groupFilters.removeAll { $0 == gid }
+                                vm.reload()
+                            }
+                        }
                     }
                 }
             }
 
-            // 5) メンバー（単一）
-            if let mid = vm.memberFilter {
+            // 5) メンバー（複数）
+            if !vm.memberFilters.isEmpty {
                 let mmap = Dictionary(uniqueKeysWithValues: vm.members.map { ($0.id, $0.name) })
-                let name = (mmap[mid] ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
                 FlowRow(spacing: 6, rowSpacing: 6) {
-                    Chip(name, kind: .member) {
-                        vm.memberFilter = nil
-                        vm.reload()
+                    ForEach(vm.memberFilters, id: \.self) { mid in
+                        if let name = mmap[mid]?.trimmingCharacters(in: .whitespacesAndNewlines), !name.isEmpty {
+                            Chip(name, kind: .member) {
+                                vm.memberFilters.removeAll { $0 == mid }
+                                vm.reload()
+                            }
+                        }
                     }
                 }
             }
 
-            // 6) カテゴリ
-            if let catRaw = vm.categoryFilter {
-                let category = MKPointOfInterestCategory(rawValue: catRaw)
-                let name = category.japaneseName
+            // 6) カテゴリ（複数）
+            if !vm.categoryFilters.isEmpty {
                 FlowRow(spacing: 6, rowSpacing: 6) {
-                    Chip(name, kind: .category) {
-                        vm.categoryFilter = nil
-                        vm.reload()
+                    ForEach(vm.categoryFilters, id: \.self) { catRaw in
+                        let category = MKPointOfInterestCategory(rawValue: catRaw)
+                        let name = category.japaneseName
+                        Chip(name, kind: .category) {
+                            vm.categoryFilters.removeAll { $0 == catRaw }
+                            vm.reload()
+                        }
                     }
                 }
             }

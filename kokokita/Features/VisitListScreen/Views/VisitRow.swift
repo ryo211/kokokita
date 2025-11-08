@@ -43,15 +43,7 @@ struct VisitRow: View {
                           Chip(n, kind: .label, size: .small, showRemoveButton: false)
                       }
                       ForEach(names.members, id: \.self) { n in
-                          HStack(spacing: 3) {
-                              Image(systemName: "person")
-                                  .font(.system(size: 9))
-                              Text(n)
-                                  .font(.system(size: 11))
-                          }
-                          .padding(.horizontal, 7)
-                          .padding(.vertical, 4)
-                          .background(Color.blue.opacity(0.15), in: RoundedRectangle(cornerRadius: 6))
+                          Chip(n, kind: .member, size: .small, showRemoveButton: false)
                       }
                   }
               }

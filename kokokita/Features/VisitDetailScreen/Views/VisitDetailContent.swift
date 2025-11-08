@@ -81,20 +81,12 @@ struct VisitDetailContent: View {
                             ForEach(data.members, id: \.self) { name in
                                 let t = name.trimmed
                                 if !t.isEmpty {
-                                    HStack(spacing: 4) {
-                                        Image(systemName: "person")
-                                            .font(.caption2)
-                                        Text(t)
-                                            .font(.caption)
-                                    }
-                                    .padding(.horizontal, 10)
-                                    .padding(.vertical, 6)
-                                    .background(Color.blue.opacity(0.15), in: RoundedRectangle(cornerRadius: 8))
-                                    .onTapGesture {
-                                        if !isSharing {
-                                            onMemberTap?()
+                                    Chip(t, kind: .member, showRemoveButton: false)
+                                        .onTapGesture {
+                                            if !isSharing {
+                                                onMemberTap?()
+                                            }
                                         }
-                                    }
                                 }
                             }
                         }

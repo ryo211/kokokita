@@ -13,16 +13,17 @@ struct SearchFilterSheet: View {
     @State private var dateFrom: Date = Date()
     @State private var dateTo: Date = Date()
 
-    @State private var selectedLabel: UUID? = nil
-    @State private var selectedGroup: UUID? = nil
-
     @State private var titleDraft: String = ""
     @State private var debounceTask: Task<Void, Never>? = nil
-    
+
+    // シート表示状態
+    @State private var showLabelPicker = false
+    @State private var showGroupPicker = false
+    @State private var showMemberPicker = false
+    @State private var showCategoryPicker = false
+
     private func resetLocalFields() {
         titleQuery = ""
-        selectedLabel = nil
-        selectedGroup = nil
         useDateRange = false
         dateFrom = Date()
         dateTo   = Date()
@@ -57,9 +58,7 @@ struct SearchFilterSheet: View {
         .onAppear {
             // 既存値を編集用に反映
             titleQuery = vm.titleQuery
-            titleDraft = vm.titleQuery // ← 追加
-            selectedLabel = vm.labelFilter
-            selectedGroup = vm.groupFilter
+            titleDraft = vm.titleQuery
 
             if let f = vm.dateFrom, let t = vm.dateTo {
                 useDateRange = true
@@ -132,70 +131,359 @@ struct SearchFilterSheet: View {
 
     private var labelSection: some View {
         Section("ラベル") {
-            Picker(selection: $store.labelFilter) {
-                Text("指定なし").tag(UUID?.none)
-                ForEach(
-                    vm.labels
-                        .filter { !$0.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
-                        .sorted { $0.name.localizedCompare($1.name) == .orderedAscending }
-                ) { t in
-                    Text(t.name).tag(Optional(t.id))
+            Button {
+                showLabelPicker = true
+            } label: {
+                HStack {
+                    Text("選択")
+                        .foregroundStyle(.primary)
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
-            } label: { EmptyView() }
-            .labelsHidden()
-            .onChange(of: store.labelFilter) { vm.applyAndReload() }
+            }
+            .sheet(isPresented: $showLabelPicker) {
+                FilterLabelPickerSheet(
+                    selectedIds: $store.labelFilters,
+                    labelOptions: vm.labels,
+                    isPresented: $showLabelPicker,
+                    onDismiss: { vm.applyAndReload() }
+                )
+            }
+
+            if !store.labelFilters.isEmpty {
+                let lmap = Dictionary(uniqueKeysWithValues: vm.labels.map { ($0.id, $0.name) })
+                FlowRow(spacing: 6, rowSpacing: 6) {
+                    ForEach(store.labelFilters, id: \.self) { lid in
+                        if let name = lmap[lid]?.trimmingCharacters(in: .whitespacesAndNewlines), !name.isEmpty {
+                            Chip(name, kind: .label) {
+                                store.labelFilters.removeAll { $0 == lid }
+                                vm.applyAndReload()
+                            }
+                        }
+                    }
+                }
+                .padding(.vertical, 4)
+            }
         }
     }
 
     private var groupSection: some View {
         Section("グループ") {
-            Picker(selection: $store.groupFilter) {
-                Text("指定なし").tag(UUID?.none)
-                ForEach(
-                    vm.groups
-                        .filter { !$0.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
-                        .sorted { $0.name.localizedCompare($1.name) == .orderedAscending }
-                ) { t in
-                    Text(t.name).tag(Optional(t.id))
+            Button {
+                showGroupPicker = true
+            } label: {
+                HStack {
+                    Text("選択")
+                        .foregroundStyle(.primary)
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
-            } label: { EmptyView() }
-            .labelsHidden()
-            .onChange(of: store.groupFilter) { vm.applyAndReload() }
+            }
+            .sheet(isPresented: $showGroupPicker) {
+                FilterGroupPickerSheet(
+                    selectedIds: $store.groupFilters,
+                    groupOptions: vm.groups,
+                    isPresented: $showGroupPicker,
+                    onDismiss: { vm.applyAndReload() }
+                )
+            }
+
+            if !store.groupFilters.isEmpty {
+                let gmap = Dictionary(uniqueKeysWithValues: vm.groups.map { ($0.id, $0.name) })
+                FlowRow(spacing: 6, rowSpacing: 6) {
+                    ForEach(store.groupFilters, id: \.self) { gid in
+                        if let name = gmap[gid]?.trimmingCharacters(in: .whitespacesAndNewlines), !name.isEmpty {
+                            Chip(name, kind: .group) {
+                                store.groupFilters.removeAll { $0 == gid }
+                                vm.applyAndReload()
+                            }
+                        }
+                    }
+                }
+                .padding(.vertical, 4)
+            }
         }
     }
 
     private var memberSection: some View {
         Section("メンバー") {
-            Picker(selection: $store.memberFilter) {
-                Text("指定なし").tag(UUID?.none)
-                ForEach(
-                    vm.members
-                        .filter { !$0.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
-                        .sorted { $0.name.localizedCompare($1.name) == .orderedAscending }
-                ) { t in
-                    Text(t.name).tag(Optional(t.id))
+            Button {
+                showMemberPicker = true
+            } label: {
+                HStack {
+                    Text("選択")
+                        .foregroundStyle(.primary)
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
-            } label: { EmptyView() }
-            .labelsHidden()
-            .onChange(of: store.memberFilter) { vm.applyAndReload() }
+            }
+            .sheet(isPresented: $showMemberPicker) {
+                FilterMemberPickerSheet(
+                    selectedIds: $store.memberFilters,
+                    memberOptions: vm.members,
+                    isPresented: $showMemberPicker,
+                    onDismiss: { vm.applyAndReload() }
+                )
+            }
+
+            if !store.memberFilters.isEmpty {
+                let mmap = Dictionary(uniqueKeysWithValues: vm.members.map { ($0.id, $0.name) })
+                FlowRow(spacing: 6, rowSpacing: 6) {
+                    ForEach(store.memberFilters, id: \.self) { mid in
+                        if let name = mmap[mid]?.trimmingCharacters(in: .whitespacesAndNewlines), !name.isEmpty {
+                            Chip(name, kind: .member) {
+                                store.memberFilters.removeAll { $0 == mid }
+                                vm.applyAndReload()
+                            }
+                        }
+                    }
+                }
+                .padding(.vertical, 4)
+            }
         }
     }
 
     private var categorySection: some View {
         Section("施設カテゴリ") {
-            Picker(selection: $store.categoryFilter) {
-                Text("指定なし").tag(String?.none)
-                ForEach(MKPointOfInterestCategory.allCases, id: \.rawValue) { category in
-                    Text(category.japaneseName).tag(Optional(category.rawValue))
+            Button {
+                showCategoryPicker = true
+            } label: {
+                HStack {
+                    Text("選択")
+                        .foregroundStyle(.primary)
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
-            } label: { EmptyView() }
-            .labelsHidden()
-            .onChange(of: store.categoryFilter) { vm.applyAndReload() }
+            }
+            .sheet(isPresented: $showCategoryPicker) {
+                FilterCategoryPickerSheet(
+                    selectedCategories: $store.categoryFilters,
+                    isPresented: $showCategoryPicker,
+                    onDismiss: { vm.applyAndReload() }
+                )
+            }
+
+            if !store.categoryFilters.isEmpty {
+                FlowRow(spacing: 6, rowSpacing: 6) {
+                    ForEach(store.categoryFilters, id: \.self) { catRaw in
+                        let category = MKPointOfInterestCategory(rawValue: catRaw)
+                        let name = category.japaneseName
+                        Chip(name, kind: .category) {
+                            store.categoryFilters.removeAll { $0 == catRaw }
+                            vm.applyAndReload()
+                        }
+                    }
+                }
+                .padding(.vertical, 4)
+            }
         }
     }
 
     // 時刻丸め（比較の安定化）
     private func stripTime(_ d: Date) -> Date {
         Calendar.current.startOfDay(for: d)
+    }
+}
+
+// MARK: - Filter Label Picker Sheet
+struct FilterLabelPickerSheet: View {
+    @Binding var selectedIds: [UUID]
+    let labelOptions: [LabelTag]
+    @Binding var isPresented: Bool
+    let onDismiss: () -> Void
+
+    var body: some View {
+        NavigationStack {
+            List {
+                Section {
+                    ForEach(
+                        labelOptions
+                            .filter { !$0.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+                            .sorted { $0.name.localizedCompare($1.name) == .orderedAscending }
+                    ) { label in
+                        Button {
+                            if selectedIds.contains(label.id) {
+                                selectedIds.removeAll { $0 == label.id }
+                            } else {
+                                selectedIds.append(label.id)
+                            }
+                        } label: {
+                            HStack {
+                                Text(label.name)
+                                    .foregroundStyle(.primary)
+                                Spacer()
+                                if selectedIds.contains(label.id) {
+                                    Image(systemName: "checkmark")
+                                        .foregroundStyle(.blue)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            .navigationTitle("ラベルを選択")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("完了") {
+                        isPresented = false
+                        onDismiss()
+                    }
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Filter Group Picker Sheet
+struct FilterGroupPickerSheet: View {
+    @Binding var selectedIds: [UUID]
+    let groupOptions: [GroupTag]
+    @Binding var isPresented: Bool
+    let onDismiss: () -> Void
+
+    var body: some View {
+        NavigationStack {
+            List {
+                Section {
+                    ForEach(
+                        groupOptions
+                            .filter { !$0.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+                            .sorted { $0.name.localizedCompare($1.name) == .orderedAscending }
+                    ) { group in
+                        Button {
+                            if selectedIds.contains(group.id) {
+                                selectedIds.removeAll { $0 == group.id }
+                            } else {
+                                selectedIds.append(group.id)
+                            }
+                        } label: {
+                            HStack {
+                                Text(group.name)
+                                    .foregroundStyle(.primary)
+                                Spacer()
+                                if selectedIds.contains(group.id) {
+                                    Image(systemName: "checkmark")
+                                        .foregroundStyle(.blue)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            .navigationTitle("グループを選択")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("完了") {
+                        isPresented = false
+                        onDismiss()
+                    }
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Filter Member Picker Sheet
+struct FilterMemberPickerSheet: View {
+    @Binding var selectedIds: [UUID]
+    let memberOptions: [MemberTag]
+    @Binding var isPresented: Bool
+    let onDismiss: () -> Void
+
+    var body: some View {
+        NavigationStack {
+            List {
+                Section {
+                    ForEach(
+                        memberOptions
+                            .filter { !$0.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+                            .sorted { $0.name.localizedCompare($1.name) == .orderedAscending }
+                    ) { member in
+                        Button {
+                            if selectedIds.contains(member.id) {
+                                selectedIds.removeAll { $0 == member.id }
+                            } else {
+                                selectedIds.append(member.id)
+                            }
+                        } label: {
+                            HStack {
+                                Text(member.name)
+                                    .foregroundStyle(.primary)
+                                Spacer()
+                                if selectedIds.contains(member.id) {
+                                    Image(systemName: "checkmark")
+                                        .foregroundStyle(.blue)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            .navigationTitle("メンバーを選択")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("完了") {
+                        isPresented = false
+                        onDismiss()
+                    }
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Filter Category Picker Sheet
+struct FilterCategoryPickerSheet: View {
+    @Binding var selectedCategories: [String]
+    @Binding var isPresented: Bool
+    let onDismiss: () -> Void
+
+    var body: some View {
+        NavigationStack {
+            List {
+                Section {
+                    ForEach(MKPointOfInterestCategory.allCases, id: \.rawValue) { category in
+                        Button {
+                            if selectedCategories.contains(category.rawValue) {
+                                selectedCategories.removeAll { $0 == category.rawValue }
+                            } else {
+                                selectedCategories.append(category.rawValue)
+                            }
+                        } label: {
+                            HStack {
+                                Text(category.japaneseName)
+                                    .foregroundStyle(.primary)
+                                Spacer()
+                                if selectedCategories.contains(category.rawValue) {
+                                    Image(systemName: "checkmark")
+                                        .foregroundStyle(.blue)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            .navigationTitle("施設カテゴリを選択")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("完了") {
+                        isPresented = false
+                        onDismiss()
+                    }
+                }
+            }
+        }
     }
 }

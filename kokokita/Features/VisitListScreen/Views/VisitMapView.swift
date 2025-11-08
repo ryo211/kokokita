@@ -298,13 +298,18 @@ struct VisitMapDetailSheet: View {
                     }
 
                     // ラベル/グループ/メンバー
-                    HStack(spacing: 6) {
+                    FlowRow(spacing: 6, rowSpacing: 6) {
                         if let gid = aggregate.details.groupId, let gname = groupMap[gid] {
                             Chip(gname, kind: .group, size: .small, showRemoveButton: false)
                         }
                         ForEach(aggregate.details.labelIds.prefix(2), id: \.self) { lid in
                             if let lname = labelMap[lid] {
                                 Chip(lname, kind: .label, size: .small, showRemoveButton: false)
+                            }
+                        }
+                        ForEach(aggregate.details.memberIds.prefix(2), id: \.self) { mid in
+                            if let mname = memberMap[mid] {
+                                Chip(mname, kind: .member, size: .small, showRemoveButton: false)
                             }
                         }
                     }

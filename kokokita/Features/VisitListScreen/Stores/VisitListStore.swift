@@ -5,10 +5,10 @@ import Observation
 @Observable
 final class VisitListStore {
     var items: [VisitAggregate] = []
-    var labelFilter: UUID? = nil
-    var groupFilter: UUID? = nil
-    var memberFilter: UUID? = nil
-    var categoryFilter: String? = nil  // カテゴリフィルタ (rawValue)
+    var labelFilters: [UUID] = []       // ラベルフィルタ（複数選択）
+    var groupFilters: [UUID] = []       // グループフィルタ（複数選択）
+    var memberFilters: [UUID] = []      // メンバーフィルタ（複数選択）
+    var categoryFilters: [String] = []  // カテゴリフィルタ（複数選択、rawValue）
     var titleQuery: String = ""         // タイトル部分一致
     var dateFrom: Date? = nil          // 範囲: 開始
     var dateTo: Date? = nil            // 範囲: 終了
@@ -51,10 +51,10 @@ final class VisitListStore {
     /// 現在のフィルタ条件
     private var currentCriteria: FilterCriteria {
         FilterCriteria(
-            labelId: labelFilter,
-            groupId: groupFilter,
-            memberId: memberFilter,
-            category: categoryFilter,
+            labelIds: labelFilters,
+            groupIds: groupFilters,
+            memberIds: memberFilters,
+            categories: categoryFilters,
             titleQuery: titleQuery,
             dateFrom: dateFrom,
             dateTo: dateTo
@@ -64,10 +64,10 @@ final class VisitListStore {
     // MARK: - User Actions
 
     func clearAllFilters() {
-        labelFilter = nil
-        groupFilter = nil
-        memberFilter = nil
-        categoryFilter = nil
+        labelFilters = []
+        groupFilters = []
+        memberFilters = []
+        categoryFilters = []
         titleQuery = ""
         dateFrom = nil
         dateTo = nil
@@ -97,15 +97,16 @@ final class VisitListStore {
             let from = dateFrom.map { dateHelper.startOfDay($0) }
             let toExclusive = dateTo.map { dateHelper.calculateEndExclusive($0) }
 
+            // 複数選択対応のため、ラベル・グループフィルタはクライアントサイドで適用
             var rows = try repo.fetchAll(
-                filterLabel: labelFilter,
-                filterGroup: groupFilter,
+                filterLabel: nil,
+                filterGroup: nil,
                 titleQuery: title,
                 dateFrom: from,
                 dateToExclusive: toExclusive
             )
 
-            // クライアントサイドフィルタ適用（カテゴリ、メンバー）
+            // クライアントサイドフィルタ適用（ラベル、グループ、カテゴリ、メンバー）
             rows = filter.applyClientSideFilters(rows, criteria: currentCriteria)
 
             // ソート適用

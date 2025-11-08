@@ -4,10 +4,10 @@ import Foundation
 
 /// フィルタ条件を表す構造体
 struct FilterCriteria {
-    let labelId: UUID?
-    let groupId: UUID?
-    let memberId: UUID?
-    let category: String?
+    let labelIds: [UUID]
+    let groupIds: [UUID]
+    let memberIds: [UUID]
+    let categories: [String]
     let titleQuery: String
     let dateFrom: Date?
     let dateTo: Date?
@@ -20,27 +20,55 @@ struct VisitFilter {
 
     /// フィルタ条件が有効かどうかを判定
     func hasActiveFilters(_ criteria: FilterCriteria) -> Bool {
-        return criteria.labelId != nil
-            || criteria.groupId != nil
-            || criteria.memberId != nil
-            || criteria.category != nil
+        return !criteria.labelIds.isEmpty
+            || !criteria.groupIds.isEmpty
+            || !criteria.memberIds.isEmpty
+            || !criteria.categories.isEmpty
             || !criteria.titleQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             || criteria.dateFrom != nil
             || criteria.dateTo != nil
     }
 
-    /// クライアントサイドフィルタリングを適用（カテゴリ、メンバー）
+    /// クライアントサイドフィルタリングを適用（ラベル、グループ、カテゴリ、メンバー）
     func applyClientSideFilters(_ visits: [VisitAggregate], criteria: FilterCriteria) -> [VisitAggregate] {
         var result = visits
 
-        // カテゴリフィルタ
-        if let catFilter = criteria.category {
-            result = result.filter { $0.details.facilityCategory == catFilter }
+        // ラベルフィルタ（複数）- いずれかのラベルを含む
+        if !criteria.labelIds.isEmpty {
+            result = result.filter { visit in
+                criteria.labelIds.contains { labelId in
+                    visit.details.labelIds.contains(labelId)
+                }
+            }
         }
 
-        // メンバーフィルタ
-        if let memberFilter = criteria.memberId {
-            result = result.filter { $0.details.memberIds.contains(memberFilter) }
+        // グループフィルタ（複数）- いずれかのグループに一致
+        if !criteria.groupIds.isEmpty {
+            result = result.filter { visit in
+                if let groupId = visit.details.groupId {
+                    return criteria.groupIds.contains(groupId)
+                }
+                return false
+            }
+        }
+
+        // カテゴリフィルタ（複数）- いずれかのカテゴリに一致
+        if !criteria.categories.isEmpty {
+            result = result.filter { visit in
+                if let category = visit.details.facilityCategory {
+                    return criteria.categories.contains(category)
+                }
+                return false
+            }
+        }
+
+        // メンバーフィルタ（複数）- いずれかのメンバーを含む
+        if !criteria.memberIds.isEmpty {
+            result = result.filter { visit in
+                criteria.memberIds.contains { memberId in
+                    visit.details.memberIds.contains(memberId)
+                }
+            }
         }
 
         return result
