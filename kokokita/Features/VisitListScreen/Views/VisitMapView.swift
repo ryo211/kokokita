@@ -19,10 +19,16 @@ struct VisitMapView: View {
     let onShowDetail: (UUID) -> Void
 
     @State private var cameraPosition: MapCameraPosition = .automatic
+    @State private var locationService = DefaultLocationService()
+    @State private var isLoadingLocation = false
+    @State private var showCurrentLocation = false
+    @State private var currentLocation: CLLocationCoordinate2D?
+    @State private var currentMapRegion: MKCoordinateRegion?
 
     var body: some View {
         ZStack(alignment: .bottom) {
             Map(position: $cameraPosition) {
+                // 訪問記録のピン
                 ForEach(items) { agg in
                     if agg.visit.latitude != 0 || agg.visit.longitude != 0 {
                         Annotation("", coordinate: CLLocationCoordinate2D(
@@ -34,10 +40,34 @@ struct VisitMapView: View {
                                     selectedItemId = agg.id
                                 }
                         }
+                        .annotationTitles(.hidden)
                     }
+                }
+
+                // 現在地のピン（一番上に表示）
+                if showCurrentLocation, let location = currentLocation {
+                    Annotation("現在地", coordinate: location) {
+                        CurrentLocationPinView()
+                            .zIndex(1000)
+                    }
+                    .annotationTitles(.hidden)
                 }
             }
             .mapStyle(.standard)
+            .onMapCameraChange { context in
+                currentMapRegion = context.region
+            }
+
+            // 現在地ボタン
+            VStack {
+                HStack {
+                    Spacer()
+                    currentLocationButton
+                        .padding(.trailing, 16)
+                        .padding(.top, 16)
+                }
+                Spacer()
+            }
 
             // 下部詳細シート
             if let selectedId = selectedItemId,
@@ -102,6 +132,81 @@ struct VisitMapView: View {
             cameraPosition = .rect(paddedRect)
         }
     }
+
+    // MARK: - Current Location Button
+    private var currentLocationButton: some View {
+        Button {
+            Task {
+                await toggleCurrentLocation()
+            }
+        } label: {
+            ZStack {
+                Circle()
+                    .fill(showCurrentLocation ? Color.blue : Color.white)
+                    .frame(width: 44, height: 44)
+                    .shadow(radius: 4)
+
+                if isLoadingLocation {
+                    ProgressView()
+                        .tint(showCurrentLocation ? .white : .blue)
+                } else {
+                    Image(systemName: showCurrentLocation ? "location.fill" : "location")
+                        .font(.system(size: 20))
+                        .foregroundStyle(showCurrentLocation ? .white : .blue)
+                }
+            }
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func toggleCurrentLocation() async {
+        if showCurrentLocation {
+            // OFF にする
+            withAnimation {
+                showCurrentLocation = false
+                currentLocation = nil
+            }
+        } else {
+            // ON にする
+            await fetchAndShowCurrentLocation()
+        }
+    }
+
+    private func fetchAndShowCurrentLocation() async {
+        isLoadingLocation = true
+        defer { isLoadingLocation = false }
+
+        do {
+            let (location, _) = try await locationService.requestOneShotLocation()
+            let coordinate = location.coordinate
+
+            currentLocation = coordinate
+
+            withAnimation {
+                showCurrentLocation = true
+
+                // ズームレベルを維持したまま中心だけ移動
+                if let existingRegion = currentMapRegion {
+                    // 既存のズームレベルを維持
+                    let newRegion = MKCoordinateRegion(
+                        center: coordinate,
+                        span: existingRegion.span
+                    )
+                    cameraPosition = .region(newRegion)
+                } else {
+                    // 初回はデフォルトのズームレベルで表示
+                    let region = MKCoordinateRegion(
+                        center: coordinate,
+                        latitudinalMeters: 1000,
+                        longitudinalMeters: 1000
+                    )
+                    cameraPosition = .region(region)
+                }
+            }
+        } catch {
+            Logger.error("Failed to get current location", error: error)
+        }
+    }
 }
 
 // MARK: - Map Pin View
@@ -119,6 +224,29 @@ struct MapPinView: View {
                 .frame(width: isSelected ? 20 : 16, height: isSelected ? 20 : 16)
         }
         .shadow(radius: 2)
+    }
+}
+
+// MARK: - Current Location Pin View
+struct CurrentLocationPinView: View {
+    var body: some View {
+        ZStack {
+            // 外側の円（薄い青色の範囲表示）
+            Circle()
+                .fill(Color.blue.opacity(0.2))
+                .frame(width: 32, height: 32)
+
+            // 内側の円（濃い緑色）
+            Circle()
+                .fill(Color.green)
+                .frame(width: 16, height: 16)
+
+            // 白い縁取り
+            Circle()
+                .stroke(Color.white, lineWidth: 3)
+                .frame(width: 16, height: 16)
+        }
+        .shadow(radius: 3)
     }
 }
 
