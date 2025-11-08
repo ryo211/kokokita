@@ -102,19 +102,19 @@ enum MapSnapshotService {
     private static func makeMarkerViewImage() -> UIImage {
         // ピンとラベルを縦に配置
         let marker = VStack(spacing: 2) {
+            Text("ココキタ")
+                .font(.caption.bold())
+                .foregroundColor(.accentColor)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(.white)
+                .cornerRadius(8)
+                .shadow(color: .black.opacity(0.2), radius: 2, x: 0, y: 1)
+
             Image("kokokita_irodori_map")
                 .resizable()
                 .scaledToFit()
                 .frame(width: 42, height: 42)
-//            Text("ココキタ")
-//                .font(.caption2.weight(.semibold))
-//                .foregroundColor(.primary)
-//                .padding(.horizontal, 4)
-//                .background(
-//                    RoundedRectangle(cornerRadius: 4)
-//                        .fill(Color(.systemBackground).opacity(0.8))
-//                        .shadow(radius: 1, y: 1)
-//                )
         }
 
         let renderer = ImageRenderer(content: marker)
