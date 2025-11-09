@@ -350,11 +350,12 @@ struct VisitDetailScreen: View {
     
     private func shareText() -> String {
         var lines: [String] = []
+        lines.append("【ココキタ】")
         lines.append(data.title.ifBlank("（タイトルなし）"))
         lines.append(data.timestamp.kokokitaVisitString)
-        if let addr = data.address?.trimmingCharacters(in: .whitespacesAndNewlines), !addr.isEmpty {
-            lines.append(addr)
-        }
+//        if let addr = data.address?.trimmingCharacters(in: .whitespacesAndNewlines), !addr.isEmpty {
+//            lines.append(addr)
+//        }
         return lines.joined(separator: "\n")
     }
 
