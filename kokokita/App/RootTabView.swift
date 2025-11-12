@@ -32,7 +32,18 @@ struct RootTabView: View {
     @Environment(AppUIState.self) private var ui
 
     var body: some View {
-        // ← 重ねずに“占有する”縦積みレイアウトに変更
+        // CoreDataの読み込み状態をチェック
+        if !CoreDataStack.shared.isHealthy {
+            // エラー画面を表示
+            DataErrorView()
+        } else {
+            // 通常のUI
+            normalTabView
+        }
+    }
+
+    private var normalTabView: some View {
+        // ← 重ねずに"占有する"縦積みレイアウトに変更
         VStack(spacing: 0) {
             // ===== コンテンツ領域（フッター分を除いた残り全体） =====
             ZStack { // （必要なければ Group でもOK）
