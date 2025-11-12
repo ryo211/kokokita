@@ -348,7 +348,7 @@ struct RootTabView: View {
             try repo.create(visit: visit, details: details)
             NotificationCenter.default.post(name: .visitsChanged, object: nil)
         } catch {
-            print("Quick save failed: \(error)")
+            Logger.error("Quick save failed", error: error)
         }
     }
 

@@ -419,27 +419,29 @@ final class CoreDataVisitRepository {
     
     // ① 追加：保存直前に必須項目の nil を検知してログする
     private func preflightValidate(_ objs: [NSManagedObject]) {
+        #if DEBUG
         for o in objs {
             guard let entity = o.entity.name else { continue }
             // 必須属性の nil を列挙
             for (name, attr) in o.entity.attributesByName where !attr.isOptional {
                 if o.value(forKey: name) == nil {
-                    print("❌ [\(entity)] required attr '\(name)' is nil")
+                    Logger.error("[\(entity)] required attr '\(name)' is nil")
                 }
             }
             // to-one リレーションの MinCount > 0 で未設定を検知
             for (name, rel) in o.entity.relationshipsByName where !rel.isToMany && rel.minCount > 0 {
                 if o.value(forKey: name) == nil {
-                    print("❌ [\(entity)] required to-one relation '\(name)' is nil (minCount=\(rel.minCount))")
+                    Logger.error("[\(entity)] required to-one relation '\(name)' is nil (minCount=\(rel.minCount))")
                 }
             }
             // to-many リレーションの MinCount > 0 で空配列を検知
             for (name, rel) in o.entity.relationshipsByName where rel.isToMany && rel.minCount > 0 {
                 if let set = o.value(forKey: name) as? NSSet, set.count == 0 {
-                    print("❌ [\(entity)] required to-many relation '\(name)' is empty (minCount=\(rel.minCount))")
+                    Logger.error("[\(entity)] required to-many relation '\(name)' is empty (minCount=\(rel.minCount))")
                 }
             }
         }
+        #endif
     }
     
     // MARK: - Taxonomy: Label

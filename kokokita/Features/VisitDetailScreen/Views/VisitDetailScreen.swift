@@ -265,7 +265,7 @@ struct VisitDetailScreen: View {
                 selectedLabelIds.insert(id)
                 NotificationCenter.default.post(name: .taxonomyChanged, object: nil)
             } catch {
-                print("Failed to create label: \(error)")
+                Logger.error("Failed to create label", error: error)
             }
         }
         newLabelName = ""
@@ -286,7 +286,7 @@ struct VisitDetailScreen: View {
                 selectedGroupId = id
                 NotificationCenter.default.post(name: .taxonomyChanged, object: nil)
             } catch {
-                print("Failed to create group: \(error)")
+                Logger.error("Failed to create group", error: error)
             }
         }
         newGroupName = ""
@@ -307,7 +307,7 @@ struct VisitDetailScreen: View {
                 selectedMemberIds.insert(id)
                 NotificationCenter.default.post(name: .taxonomyChanged, object: nil)
             } catch {
-                print("Failed to create member: \(error)")
+                Logger.error("Failed to create member", error: error)
             }
         }
         newMemberName = ""
@@ -322,7 +322,7 @@ struct VisitDetailScreen: View {
             }
             onUpdate()
         } catch {
-            print("Failed to update labels: \(error)")
+            Logger.error("Failed to update labels", error: error)
         }
     }
 
@@ -333,7 +333,7 @@ struct VisitDetailScreen: View {
             }
             onUpdate()
         } catch {
-            print("Failed to update group: \(error)")
+            Logger.error("Failed to update group", error: error)
         }
     }
 
@@ -344,7 +344,7 @@ struct VisitDetailScreen: View {
             }
             onUpdate()
         } catch {
-            print("Failed to update members: \(error)")
+            Logger.error("Failed to update members", error: error)
         }
     }
     
