@@ -42,44 +42,21 @@ struct VisitListScreen: View {
     // MARK: - List（分離して軽く）
     @ViewBuilder
     private func listContent() -> some View {
+        if store.items.isEmpty {
+            // 空の状態UI
+            emptyStateView
+        } else {
+            actualListView
+        }
+    }
+
+    // リスト表示本体（型推論を軽くするため分離）
+    private var actualListView: some View {
         List {
             ForEach(store.groupedByDate) { group in
                 Section {
                     ForEach(group.items) { agg in
-                        NavigationLink {
-                            VisitDetailScreen(
-                                data: toDetailData(agg),
-                                visitId: agg.id,
-                                onBack: {},                 // NavigationLink なので未使用
-                                onEdit: { editingTarget = agg },
-                                onShare: { /* 共有導線をここに（必要なら）*/ },
-                                onDelete: {
-                                    withAnimation {
-                                        store.delete(id: agg.id)
-                                    }
-                                },
-                                onUpdate: {
-                                    Task { store.reload() }
-                                }
-                            )
-                        } label: {
-                            VisitListRow(agg: agg, labelMap: labelMap, groupMap: groupMap, memberMap: memberMap)
-                        }
-                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                            Button() {
-                                pendingDeleteId = agg.id
-                                showDeleteConfirm = true
-                            } label: {
-                                Label(L.Common.delete, systemImage: "trash")
-                            }
-                            .tint(.red)
-                        }
-                        // 行全体をほんのり強調（任意）
-                        .listRowBackground(
-                            (pendingDeleteId == agg.id && showDeleteConfirm)
-                            ? Color.red.opacity(0.06)
-                            : Color.clear
-                        )
+                        listRowView(for: agg)
                     }
                 } header: {
                     Text(formatDateHeader(group.date))
@@ -90,7 +67,6 @@ struct VisitListScreen: View {
                 }
             }
         }
-
         .listStyle(.plain)
         .task { store.reload() }
         .onReceive(NotificationCenter.default.publisher(for: .visitsChanged)) { _ in
@@ -120,6 +96,44 @@ struct VisitListScreen: View {
         } message: {
             Text(L.Home.deleteConfirmMessage)
         }
+    }
+
+    // 各リスト行のビュー（さらに分離）
+    @ViewBuilder
+    private func listRowView(for agg: VisitAggregate) -> some View {
+        NavigationLink {
+            VisitDetailScreen(
+                data: toDetailData(agg),
+                visitId: agg.id,
+                onBack: {},
+                onEdit: { editingTarget = agg },
+                onShare: { /* 共有導線をここに（必要なら）*/ },
+                onDelete: {
+                    withAnimation {
+                        store.delete(id: agg.id)
+                    }
+                },
+                onUpdate: {
+                    Task { store.reload() }
+                }
+            )
+        } label: {
+            VisitListRow(agg: agg, labelMap: labelMap, groupMap: groupMap, memberMap: memberMap)
+        }
+        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+            Button() {
+                pendingDeleteId = agg.id
+                showDeleteConfirm = true
+            } label: {
+                Label(L.Common.delete, systemImage: "trash")
+            }
+            .tint(.red)
+        }
+        .listRowBackground(
+            (pendingDeleteId == agg.id && showDeleteConfirm)
+            ? Color.red.opacity(0.06)
+            : Color.clear
+        )
     }
 
     // MARK: - Main Content
@@ -230,6 +244,37 @@ struct VisitListScreen: View {
         }
         .presentationDetents([.large])
         .presentationDragIndicator(.visible)
+    }
+
+    // MARK: - Empty State View
+
+    private var emptyStateView: some View {
+        VStack(spacing: 24) {
+            Spacer()
+
+            // ロゴアイコン
+            Image("kokokita_irodori_blue")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 120, height: 120)
+                .opacity(0.3)
+
+            VStack(spacing: 12) {
+                Text("まだ記録がありません")
+                    .font(.title2.bold())
+                    .foregroundColor(.primary)
+
+                Text("下の「ココキタ」ボタンをタップして\n今いる場所を記録しましょう")
+                    .font(.body)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+                    .lineSpacing(4)
+            }
+
+            Spacer()
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color(.systemBackground))
     }
 
     // MARK: - Mode Toggle Button
