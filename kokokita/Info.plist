@@ -4,7 +4,5 @@
 <dict>
 	<key>GADApplicationIdentifier</key>
 	<string>ca-app-pub-7495977536865069~4734364300</string>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>訪問した場所の位置情報を記録するために使用します。</string>
 </dict>
 </plist>

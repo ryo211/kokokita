@@ -14,7 +14,7 @@ struct ResetAllScreen: View {
                     Label("全ての記録を削除", systemImage: "trash")
                 }
             } footer: {
-                Text("Visit（記録）と付随する詳細をすべて削除します。取り消しはできません。")
+                Text("全ての記録を削除します。取り消しはできません。")
             }
         }
         .navigationTitle("初期化")

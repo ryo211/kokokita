@@ -1,4 +1,5 @@
 import Foundation
+import FirebaseCrashlytics
 
 /// アプリ全体で使用するロギングユーティリティ
 enum Logger {
@@ -25,8 +26,26 @@ enum Logger {
         }
         #endif
 
-        // TODO: 本番環境では分析サービスに送信
-        // Analytics.logError(message, error: error, location: location)
+        // Firebase Crashlyticsに送信
+        let crashlytics = Crashlytics.crashlytics()
+        crashlytics.log("\(location) - \(message)")
+
+        if let error = error {
+            // NSErrorとして記録
+            let nsError = error as NSError
+            crashlytics.record(error: nsError)
+        } else {
+            // エラーオブジェクトがない場合、カスタムエラーを作成
+            let customError = NSError(
+                domain: "com.hashimoto.kokokita",
+                code: -1,
+                userInfo: [
+                    NSLocalizedDescriptionKey: message,
+                    "location": location
+                ]
+            )
+            crashlytics.record(error: customError)
+        }
     }
 
     /// 警告レベルのログ（問題になる可能性があるが致命的ではない）
@@ -44,8 +63,9 @@ enum Logger {
         print("   Message: \(message)")
         #endif
 
-        // TODO: 本番環境では分析サービスに送信
-        // Analytics.logWarning(message, location: location)
+        // Firebase Crashlyticsにログ送信（非致命的エラー）
+        let crashlytics = Crashlytics.crashlytics()
+        crashlytics.log("⚠️ WARNING \(location) - \(message)")
     }
 
     /// 情報レベルのログ（開発時のデバッグ用）

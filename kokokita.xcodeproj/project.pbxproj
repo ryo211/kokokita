@@ -9,6 +9,8 @@
 /* Begin PBXBuildFile section */
 		45B215842E7EF0B70004B944 /* Kokokita.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 45B215822E7EF0B70004B944 /* Kokokita.xcdatamodeld */; };
 		45DF36A02E975A2200B6526D /* GoogleMobileAds in Frameworks */ = {isa = PBXBuildFile; productRef = 45DF369F2E975A2200B6526D /* GoogleMobileAds */; };
+		45EDE1BD2EC7163100DCDCF7 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 45EDE1BC2EC7163100DCDCF7 /* FirebaseAnalytics */; };
+		45EDE1BF2EC7163100DCDCF7 /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = 45EDE1BE2EC7163100DCDCF7 /* FirebaseCrashlytics */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -42,6 +44,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				45EDE1BF2EC7163100DCDCF7 /* FirebaseCrashlytics in Frameworks */,
+				45EDE1BD2EC7163100DCDCF7 /* FirebaseAnalytics in Frameworks */,
 				45DF36A02E975A2200B6526D /* GoogleMobileAds in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -76,6 +80,7 @@
 				45B214B32E7EDB560004B944 /* Sources */,
 				45B214B42E7EDB560004B944 /* Frameworks */,
 				45B214B52E7EDB560004B944 /* Resources */,
+				45EDE1C22EC7261600DCDCF7 /* Run Script */,
 			);
 			buildRules = (
 			);
@@ -87,6 +92,8 @@
 			name = kokokita;
 			packageProductDependencies = (
 				45DF369F2E975A2200B6526D /* GoogleMobileAds */,
+				45EDE1BC2EC7163100DCDCF7 /* FirebaseAnalytics */,
+				45EDE1BE2EC7163100DCDCF7 /* FirebaseCrashlytics */,
 			);
 			productName = kokokita;
 			productReference = 45B214B72E7EDB560004B944 /* kokokita.app */;
@@ -108,7 +115,7 @@
 				};
 			};
 			buildConfigurationList = 45B214B22E7EDB560004B944 /* Build configuration list for PBXProject "kokokita" */;
-			developmentRegion = en;
+			developmentRegion = ja;
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
@@ -119,6 +126,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				45DF369E2E975A2200B6526D /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */,
+				45EDE1BB2EC7163100DCDCF7 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 45B214B82E7EDB560004B944 /* Products */;
@@ -139,6 +147,31 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		45EDE1C22EC7261600DCDCF7 /* Run Script */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}/Contents/Resources/DWARF/${TARGET_NAME}",
+				"$(SRCROOT)/$(BUILT_PRODUCTS_DIR)/$(INFOPLIST_PATH)",
+				"$(SRCROOT)/kokokita/GoogleService-Info.plist",
+			);
+			name = "Run Script";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "  #!/bin/bash\n\n  # Firebase Crashlytics dSYM Upload Script\n\n  # GoogleService-Info.plistのパスを明示的に設定\n  GOOGLE_SERVICE_PLIST=\"${SRCROOT}/kokokita/GoogleService-Info.plist\"\n\n  CRASHLYTICS_SCRIPT=\"${BUILD_DIR%/Build/*}/SourcePackages/checkouts/firebase-ios-sdk/Crashlytics/run\"\n\n  if [ -f \"$CRASHLYTICS_SCRIPT\" ]; then\n      echo \"🔥 Uploading dSYM to Firebase Crashlytics...\"\n      echo \"📄 Using GoogleService-Info.plist at: ${GOOGLE_SERVICE_PLIST}\"\n\n      if [ -f \"$GOOGLE_SERVICE_PLIST\" ]; then\n          # -gspオプションでplistのパスを明示的に渡す\n          \"${CRASHLYTICS_SCRIPT}\" -gsp \"${GOOGLE_SERVICE_PLIST}\"\n          echo \"✅ dSYM upload completed\"\n      else\n          echo \"❌ Error: GoogleService-Info.plist not found at:\"\n          echo \"   ${GOOGLE_SERVICE_PLIST}\"\n      fi\n  else\n      echo \"⚠️ Warning: Crashlytics upload script not found\"\n  fi\n";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		45B214B32E7EDB560004B944 /* Sources */ = {
@@ -284,13 +317,16 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_ASSET_PATHS = "\"kokokita/Preview Content\"";
+				DEVELOPMENT_TEAM = G3W2XG2N42;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = kokokita/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "ココキタ";
 				INFOPLIST_KEY_LSApplicationCategoryType = "";
 				INFOPLIST_KEY_NSCameraUsageDescription = "写真撮影のためにカメラを使用します。";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "訪問した場所の位置情報を記録するために使用します。";
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "画像をフォトライブラリに保存します。";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "写真ライブラリから画像を選択するために使用します。";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -319,12 +355,14 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"kokokita/Preview Content\"";
+				DEVELOPMENT_TEAM = G3W2XG2N42;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = kokokita/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "ココキタ";
 				INFOPLIST_KEY_LSApplicationCategoryType = "";
 				INFOPLIST_KEY_NSCameraUsageDescription = "写真撮影のためにカメラを使用します。";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "訪問した場所の位置情報を記録するために使用します。";
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "画像をフォトライブラリに保存します。";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "写真ライブラリから画像を選択するために使用します。";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -377,6 +415,14 @@
 				minimumVersion = 12.12.0;
 			};
 		};
+		45EDE1BB2EC7163100DCDCF7 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 11.0.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -384,6 +430,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 45DF369E2E975A2200B6526D /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */;
 			productName = GoogleMobileAds;
+		};
+		45EDE1BC2EC7163100DCDCF7 /* FirebaseAnalytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 45EDE1BB2EC7163100DCDCF7 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAnalytics;
+		};
+		45EDE1BE2EC7163100DCDCF7 /* FirebaseCrashlytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 45EDE1BB2EC7163100DCDCF7 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCrashlytics;
 		};
 /* End XCSwiftPackageProductDependency section */
 
