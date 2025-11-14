@@ -39,10 +39,12 @@ struct LocationGeocodingService {
         // 位置情報を取得
         let (location, flags) = try await locationService.requestOneShotLocation()
 
-        // シミュレーション／アクセサリチェック
+        // シミュレーション／アクセサリチェック（DEBUGビルドではスキップ）
+        #if !DEBUG
         if flags.isSimulatedBySoftware == true || flags.isProducedByAccessory == true {
             throw LocationGeocodingError.simulatedOrAccessory
         }
+        #endif
 
         // 住所を逆引き（2秒タイムアウト）
         let address = await reverseGeocodeWithTimeout(
@@ -74,12 +76,14 @@ struct LocationGeocodingService {
             accuracy: kCLLocationAccuracyHundredMeters,
             timeout: 5.0  // 短いタイムアウト
         )
-        
-        // シミュレーション／アクセサリチェック
+
+        // シミュレーション／アクセサリチェック（DEBUGビルドではスキップ）
+        #if !DEBUG
         if flags.isSimulatedBySoftware == true || flags.isProducedByAccessory == true {
             throw LocationGeocodingError.simulatedOrAccessory
         }
-        
+        #endif
+
         // 住所を逆引き（0.5秒の短いタイムアウト、失敗してもOK）
         let address = await reverseGeocodeWithTimeout(
             location,

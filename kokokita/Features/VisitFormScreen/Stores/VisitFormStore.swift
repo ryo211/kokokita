@@ -201,10 +201,13 @@ final class VisitFormStore {
     func createNew() -> Bool {
         do {
             // 位置情報検証（純粋関数）
+            // DEBUGビルドではシミュレーション位置情報を許可（開発用）
+            #if !DEBUG
             if locationValidator.isSimulated(lastFlags) {
                 alert = L.Error.locationSimulated
                 return false
             }
+            #endif
 
             let id  = UUID()
             let utc = Date() // 保存はUTC
