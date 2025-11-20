@@ -115,6 +115,10 @@ struct VisitListScreen: View {
                 },
                 onUpdate: {
                     Task { store.reload() }
+                },
+                onMapTap: {
+                    displayMode = .map
+                    selectedMapItemId = agg.id
                 }
             )
         } label: {
@@ -239,6 +243,10 @@ struct VisitListScreen: View {
                 },
                 onUpdate: {
                     Task { store.reload() }
+                },
+                onMapTap: {
+                    detailSheetItemId = nil
+                    selectedMapItemId = agg.id
                 }
             )
         }

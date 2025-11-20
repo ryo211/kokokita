@@ -12,6 +12,7 @@ struct VisitDetailScreen: View {
     let onShare: () -> Void
     let onDelete: () -> Void
     let onUpdate: () -> Void  // 更新時のコールバック
+    let onMapTap: (() -> Void)?  // 地図タップ時のコールバック
 
     // 地図カメラ
     @State private var camera: MapCameraPosition
@@ -51,7 +52,8 @@ struct VisitDetailScreen: View {
          onEdit: @escaping () -> Void = {},
          onShare: @escaping () -> Void = {},
          onDelete: @escaping () -> Void = {},
-         onUpdate: @escaping () -> Void = {}) {
+         onUpdate: @escaping () -> Void = {},
+         onMapTap: (() -> Void)? = nil) {
         self.data = data
         self.visitId = visitId
         self.onBack = onBack
@@ -59,6 +61,7 @@ struct VisitDetailScreen: View {
         self.onShare = onShare
         self.onDelete = onDelete
         self.onUpdate = onUpdate
+        self.onMapTap = onMapTap
 
         if let c = data.coordinate {
             let region = MKCoordinateRegion(center: c,
@@ -84,7 +87,11 @@ struct VisitDetailScreen: View {
                     isSharing: false,
                     onLabelTap: { labelPickerShown = true },
                     onGroupTap: { groupPickerShown = true },
-                    onMemberTap: { memberPickerShown = true }
+                    onMemberTap: { memberPickerShown = true },
+                    onMapTap: {
+                        dismiss()
+                        onMapTap?()
+                    }
                 )
             }
 

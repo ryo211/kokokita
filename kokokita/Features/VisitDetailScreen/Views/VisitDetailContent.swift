@@ -8,6 +8,7 @@ struct VisitDetailContent: View {
     var onLabelTap: (() -> Void)? = nil
     var onGroupTap: (() -> Void)? = nil
     var onMemberTap: (() -> Void)? = nil
+    var onMapTap: (() -> Void)? = nil
 
     var body: some View {
         VStack(alignment: .leading, spacing: UIConstants.Spacing.large) {
@@ -150,6 +151,9 @@ struct VisitDetailContent: View {
                         .clipShape(RoundedRectangle(cornerRadius: UIConstants.CornerRadius.large))
                     }
                     .padding(.horizontal)
+                    .onTapGesture {
+                        onMapTap?()
+                    }
                 }
             }
 
