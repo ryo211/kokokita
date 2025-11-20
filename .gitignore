@@ -105,3 +105,6 @@ iOSInjectionProject/
 
 # Documentation (一時的に追跡しない場合)
 # doc/
+
+# Firebase
+GoogleService-Info.plist

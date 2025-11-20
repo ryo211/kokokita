@@ -28,6 +28,13 @@ struct SettingsHomeScreen: View {
 
             #if DEBUG
             Section {
+                NavigationLink {
+                    DataMigrationScreen()
+                } label: {
+                    Label("データ移行", systemImage: "arrow.up.arrow.down.circle")
+                        .foregroundStyle(.blue)
+                }
+
                 Button {
                     testErrorLogging()
                 } label: {

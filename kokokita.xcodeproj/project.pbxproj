@@ -11,6 +11,7 @@
 		45DF36A02E975A2200B6526D /* GoogleMobileAds in Frameworks */ = {isa = PBXBuildFile; productRef = 45DF369F2E975A2200B6526D /* GoogleMobileAds */; };
 		45EDE1BD2EC7163100DCDCF7 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 45EDE1BC2EC7163100DCDCF7 /* FirebaseAnalytics */; };
 		45EDE1BF2EC7163100DCDCF7 /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = 45EDE1BE2EC7163100DCDCF7 /* FirebaseCrashlytics */; };
+		45EDE1D12ECDC94F00DCDCF7 /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = 45EDE1D02ECDC94F00DCDCF7 /* ZIPFoundation */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -47,6 +48,7 @@
 				45EDE1BF2EC7163100DCDCF7 /* FirebaseCrashlytics in Frameworks */,
 				45EDE1BD2EC7163100DCDCF7 /* FirebaseAnalytics in Frameworks */,
 				45DF36A02E975A2200B6526D /* GoogleMobileAds in Frameworks */,
+				45EDE1D12ECDC94F00DCDCF7 /* ZIPFoundation in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -94,6 +96,7 @@
 				45DF369F2E975A2200B6526D /* GoogleMobileAds */,
 				45EDE1BC2EC7163100DCDCF7 /* FirebaseAnalytics */,
 				45EDE1BE2EC7163100DCDCF7 /* FirebaseCrashlytics */,
+				45EDE1D02ECDC94F00DCDCF7 /* ZIPFoundation */,
 			);
 			productName = kokokita;
 			productReference = 45B214B72E7EDB560004B944 /* kokokita.app */;
@@ -127,6 +130,7 @@
 			packageReferences = (
 				45DF369E2E975A2200B6526D /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */,
 				45EDE1BB2EC7163100DCDCF7 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+				45EDE1CF2ECDC94F00DCDCF7 /* XCRemoteSwiftPackageReference "ZIPFoundation" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 45B214B82E7EDB560004B944 /* Products */;
@@ -339,7 +343,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.hashimoto.kokokita;
+				PRODUCT_BUNDLE_IDENTIFIER = com.irodori.kokokita;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -375,7 +379,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.hashimoto.kokokita;
+				PRODUCT_BUNDLE_IDENTIFIER = com.irodori.kokokita;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -423,6 +427,14 @@
 				minimumVersion = 11.0.0;
 			};
 		};
+		45EDE1CF2ECDC94F00DCDCF7 /* XCRemoteSwiftPackageReference "ZIPFoundation" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/weichsel/ZIPFoundation";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.9.20;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -440,6 +452,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 45EDE1BB2EC7163100DCDCF7 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseCrashlytics;
+		};
+		45EDE1D02ECDC94F00DCDCF7 /* ZIPFoundation */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 45EDE1CF2ECDC94F00DCDCF7 /* XCRemoteSwiftPackageReference "ZIPFoundation" */;
+			productName = ZIPFoundation;
 		};
 /* End XCSwiftPackageProductDependency section */
 

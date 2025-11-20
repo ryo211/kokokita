@@ -10,7 +10,14 @@ final class CoreDataVisitRepository {
 
     // MARK: - VisitRepository
 
-    func create(visit: Visit, details: VisitDetails) throws {
+    func create(visit: Visit, details: VisitDetails, saveImmediately: Bool = true) throws {
+        // 既存のVisitをチェック（リストア時の重複防止）
+        if let existing = try fetchVisitEntity(id: visit.id) {
+            Logger.warning("Visit with ID \(visit.id) already exists, skipping creation")
+            throw NSError(domain: "Visit", code: 2,
+                          userInfo: [NSLocalizedDescriptionKey: "Visit with ID \(visit.id) already exists"])
+        }
+
         let v = VisitEntity(context: ctx)
 
         // ---- Visit（不変部）を先にすべて代入 ----
@@ -65,7 +72,9 @@ final class CoreDataVisitRepository {
         // 保存直前チェック（必須が nil ならここでログに出る）
         preflightValidate([v, d])
 
-        try ctx.save()
+        if saveImmediately {
+            try ctx.save()
+        }
     }
 
     func updateDetails(id: UUID, transform: (inout VisitDetails) -> Void) throws {
@@ -521,6 +530,13 @@ final class CoreDataVisitRepository {
         try ctx.save()
     }
 
+    // MARK: - Visit: カウント
+
+    func allVisitsCount() throws -> Int {
+        let request: NSFetchRequest<VisitEntity> = VisitEntity.fetchRequest()
+        return try ctx.count(for: request)
+    }
+
     // MARK: - Visit: 全削除（初期化）
 
     func deleteAllVisits() throws {
@@ -614,6 +630,118 @@ final class CoreDataVisitRepository {
             throw NSError(domain: "Repository", code: 2, userInfo: [NSLocalizedDescriptionKey: "メンバーの保存に失敗しました"])
         }
         return savedId
+    }
+
+    // MARK: - Restore用：既存IDでの作成
+
+    func createLabel(id: UUID, name: String, saveImmediately: Bool = true) throws {
+        let trimmed = name.trimmed
+        guard !trimmed.isEmpty else {
+            Logger.warning("Attempted to create label with empty name")
+            throw NSError(domain: "Label", code: 1,
+                          userInfo: [NSLocalizedDescriptionKey: "空名は作成できません"])
+        }
+
+        // 既存のラベルをチェック
+        if let existing = try fetchLabelEntity(id: id) {
+            Logger.info("Label with ID \(id) already exists, skipping creation")
+            // 名前が異なる場合は更新
+            if existing.name != trimmed {
+                existing.name = trimmed
+                if saveImmediately {
+                    try ctx.save()
+                }
+                Logger.info("Updated label name to: \(trimmed)")
+            }
+            return
+        }
+
+        let e = LabelEntity(context: ctx)
+        e.id = id
+        e.name = trimmed
+        if saveImmediately {
+            try ctx.save()
+        }
+        Logger.info("Created label with existing ID: \(trimmed) (\(id))")
+    }
+
+    func createGroup(id: UUID, name: String, saveImmediately: Bool = true) throws {
+        let trimmed = name.trimmed
+        guard !trimmed.isEmpty else {
+            Logger.warning("Attempted to create group with empty name")
+            throw NSError(domain: "Group", code: 1,
+                          userInfo: [NSLocalizedDescriptionKey: "空名は作成できません"])
+        }
+
+        // 既存のグループをチェック
+        if let existing = try fetchGroupEntity(id: id) {
+            Logger.info("Group with ID \(id) already exists, skipping creation")
+            // 名前が異なる場合は更新
+            if existing.name != trimmed {
+                existing.name = trimmed
+                if saveImmediately {
+                    try ctx.save()
+                }
+                Logger.info("Updated group name to: \(trimmed)")
+            }
+            return
+        }
+
+        let e = GroupEntity(context: ctx)
+        e.id = id
+        e.name = trimmed
+        if saveImmediately {
+            try ctx.save()
+        }
+        Logger.info("Created group with existing ID: \(trimmed) (\(id))")
+    }
+
+    func createMember(id: UUID, name: String, saveImmediately: Bool = true) throws {
+        let trimmed = name.trimmed
+        guard !trimmed.isEmpty else {
+            Logger.warning("Attempted to create member with empty name")
+            throw NSError(domain: "Member", code: 1,
+                          userInfo: [NSLocalizedDescriptionKey: "空名は作成できません"])
+        }
+
+        // 既存のメンバーをチェック
+        if let existing = try fetchMemberEntity(id: id) {
+            Logger.info("Member with ID \(id) already exists, skipping creation")
+            // 名前が異なる場合は更新
+            if existing.name != trimmed {
+                existing.name = trimmed
+                if saveImmediately {
+                    try ctx.save()
+                }
+                Logger.info("Updated member name to: \(trimmed)")
+            }
+            return
+        }
+
+        let e = MemberEntity(context: ctx)
+        e.id = id
+        e.name = trimmed
+        if saveImmediately {
+            try ctx.save()
+        }
+        Logger.info("Created member with existing ID: \(trimmed) (\(id))")
+    }
+
+    /// CoreDataコンテキストをリフレッシュして一時ObjectIDを永続IDに変換
+    func refreshContext() throws {
+        // 未保存の変更があれば保存
+        if ctx.hasChanges {
+            try ctx.save()
+        }
+
+        // 一時ObjectIDを永続IDに変換
+        let insertedObjects = Array(ctx.insertedObjects)
+        if !insertedObjects.isEmpty {
+            try ctx.obtainPermanentIDs(for: insertedObjects)
+            Logger.info("Obtained permanent IDs for \(insertedObjects.count) objects")
+        }
+
+        Logger.info("CoreData context refreshed")
     }
 }
 

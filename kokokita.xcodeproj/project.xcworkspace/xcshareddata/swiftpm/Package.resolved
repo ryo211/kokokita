@@ -1,5 +1,5 @@
 {
-  "originHash" : "9161ef682717a7f0b9cd89841ad51f41294798ac1bd91c848fd7f13b3a86d1b5",
+  "originHash" : "6f1b3ec9b468d6d3aa6e0ff8116133df36a91db8ecd7b0f1fc40a64b0ddda0cc",
   "pins" : [
     {
       "identity" : "abseil-cpp-binary",
@@ -143,6 +143,15 @@
       "state" : {
         "revision" : "c169a5744230951031770e27e475ff6eefe51f9d",
         "version" : "1.33.3"
+      }
+    },
+    {
+      "identity" : "zipfoundation",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/weichsel/ZIPFoundation",
+      "state" : {
+        "revision" : "22787ffb59de99e5dc1fbfe80b19c97a904ad48d",
+        "version" : "0.9.20"
       }
     }
   ],
