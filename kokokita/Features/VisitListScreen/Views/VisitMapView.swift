@@ -25,17 +25,31 @@ struct VisitMapView: View {
     @State private var currentLocation: CLLocationCoordinate2D?
     @State private var currentMapRegion: MKCoordinateRegion?
 
+    // 選択されたアイテムを最後に配置するようソート
+    private var sortedItems: [VisitAggregate] {
+        items.sorted { item1, item2 in
+            let isItem1Selected = item1.id == selectedItemId
+            let isItem2Selected = item2.id == selectedItemId
+
+            if isItem1Selected == isItem2Selected {
+                return false // 両方選択/非選択なら順序を変えない
+            }
+            return isItem2Selected // 選択されたものを後ろに
+        }
+    }
+
     var body: some View {
         ZStack(alignment: .bottom) {
             Map(position: $cameraPosition) {
-                // 訪問記録のピン
-                ForEach(items) { agg in
+                // 訪問記録のピン（選択されたものを最後に描画するためソート）
+                ForEach(sortedItems) { agg in
                     if agg.visit.latitude != 0 || agg.visit.longitude != 0 {
+                        let isSelected = selectedItemId == agg.id
                         Annotation("", coordinate: CLLocationCoordinate2D(
                             latitude: agg.visit.latitude,
                             longitude: agg.visit.longitude
                         )) {
-                            MapPinView(isSelected: selectedItemId == agg.id)
+                            MapPinView(isSelected: isSelected)
                                 .onTapGesture {
                                     selectedItemId = agg.id
                                 }
@@ -48,7 +62,6 @@ struct VisitMapView: View {
                 if showCurrentLocation, let location = currentLocation {
                     Annotation("現在地", coordinate: location) {
                         CurrentLocationPinView()
-                            .zIndex(1000)
                     }
                     .annotationTitles(.hidden)
                 }
@@ -215,15 +228,23 @@ struct MapPinView: View {
 
     var body: some View {
         ZStack {
-            Circle()
-                .fill(isSelected ? Color.blue : Color.red)
-                .frame(width: isSelected ? 20 : 16, height: isSelected ? 20 : 16)
+            // 選択時は外側に目立つハロー効果
+            if isSelected {
+                Circle()
+                    .fill(Color.blue.opacity(0.3))
+                    .frame(width: 36, height: 36)
+            }
 
             Circle()
-                .stroke(Color.white, lineWidth: 2)
-                .frame(width: isSelected ? 20 : 16, height: isSelected ? 20 : 16)
+                .fill(isSelected ? Color.blue : Color.red)
+                .frame(width: isSelected ? 28 : 16, height: isSelected ? 28 : 16)
+
+            Circle()
+                .stroke(Color.white, lineWidth: isSelected ? 3 : 2)
+                .frame(width: isSelected ? 28 : 16, height: isSelected ? 28 : 16)
         }
-        .shadow(radius: 2)
+        .shadow(color: isSelected ? Color.blue.opacity(0.5) : Color.black.opacity(0.3),
+                radius: isSelected ? 6 : 2)
     }
 }
 
