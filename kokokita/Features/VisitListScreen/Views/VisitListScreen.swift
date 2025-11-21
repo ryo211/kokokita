@@ -42,11 +42,20 @@ struct VisitListScreen: View {
     // MARK: - List（分離して軽く）
     @ViewBuilder
     private func listContent() -> some View {
-        if store.items.isEmpty {
-            // 空の状態UI
-            emptyStateView
-        } else {
-            actualListView
+        Group {
+            if store.items.isEmpty {
+                // 空の状態UI
+                emptyStateView
+            } else {
+                actualListView
+            }
+        }
+        .task { store.reload() }
+        .onReceive(NotificationCenter.default.publisher(for: .visitsChanged)) { _ in
+            Task { store.reload() }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .taxonomyChanged)) { _ in
+            Task { await store.reloadTaxonomyThenData() }
         }
     }
 
@@ -68,13 +77,6 @@ struct VisitListScreen: View {
             }
         }
         .listStyle(.plain)
-        .task { store.reload() }
-        .onReceive(NotificationCenter.default.publisher(for: .visitsChanged)) { _ in
-            Task { store.reload() }
-        }
-        .onReceive(NotificationCenter.default.publisher(for: .taxonomyChanged)) { _ in
-            Task { await store.reloadTaxonomyThenData() }
-        }
         .alert(
             L.Home.deleteConfirmTitle,
             isPresented: Binding(
