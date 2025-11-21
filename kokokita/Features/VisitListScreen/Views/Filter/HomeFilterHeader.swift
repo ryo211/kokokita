@@ -27,7 +27,7 @@ struct HomeFilterHeader: View {
                 } label: {
                     // 降順（最新が上）がデフォ。アイコンと説明を状態で出し分け。
                     HStack(spacing: 6) {
-                        Text(vm.sortAscending ? "　古い順" : "新しい順")
+                        Text(vm.sortAscending ? L.SearchFilter.sortOldest : L.SearchFilter.sortNewest)
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                         Image(systemName: vm.sortAscending ? "chevron.up"

@@ -47,7 +47,7 @@ final class LabelListStore {
 
         // 重複チェック
         if LabelValidator.isDuplicate(validName, in: items) {
-            alert = "同じ名前のラベルが既にあります。"
+            alert = L.LabelManagement.duplicateName
             return false
         }
 

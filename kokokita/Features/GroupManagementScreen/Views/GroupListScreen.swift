@@ -27,11 +27,11 @@ struct GroupListScreen: View {
             if store.loading {
                 ProgressView().controlSize(.large)
             } else if store.items.isEmpty {
-                ContentUnavailableView("グループはありません", systemImage: "folder",
-                    description: Text("右上の+から作成できます。"))
+                ContentUnavailableView(L.GroupManagement.emptyMessage, systemImage: "folder",
+                    description: Text(L.GroupManagement.emptyDescription))
             }
         }
-        .navigationTitle("グループ")
+        .navigationTitle(L.GroupManagement.title)
         .navigationBarTitleDisplayMode(.inline)
         .task { await store.load() }
         .toolbar {
@@ -42,13 +42,13 @@ struct GroupListScreen: View {
                 } label: {
                     Image(systemName: "plus")
                 }
-                .accessibilityLabel("グループを新規作成")
+                .accessibilityLabel(L.GroupManagement.createAccessibility)
             }
         }
         .sheet(isPresented: $showCreate) {
             NavigationStack {
                 Form {
-                    Section { TextField("グループ名", text: $newGroupName)
+                    Section { TextField(L.GroupManagement.namePlaceholder, text: $newGroupName)
                         .textInputAutocapitalization(.none)
                         .disableAutocorrection(true)
                         .submitLabel(.done)
@@ -59,16 +59,16 @@ struct GroupListScreen: View {
                         }
                     }
                     Section {
-                        Button("作成") { createGroup() }
+                        Button(L.Common.create) { createGroup() }
                             .disabled(!GroupValidator.isNotEmpty(newGroupName))
-                        Button("キャンセル", role: .cancel) { showCreate = false }
+                        Button(L.Common.cancel, role: .cancel) { showCreate = false }
                     }
                 }
-                .navigationTitle("グループ新規作成")
+                .navigationTitle(L.GroupManagement.createTitle)
             }
         }
-        .alert("エラー", isPresented: Binding(get: { store.alert != nil }, set: { _ in store.alert = nil })) {
-            Button("OK", role: .cancel) {}
+        .alert(L.Common.error, isPresented: Binding(get: { store.alert != nil }, set: { _ in store.alert = nil })) {
+            Button(L.Common.ok, role: .cancel) {}
         } message: { Text(store.alert ?? "") }
     }
 

@@ -38,14 +38,14 @@ struct SearchFilterSheet: View {
             memberSection
             categorySection
         }
-        .navigationTitle("検索")
+        .navigationTitle(L.SearchFilter.title)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
-                Button("閉じる") { onClose() }
+                Button(L.Common.cancel) { onClose() }
             }
             ToolbarItem(placement: .primaryAction) {
-                Button("クリア") {
+                Button(L.Common.clear) {
                     debounceTask?.cancel()
                     vm.clearAllFilters()
                     titleDraft = ""
@@ -79,8 +79,8 @@ struct SearchFilterSheet: View {
     // MARK: - Form Sections
 
     private var keywordSection: some View {
-        Section("キーワード") {
-            TextField("タイトルまたは住所に含む語", text: $titleDraft)
+        Section(L.SearchFilter.sectionKeyword) {
+            TextField(L.SearchFilter.titleOrAddressPlaceholder, text: $titleDraft)
                 .textInputAutocapitalization(.never)
                 .submitLabel(.done)
                 .onChange(of: titleDraft) { _, new in
@@ -96,8 +96,8 @@ struct SearchFilterSheet: View {
     }
 
     private var periodSection: some View {
-        Section("期間") {
-            Toggle("日付で絞り込む", isOn: $useDateRange)
+        Section(L.SearchFilter.sectionPeriod) {
+            Toggle(L.SearchFilter.filterByDate, isOn: $useDateRange)
                 .onChange(of: useDateRange) { _, on in
                     if on {
                         if vm.dateFrom == nil { vm.dateFrom = stripTime(Date()) }
@@ -130,7 +130,7 @@ struct SearchFilterSheet: View {
     }
 
     private var labelSection: some View {
-        Section("ラベル") {
+        Section(L.SearchFilter.sectionLabel) {
             Button {
                 showLabelPicker = true
             } label: {
@@ -170,7 +170,7 @@ struct SearchFilterSheet: View {
     }
 
     private var groupSection: some View {
-        Section("グループ") {
+        Section(L.SearchFilter.sectionGroup) {
             Button {
                 showGroupPicker = true
             } label: {
@@ -210,7 +210,7 @@ struct SearchFilterSheet: View {
     }
 
     private var memberSection: some View {
-        Section("メンバー") {
+        Section(L.SearchFilter.sectionMember) {
             Button {
                 showMemberPicker = true
             } label: {
@@ -250,7 +250,7 @@ struct SearchFilterSheet: View {
     }
 
     private var categorySection: some View {
-        Section("施設カテゴリ") {
+        Section(L.SearchFilter.sectionCategory) {
             Button {
                 showCategoryPicker = true
             } label: {
@@ -329,11 +329,11 @@ struct FilterLabelPickerSheet: View {
                     }
                 }
             }
-            .navigationTitle("ラベルを選択")
+            .navigationTitle(L.LabelManagement.selectTitle)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("完了") {
+                    Button(L.Common.done) {
                         isPresented = false
                         onDismiss()
                     }
@@ -379,11 +379,11 @@ struct FilterGroupPickerSheet: View {
                     }
                 }
             }
-            .navigationTitle("グループを選択")
+            .navigationTitle(L.GroupManagement.selectTitle)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("完了") {
+                    Button(L.Common.done) {
                         isPresented = false
                         onDismiss()
                     }
@@ -429,11 +429,11 @@ struct FilterMemberPickerSheet: View {
                     }
                 }
             }
-            .navigationTitle("メンバーを選択")
+            .navigationTitle(L.MemberManagement.selectTitle)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("完了") {
+                    Button(L.Common.done) {
                         isPresented = false
                         onDismiss()
                     }
@@ -474,11 +474,11 @@ struct FilterCategoryPickerSheet: View {
                     }
                 }
             }
-            .navigationTitle("施設カテゴリを選択")
+            .navigationTitle(L.Category.selectTitle)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("完了") {
+                    Button(L.Common.done) {
                         isPresented = false
                         onDismiss()
                     }

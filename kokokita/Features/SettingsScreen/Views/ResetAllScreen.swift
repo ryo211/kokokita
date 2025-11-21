@@ -18,17 +18,17 @@ struct ResetAllScreen: View {
                 Button(role: .destructive) {
                     showConfirm = true
                 } label: {
-                    Label("全ての記録を削除", systemImage: "trash")
+                    Label(L.Settings.deleteAllButton, systemImage: "trash")
                 }
             } footer: {
-                Text("全ての記録を削除します。取り消しはできません。")
+                Text(L.Settings.resetMessage)
             }
         }
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .principal) {
                 // タイトルを長押しで隠し機能にアクセス
-                Text("初期化")
+                Text(L.Settings.resetTitle)
                     .font(.headline)
                     .contentShape(Rectangle())
                     .onLongPressGesture(minimumDuration: longPressThreshold, pressing: { isPressing in
@@ -42,14 +42,14 @@ struct ResetAllScreen: View {
                     })
             }
         }
-        .alert("本当に削除しますか？", isPresented: $showConfirm) {
-            Button("キャンセル", role: .cancel) {}
-            Button("削除する", role: .destructive) { performReset() }
+        .alert(L.Settings.resetConfirmTitle, isPresented: $showConfirm) {
+            Button(L.Common.cancel, role: .cancel) {}
+            Button(L.Common.delete, role: .destructive) { performReset() }
         } message: {
-            Text("「ココキタ」の全ての記録が端末から削除されます。")
+            Text(L.Settings.resetConfirmMessage)
         }
-        .alert("エラー", isPresented: Binding(get: { alert != nil }, set: { _ in alert = nil })) {
-            Button("OK", role: .cancel) {}
+        .alert(L.Common.error, isPresented: Binding(get: { alert != nil }, set: { _ in alert = nil })) {
+            Button(L.Common.ok, role: .cancel) {}
         } message: { Text(alert ?? "") }
         .sheet(isPresented: $showPasswordSheet) {
             DeveloperPasswordSheet(onAuthenticated: {

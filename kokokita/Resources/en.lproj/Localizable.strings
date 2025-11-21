@@ -15,6 +15,9 @@
 "common.loading" = "Loading…";
 "common.retry" = "Retry";
 "common.notSelected" = "Not Selected";
+"common.create" = "Create";
+"common.clear" = "Clear";
+"common.share" = "Share";
 
 // MARK: - Visit Edit
 "visit.edit.titlePlaceholder" = "Title";
@@ -25,6 +28,7 @@
 "visit.edit.kokokamo" = "Nearby";
 "visit.edit.selectLabel" = "Select Labels";
 "visit.edit.selectGroup" = "Select Group";
+"visit.edit.selectMember" = "Select Members";
 "visit.edit.createNew" = "Create New…";
 "visit.edit.labelName" = "Label Name";
 "visit.edit.groupName" = "Group Name";
@@ -59,6 +63,8 @@
 "detail.group" = "Group";
 "detail.memo" = "Memo";
 "detail.facility" = "Facility Info";
+"detail.deleteConfirmTitle" = "Delete this record?";
+"detail.deleteConfirmMessage" = "This action cannot be undone.";
 
 // MARK: - Menu
 "menu.title" = "Menu";
@@ -96,3 +102,129 @@
 "period.thisMonth" = "This Month";
 "period.lastMonth" = "Last Month";
 "period.custom" = "Custom Period";
+
+// MARK: - Label Management
+"label.title" = "Labels";
+"label.namePlaceholder" = "Label Name";
+"label.createTitle" = "New Label";
+"label.selectTitle" = "Select Labels";
+"label.emptyMessage" = "No labels";
+"label.emptyDescription" = "Tap + above to create.";
+"label.deleteConfirm" = "Delete this label";
+"label.createAccessibility" = "Create new label";
+"label.deleteReallyConfirm" = "Are you sure?";
+"label.deleteFooter" = "Deleting a label does not delete the records themselves.";
+"label.duplicateName" = "A label with the same name already exists.";
+"label.detailTitle" = "Label Details";
+"label.deleteIrreversible" = "This action cannot be undone.";
+
+// MARK: - Group Management
+"group.title" = "Groups";
+"group.namePlaceholder" = "Group Name";
+"group.createTitle" = "New Group";
+"group.selectTitle" = "Select Group";
+"group.emptyMessage" = "No groups";
+"group.emptyDescription" = "Tap + above to create.";
+"group.deleteConfirm" = "Delete this group";
+"group.createAccessibility" = "Create new group";
+"group.deleteReallyConfirm" = "Are you sure?";
+"group.deleteFooter" = "Deleting a group does not delete the records themselves.";
+"group.duplicateName" = "A group with the same name already exists.";
+"group.detailTitle" = "Group Details";
+"group.deleteIrreversible" = "This action cannot be undone.";
+
+// MARK: - Member Management
+"member.title" = "Members";
+"member.namePlaceholder" = "Member Name";
+"member.createTitle" = "New Member";
+"member.selectTitle" = "Select Members";
+"member.emptyMessage" = "No members";
+"member.emptyDescription" = "Tap + above to create.";
+"member.deleteConfirm" = "Delete this member";
+"member.createAccessibility" = "Create new member";
+"member.deleteReallyConfirm" = "Are you sure?";
+"member.deleteFooter" = "Deleting a member does not delete the records themselves.";
+"member.duplicateName" = "A member with the same name already exists.";
+"member.detailTitle" = "Member Details";
+"member.deleteIrreversible" = "This action cannot be undone.";
+
+// MARK: - Settings
+"settings.title" = "Menu";
+"settings.editLabels" = "Edit Labels";
+"settings.editGroups" = "Edit Groups";
+"settings.editMembers" = "Edit Members";
+"settings.dataMigration" = "Data Migration";
+"settings.resetAll" = "Reset (Delete All)";
+"settings.resetAllDescription" = "\"Reset\" deletes all records. This cannot be undone.";
+"settings.resetTitle" = "Reset";
+"settings.resetMessage" = "All records will be deleted. This cannot be undone.";
+"settings.resetConfirmTitle" = "Are you sure?";
+"settings.resetConfirmMessage" = "All \"Kokokita\" records will be deleted from this device.";
+"settings.deleteAllButton" = "Delete All Records";
+"settings.testErrorLog" = "Test Error Log";
+"settings.testCrash" = "Test Crash";
+"settings.testCrashTitle" = "Test Crash";
+"settings.testCrashMessage" = "App will force quit. You can check it on Firebase Crashlytics.";
+"settings.developerTest" = "Developer Tests";
+
+// MARK: - Data Migration
+"migration.title" = "Data Migration";
+"migration.backupSection" = "Data Backup";
+"migration.restoreSection" = "Data Restore";
+"migration.backupButton" = "Backup";
+"migration.backupDescription" = "Save all data to a ZIP file";
+"migration.restoreButton" = "Restore";
+"migration.backupCompleteTitle" = "Backup Complete";
+"migration.backupResultTitle" = "Backup Result";
+"migration.backupFilename" = "Filename";
+"migration.backupSize" = "Size";
+"migration.shareFile" = "Share File";
+"migration.backupErrorTitle" = "Backup Error";
+"migration.restoreCompleteTitle" = "Restore Complete";
+"migration.restoreCompleteMessage" = "Data has been restored successfully";
+"migration.restoreErrorTitle" = "Restore Error";
+"migration.restoreNotPossibleTitle" = "Cannot Restore";
+"migration.restoreNotPossibleMessage" = "Data exists. To restore, please execute \"Reset (Delete All)\" first.";
+"migration.fileSelectError" = "File Selection Error";
+"migration.passwordPrompt" = "Password";
+"migration.passwordIncorrect" = "Incorrect password";
+"migration.execute" = "Execute";
+
+// MARK: - Search & Filter
+"filter.sortOldest" = "Oldest First";
+"filter.sortNewest" = "Newest First";
+"filter.titleOrAddressPlaceholder" = "Word in title or address";
+"filter.filterByDate" = "Filter by date";
+"filter.title" = "Search";
+"filter.sectionKeyword" = "Keyword";
+"filter.sectionLabel" = "Labels";
+"filter.sectionGroup" = "Group";
+"filter.sectionMember" = "Members";
+"filter.sectionPeriod" = "Period";
+"filter.sectionCategory" = "Facility Category";
+
+// MARK: - Prompt
+"prompt.saveAsIsTitle" = "Save as is";
+"prompt.saveAsIsSubtitle" = "Can edit later";
+"prompt.enterInfoTitle" = "Enter info";
+"prompt.enterInfoSubtitle" = "Title, memo, etc.";
+"prompt.kokokamoTitle" = "Nearby";
+"prompt.kokokamoSubtitle" = "View & select nearby places";
+
+// MARK: - Location
+"location.acquiring" = "Getting location...";
+"location.waiting" = "Please wait";
+"location.noLocation" = "No location";
+"location.kokokitaCompleted" = "Kokokita  ✅";
+"location.noLocationData" = "No location data";
+
+// MARK: - Empty State
+"emptyState.noRecords" = "No records yet";
+"emptyState.noRecordsDescription" = "Tap the \"Kokokita\" button below\nto record where you are";
+
+// MARK: - Category
+"category.selectTitle" = "Select Facility Category";
+
+// MARK: - Date
+"date.today" = "Today";
+"date.yesterday" = "Yesterday";

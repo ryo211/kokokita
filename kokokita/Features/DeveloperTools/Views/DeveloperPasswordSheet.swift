@@ -26,7 +26,7 @@ struct DeveloperPasswordSheet: View {
                 }
 
                 VStack(spacing: 16) {
-                    SecureField("パスワード", text: $password)
+                    SecureField(L.DataMigration.passwordPrompt, text: $password)
                         .textFieldStyle(.roundedBorder)
                         .textContentType(.password)
                         .autocapitalization(.none)
@@ -53,15 +53,15 @@ struct DeveloperPasswordSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("キャンセル") {
+                    Button(L.Common.cancel) {
                         dismiss()
                     }
                 }
             }
             .alert("認証エラー", isPresented: $showError) {
-                Button("OK", role: .cancel) {}
+                Button(L.Common.ok, role: .cancel) {}
             } message: {
-                Text("パスワードが間違っています")
+                Text(L.DataMigration.passwordIncorrect)
             }
         }
     }

@@ -105,7 +105,7 @@ struct VisitDetailScreen: View {
                 } label: {
                     HStack(spacing: 6) {
                         Image(systemName: "square.and.pencil")
-                        Text("編集")
+                        Text(L.Common.edit)
                     }
                     .font(.subheadline.weight(.semibold))
                 }
@@ -115,31 +115,31 @@ struct VisitDetailScreen: View {
                 } label: {
                     HStack(spacing: 6) {
                         Image(systemName: "square.and.arrow.up")
-                        Text("共有")
+                        Text(L.Common.share)
                     }
                     .font(.subheadline.weight(.semibold))
                 }
-                
+
                 Button(role: .destructive) {
                     showDeleteAlert = true
                 } label: {
                     Image(systemName: "trash")
                 }
-                .accessibilityLabel("削除")
+                .accessibilityLabel(L.Common.delete)
             }
         }
 
         .sheet(item: $sharePayload) { payload in
             ActivityView(items: [payload.text, payload.image])
         }
-        .alert("この記録を削除しますか？", isPresented: $showDeleteAlert) {
-            Button("削除", role: .destructive) {
+        .alert(L.Detail.deleteConfirmTitle, isPresented: $showDeleteAlert) {
+            Button(L.Common.delete, role: .destructive) {
                 onDelete()
                 dismiss()
             }
-            Button("キャンセル", role: .cancel) { }
+            Button(L.Common.cancel, role: .cancel) { }
         } message: {
-            Text("この操作は取り消せません。")
+            Text(L.Detail.deleteConfirmMessage)
         }
         // ラベルピッカー
         .sheet(isPresented: $labelPickerShown) {
@@ -151,14 +151,14 @@ struct VisitDetailScreen: View {
                     showCreateSheet: $labelCreateShown,
                     showDoneButton: false
                 )
-                .navigationTitle("ラベルを選択")
+                .navigationTitle(L.LabelManagement.selectTitle)
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .cancellationAction) {
-                        Button("閉じる") { labelPickerShown = false }
+                        Button(L.Common.close) { labelPickerShown = false }
                     }
                     ToolbarItem(placement: .confirmationAction) {
-                        Button("保存") {
+                        Button(L.Common.save) {
                             saveLabels()
                             labelPickerShown = false
                         }
@@ -184,14 +184,14 @@ struct VisitDetailScreen: View {
                     showClearButton: true,
                     showDoneButton: false
                 )
-                .navigationTitle("グループを選択")
+                .navigationTitle(L.GroupManagement.selectTitle)
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .cancellationAction) {
-                        Button("閉じる") { groupPickerShown = false }
+                        Button(L.Common.close) { groupPickerShown = false }
                     }
                     ToolbarItem(placement: .confirmationAction) {
-                        Button("保存") {
+                        Button(L.Common.save) {
                             saveGroup()
                             groupPickerShown = false
                         }
@@ -216,14 +216,14 @@ struct VisitDetailScreen: View {
                     showCreateSheet: $memberCreateShown,
                     showDoneButton: false
                 )
-                .navigationTitle("メンバーを選択")
+                .navigationTitle(L.MemberManagement.selectTitle)
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .cancellationAction) {
-                        Button("閉じる") { memberPickerShown = false }
+                        Button(L.Common.close) { memberPickerShown = false }
                     }
                     ToolbarItem(placement: .confirmationAction) {
-                        Button("保存") {
+                        Button(L.Common.save) {
                             saveMembers()
                             memberPickerShown = false
                         }

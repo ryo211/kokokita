@@ -38,7 +38,7 @@ struct MemberPickerSheet: View {
                     }
                 }
             }
-            .navigationTitle("メンバーを選択")
+            .navigationTitle(L.VisitEdit.selectMember)
             .toolbar {
                 if showDoneButton {
                     ToolbarItem(placement: .navigationBarTrailing) {

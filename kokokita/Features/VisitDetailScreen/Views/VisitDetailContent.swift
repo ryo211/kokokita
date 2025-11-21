@@ -161,7 +161,7 @@ struct VisitDetailContent: View {
             if let memo = data.memo?.trimmed, !memo.isEmpty {
                 InfoCard {
                     VStack(alignment: .leading, spacing: 8) {
-                        Label("メモ", systemImage: "note.text")
+                        Label(L.Detail.memo, systemImage: "note.text")
                             .font(.headline)
                         Text(memo)
                             .font(.body)

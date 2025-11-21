@@ -47,7 +47,7 @@ final class GroupListStore {
 
         // 重複チェック
         if GroupValidator.isDuplicate(validName, in: items) {
-            alert = "同じ名前のグループが既にあります。"
+            alert = L.GroupManagement.duplicateName
             return false
         }
 

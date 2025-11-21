@@ -17,7 +17,7 @@ struct GroupDetailView: View {
 
     var body: some View {
         Form {
-            Section { TextField("グループ名", text: $name)
+            Section { TextField(L.GroupManagement.namePlaceholder, text: $name)
                 .submitLabel(.done)
                 .onSubmit {
                     if GroupValidator.isNotEmpty(name) {
@@ -27,23 +27,23 @@ struct GroupDetailView: View {
             }
             Section {
                 Button(role: .destructive) { showDeleteConfirm = true } label: {
-                    Label("このグループを削除", systemImage: "trash")
+                    Label(L.GroupManagement.deleteConfirm, systemImage: "trash")
                 }
-            } footer: { Text("グループを削除しても、記録自体は削除されません。") }
+            } footer: { Text(L.GroupManagement.deleteFooter) }
         }
-        .navigationTitle("グループ詳細")
+        .navigationTitle(L.GroupManagement.detailTitle)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button("保存") { save() }
+                Button(L.Common.save) { save() }
                     .disabled(store.loading || !GroupValidator.isNotEmpty(name))
             }
         }
-        .alert("本当に削除しますか?", isPresented: $showDeleteConfirm) {
-            Button("キャンセル", role: .cancel) {}
-            Button("削除", role: .destructive) { delete() }
-        } message: { Text("この操作は取り消せません。") }
-        .alert("エラー", isPresented: Binding(get: { store.alert != nil }, set: { _ in store.alert = nil })) {
-            Button("OK", role: .cancel) {}
+        .alert(L.GroupManagement.deleteReallyConfirm, isPresented: $showDeleteConfirm) {
+            Button(L.Common.cancel, role: .cancel) {}
+            Button(L.Common.delete, role: .destructive) { delete() }
+        } message: { Text(L.GroupManagement.deleteIrreversible) }
+        .alert(L.Common.error, isPresented: Binding(get: { store.alert != nil }, set: { _ in store.alert = nil })) {
+            Button(L.Common.ok, role: .cancel) {}
         } message: { Text(store.alert ?? "") }
     }
 

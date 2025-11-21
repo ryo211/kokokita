@@ -27,11 +27,11 @@ struct LabelListScreen: View {
             if store.loading {
                 ProgressView().controlSize(.large)
             } else if store.items.isEmpty {
-                ContentUnavailableView("ラベルはありません", systemImage: "tag",
-                    description: Text("右上の+から作成できます。"))
+                ContentUnavailableView(L.LabelManagement.emptyMessage, systemImage: "tag",
+                    description: Text(L.LabelManagement.emptyDescription))
             }
         }
-        .navigationTitle("ラベル")
+        .navigationTitle(L.LabelManagement.title)
         .navigationBarTitleDisplayMode(.inline)
         .task { await store.load() }
         .toolbar {
@@ -42,13 +42,13 @@ struct LabelListScreen: View {
                 } label: {
                     Image(systemName: "plus")
                 }
-                .accessibilityLabel("ラベルを新規作成")
+                .accessibilityLabel(L.LabelManagement.createAccessibility)
             }
         }
         .sheet(isPresented: $showCreate) {
             NavigationStack {
                 Form {
-                    Section { TextField("ラベル名", text: $newLabelName)
+                    Section { TextField(L.LabelManagement.namePlaceholder, text: $newLabelName)
                         .textInputAutocapitalization(.none)
                         .disableAutocorrection(true)
                         .submitLabel(.done)
@@ -59,16 +59,16 @@ struct LabelListScreen: View {
                         }
                     }
                     Section {
-                        Button("作成") { createLabel() }
+                        Button(L.Common.create) { createLabel() }
                             .disabled(!LabelValidator.isNotEmpty(newLabelName))
-                        Button("キャンセル", role: .cancel) { showCreate = false }
+                        Button(L.Common.cancel, role: .cancel) { showCreate = false }
                     }
                 }
-                .navigationTitle("ラベル新規作成")
+                .navigationTitle(L.LabelManagement.createTitle)
             }
         }
-        .alert("エラー", isPresented: Binding(get: { store.alert != nil }, set: { _ in store.alert = nil })) {
-            Button("OK", role: .cancel) {}
+        .alert(L.Common.error, isPresented: Binding(get: { store.alert != nil }, set: { _ in store.alert = nil })) {
+            Button(L.Common.ok, role: .cancel) {}
         } message: { Text(store.alert ?? "") }
     }
 

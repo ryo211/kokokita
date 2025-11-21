@@ -268,11 +268,11 @@ struct VisitListScreen: View {
                 .opacity(0.3)
 
             VStack(spacing: 12) {
-                Text("まだ記録がありません")
+                Text(L.EmptyState.noRecords)
                     .font(.title2.bold())
                     .foregroundColor(.primary)
 
-                Text("下の「ココキタ」ボタンをタップして\n今いる場所を記録しましょう")
+                Text(L.EmptyState.noRecordsDescription)
                     .font(.body)
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
@@ -327,9 +327,9 @@ struct VisitListScreen: View {
 
         let calendar = Calendar.current
         if calendar.isDateInToday(date) {
-            return "今日"
+            return L.Date.today
         } else if calendar.isDateInYesterday(date) {
-            return "昨日"
+            return L.Date.yesterday
         } else {
             return formatter.string(from: date)
         }

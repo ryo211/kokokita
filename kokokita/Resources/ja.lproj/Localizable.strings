@@ -15,6 +15,9 @@
 "common.loading" = "読み込み中…";
 "common.retry" = "再試行";
 "common.notSelected" = "未選択";
+"common.create" = "作成";
+"common.clear" = "クリア";
+"common.share" = "共有";
 
 // MARK: - Visit Edit
 "visit.edit.titlePlaceholder" = "タイトル";
@@ -25,6 +28,7 @@
 "visit.edit.kokokamo" = "ココカモ";
 "visit.edit.selectLabel" = "ラベルを選択";
 "visit.edit.selectGroup" = "グループを選択";
+"visit.edit.selectMember" = "メンバーを選択";
 "visit.edit.createNew" = "新規作成…";
 "visit.edit.labelName" = "ラベル名";
 "visit.edit.groupName" = "グループ名";
@@ -59,6 +63,8 @@
 "detail.group" = "グループ";
 "detail.memo" = "メモ";
 "detail.facility" = "施設情報";
+"detail.deleteConfirmTitle" = "この記録を削除しますか？";
+"detail.deleteConfirmMessage" = "この操作は取り消せません。";
 
 // MARK: - Menu
 "menu.title" = "メニュー";
@@ -96,3 +102,129 @@
 "period.thisMonth" = "今月";
 "period.lastMonth" = "先月";
 "period.custom" = "期間指定";
+
+// MARK: - Label Management
+"label.title" = "ラベル";
+"label.namePlaceholder" = "ラベル名";
+"label.createTitle" = "ラベル新規作成";
+"label.selectTitle" = "ラベルを選択";
+"label.emptyMessage" = "ラベルはありません";
+"label.emptyDescription" = "右上の+から作成できます。";
+"label.deleteConfirm" = "このラベルを削除";
+"label.createAccessibility" = "ラベルを新規作成";
+"label.deleteReallyConfirm" = "本当に削除しますか？";
+"label.deleteFooter" = "ラベルを削除しても、記録自体は削除されません。";
+"label.duplicateName" = "同じ名前のラベルが既にあります。";
+"label.detailTitle" = "ラベル詳細";
+"label.deleteIrreversible" = "この操作は取り消せません。";
+
+// MARK: - Group Management
+"group.title" = "グループ";
+"group.namePlaceholder" = "グループ名";
+"group.createTitle" = "グループ新規作成";
+"group.selectTitle" = "グループを選択";
+"group.emptyMessage" = "グループはありません";
+"group.emptyDescription" = "右上の+から作成できます。";
+"group.deleteConfirm" = "このグループを削除";
+"group.createAccessibility" = "グループを新規作成";
+"group.deleteReallyConfirm" = "本当に削除しますか？";
+"group.deleteFooter" = "グループを削除しても、記録自体は削除されません。";
+"group.duplicateName" = "同じ名前のグループが既にあります。";
+"group.detailTitle" = "グループ詳細";
+"group.deleteIrreversible" = "この操作は取り消せません。";
+
+// MARK: - Member Management
+"member.title" = "メンバー";
+"member.namePlaceholder" = "メンバー名";
+"member.createTitle" = "メンバー新規作成";
+"member.selectTitle" = "メンバーを選択";
+"member.emptyMessage" = "メンバーはありません";
+"member.emptyDescription" = "右上の+から作成できます。";
+"member.deleteConfirm" = "このメンバーを削除";
+"member.createAccessibility" = "メンバーを新規作成";
+"member.deleteReallyConfirm" = "本当に削除しますか？";
+"member.deleteFooter" = "メンバーを削除しても、記録自体は削除されません。";
+"member.duplicateName" = "同じ名前のメンバーが既にあります。";
+"member.detailTitle" = "メンバー詳細";
+"member.deleteIrreversible" = "この操作は取り消せません。";
+
+// MARK: - Settings
+"settings.title" = "メニュー";
+"settings.editLabels" = "ラベルを編集";
+"settings.editGroups" = "グループを編集";
+"settings.editMembers" = "メンバーを編集";
+"settings.dataMigration" = "データ移行";
+"settings.resetAll" = "初期化（全削除）";
+"settings.resetAllDescription" = "「初期化」は全ての記録を削除します。元に戻せません。";
+"settings.resetTitle" = "初期化";
+"settings.resetMessage" = "全ての記録を削除します。取り消しはできません。";
+"settings.resetConfirmTitle" = "本当に削除しますか？";
+"settings.resetConfirmMessage" = "「ココキタ」の全ての記録が端末から削除されます。";
+"settings.deleteAllButton" = "全ての記録を削除";
+"settings.testErrorLog" = "エラーログをテスト";
+"settings.testCrash" = "クラッシュをテスト";
+"settings.testCrashTitle" = "テストクラッシュ";
+"settings.testCrashMessage" = "アプリが強制終了します。Firebase Crashlyticsで確認できます。";
+"settings.developerTest" = "開発者向けテスト";
+
+// MARK: - Data Migration
+"migration.title" = "データ移行";
+"migration.backupSection" = "データバックアップ";
+"migration.restoreSection" = "データリストア";
+"migration.backupButton" = "バックアップ";
+"migration.backupDescription" = "全データをZIPファイルに保存";
+"migration.restoreButton" = "リストア";
+"migration.backupCompleteTitle" = "バックアップ完了";
+"migration.backupResultTitle" = "バックアップ結果";
+"migration.backupFilename" = "ファイル名";
+"migration.backupSize" = "サイズ";
+"migration.shareFile" = "ファイルを共有";
+"migration.backupErrorTitle" = "バックアップエラー";
+"migration.restoreCompleteTitle" = "リストア完了";
+"migration.restoreCompleteMessage" = "データの復元が完了しました";
+"migration.restoreErrorTitle" = "リストアエラー";
+"migration.restoreNotPossibleTitle" = "リストア不可";
+"migration.restoreNotPossibleMessage" = "データが存在します。リストアを実行するには、先に「初期化（全削除）」を実行してください。";
+"migration.fileSelectError" = "ファイル選択エラー";
+"migration.passwordPrompt" = "パスワード";
+"migration.passwordIncorrect" = "パスワードが間違っています";
+"migration.execute" = "実行";
+
+// MARK: - Search & Filter
+"filter.sortOldest" = "　古い順";
+"filter.sortNewest" = "新しい順";
+"filter.titleOrAddressPlaceholder" = "タイトルまたは住所に含む語";
+"filter.filterByDate" = "日付で絞り込む";
+"filter.title" = "検索";
+"filter.sectionKeyword" = "キーワード";
+"filter.sectionLabel" = "ラベル";
+"filter.sectionGroup" = "グループ";
+"filter.sectionMember" = "メンバー";
+"filter.sectionPeriod" = "期間";
+"filter.sectionCategory" = "施設カテゴリ";
+
+// MARK: - Prompt
+"prompt.saveAsIsTitle" = "そのまま保存";
+"prompt.saveAsIsSubtitle" = "後で編集できます";
+"prompt.enterInfoTitle" = "情報を入力";
+"prompt.enterInfoSubtitle" = "タイトル・メモなど";
+"prompt.kokokamoTitle" = "ココカモ";
+"prompt.kokokamoSubtitle" = "周囲の場所を表示・選択";
+
+// MARK: - Location
+"location.acquiring" = "位置情報を取得中...";
+"location.waiting" = "しばらくお待ちください";
+"location.noLocation" = "位置情報なし";
+"location.kokokitaCompleted" = "ココキタ  ✅";
+"location.noLocationData" = "位置情報がありません";
+
+// MARK: - Empty State
+"emptyState.noRecords" = "まだ記録がありません";
+"emptyState.noRecordsDescription" = "下の「ココキタ」ボタンをタップして\n今いる場所を記録しましょう";
+
+// MARK: - Category
+"category.selectTitle" = "施設カテゴリを選択";
+
+// MARK: - Date
+"date.today" = "今日";
+"date.yesterday" = "昨日";

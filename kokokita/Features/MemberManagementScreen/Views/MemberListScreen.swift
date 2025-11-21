@@ -27,11 +27,11 @@ struct MemberListScreen: View {
             if store.loading {
                 ProgressView().controlSize(.large)
             } else if store.items.isEmpty {
-                ContentUnavailableView("メンバーはありません", systemImage: "person",
-                    description: Text("右上の+から作成できます。"))
+                ContentUnavailableView(L.MemberManagement.emptyMessage, systemImage: "person",
+                    description: Text(L.MemberManagement.emptyDescription))
             }
         }
-        .navigationTitle("メンバー")
+        .navigationTitle(L.MemberManagement.title)
         .navigationBarTitleDisplayMode(.inline)
         .task { await store.load() }
         .toolbar {
@@ -42,13 +42,13 @@ struct MemberListScreen: View {
                 } label: {
                     Image(systemName: "plus")
                 }
-                .accessibilityLabel("メンバーを新規作成")
+                .accessibilityLabel(L.MemberManagement.createAccessibility)
             }
         }
         .sheet(isPresented: $showCreate) {
             NavigationStack {
                 Form {
-                    Section { TextField("メンバー名", text: $newMemberName)
+                    Section { TextField(L.MemberManagement.namePlaceholder, text: $newMemberName)
                         .textInputAutocapitalization(.none)
                         .disableAutocorrection(true)
                         .submitLabel(.done)
@@ -59,16 +59,16 @@ struct MemberListScreen: View {
                         }
                     }
                     Section {
-                        Button("作成") { createMember() }
+                        Button(L.Common.create) { createMember() }
                             .disabled(!MemberValidator.isNotEmpty(newMemberName))
-                        Button("キャンセル", role: .cancel) { showCreate = false }
+                        Button(L.Common.cancel, role: .cancel) { showCreate = false }
                     }
                 }
-                .navigationTitle("メンバー新規作成")
+                .navigationTitle(L.MemberManagement.createTitle)
             }
         }
-        .alert("エラー", isPresented: Binding(get: { store.alert != nil }, set: { _ in store.alert = nil })) {
-            Button("OK", role: .cancel) {}
+        .alert(L.Common.error, isPresented: Binding(get: { store.alert != nil }, set: { _ in store.alert = nil })) {
+            Button(L.Common.ok, role: .cancel) {}
         } message: { Text(store.alert ?? "") }
     }
 

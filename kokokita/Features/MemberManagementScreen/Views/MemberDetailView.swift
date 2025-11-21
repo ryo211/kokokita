@@ -17,7 +17,7 @@ struct MemberDetailView: View {
 
     var body: some View {
         Form {
-            Section { TextField("メンバー名", text: $name)
+            Section { TextField(L.MemberManagement.namePlaceholder, text: $name)
                 .submitLabel(.done)
                 .onSubmit {
                     if MemberValidator.isNotEmpty(name) {
@@ -28,22 +28,22 @@ struct MemberDetailView: View {
             Section {
                 Button(role: .destructive) {
                     showDeleteConfirm = true
-                } label: { Label("このメンバーを削除", systemImage: "trash") }
-            } footer: { Text("メンバーを削除しても、記録自体は削除されません。") }
+                } label: { Label(L.MemberManagement.deleteConfirm, systemImage: "trash") }
+            } footer: { Text(L.MemberManagement.deleteFooter) }
         }
-        .navigationTitle("メンバー詳細")
+        .navigationTitle(L.MemberManagement.detailTitle)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button("保存") { save() }
+                Button(L.Common.save) { save() }
                     .disabled(store.loading || !MemberValidator.isNotEmpty(name))
             }
         }
-        .alert("本当に削除しますか?", isPresented: $showDeleteConfirm) {
-            Button("キャンセル", role: .cancel) {}
-            Button("削除", role: .destructive) { delete() }
-        } message: { Text("この操作は取り消せません。") }
-        .alert("エラー", isPresented: Binding(get: { store.alert != nil }, set: { _ in store.alert = nil })) {
-            Button("OK", role: .cancel) {}
+        .alert(L.MemberManagement.deleteReallyConfirm, isPresented: $showDeleteConfirm) {
+            Button(L.Common.cancel, role: .cancel) {}
+            Button(L.Common.delete, role: .destructive) { delete() }
+        } message: { Text(L.MemberManagement.deleteIrreversible) }
+        .alert(L.Common.error, isPresented: Binding(get: { store.alert != nil }, set: { _ in store.alert = nil })) {
+            Button(L.Common.ok, role: .cancel) {}
         } message: { Text(store.alert ?? "") }
     }
 

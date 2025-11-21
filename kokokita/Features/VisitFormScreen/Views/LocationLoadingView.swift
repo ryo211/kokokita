@@ -9,10 +9,10 @@ struct LocationLoadingView: View {
                 .progressViewStyle(CircularProgressViewStyle(tint: .accentColor))
 
             VStack(spacing: 8) {
-                Text("位置情報を取得中...")
+                Text(L.Location.acquiring)
                     .font(.headline)
 
-                Text("しばらくお待ちください")
+                Text(L.Location.waiting)
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

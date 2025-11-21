@@ -10,19 +10,19 @@ struct SettingsHomeScreen: View {
                 NavigationLink {
                     LabelListScreen()
                 } label: {
-                    Label("ラベルを編集", systemImage: "tag")
+                    Label(L.Settings.editLabels, systemImage: "tag")
                 }
 
                 NavigationLink {
                     GroupListScreen()
                 } label: {
-                    Label("グループを編集", systemImage: "folder")
+                    Label(L.Settings.editGroups, systemImage: "folder")
                 }
 
                 NavigationLink {
                     MemberListScreen()
                 } label: {
-                    Label("メンバーを編集", systemImage: "person")
+                    Label(L.Settings.editMembers, systemImage: "person")
                 }
             }
 
@@ -31,33 +31,33 @@ struct SettingsHomeScreen: View {
                 NavigationLink {
                     DataMigrationScreen()
                 } label: {
-                    Label("データ移行", systemImage: "arrow.up.arrow.down.circle")
+                    Label(L.Settings.dataMigration, systemImage: "arrow.up.arrow.down.circle")
                         .foregroundStyle(.blue)
                 }
 
                 Button {
                     testErrorLogging()
                 } label: {
-                    Label("エラーログをテスト", systemImage: "ladybug")
+                    Label(L.Settings.testErrorLog, systemImage: "ladybug")
                         .foregroundStyle(.orange)
                 }
 
                 Button {
                     showCrashAlert = true
                 } label: {
-                    Label("クラッシュをテスト", systemImage: "exclamationmark.triangle")
+                    Label(L.Settings.testCrash, systemImage: "exclamationmark.triangle")
                         .foregroundStyle(.red)
                 }
-                .alert("テストクラッシュ", isPresented: $showCrashAlert) {
-                    Button("キャンセル", role: .cancel) { }
-                    Button("実行", role: .destructive) {
+                .alert(L.Settings.testCrashTitle, isPresented: $showCrashAlert) {
+                    Button(L.Common.cancel, role: .cancel) { }
+                    Button(L.DataMigration.execute, role: .destructive) {
                         testCrash()
                     }
                 } message: {
-                    Text("アプリが強制終了します。Firebase Crashlyticsで確認できます。")
+                    Text(L.Settings.testCrashMessage)
                 }
             } header: {
-                Text("開発者向けテスト")
+                Text(L.Settings.developerTest)
             }
             #endif
 
@@ -65,14 +65,14 @@ struct SettingsHomeScreen: View {
                 NavigationLink {
                     ResetAllScreen()
                 } label: {
-                    Label("初期化（全削除）", systemImage: "trash")
+                    Label(L.Settings.resetAll, systemImage: "trash")
                         .foregroundStyle(.red)
                 }
             } footer: {
-                Text("「初期化」は全ての記録を削除します。元に戻せません。")
+                Text(L.Settings.resetAllDescription)
             }
         }
-        .navigationTitle("メニュー")
+        .navigationTitle(L.Settings.title)
         .navigationBarTitleDisplayMode(.inline)
     }
 

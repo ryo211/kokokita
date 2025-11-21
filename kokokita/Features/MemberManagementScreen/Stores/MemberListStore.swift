@@ -47,7 +47,7 @@ final class MemberListStore {
 
         // 重複チェック
         if MemberValidator.isDuplicate(validName, in: items) {
-            alert = "同じ名前のメンバーが既にあります。"
+            alert = L.MemberManagement.duplicateName
             return false
         }
 

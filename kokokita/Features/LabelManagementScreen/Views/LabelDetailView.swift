@@ -17,7 +17,7 @@ struct LabelDetailView: View {
 
     var body: some View {
         Form {
-            Section { TextField("ラベル名", text: $name)
+            Section { TextField(L.LabelManagement.namePlaceholder, text: $name)
                 .submitLabel(.done)
                 .onSubmit {
                     if LabelValidator.isNotEmpty(name) {
@@ -28,22 +28,22 @@ struct LabelDetailView: View {
             Section {
                 Button(role: .destructive) {
                     showDeleteConfirm = true
-                } label: { Label("このラベルを削除", systemImage: "trash") }
-            } footer: { Text("ラベルを削除しても、記録自体は削除されません。") }
+                } label: { Label(L.LabelManagement.deleteConfirm, systemImage: "trash") }
+            } footer: { Text(L.LabelManagement.deleteFooter) }
         }
-        .navigationTitle("ラベル詳細")
+        .navigationTitle(L.LabelManagement.detailTitle)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button("保存") { save() }
+                Button(L.Common.save) { save() }
                     .disabled(store.loading || !LabelValidator.isNotEmpty(name))
             }
         }
-        .alert("本当に削除しますか？", isPresented: $showDeleteConfirm) {
-            Button("キャンセル", role: .cancel) {}
-            Button("削除", role: .destructive) { delete() }
-        } message: { Text("この操作は取り消せません。") }
-        .alert("エラー", isPresented: Binding(get: { store.alert != nil }, set: { _ in store.alert = nil })) {
-            Button("OK", role: .cancel) {}
+        .alert(L.LabelManagement.deleteReallyConfirm, isPresented: $showDeleteConfirm) {
+            Button(L.Common.cancel, role: .cancel) {}
+            Button(L.Common.delete, role: .destructive) { delete() }
+        } message: { Text(L.LabelManagement.deleteIrreversible) }
+        .alert(L.Common.error, isPresented: Binding(get: { store.alert != nil }, set: { _ in store.alert = nil })) {
+            Button(L.Common.ok, role: .cancel) {}
         } message: { Text(store.alert ?? "") }
     }
 

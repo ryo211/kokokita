@@ -27,7 +27,7 @@ struct PostKokokitaPromptSheet: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 42, height: 42)
-                    Text("ココキタ  ✅")
+                    Text(L.Location.kokokitaCompleted)
                         .font(.system(size: 24, weight: .semibold, design: .rounded))
                         .tracking(1.2)  // 文字間隔を広げる
                         .foregroundColor(.accentColor)
@@ -59,7 +59,7 @@ struct PostKokokitaPromptSheet: View {
                     )
                     .frame(height: max(200, min(500, geometry.size.height * 0.55)))
                 } else {
-                    Text("位置情報がありません")
+                    Text(L.Location.noLocationData)
                         .foregroundStyle(.secondary)
                 }
                 
@@ -68,8 +68,8 @@ struct PostKokokitaPromptSheet: View {
                     actionButton(
                         primary: true,
                         systemImage: "checkmark.circle.fill",
-                        title: "そのまま保存",
-                        subtitle: "後で編集できます",
+                        title: L.Prompt.saveAsIsTitle,
+                        subtitle: L.Prompt.saveAsIsSubtitle,
                         isDisabled: !canSave,
                         action: onQuickSave
                     )
@@ -77,16 +77,16 @@ struct PostKokokitaPromptSheet: View {
                     actionButton(
                         primary: false,
                         systemImage: "square.and.pencil",
-                        title: "情報を入力",
-                        subtitle: "タイトル・メモなど",
+                        title: L.Prompt.enterInfoTitle,
+                        subtitle: L.Prompt.enterInfoSubtitle,
                         action: onOpenEditor
                     )
 
                     actionButton(
                         primary: false,
                         systemImage: "building.2.crop.circle",
-                        title: "ココカモ",
-                        subtitle: "周囲の場所を表示・選択",
+                        title: L.Prompt.kokokamoTitle,
+                        subtitle: L.Prompt.kokokamoSubtitle,
                         action: onOpenPOI
                     )
                 }

@@ -26,9 +26,9 @@ struct DataMigrationScreen: View {
                                 .font(.title3)
                                 .foregroundColor(.blue)
                             VStack(alignment: .leading, spacing: 4) {
-                                Text("データバックアップ")
+                                Text(L.DataMigration.backupSection)
                                     .font(.headline)
-                                Text("全データをZIPファイルに保存")
+                                Text(L.DataMigration.backupDescription)
                                     .font(.caption)
                                     .foregroundColor(.secondary)
                             }
@@ -40,7 +40,7 @@ struct DataMigrationScreen: View {
                     }
                     .disabled(isBackupInProgress || isRestoreInProgress)
                 } header: {
-                    Text("バックアップ")
+                    Text(L.DataMigration.backupButton)
                 } footer: {
                     Text("訪問記録、写真、ラベル、グループ等の全データをエクスポートします。")
                 }
@@ -55,7 +55,7 @@ struct DataMigrationScreen: View {
                                 .font(.title3)
                                 .foregroundColor(.green)
                             VStack(alignment: .leading, spacing: 4) {
-                                Text("データリストア")
+                                Text(L.DataMigration.restoreSection)
                                     .font(.headline)
                                 Text("ZIPファイルからデータを復元")
                                     .font(.caption)
@@ -69,7 +69,7 @@ struct DataMigrationScreen: View {
                     }
                     .disabled(isBackupInProgress || isRestoreInProgress)
                 } header: {
-                    Text("リストア")
+                    Text(L.DataMigration.restoreButton)
                 } footer: {
                     Text("⚠️ データが1件もない状態でのみ使用できます。既存データは全て削除されます。")
                         .foregroundColor(.orange)
@@ -82,16 +82,16 @@ struct DataMigrationScreen: View {
                             HStack {
                                 Image(systemName: "checkmark.circle.fill")
                                     .foregroundColor(.green)
-                                Text("バックアップ完了")
+                                Text(L.DataMigration.backupCompleteTitle)
                                     .font(.headline)
                             }
 
-                            Text("ファイル名: \(result.filename)")
+                            Text("\(L.DataMigration.backupFilename): \(result.filename)")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                                 .textSelection(.enabled)
 
-                            Text("サイズ: \(ByteCountFormatter.string(fromByteCount: result.fileSize, countStyle: .file))")
+                            Text("\(L.DataMigration.backupSize): \(ByteCountFormatter.string(fromByteCount: result.fileSize, countStyle: .file))")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
 
@@ -102,22 +102,22 @@ struct DataMigrationScreen: View {
                             Button {
                                 showShareSheet = true
                             } label: {
-                                Label("ファイルを共有", systemImage: "square.and.arrow.up")
+                                Label(L.DataMigration.shareFile, systemImage: "square.and.arrow.up")
                                     .frame(maxWidth: .infinity)
                             }
                             .buttonStyle(.bordered)
                             .padding(.top, 8)
                         }
                     } header: {
-                        Text("バックアップ結果")
+                        Text(L.DataMigration.backupResultTitle)
                     }
                 }
             }
-            .navigationTitle("データ移行")
+            .navigationTitle(L.DataMigration.title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("閉じる") {
+                    Button(L.Common.close) {
                         dismiss()
                     }
                 }
@@ -161,7 +161,7 @@ struct DataMigrationScreen: View {
             } catch {
                 await MainActor.run {
                     alert = AlertMessage(
-                        title: "バックアップエラー",
+                        title: L.DataMigration.backupErrorTitle,
                         message: error.localizedDescription
                     )
                     isBackupInProgress = false
@@ -178,8 +178,8 @@ struct DataMigrationScreen: View {
             let count = try repo.allVisitsCount()
             if count > 0 {
                 alert = AlertMessage(
-                    title: "リストア不可",
-                    message: "データが存在します。リストアを実行するには、先に「初期化（全削除）」を実行してください。"
+                    title: L.DataMigration.restoreNotPossibleTitle,
+                    message: L.DataMigration.restoreNotPossibleMessage
                 )
                 return
             }
@@ -188,7 +188,7 @@ struct DataMigrationScreen: View {
             showFilePicker = true
         } catch {
             alert = AlertMessage(
-                title: "エラー",
+                title: L.Common.error,
                 message: error.localizedDescription
             )
         }
@@ -200,7 +200,7 @@ struct DataMigrationScreen: View {
             performRestore(from: url)
         case .failure(let error):
             alert = AlertMessage(
-                title: "ファイル選択エラー",
+                title: L.DataMigration.fileSelectError,
                 message: error.localizedDescription
             )
         }
@@ -216,15 +216,15 @@ struct DataMigrationScreen: View {
 
                 await MainActor.run {
                     alert = AlertMessage(
-                        title: "リストア完了",
-                        message: "データの復元が完了しました"
+                        title: L.DataMigration.restoreCompleteTitle,
+                        message: L.DataMigration.restoreCompleteMessage
                     )
                     isRestoreInProgress = false
                 }
             } catch {
                 await MainActor.run {
                     alert = AlertMessage(
-                        title: "リストアエラー",
+                        title: L.DataMigration.restoreErrorTitle,
                         message: error.localizedDescription
                     )
                     isRestoreInProgress = false
