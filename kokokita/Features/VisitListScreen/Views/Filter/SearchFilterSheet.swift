@@ -275,7 +275,7 @@ struct SearchFilterSheet: View {
                 FlowRow(spacing: 6, rowSpacing: 6) {
                     ForEach(store.categoryFilters, id: \.self) { catRaw in
                         let category = MKPointOfInterestCategory(rawValue: catRaw)
-                        let name = category.japaneseName
+                        let name = category.localizedName
                         Chip(name, kind: .category) {
                             store.categoryFilters.removeAll { $0 == catRaw }
                             vm.applyAndReload()
@@ -462,7 +462,7 @@ struct FilterCategoryPickerSheet: View {
                             }
                         } label: {
                             HStack {
-                                Text(category.japaneseName)
+                                Text(category.localizedName)
                                     .foregroundStyle(.primary)
                                 Spacer()
                                 if selectedCategories.contains(category.rawValue) {

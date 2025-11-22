@@ -357,8 +357,8 @@ struct VisitDetailScreen: View {
     
     private func shareText() -> String {
         var lines: [String] = []
-        lines.append("【ココキタ】")
-        lines.append(data.title.ifBlank("（タイトルなし）"))
+        lines.append("【\(L.App.name)】")
+        lines.append(data.title.ifBlank(L.Home.noTitle))
         lines.append(data.timestamp.kokokitaVisitString)
 //        if let addr = data.address?.trimmingCharacters(in: .whitespacesAndNewlines), !addr.isEmpty {
 //            lines.append(addr)

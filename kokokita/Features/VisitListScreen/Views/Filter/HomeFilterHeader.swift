@@ -109,7 +109,7 @@ struct HomeFilterHeader: View {
                 FlowRow(spacing: 6, rowSpacing: 6) {
                     ForEach(vm.categoryFilters, id: \.self) { catRaw in
                         let category = MKPointOfInterestCategory(rawValue: catRaw)
-                        let name = category.japaneseName
+                        let name = category.localizedName
                         Chip(name, kind: .category) {
                             vm.categoryFilters.removeAll { $0 == catRaw }
                             vm.reload()
@@ -124,10 +124,7 @@ struct HomeFilterHeader: View {
     }
 
     private func dateRangeText(from: Date?, to: Date?) -> String {
-        let f = DateFormatter()
-        f.calendar = Calendar(identifier: .gregorian)
-        f.locale = Locale(identifier: "ja_JP")
-        f.dateFormat = "yyyy/MM/dd"
+        let f = AppDateFormatters.filterDate
         switch (from, to) {
         case let (fD?, tD?): return "\(f.string(from: fD)) 〜 \(f.string(from: tD))"
         case let (fD?, nil): return "\(f.string(from: fD)) 〜"

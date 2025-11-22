@@ -16,7 +16,13 @@ extension MKPointOfInterestCategory {
         ]
     }
 
-    var japaneseName: String {
+    /// ローカライズされた名前（日本語/英語）
+    var localizedName: String {
+        let isJapanese = Locale.current.language.languageCode?.identifier == "ja"
+        return isJapanese ? japaneseName : englishName
+    }
+
+    private var japaneseName: String {
         switch self {
         case .airport:         return "空港"
         case .amusementPark:   return "遊園地"
@@ -69,7 +75,61 @@ extension MKPointOfInterestCategory {
             return rawValue.replacingOccurrences(of: "MKPOICategory", with: "")
         }
     }
-    
+
+    private var englishName: String {
+        switch self {
+        case .airport:         return "Airport"
+        case .amusementPark:   return "Amusement Park"
+        case .aquarium:        return "Aquarium"
+        case .atm:             return "ATM"
+        case .automotiveRepair: return "Auto Repair"
+        case .bakery:          return "Bakery"
+        case .bank:            return "Bank"
+        case .beach:           return "Beach"
+        case .beauty:           return "Beauty Salon"
+        case .brewery:         return "Brewery"
+        case .cafe:            return "Cafe"
+        case .campground:      return "Campground"
+        case .carRental:       return "Car Rental"
+        case .evCharger:       return "EV Charger"
+        case .fireStation:     return "Fire Station"
+        case .fitnessCenter:   return "Fitness Center"
+        case .foodMarket:      return "Food Market"
+        case .gasStation:      return "Gas Station"
+        case .hospital:        return "Hospital"
+        case .hotel:           return "Hotel"
+        case .landmark:        return "Landmark"
+        case .laundry:         return "Laundry"
+        case .library:         return "Library"
+        case .mailbox:         return "Mailbox"
+        case .marina:          return "Marina"
+        case .movieTheater:    return "Movie Theater"
+        case .museum:          return "Museum"
+        case .nationalPark:    return "National Park"
+        case .nightlife:       return "Nightlife"
+        case .park:            return "Park"
+        case .parking:         return "Parking"
+        case .pharmacy:        return "Pharmacy"
+        case .police:          return "Police Station"
+        case .postOffice:      return "Post Office"
+        case .publicTransport: return "Public Transport"
+        case .restaurant:      return "Restaurant"
+        case .restroom:        return "Restroom"
+        case .school:          return "School"
+        case .spa:             return "Spa"
+        case .stadium:         return "Stadium"
+        case .store:           return "Store"
+        case .theater:         return "Theater"
+        case .university:      return "University"
+        case .winery:          return "Winery"
+        case .zoo:             return "Zoo"
+
+        default:
+            // 未来のカテゴリ or 未対応カテゴリ
+            return rawValue.replacingOccurrences(of: "MKPOICategory", with: "")
+        }
+    }
+
     /// アプリの3分類（飲食 / 観光 / その他）に正規化
     var kkCategory: KKCategory {
         switch self {
@@ -90,10 +150,23 @@ extension MKPointOfInterestCategory {
 }
 
 enum KKCategory: String, CaseIterable, Identifiable {
-    case food = "飲食店"
-    case sightseeing = "観光地"
-    case other = "その他"
+    case food
+    case sightseeing
+    case other
+
     var id: String { rawValue }
+
+    var localizedName: String {
+        let isJapanese = Locale.current.language.languageCode?.identifier == "ja"
+        switch self {
+        case .food:
+            return isJapanese ? "飲食店" : "Food & Drink"
+        case .sightseeing:
+            return isJapanese ? "観光地" : "Sightseeing"
+        case .other:
+            return isJapanese ? "その他" : "Other"
+        }
+    }
 }
 
 

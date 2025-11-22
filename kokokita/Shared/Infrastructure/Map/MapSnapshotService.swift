@@ -102,7 +102,7 @@ enum MapSnapshotService {
     private static func makeMarkerViewImage() -> UIImage {
         // ピンとラベルを縦に配置
         let marker = VStack(spacing: 2) {
-            Text("ココキタ")
+            Text(L.App.name)
                 .font(.caption.bold())
                 .foregroundColor(.accentColor)
                 .padding(.horizontal, 8)

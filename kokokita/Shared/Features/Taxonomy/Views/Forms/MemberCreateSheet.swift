@@ -10,7 +10,7 @@ struct MemberCreateSheet: View {
         NavigationStack {
             Form {
                 Section {
-                    TextField("メンバー名", text: $newMemberName)
+                    TextField(L.MemberManagement.namePlaceholder, text: $newMemberName)
                         .submitLabel(.done)
                         .onSubmit {
                             if !newMemberName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
@@ -30,7 +30,7 @@ struct MemberCreateSheet: View {
                     }
                 }
             }
-            .navigationTitle("新規メンバー")
+            .navigationTitle(L.MemberManagement.createTitle)
         }
     }
 }

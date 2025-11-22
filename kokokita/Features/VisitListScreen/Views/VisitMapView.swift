@@ -289,7 +289,7 @@ struct VisitMapDetailSheet: View {
         if let f = aggregate.details.facilityName, !f.isEmpty {
             return f
         }
-        return "（タイトルなし）"
+        return L.Home.noTitle
     }
 
     var body: some View {

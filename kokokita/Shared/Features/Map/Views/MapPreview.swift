@@ -35,7 +35,7 @@ struct MapPreview: View {
             openMapButton
         }
         .clipShape(RoundedRectangle(cornerRadius: AppConfig.mapCornerRadius))
-        .confirmationDialog("地図アプリで開く", isPresented: $showMapAppSheet, titleVisibility: .visible) {
+        .confirmationDialog(L.Map.openInApp, isPresented: $showMapAppSheet, titleVisibility: .visible) {
             mapAppSelectionButtons
         }
     }
@@ -46,7 +46,7 @@ struct MapPreview: View {
     private var mapAnnotation: some MapContent {
         Annotation("", coordinate: coordinate) {
             VStack(spacing: 2) {
-                Text("ココキタ")
+                Text(L.App.name)
                     .font(.caption.bold())
                     .foregroundColor(.accentColor)
                     .padding(.horizontal, 8)
@@ -82,7 +82,7 @@ struct MapPreview: View {
             HStack(spacing: 4) {
                 Image(systemName: "map")
                     .font(.callout)
-                Text("地図アプリで開く")
+                Text(L.Map.openInApp)
                     .font(.caption)
             }
             .padding(.horizontal, 12)
@@ -102,7 +102,7 @@ struct MapPreview: View {
         Button("Google Maps") {
             openInGoogleMaps()
         }
-        Button("キャンセル", role: .cancel) {}
+        Button(L.Common.cancel, role: .cancel) {}
     }
 
     // MARK: - Actions

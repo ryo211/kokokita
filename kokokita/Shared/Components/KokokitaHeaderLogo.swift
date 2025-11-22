@@ -55,7 +55,7 @@ struct KokokitaHeaderLogo: View {
                 .frame(width: 42, height: 42)
 
             // テキスト部分 - スマート＆おしゃれ
-            Text("ココキタ")
+            Text(L.App.name)
                 .font(.system(size: size.fontSize, weight: .semibold, design: .rounded))
                 .tracking(1.2)  // 文字間隔を広げる
                 .foregroundColor(.accentColor)
@@ -75,7 +75,7 @@ struct KokokitaHeaderLogoSimple: View {
                 .frame(width: 42, height: 42)
 
             // テキスト - スマート＆おしゃれ
-            Text("ココキタ")
+            Text(L.App.name)
                 .font(.system(size: 20, weight: .semibold, design: .rounded))
                 .tracking(1.2)  // 文字間隔を広げる
                 .foregroundColor(.accentColor)

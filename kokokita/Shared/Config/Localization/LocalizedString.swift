@@ -3,6 +3,11 @@ import Foundation
 /// ローカライゼーション用のキー管理と簡潔なアクセス
 enum L {
 
+    // MARK: - App
+    enum App {
+        static let name = localized("app.name")
+    }
+
     // MARK: - Common
     enum Common {
         static let ok = localized("common.ok")
@@ -19,6 +24,7 @@ enum L {
         static let create = localized("common.create")
         static let clear = localized("common.clear")
         static let share = localized("common.share")
+        static let copy = localized("common.copy")
     }
 
     // MARK: - Visit Edit
@@ -103,6 +109,9 @@ enum L {
         static let address = localized("facility.address")
         static let phone = localized("facility.phone")
         static let clear = localized("facility.clear")
+        static let info = localized("facility.info")
+        static let showInfo = localized("facility.showInfo")
+        static let clearInfo = localized("facility.clearInfo")
     }
 
     // MARK: - Period Filter
@@ -269,6 +278,21 @@ enum L {
     enum EmptyState {
         static let noRecords = localized("emptyState.noRecords")
         static let noRecordsDescription = localized("emptyState.noRecordsDescription")
+    }
+
+    // MARK: - Map
+    enum Map {
+        static let openInApp = localized("map.openInApp")
+    }
+
+    // MARK: - Kokokamo (POI Search)
+    enum Kokokamo {
+        static let title = localized("kokokamo.title")
+        static let searchPlaceholder = localized("kokokamo.searchPlaceholder")
+        static let selected = localized("kokokamo.selected")
+        static let notSelected = localized("kokokamo.notSelected")
+        static let tapToSelect = localized("kokokamo.tapToSelect")
+        static let tapToDeselect = localized("kokokamo.tapToDeselect")
     }
 
     // MARK: - Helper

@@ -400,7 +400,7 @@ private struct CustomBottomBar: View {
                                 .scaledToFit()
                                 .frame(width: 42, height: 42)
                                 .accessibilityHidden(true)
-                            Text("ココキタ")
+                            Text(L.App.name)
                                 .font(.caption2.weight(.bold))
                                 .foregroundStyle(.white)
                                 .lineLimit(1)

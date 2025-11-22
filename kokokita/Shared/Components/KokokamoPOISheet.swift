@@ -29,7 +29,7 @@ struct KokokamoPOISheet<Item: Identifiable>: View {
             HStack(spacing: 8) {
                 Image(systemName: "magnifyingglass")
                     .foregroundStyle(.secondary)
-                TextField("施設名で検索", text: $searchText)
+                TextField(L.Kokokamo.searchPlaceholder, text: $searchText)
                     .focused($isSearchFocused)
                     .textFieldStyle(.plain)
                     .autocorrectionDisabled()
@@ -61,7 +61,7 @@ struct KokokamoPOISheet<Item: Identifiable>: View {
 
                         if let poi = poiCategory(p) {
                             // あなたの既存の日本語化拡張が使えます
-                            Text(poi.japaneseName)
+                            Text(poi.localizedName)
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -76,7 +76,7 @@ struct KokokamoPOISheet<Item: Identifiable>: View {
             }
             .listStyle(.plain)
         }
-        .navigationTitle("現在地から半径100m以内の施設")
+        .navigationTitle(L.Kokokamo.title)
         .navigationBarTitleDisplayMode(.inline)
     }
 
@@ -180,16 +180,16 @@ struct KKFilterBar: View {
                                     radius: isOn ? 6 : 0, x: 0, y: 2)
 
                         if showLabels {
-                            Text(cat.rawValue)
+                            Text(cat.localizedName)
                                 .font(.caption)
                                 .foregroundStyle(isOn ? cat.highlightColor : .secondary)
                         }
                     }
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel(Text("\(cat.rawValue)"))
-                .accessibilityValue(Text(isOn ? "選択中" : "未選択"))
-                .accessibilityHint(Text("タップで\(isOn ? "解除" : "選択")"))
+                .accessibilityLabel(Text(cat.localizedName))
+                .accessibilityValue(Text(isOn ? L.Kokokamo.selected : L.Kokokamo.notSelected))
+                .accessibilityHint(Text(isOn ? L.Kokokamo.tapToDeselect : L.Kokokamo.tapToSelect))
                 .animation(.easeOut(duration: 0.15), value: isOn)
             }
             Spacer(minLength: 0)

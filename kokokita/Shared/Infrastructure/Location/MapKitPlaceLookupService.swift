@@ -46,10 +46,10 @@ struct MapKitPlaceLookupService {
                 // 住所は postalAddress があれば整形、無ければ placemark.title をフォールバック
                 let addr = item.placemark.postalAddress?.formatted() ?? item.placemark.title
 
-                let jpCategory = item.pointOfInterestCategory?.japaneseName
+                let localizedCategory = item.pointOfInterestCategory?.localizedName
                 return PlacePOI(
                     name: item.name ?? "不明",
-                    category: jpCategory,
+                    category: localizedCategory,
                     address: addr,
                     phone: item.phoneNumber,
                     poiCategoryRaw: cat

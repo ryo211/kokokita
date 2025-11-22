@@ -26,7 +26,7 @@ struct VisitRow: View {
                           .font(.headline)
                       if let catRaw = agg.details.facilityCategory {
                           let category = MKPointOfInterestCategory(rawValue: catRaw)
-                          Text(category.japaneseName)
+                          Text(category.localizedName)
                               .font(.caption)
                               .foregroundStyle(.secondary)
                       }

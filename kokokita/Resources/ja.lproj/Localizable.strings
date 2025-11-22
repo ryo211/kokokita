@@ -3,6 +3,9 @@
   kokokita
 */
 
+// MARK: - App
+"app.name" = "ココキタ";
+
 // MARK: - Common
 "common.ok" = "OK";
 "common.cancel" = "キャンセル";
@@ -18,6 +21,7 @@
 "common.create" = "作成";
 "common.clear" = "クリア";
 "common.share" = "共有";
+"common.copy" = "コピー";
 
 // MARK: - Visit Edit
 "visit.edit.titlePlaceholder" = "タイトル";
@@ -93,6 +97,9 @@
 "facility.address" = "住所";
 "facility.phone" = "電話番号";
 "facility.clear" = "クリア";
+"facility.info" = "施設情報";
+"facility.showInfo" = "施設情報を表示";
+"facility.clearInfo" = "施設情報をクリア";
 
 // MARK: - Period Filter
 "period.today" = "今日";
@@ -228,3 +235,14 @@
 // MARK: - Date
 "date.today" = "今日";
 "date.yesterday" = "昨日";
+
+// MARK: - Map
+"map.openInApp" = "地図アプリで開く";
+
+// MARK: - Kokokamo (POI Search)
+"kokokamo.title" = "現在地から半径100m以内の施設";
+"kokokamo.searchPlaceholder" = "施設名で検索";
+"kokokamo.selected" = "選択中";
+"kokokamo.notSelected" = "未選択";
+"kokokamo.tapToSelect" = "タップで選択";
+"kokokamo.tapToDeselect" = "タップで解除";

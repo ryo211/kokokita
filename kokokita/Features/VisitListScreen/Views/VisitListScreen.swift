@@ -322,18 +322,13 @@ struct VisitListScreen: View {
     }
 
     private func formatDateHeader(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.calendar = Calendar(identifier: .gregorian)
-        formatter.locale = Locale(identifier: "ja_JP")
-        formatter.dateFormat = "yyyy年M月d日(E)"
-
         let calendar = Calendar.current
         if calendar.isDateInToday(date) {
             return L.Date.today
         } else if calendar.isDateInYesterday(date) {
             return L.Date.yesterday
         } else {
-            return formatter.string(from: date)
+            return AppDateFormatters.listDateHeader.string(from: date)
         }
     }
 

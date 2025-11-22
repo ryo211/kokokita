@@ -48,7 +48,7 @@ struct FacilityInfoButton: View {
                     .frame(maxWidth: 360)
                     .padding()
                 }
-                .accessibilityLabel("施設情報を表示")
+                .accessibilityLabel(L.Facility.showInfo)
             }
         }
     }
@@ -67,12 +67,12 @@ struct FacilityInfoPopoverContent: View {
     private var categoryName: String? {
         guard let raw = categoryRawValue else { return nil }
         let cat = MKPointOfInterestCategory(rawValue: raw)
-        return cat.japaneseName
+        return cat.localizedName
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("施設情報").font(.headline)
+            Text(L.Facility.info).font(.headline)
 
             if let n = name?.trimmingCharacters(in: .whitespacesAndNewlines), !n.isEmpty {
                 HStack(alignment: .top, spacing: 6) {
@@ -111,11 +111,11 @@ struct FacilityInfoPopoverContent: View {
             HStack {
                 if mode == .editable {
                     Button(role: .destructive, action: onClear) {
-                        Label("施設情報をクリア", systemImage: "trash")
+                        Label(L.Facility.clearInfo, systemImage: "trash")
                     }
                 }
                 Spacer()
-                Button("閉じる", action: onClose)
+                Button(L.Common.close, action: onClose)
             }
         }
     }
@@ -138,6 +138,6 @@ private struct CopyButton: View {
                 .foregroundStyle(copied ? .green : .secondary)
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("コピー")
+        .accessibilityLabel(L.Common.copy)
     }
 }

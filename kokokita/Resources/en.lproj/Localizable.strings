@@ -3,6 +3,9 @@
   kokokita
 */
 
+// MARK: - App
+"app.name" = "kokokita";
+
 // MARK: - Common
 "common.ok" = "OK";
 "common.cancel" = "Cancel";
@@ -18,6 +21,7 @@
 "common.create" = "Create";
 "common.clear" = "Clear";
 "common.share" = "Share";
+"common.copy" = "Copy";
 
 // MARK: - Visit Edit
 "visit.edit.titlePlaceholder" = "Title";
@@ -93,6 +97,9 @@
 "facility.address" = "Address";
 "facility.phone" = "Phone";
 "facility.clear" = "Clear";
+"facility.info" = "Facility Info";
+"facility.showInfo" = "Show facility info";
+"facility.clearInfo" = "Clear facility info";
 
 // MARK: - Period Filter
 "period.today" = "Today";
@@ -228,3 +235,14 @@
 // MARK: - Date
 "date.today" = "Today";
 "date.yesterday" = "Yesterday";
+
+// MARK: - Map
+"map.openInApp" = "Open in Maps";
+
+// MARK: - Kokokamo (POI Search)
+"kokokamo.title" = "Facilities within 100m radius";
+"kokokamo.searchPlaceholder" = "Search by facility name";
+"kokokamo.selected" = "Selected";
+"kokokamo.notSelected" = "Not selected";
+"kokokamo.tapToSelect" = "Tap to select";
+"kokokamo.tapToDeselect" = "Tap to deselect";
