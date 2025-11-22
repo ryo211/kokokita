@@ -249,6 +249,10 @@ struct VisitEditScreen: View {
     private var formContent: some View {
         Form {
             Section(L.VisitEdit.editSection) {
+                #if DEBUG
+                DatePicker("記録日時", selection: $vm.timestampDisplay)
+                #endif
+
                 HStack(spacing: UIConstants.Spacing.medium) {
                     TextField(L.VisitEdit.titlePlaceholder, text: $vm.title)
                         .focused($focusedField, equals: .title)

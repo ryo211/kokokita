@@ -156,7 +156,28 @@ final class CoreDataVisitRepository {
         try ctx.save()
     }
 
+    #if DEBUG
+    /// デバッグモード専用：既存VisitのtimestampUTCと署名を更新
+    func updateVisitTimestamp(id: UUID, newTimestamp: Date, newIntegrity: Visit.Integrity) throws {
+        guard let v = try fetchVisitEntity(id: id) else {
+            Logger.warning("Visit not found for timestamp update: \(id)")
+            return
+        }
 
+        // timestampUTCを更新
+        v.timestampUTC = newTimestamp
+
+        // 署名情報を更新
+        v.integrityAlgo         = newIntegrity.algo
+        v.integritySigDER       = newIntegrity.signatureDERBase64
+        v.integrityPubRaw       = newIntegrity.publicKeyRawBase64
+        v.integrityPayloadHash  = newIntegrity.payloadHashHex
+        v.integrityCreatedAtUTC = newIntegrity.createdAtUTC
+
+        preflightValidate([v])
+        try ctx.save()
+    }
+    #endif
 
     func delete(id: UUID) throws {
         if let v = try fetchVisitEntity(id: id) {

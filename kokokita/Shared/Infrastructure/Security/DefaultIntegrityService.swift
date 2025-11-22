@@ -12,7 +12,8 @@ struct DefaultIntegrityService {
         lat: Double,
         lon: Double,
         acc: Double?,
-        flags: LocationSourceFlags           // ← ここに変更
+        flags: LocationSourceFlags,
+        createdAtUTC: Date = Date()  // 署名作成時刻（デバッグモードでカスタマイズ可能）
     ) throws -> Visit.Integrity {
 
 
@@ -40,7 +41,7 @@ struct DefaultIntegrityService {
             signatureDERBase64: Data(sig.derRepresentation).base64EncodedString(),
             publicKeyRawBase64: pub.rawRepresentation.base64EncodedString(),
             payloadHashHex: digest.map { String(format: "%02x", $0) }.joined(),
-            createdAtUTC: Date()
+            createdAtUTC: createdAtUTC
         )
     }
 

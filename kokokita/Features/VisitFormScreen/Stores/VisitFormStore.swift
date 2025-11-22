@@ -35,6 +35,11 @@ final class VisitFormStore {
         isProducedByAccessory: nil
     )
 
+    #if DEBUG
+    // デバッグモード専用：編集時の元のタイムスタンプ（時刻変更検出用）
+    private var originalTimestamp: Date?
+    #endif
+
     // MARK: - Dependencies (Services)
     private let integ: DefaultIntegrityService
     private let repo: CoreDataVisitRepository
@@ -123,6 +128,15 @@ final class VisitFormStore {
         memberIds = Set(agg.details.memberIds)
         addressLine = agg.details.resolvedAddress
 
+        #if DEBUG
+        // デバッグモード：元のタイムスタンプと位置情報フラグを保存
+        originalTimestamp = agg.visit.timestampUTC
+        lastFlags = LocationSourceFlags(
+            isSimulatedBySoftware: agg.visit.isSimulatedBySoftware,
+            isProducedByAccessory: agg.visit.isProducedByAccessory
+        )
+        #endif
+
         // 写真はEffects経由で管理
         photoEffects.loadForEdit(agg.details.photoPaths)
     }
@@ -210,7 +224,7 @@ final class VisitFormStore {
             #endif
 
             let id  = UUID()
-            let utc = Date() // 保存はUTC
+            let utc = timestampDisplay // デバッグモードで編集可能な日付を使用
 
             let integrity = try integ.signImmutablePayload(
                 id: id,
@@ -218,7 +232,8 @@ final class VisitFormStore {
                 lat: latitude,
                 lon: longitude,
                 acc: accuracy,
-                flags: lastFlags
+                flags: lastFlags,
+                createdAtUTC: utc  // デバッグモードで編集した日付を署名作成時刻にも反映
             )
 
             let visit = Visit(
@@ -256,6 +271,22 @@ final class VisitFormStore {
     @discardableResult
     func saveEdits(for id: UUID) -> Bool {
         do {
+            #if DEBUG
+            // デバッグモード：タイムスタンプが変更されていれば署名を再生成してVisitも更新
+            if let original = originalTimestamp, timestampDisplay != original {
+                let newIntegrity = try integ.signImmutablePayload(
+                    id: id,
+                    timestampUTC: timestampDisplay,
+                    lat: latitude,
+                    lon: longitude,
+                    acc: accuracy,
+                    flags: lastFlags,
+                    createdAtUTC: timestampDisplay
+                )
+                try repo.updateVisitTimestamp(id: id, newTimestamp: timestampDisplay, newIntegrity: newIntegrity)
+            }
+            #endif
+
             try repo.updateDetails(id: id) { cur in
                 cur.title = title.isEmpty ? nil : title
                 cur.facilityName = facilityName
