@@ -167,6 +167,7 @@ struct VisitDetailContent: View {
                             .font(.body)
                             .multilineTextAlignment(.leading)
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 .padding(.horizontal)
             }
