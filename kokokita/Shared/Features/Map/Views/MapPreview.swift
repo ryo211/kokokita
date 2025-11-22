@@ -55,7 +55,7 @@ struct MapPreview: View {
                     .cornerRadius(8)
                     .shadow(color: .black.opacity(0.2), radius: 2, x: 0, y: 1)
 
-                Image("kokokita_irodori_map")
+                Image("kokokita_irodori_blue")
                     .resizable()
                     .scaledToFit()
                     .frame(width: 42, height: 42)
