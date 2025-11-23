@@ -9,19 +9,28 @@ struct HomeFilterHeader: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            HStack(alignment: .center) {
-                // ロゴ
-                KokokitaHeaderLogoSimple()
-
-                Spacer()
-
-                // 検索ボタン
+            HStack(alignment: .center, spacing: 12) {
+                // 検索ボタン（左側に移動）
                 Button(action: onTapSearch) {
-                    Image(systemName: "magnifyingglass").font(.title2)
+                    Image(systemName: "magnifyingglass")
+                        .font(.title2)
                         .foregroundStyle(Color.blue)
                 }
                 .buttonStyle(.plain)
-                
+
+                // 件数表示
+                HStack(spacing: 4) {
+                    Text("\(vm.items.count)")
+                        .font(.body.bold())
+                        .foregroundStyle(Color.blue)
+                    Text(L.Home.itemsCount)
+                        .font(.subheadline)
+                        .foregroundStyle(Color.blue)
+                }
+
+                Spacer()
+
+                // ソートボタン（右側）
                 Button {
                     vm.toggleSort()
                 } label: {

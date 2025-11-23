@@ -65,6 +65,7 @@ enum L {
         static let deleteConfirmTitle = localized("home.deleteConfirmTitle")
         static let deleteConfirmMessage = localized("home.deleteConfirmMessage")
         static let noTitle = localized("home.noTitle")
+        static let itemsCount = localized("home.itemsCount")
     }
 
     // MARK: - Detail

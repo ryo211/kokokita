@@ -56,6 +56,7 @@
 "home.deleteConfirmTitle" = "Delete this record?";
 "home.deleteConfirmMessage" = "This action cannot be undone.";
 "home.noTitle" = "(No Title)";
+"home.itemsCount" = "items";
 
 // MARK: - Detail
 "detail.share" = "Share";

@@ -56,6 +56,7 @@
 "home.deleteConfirmTitle" = "この記録を削除しますか？";
 "home.deleteConfirmMessage" = "この操作は取り消せません。";
 "home.noTitle" = "（タイトルなし）";
+"home.itemsCount" = "件";
 
 // MARK: - Detail
 "detail.share" = "共有";
