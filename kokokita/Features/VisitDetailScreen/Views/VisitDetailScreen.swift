@@ -5,6 +5,7 @@ import CoreLocation
 // MARK: - 詳細画面
 struct VisitDetailScreen: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(AppUIState.self) private var appUIState
     let data: VisitDetailData
     let visitId: UUID  // 編集用にIDを追加
     let onBack: () -> Void
@@ -42,6 +43,11 @@ struct VisitDetailScreen: View {
     @State private var selectedLabelIds: Set<UUID> = []
     @State private var selectedGroupId: UUID? = nil
     @State private var selectedMemberIds: Set<UUID> = []
+
+    // 写真全画面表示用
+    @State private var photoFullScreenIndex: Int? = nil
+    @State private var photoDragOffset: CGFloat = 0
+
     // SNSカードの論理サイズ（表示用は1/3で描画、保存はscale=3で 1080x1350）
     private let logicalSize = CGSize(width: AppConfig.shareImageLogicalWidth,
                                       height: AppConfig.shareImageLogicalHeight)
@@ -91,13 +97,31 @@ struct VisitDetailScreen: View {
                     onMapTap: {
                         dismiss()
                         onMapTap?()
-                    }
+                    },
+                    photoFullScreenIndex: $photoFullScreenIndex
                 )
             }
 
+            // 写真全画面表示オーバーレイ
+            if let index = photoFullScreenIndex {
+                Color.clear
+                    .ignoresSafeArea()
+                    .overlay(
+                        PhotoPager(
+                            paths: data.photoPaths,
+                            startIndex: index,
+                            externalDragOffset: $photoDragOffset,
+                            onDismiss: { photoFullScreenIndex = nil }
+                        )
+                        .ignoresSafeArea()
+                    )
+                    .transition(.opacity)
+                    .zIndex(1000)
+            }
         }
         // ▼ 標準の戻るボタンを活かしつつ、右側に「編集」を出す
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar(photoFullScreenIndex == nil || photoDragOffset != 0 ? .visible : .hidden, for: .navigationBar)
         .toolbar {
             ToolbarItemGroup(placement: .topBarTrailing) {
                 Button {
@@ -240,6 +264,30 @@ struct VisitDetailScreen: View {
         }
         .task {
             await loadTaxonomyData()
+        }
+        .onChange(of: photoFullScreenIndex) { oldValue, newValue in
+            if newValue != nil {
+                // 写真が開いた時: フッターを非表示
+                appUIState.tabBarOpacity = 0
+                appUIState.isTabBarHidden = true
+            } else {
+                // 写真が閉じた時: フッターを表示
+                appUIState.tabBarOpacity = 1
+                appUIState.isTabBarHidden = false
+                photoDragOffset = 0  // リセット
+            }
+        }
+        .onChange(of: photoDragOffset) { oldValue, newValue in
+            // ドラッグ中: ドラッグ量に応じてフッターをフェードイン
+            if photoFullScreenIndex != nil {
+                let progress = min(abs(newValue) / 150, 1.0)
+                appUIState.tabBarOpacity = progress
+            }
+        }
+        .onDisappear {
+            // 画面を離れる時はタブバーを表示
+            appUIState.isTabBarHidden = false
+            appUIState.tabBarOpacity = 1
         }
     }
 
@@ -388,8 +436,13 @@ struct VisitDetailScreen: View {
         // 2) 同じ中身を共有用フラグでレンダリング
         let img: UIImage? = await MainActor.run {
             let content = VStack(spacing: 0) {
-                VisitDetailContent(data: data, mapSnapshot: mapImage, isSharing: true)
-                    .padding(.all, UIConstants.Spacing.xxLarge)
+                VisitDetailContent(
+                    data: data,
+                    mapSnapshot: mapImage,
+                    isSharing: true,
+                    photoFullScreenIndex: .constant(nil)
+                )
+                .padding(.all, UIConstants.Spacing.xxLarge)
             }
             return ShareImageRenderer.renderWidth(content, width: AppConfig.shareImageLogicalWidth, scale: AppConfig.shareImageScale)
         }

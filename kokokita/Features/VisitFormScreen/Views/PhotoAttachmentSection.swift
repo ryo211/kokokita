@@ -11,6 +11,7 @@ struct PhotoAttachmentSection: View {
     @State private var libSelection: [PhotosPickerItem] = []
     @State private var showCamera = false
     @State private var fullScreenIndex: Int? = nil
+    @State private var photoDragOffset: CGFloat = 0
 
     private var canAddMore: Bool { vm.photoEffects.photoPathsEditing.count < AppConfig.maxPhotosPerVisit }
 
@@ -70,7 +71,11 @@ struct PhotoAttachmentSection: View {
             get: { fullScreenIndex.map { PhotoPager.IndexWrapper(index: $0) } },
             set: { fullScreenIndex = $0?.index }
         )) { wrapper in
-            PhotoPager(paths: vm.photoEffects.photoPathsEditing, startIndex: wrapper.index)
+            PhotoPager(
+                paths: vm.photoEffects.photoPathsEditing,
+                startIndex: wrapper.index,
+                externalDragOffset: $photoDragOffset
+            )
         }
     }
 

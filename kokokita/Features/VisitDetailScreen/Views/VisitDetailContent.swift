@@ -9,6 +9,7 @@ struct VisitDetailContent: View {
     var onGroupTap: (() -> Void)? = nil
     var onMemberTap: (() -> Void)? = nil
     var onMapTap: (() -> Void)? = nil
+    @Binding var photoFullScreenIndex: Int?
 
     var body: some View {
         VStack(alignment: .leading, spacing: UIConstants.Spacing.large) {
@@ -124,8 +125,11 @@ struct VisitDetailContent: View {
             }
             .padding(.horizontal)
 
-            if !data.photoPaths.isEmpty {
-                PhotoReadOnlyGrid(paths: data.photoPaths)
+            if !data.photoPaths.isEmpty && !isSharing {
+                PhotoReadOnlyGrid(paths: data.photoPaths, fullScreenIndex: $photoFullScreenIndex)
+                    .padding(.horizontal, 10)
+            } else if !data.photoPaths.isEmpty && isSharing {
+                PhotoReadOnlyGrid(paths: data.photoPaths, fullScreenIndex: .constant(nil))
                     .padding(.horizontal, 10)
             }
             

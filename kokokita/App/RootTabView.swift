@@ -106,6 +106,7 @@ struct RootTabView: View {
                             checkLocationPermissionAndCreate()
                         }
                     )
+                    .opacity(ui.tabBarOpacity)
                     .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
             }
