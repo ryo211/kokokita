@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- アプリが収集・追跡するデータの種類 -->
+	<key>NSPrivacyTracking</key>
+	<false/>
+
+	<!-- 収集するデータのカテゴリ -->
+	<key>NSPrivacyCollectedDataTypes</key>
+	<array>
+		<!-- 位置情報 -->
+		<dict>
+			<key>NSPrivacyCollectedDataType</key>
+			<string>NSPrivacyCollectedDataTypePreciseLocation</string>
+			<key>NSPrivacyCollectedDataTypeLinked</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypeTracking</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypePurposes</key>
+			<array>
+				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+			</array>
+		</dict>
+
+		<!-- 写真とビデオ -->
+		<dict>
+			<key>NSPrivacyCollectedDataType</key>
+			<string>NSPrivacyCollectedDataTypePhotos</string>
+			<key>NSPrivacyCollectedDataTypeLinked</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypeTracking</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypePurposes</key>
+			<array>
+				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+			</array>
+		</dict>
+	</array>
+
+	<!-- 使用するAPIとその理由 -->
+	<key>NSPrivacyAccessedAPITypes</key>
+	<array>
+		<!-- UserDefaults: アプリの設定とフィルタ条件を保存 -->
+		<dict>
+			<key>NSPrivacyAccessedAPIType</key>
+			<string>NSPrivacyAccessedAPICategoryUserDefaults</string>
+			<key>NSPrivacyAccessedAPITypeReasons</key>
+			<array>
+				<!-- CA92.1: アプリ固有のデータのみにアクセス -->
+				<string>CA92.1</string>
+			</array>
+		</dict>
+
+		<!-- File Timestamp: 写真ファイルの管理 -->
+		<dict>
+			<key>NSPrivacyAccessedAPIType</key>
+			<string>NSPrivacyAccessedAPICategoryFileTimestamp</string>
+			<key>NSPrivacyAccessedAPITypeReasons</key>
+			<array>
+				<!-- C617.1: アプリコンテナ内のファイルにアクセス -->
+				<string>C617.1</string>
+			</array>
+		</dict>
+	</array>
+
+	<!-- 使用している第三者SDK -->
+	<key>NSPrivacyTrackingDomains</key>
+	<array>
+		<!-- Google AdMobの広告ドメイン -->
+		<string>googleads.g.doubleclick.net</string>
+		<string>google.com</string>
+	</array>
+</dict>
+</plist>
