@@ -30,6 +30,9 @@ struct RootTabView: View {
     @State private var promptSheetLocationData: LocationData?
     @State private var createScreenData: CreateScreenData?
     @Environment(AppUIState.self) private var ui
+    #if DEBUG
+    @ObservedObject private var debugSettings = DebugSettings.shared
+    #endif
 
     var body: some View {
         // CoreDataの読み込み状態をチェック
@@ -82,10 +85,18 @@ struct RootTabView: View {
 
             // ===== フッター領域（バナー + カスタムタブバー） =====
             VStack(spacing: 0) {
-                // 固定バナー（フッターの“上”に配置）
+                // 固定バナー（フッターの"上"に配置）
+                #if DEBUG
+                if debugSettings.isAdDisplayEnabled {
+                    BannerAdView(adUnitID: bannerAdUnitID)
+                        .background(.thinMaterial)
+                        .transition(.opacity)
+                }
+                #else
                 BannerAdView(adUnitID: bannerAdUnitID)
                     .background(.thinMaterial)
                     .transition(.opacity)
+                #endif
 
                 if !ui.isTabBarHidden {
                     CustomBottomBar(

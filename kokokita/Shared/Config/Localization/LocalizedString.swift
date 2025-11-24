@@ -203,6 +203,8 @@ enum L {
         static let testCrashTitle = localized("settings.testCrashTitle")
         static let testCrashMessage = localized("settings.testCrashMessage")
         static let developerTest = localized("settings.developerTest")
+        static let adDisplay = localized("settings.adDisplay")
+        static let adDisplayDescription = localized("settings.adDisplayDescription")
     }
 
     // MARK: - Data Migration

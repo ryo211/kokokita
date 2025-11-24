@@ -174,6 +174,8 @@
 "settings.testCrashTitle" = "Test Crash";
 "settings.testCrashMessage" = "App will force quit. You can check it on Firebase Crashlytics.";
 "settings.developerTest" = "Developer Tests";
+"settings.adDisplay" = "Ad Display";
+"settings.adDisplayDescription" = "Debug mode: Toggle ad display on/off";
 
 // MARK: - Data Migration
 "migration.title" = "Data Migration";

@@ -3,6 +3,9 @@ import FirebaseCrashlytics
 
 struct SettingsHomeScreen: View {
     @State private var showCrashAlert = false
+    #if DEBUG
+    @ObservedObject private var debugSettings = DebugSettings.shared
+    #endif
 
     var body: some View {
         List {
@@ -28,6 +31,15 @@ struct SettingsHomeScreen: View {
 
             #if DEBUG
             Section {
+                Toggle(isOn: $debugSettings.isAdDisplayEnabled) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Label(L.Settings.adDisplay, systemImage: "rectangle.inset.filled.and.person.filled")
+                        Text(L.Settings.adDisplayDescription)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
                 NavigationLink {
                     DataMigrationScreen()
                 } label: {
