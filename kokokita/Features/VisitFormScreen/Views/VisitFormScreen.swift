@@ -25,7 +25,7 @@ struct VisitFormScreen: View {
     VisitEditScreen(vm: vm, mode: .create) {
       dismiss()
     }
-    .presentationDetents([.large])
+    .iPadSheetSize()
     .ignoresSafeArea(.keyboard, edges: .bottom)
     .onChange(of: vm.shouldDismiss) { _, shouldDismiss in
       if shouldDismiss {

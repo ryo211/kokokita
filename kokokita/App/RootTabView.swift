@@ -188,7 +188,7 @@ struct RootTabView: View {
                         promptSheetLocationData = nil
                     }
                 )
-                .presentationDetents([.large])
+                .iPadSheetSize()
             }
         }
 
@@ -197,7 +197,7 @@ struct RootTabView: View {
             NotificationCenter.default.post(name: .visitsChanged, object: nil)
         }) { screenData in
             VisitFormScreen(initialLocationData: screenData.locationData, shouldOpenPOI: screenData.shouldOpenPOI)
-                .presentationDetents([.large])
+                .iPadSheetSize()
                 .ignoresSafeArea(.keyboard, edges: .bottom)
         }
 

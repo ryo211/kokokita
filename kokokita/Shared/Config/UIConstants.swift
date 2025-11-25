@@ -21,8 +21,11 @@ enum UIConstants {
         static let tabBarHeight: CGFloat = 72
         /// タブバー中央ボタンのサイズ
         static let centerButtonSize: CGFloat = 64
-        /// 地図プレビューの高さ
-        static let mapPreviewHeight: CGFloat = 220
+        /// 地図プレビューの高さ（デバイスに応じて調整）
+        static var mapPreviewHeight: CGFloat {
+            // iPadの場合はより高く、iPhoneの場合は標準の高さ
+            UIDevice.current.userInterfaceIdiom == .pad ? 500 : 220
+        }
         /// 共有用地図の高さ
         static let shareMapHeight: CGFloat = 300
         /// 写真サムネイルのサイズ

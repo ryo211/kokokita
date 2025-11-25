@@ -178,7 +178,7 @@ struct VisitListScreen: View {
                 }
                 .sheet(isPresented: $showSearchSheet) {
                     NavigationStack { SearchFilterSheet(store: store) { showSearchSheet = false } }
-                    .presentationDetents([.fraction(0.8)])
+                    .iPadSheetSize()
                 }
 
                 // 表示モードで切り替え
@@ -224,7 +224,7 @@ struct VisitListScreen: View {
             }
             .navigationBarTitleDisplayMode(.inline)
         }
-        .presentationDetents([.fraction(0.8)])
+        .iPadSheetSize()
         .presentationDragIndicator(.visible)
     }
     
@@ -252,7 +252,7 @@ struct VisitListScreen: View {
                 }
             )
         }
-        .presentationDetents([.large])
+        .iPadSheetSize()
         .presentationDragIndicator(.visible)
     }
 
