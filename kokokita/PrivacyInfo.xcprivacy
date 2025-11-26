@@ -4,7 +4,7 @@
 <dict>
 	<!-- アプリが収集・追跡するデータの種類 -->
 	<key>NSPrivacyTracking</key>
-	<false/>
+	<true/>
 
 	<!-- 収集するデータのカテゴリ -->
 	<key>NSPrivacyCollectedDataTypes</key>
