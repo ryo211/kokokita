@@ -19,14 +19,22 @@ struct PhotoAttachmentSection: View {
         VStack(alignment: .leading, spacing: 10) {
 
             LazyVGrid(columns: [GridItem(.adaptive(minimum: thumbSize), spacing: 5)], spacing: 5)  {
-                ForEach(vm.photoEffects.photoPathsEditing.indices, id: \.self) { idx in
-                    let path = vm.photoEffects.photoPathsEditing[idx]
+                ForEach(Array(vm.photoEffects.photoPathsEditing.enumerated()), id: \.offset) { idx, path in
                     PhotoThumb(
                         path: path,
                         size: thumbSize,
                         showDelete: allowDelete,
                         onTap: { fullScreenIndex = idx },
-                        onDelete: allowDelete ? { vm.removePhoto(at: idx) } : nil
+                        onDelete: allowDelete ? {
+                            vm.removePhoto(at: idx)
+                            // フルスクリーン表示中の場合は閉じる
+                            if fullScreenIndex == idx {
+                                fullScreenIndex = nil
+                            } else if let currentIndex = fullScreenIndex, currentIndex > idx {
+                                // 削除した写真より後ろを表示中の場合、インデックスを調整
+                                fullScreenIndex = currentIndex - 1
+                            }
+                        } : nil
                     )
                 }
             }
