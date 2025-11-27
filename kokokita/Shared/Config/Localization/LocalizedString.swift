@@ -45,6 +45,7 @@ enum L {
         static let newLabel = localized("visit.edit.newLabel")
         static let newGroup = localized("visit.edit.newGroup")
         static let clearSelection = localized("visit.edit.clearSelection")
+        static let recordDateTime = localized("visit.edit.recordDateTime")
     }
 
     // MARK: - Photo
@@ -275,6 +276,12 @@ enum L {
         static let noLocation = localized("location.noLocation")
         static let kokokitaCompleted = localized("location.kokokitaCompleted")
         static let noLocationData = localized("location.noLocationData")
+        static let acquiringLocation = localized("location.acquiringLocation")
+        static let pleaseWait = localized("location.pleaseWait")
+        static let permissionRequired = localized("location.permissionRequired")
+        static let permissionMessage = localized("location.permissionMessage")
+        static let acquisitionFailed = localized("location.acquisitionFailed")
+        static let openSettings = localized("location.openSettings")
     }
 
     // MARK: - Empty State

@@ -250,7 +250,7 @@ struct VisitEditScreen: View {
         Form {
             Section(L.VisitEdit.editSection) {
                 #if DEBUG
-                DatePicker("記録日時", selection: $vm.timestampDisplay)
+                DatePicker(L.VisitEdit.recordDateTime, selection: $vm.timestampDisplay)
                 #endif
 
                 HStack(spacing: UIConstants.Spacing.medium) {

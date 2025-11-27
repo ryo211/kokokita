@@ -29,6 +29,7 @@ struct RootTabView: View {
     @State private var showLocationLoading = false
     @State private var promptSheetLocationData: LocationData?
     @State private var createScreenData: CreateScreenData?
+    @State private var locationErrorMessage: String? = nil
     @Environment(AppUIState.self) private var ui
     #if DEBUG
     @ObservedObject private var debugSettings = DebugSettings.shared
@@ -131,10 +132,10 @@ struct RootTabView: View {
                             .progressViewStyle(CircularProgressViewStyle(tint: .accentColor))
 
                         VStack(spacing: 8) {
-                            Text("位置情報を取得中...")
+                            Text(L.Location.acquiringLocation)
                                 .font(.headline)
 
-                            Text("しばらくお待ちください")
+                            Text(L.Location.pleaseWait)
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -202,13 +203,25 @@ struct RootTabView: View {
         }
 
         // 位置情報権限アラート
-        .alert("位置情報の権限が必要です", isPresented: $showLocationPermissionAlert) {
-            Button("設定を開く") {
+        .alert(L.Location.permissionRequired, isPresented: $showLocationPermissionAlert) {
+            Button(L.Location.openSettings) {
                 openSettings()
             }
-            Button("キャンセル", role: .cancel) {}
+            Button(L.Common.cancel, role: .cancel) {}
         } message: {
-            Text("位置情報を使用するには、設定アプリで位置情報の使用を許可してください。")
+            Text(L.Location.permissionMessage)
+        }
+
+        // 位置情報取得エラーアラート
+        .alert(L.Location.acquisitionFailed, isPresented: Binding(
+            get: { locationErrorMessage != nil },
+            set: { if !$0 { locationErrorMessage = nil } }
+        )) {
+            Button(L.Common.ok, role: .cancel) {
+                locationErrorMessage = nil
+            }
+        } message: {
+            Text(locationErrorMessage ?? "")
         }
     }
 
@@ -322,9 +335,18 @@ struct RootTabView: View {
 
         } catch {
             showLocationLoading = false
-            // エラー時は権限アラート表示
+
+            // エラーの種類に応じて処理
             if case LocationServiceError.permissionDenied = error {
+                // 位置情報の権限が拒否された場合
                 showLocationPermissionAlert = true
+            } else {
+                // その他のエラー（タイムアウト、シミュレート検出など）
+                Logger.error("Location acquisition failed", error: error)
+
+                // ユーザーにエラーを表示
+                let errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+                locationErrorMessage = errorMessage
             }
         }
     }

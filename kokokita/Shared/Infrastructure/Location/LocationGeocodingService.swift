@@ -39,9 +39,13 @@ struct LocationGeocodingService {
         // 位置情報を取得
         let (location, flags) = try await locationService.requestOneShotLocation()
 
+        // 位置情報ソースのログ出力（デバッグ用）
+        Logger.info("Location source flags - isSimulatedBySoftware: \(flags.isSimulatedBySoftware?.description ?? "nil"), isProducedByAccessory: \(flags.isProducedByAccessory?.description ?? "nil")")
+
         // シミュレーション／アクセサリチェック（DEBUGビルドではスキップ）
         #if !DEBUG
         if flags.isSimulatedBySoftware == true || flags.isProducedByAccessory == true {
+            Logger.warning("Location spoofing detected! isSimulatedBySoftware: \(flags.isSimulatedBySoftware?.description ?? "nil"), isProducedByAccessory: \(flags.isProducedByAccessory?.description ?? "nil")")
             throw LocationGeocodingError.simulatedOrAccessory
         }
         #endif
@@ -77,9 +81,13 @@ struct LocationGeocodingService {
             timeout: 5.0  // 短いタイムアウト
         )
 
+        // 位置情報ソースのログ出力（デバッグ用）
+        Logger.info("Location source flags - isSimulatedBySoftware: \(flags.isSimulatedBySoftware?.description ?? "nil"), isProducedByAccessory: \(flags.isProducedByAccessory?.description ?? "nil")")
+
         // シミュレーション／アクセサリチェック（DEBUGビルドではスキップ）
         #if !DEBUG
         if flags.isSimulatedBySoftware == true || flags.isProducedByAccessory == true {
+            Logger.warning("Location spoofing detected! isSimulatedBySoftware: \(flags.isSimulatedBySoftware?.description ?? "nil"), isProducedByAccessory: \(flags.isProducedByAccessory?.description ?? "nil")")
             throw LocationGeocodingError.simulatedOrAccessory
         }
         #endif

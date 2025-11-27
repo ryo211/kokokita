@@ -40,6 +40,7 @@
 "visit.edit.newLabel" = "New Label";
 "visit.edit.newGroup" = "New Group";
 "visit.edit.clearSelection" = "Clear Selection";
+"visit.edit.recordDateTime" = "Record Date/Time";
 
 // MARK: - Photo
 "photo.photo" = "Photo";
@@ -227,6 +228,12 @@
 "location.noLocation" = "No location";
 "location.kokokitaCompleted" = "Kokokita  ✅";
 "location.noLocationData" = "No location data";
+"location.acquiringLocation" = "Acquiring location...";
+"location.pleaseWait" = "Please wait";
+"location.permissionRequired" = "Location Permission Required";
+"location.permissionMessage" = "To use location services, please allow location access in Settings.";
+"location.acquisitionFailed" = "Failed to Acquire Location";
+"location.openSettings" = "Open Settings";
 
 // MARK: - Empty State
 "emptyState.noRecords" = "No records yet";

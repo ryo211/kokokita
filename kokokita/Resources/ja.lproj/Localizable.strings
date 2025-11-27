@@ -40,6 +40,7 @@
 "visit.edit.newLabel" = "ラベル新規作成";
 "visit.edit.newGroup" = "グループ新規作成";
 "visit.edit.clearSelection" = "未選択にする";
+"visit.edit.recordDateTime" = "記録日時";
 
 // MARK: - Photo
 "photo.photo" = "写真";
@@ -83,6 +84,14 @@
 "tab.home" = "ホーム";
 "tab.menu" = "メニュー";
 "tab.kokokita" = "ココキタ";
+
+// MARK: - Location
+"location.acquiringLocation" = "位置情報を取得中...";
+"location.pleaseWait" = "しばらくお待ちください";
+"location.permissionRequired" = "位置情報の権限が必要です";
+"location.permissionMessage" = "位置情報を使用するには、設定アプリで位置情報の使用を許可してください。";
+"location.acquisitionFailed" = "位置情報の取得に失敗しました";
+"location.openSettings" = "設定を開く";
 
 // MARK: - Error Messages
 "error.locationSimulated" = "位置情報がシミュレーション／外部アクセサリ由来の可能性があるため、記録できません。";
