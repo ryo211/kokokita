@@ -1,6 +1,15 @@
 import SwiftUI
 import GoogleMobileAds
 
+/// 非パーソナライズ広告リクエストを作成
+private func makeNonPersonalizedRequest() -> Request {
+    let request = Request()
+    let extras = Extras()
+    extras.additionalParameters = ["npa": "1"]  // Non-Personalized Ads
+    request.register(extras)
+    return request
+}
+
 /// SwiftUI から使うアダプティブ・バナー（横幅に追従）
 struct BannerAdView: View {
     let adUnitID: String
@@ -36,7 +45,7 @@ private struct BannerUIViewRepresentable: UIViewRepresentable {
         // ⬇️ ここを修正：AdSize.adSizeFor → adSizeFor（トップレベル関数）
         banner.adSize = adSizeFor(cgSize: CGSize(width: widthPt, height: 50))
 
-        banner.load(Request())
+        banner.load(makeNonPersonalizedRequest())
         return banner
     }
 
@@ -45,7 +54,7 @@ private struct BannerUIViewRepresentable: UIViewRepresentable {
         let newSize = adSizeFor(cgSize: CGSize(width: widthPt, height: 50)) // ⬅️ 同様に修正
         if banner.adSize.size.width != newSize.size.width {
             banner.adSize = newSize
-            banner.load(Request())
+            banner.load(makeNonPersonalizedRequest())
         }
     }
 
@@ -72,7 +81,7 @@ private struct BannerUIViewRepresentable: UIViewRepresentable {
             print("[AdMob] Banner failed: \(error.localizedDescription)")
             #endif
             DispatchQueue.main.asyncAfter(deadline: .now() + 15) {
-                bannerView.load(Request())
+                bannerView.load(makeNonPersonalizedRequest())
             }
         }
     }

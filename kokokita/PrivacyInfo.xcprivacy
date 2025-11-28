@@ -4,7 +4,7 @@
 <dict>
 	<!-- アプリが収集・追跡するデータの種類 -->
 	<key>NSPrivacyTracking</key>
-	<true/>
+	<false/>
 
 	<!-- 収集するデータのカテゴリ -->
 	<key>NSPrivacyCollectedDataTypes</key>
@@ -62,14 +62,6 @@
 				<string>C617.1</string>
 			</array>
 		</dict>
-	</array>
-
-	<!-- 使用している第三者SDK -->
-	<key>NSPrivacyTrackingDomains</key>
-	<array>
-		<!-- Google AdMobの広告ドメイン -->
-		<string>googleads.g.doubleclick.net</string>
-		<string>google.com</string>
 	</array>
 </dict>
 </plist>
