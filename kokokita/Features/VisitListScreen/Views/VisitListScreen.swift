@@ -171,7 +171,7 @@ struct VisitListScreen: View {
     }
     
     private var contentStack: some View {
-        ZStack {
+        ZStack(alignment: .bottomTrailing) {
             VStack(spacing: 0) {
                 HomeFilterHeader(store: store) {
                     showSearchSheet = true
@@ -191,15 +191,9 @@ struct VisitListScreen: View {
             }
 
             // 右下にトグルボタン（シート表示時は上にずらす）
-            VStack {
-                Spacer()
-                HStack {
-                    Spacer()
-                    modeToggleButton
-                        .padding(.trailing, 16)
-                        .padding(.bottom, mapSheetHeight > 0 ? mapSheetHeight + 16 : 16)
-                }
-            }
+            modeToggleButton
+                .padding(.trailing, 16)
+                .padding(.bottom, mapSheetHeight > 0 ? mapSheetHeight + 16 : 16)
         }
     }
     
@@ -290,17 +284,23 @@ struct VisitListScreen: View {
     // MARK: - Mode Toggle Button
 
     private var modeToggleButton: some View {
-        Button {
-            withAnimation {
-                displayMode = displayMode == .list ? .map : .list
-            }
-        } label: {
+        ZStack {
+            Circle()
+                .fill(Color.blue)
+                .frame(width: 56, height: 56)
+                .shadow(radius: 4)
+
             Image(systemName: displayMode == .list ? "map" : "list.bullet")
                 .font(.title2)
                 .foregroundStyle(.white)
-                .frame(width: 56, height: 56)
-                .background(Color.blue, in: Circle())
-                .shadow(radius: 4)
+        }
+        .frame(width: 80, height: 80)  // タップ領域を大きく
+        .contentShape(Rectangle())  // 矩形全体をタップ可能に
+        .onTapGesture {
+            let newMode: VisitListDisplayMode = displayMode == .list ? .map : .list
+            withAnimation(.easeInOut(duration: 0.25)) {
+                displayMode = newMode
+            }
         }
     }
 
