@@ -329,10 +329,10 @@
 				INFOPLIST_FILE = kokokita/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "ココキタ";
 				INFOPLIST_KEY_LSApplicationCategoryType = "";
-				INFOPLIST_KEY_NSCameraUsageDescription = "写真撮影のためにカメラを使用します。";
-				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "訪問した場所の位置情報を記録するために使用します。";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Kokokita uses the camera to take photos that can be attached to your visit records. For example, you can capture a photo of a location you visited and save it with your record. Photos are stored locally on your device.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Kokokita uses your location to record where you have been. For example, when you tap the \"Kokokita\" button, the app captures your current GPS coordinates and saves them with a tamper-proof digital signature. Location data is stored locally on your device and never shared without your permission.";
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "画像をフォトライブラリに保存します。";
-				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "写真ライブラリから画像を選択するために使用します。";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Kokokita accesses your photo library to let you attach existing photos to your visit records. For example, you can select a photo from your library and add it to a location record. Photos are stored locally on your device.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -365,10 +365,10 @@
 				INFOPLIST_FILE = kokokita/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "ココキタ";
 				INFOPLIST_KEY_LSApplicationCategoryType = "";
-				INFOPLIST_KEY_NSCameraUsageDescription = "写真撮影のためにカメラを使用します。";
-				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "訪問した場所の位置情報を記録するために使用します。";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Kokokita uses the camera to take photos that can be attached to your visit records. For example, you can capture a photo of a location you visited and save it with your record. Photos are stored locally on your device.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Kokokita uses your location to record where you have been. For example, when you tap the \"Kokokita\" button, the app captures your current GPS coordinates and saves them with a tamper-proof digital signature. Location data is stored locally on your device and never shared without your permission.";
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "画像をフォトライブラリに保存します。";
-				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "写真ライブラリから画像を選択するために使用します。";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Kokokita accesses your photo library to let you attach existing photos to your visit records. For example, you can select a photo from your library and add it to a location record. Photos are stored locally on your device.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

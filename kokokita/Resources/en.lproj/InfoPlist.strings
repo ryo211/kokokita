@@ -1,0 +1,15 @@
+/*
+  InfoPlist.strings (English)
+  Kokokita
+
+  Permission request descriptions for camera, photo library, and location
+*/
+
+/* Camera access description */
+"NSCameraUsageDescription" = "Kokokita uses the camera to take photos that can be attached to your visit records. For example, you can capture a photo of a location you visited and save it with your record. Photos are stored locally on your device.";
+
+/* Photo library access description */
+"NSPhotoLibraryUsageDescription" = "Kokokita accesses your photo library to let you attach existing photos to your visit records. For example, you can select a photo from your library and add it to a location record. Photos are stored locally on your device.";
+
+/* Location access description */
+"NSLocationWhenInUseUsageDescription" = "Kokokita uses your location to record where you have been. For example, when you tap the \"Kokokita\" button, the app captures your current GPS coordinates and saves them with a tamper-proof digital signature. Location data is stored locally on your device and never shared without your permission.";
