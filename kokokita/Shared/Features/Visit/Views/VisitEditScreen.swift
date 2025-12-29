@@ -35,6 +35,7 @@ struct VisitEditScreen: View {
     @State private var labelCreateShown = false
     @State private var groupCreateShown = false
     @State private var memberCreateShown = false
+    @State private var visitCopyPickerShown = false
 
     // 作成入力
     @State private var newLabelName = ""
@@ -86,6 +87,7 @@ struct VisitEditScreen: View {
         .sheet(isPresented: $labelPickerShown) { labelPickerSheetContent }
         .sheet(isPresented: $groupPickerShown) { groupPickerSheetContent }
         .sheet(isPresented: $memberPickerShown) { memberPickerSheetContent }
+        .sheet(isPresented: $visitCopyPickerShown) { visitCopyPickerSheetContent }
         .ignoresSafeArea(.keyboard, edges: .bottom)
         .onDisappear {
             vm.discardPhotoEditingIfNeeded()
@@ -245,10 +247,24 @@ struct VisitEditScreen: View {
         }
     }
 
+    // MARK: - Visit Copy Picker Sheet
+
+    @ViewBuilder
+    private var visitCopyPickerSheetContent: some View {
+        VisitCopyPickerSheet(
+            isPresented: $visitCopyPickerShown,
+            onSelect: { selectedAggregate in
+                vm.copyTaxonomyFrom(selectedAggregate)
+                visitCopyPickerShown = false
+            }
+        )
+    }
+
     // MARK: - Form共通
     private var formContent: some View {
         Form {
-            Section(L.VisitEdit.editSection) {
+            // 基本情報セクション
+            Section(L.VisitEdit.basicInfoSection) {
                 #if DEBUG
                 DatePicker(L.VisitEdit.recordDateTime, selection: $vm.timestampDisplay)
                 #endif
@@ -283,7 +299,10 @@ struct VisitEditScreen: View {
                                 .padding(.top, UIConstants.Spacing.medium).padding(.leading, 5)
                         }
                     }
+            }
 
+            // タグ・グループ・メンバーセクション
+            Section(L.VisitEdit.taxonomySection) {
                 Button { labelPickerShown = true } label: {
                     Label("\(selectedLabelTitle)", systemImage: "tag")
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -294,6 +313,14 @@ struct VisitEditScreen: View {
                 }
                 Button { memberPickerShown = true } label: {
                     Label("\(selectedMemberTitle)", systemImage: "person")
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+
+                // 別のココキタからコピーボタン
+                Button {
+                    visitCopyPickerShown = true
+                } label: {
+                    Label(L.VisitEdit.copyFromOtherVisit, systemImage: "doc.on.doc")
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
