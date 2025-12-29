@@ -28,7 +28,7 @@
 "visit.edit.memoPlaceholder" = "メモ";
 "visit.edit.editSection" = "編集";
 "visit.edit.basicInfoSection" = "基本情報";
-"visit.edit.taxonomySection" = "タグ・グループ・メンバー";
+"visit.edit.taxonomySection" = "ラベル・グループ・メンバー";
 "visit.edit.saveButton" = "保存";
 "visit.edit.locationAcquiring" = "現在地を取得しています…";
 "visit.edit.kokokamo" = "ココカモ";

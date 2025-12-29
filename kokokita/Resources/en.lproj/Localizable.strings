@@ -28,7 +28,7 @@
 "visit.edit.memoPlaceholder" = "Memo";
 "visit.edit.editSection" = "Edit";
 "visit.edit.basicInfoSection" = "Basic Information";
-"visit.edit.taxonomySection" = "Tags, Groups & Members";
+"visit.edit.taxonomySection" = "Labels, Groups & Members";
 "visit.edit.saveButton" = "Save";
 "visit.edit.locationAcquiring" = "Getting current location…";
 "visit.edit.kokokamo" = "Nearby";

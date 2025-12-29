@@ -301,28 +301,38 @@ struct VisitEditScreen: View {
                     }
             }
 
-            // タグ・グループ・メンバーセクション
-            Section(L.VisitEdit.taxonomySection) {
+            // ラベル・グループ・メンバーセクション
+            Section {
                 Button { labelPickerShown = true } label: {
                     Label("\(selectedLabelTitle)", systemImage: "tag")
+                        .foregroundStyle(.purple)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 Button { groupPickerShown = true } label: {
                     Label("\(selectedGroupName)", systemImage: "folder")
+                        .foregroundStyle(.teal)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 Button { memberPickerShown = true } label: {
                     Label("\(selectedMemberTitle)", systemImage: "person")
+                        .foregroundStyle(.blue)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
-
-                // 別のココキタからコピーボタン
+            } header: {
+                Text(L.VisitEdit.taxonomySection)
+            } footer: {
                 Button {
                     visitCopyPickerShown = true
                 } label: {
-                    Label(L.VisitEdit.copyFromOtherVisit, systemImage: "doc.on.doc")
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                    HStack(spacing: UIConstants.Spacing.small) {
+                        Image(systemName: "doc.on.doc")
+                        Text(L.VisitEdit.copyFromOtherVisit)
+                    }
+                    .font(.footnote)
+                    .foregroundStyle(.primary)
                 }
+                .buttonStyle(.plain)
+                .padding(.top, UIConstants.Spacing.small)
             }
 
         }

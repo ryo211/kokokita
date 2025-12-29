@@ -135,8 +135,8 @@ struct SearchFilterSheet: View {
                 showLabelPicker = true
             } label: {
                 HStack {
-                    Text("選択")
-                        .foregroundStyle(.primary)
+                    Label("選択", systemImage: "tag")
+                        .foregroundStyle(.purple)
                     Spacer()
                     Image(systemName: "chevron.right")
                         .font(.caption)
@@ -175,8 +175,8 @@ struct SearchFilterSheet: View {
                 showGroupPicker = true
             } label: {
                 HStack {
-                    Text("選択")
-                        .foregroundStyle(.primary)
+                    Label("選択", systemImage: "folder")
+                        .foregroundStyle(.teal)
                     Spacer()
                     Image(systemName: "chevron.right")
                         .font(.caption)
@@ -215,8 +215,8 @@ struct SearchFilterSheet: View {
                 showMemberPicker = true
             } label: {
                 HStack {
-                    Text("選択")
-                        .foregroundStyle(.primary)
+                    Label("選択", systemImage: "person")
+                        .foregroundStyle(.blue)
                     Spacer()
                     Image(systemName: "chevron.right")
                         .font(.caption)
