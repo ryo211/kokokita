@@ -28,30 +28,9 @@ struct MemberDetailView: View {
 
     var body: some View {
         Form {
-            Section { TextField(L.MemberManagement.namePlaceholder, text: $name)
-                .submitLabel(.done)
-                .onSubmit {
-                    if MemberValidator.isNotEmpty(name) {
-                        save()
-                    }
-                }
-            }
-            Section {
-                Button(role: .destructive) {
-                    showDeleteConfirm = true
-                } label: { Label(L.MemberManagement.deleteConfirm, systemImage: "trash") }
-            } footer: { Text(L.MemberManagement.deleteFooter) }
-
-            // 関連する訪問記録セクション
-            if !relatedVisits.isEmpty {
-                Section {
-                    ForEach(relatedVisits, id: \.id) { visit in
-                        visitRowView(for: visit)
-                    }
-                } header: {
-                    Text("このメンバーを使用している記録")
-                }
-            }
+            nameSection
+            deleteSection
+            relatedVisitsSection
         }
         .navigationTitle(L.MemberManagement.detailTitle)
         .toolbar {
@@ -105,6 +84,47 @@ struct MemberDetailView: View {
             dismiss()
         }
     }
+
+    // MARK: - Sections
+
+    private var nameSection: some View {
+        Section {
+            TextField(L.MemberManagement.namePlaceholder, text: $name)
+                .submitLabel(.done)
+                .onSubmit {
+                    if MemberValidator.isNotEmpty(name) {
+                        save()
+                    }
+                }
+        }
+    }
+
+    private var deleteSection: some View {
+        Section {
+            Button(role: .destructive) {
+                showDeleteConfirm = true
+            } label: {
+                Label(L.MemberManagement.deleteConfirm, systemImage: "trash")
+            }
+        } footer: {
+            Text(L.MemberManagement.deleteFooter)
+        }
+    }
+
+    @ViewBuilder
+    private var relatedVisitsSection: some View {
+        if !relatedVisits.isEmpty {
+            Section {
+                ForEach(relatedVisits, id: \.id) { visit in
+                    visitRowView(for: visit)
+                }
+            } header: {
+                Text("このメンバーを使用している記録")
+            }
+        }
+    }
+
+    // MARK: - Helper Methods
 
     private func deleteVisit(id: UUID) {
         do {
