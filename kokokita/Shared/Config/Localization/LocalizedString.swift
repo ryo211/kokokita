@@ -32,6 +32,8 @@ enum L {
         static let titlePlaceholder = localized("visit.edit.titlePlaceholder")
         static let memoPlaceholder = localized("visit.edit.memoPlaceholder")
         static let editSection = localized("visit.edit.editSection")
+        static let basicInfoSection = localized("visit.edit.basicInfoSection")
+        static let taxonomySection = localized("visit.edit.taxonomySection")
         static let saveButton = localized("visit.edit.saveButton")
         static let locationAcquiring = localized("visit.edit.locationAcquiring")
         static let kokokamo = localized("visit.edit.kokokamo")
@@ -46,6 +48,8 @@ enum L {
         static let newGroup = localized("visit.edit.newGroup")
         static let clearSelection = localized("visit.edit.clearSelection")
         static let recordDateTime = localized("visit.edit.recordDateTime")
+        static let copyFromOtherVisit = localized("visit.edit.copyFromOtherVisit")
+        static let selectVisitToCopy = localized("visit.edit.selectVisitToCopy")
     }
 
     // MARK: - Photo

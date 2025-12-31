@@ -192,6 +192,7 @@ final class CoreDataVisitRepository {
     func fetchAll(
         filterLabel: UUID?,
         filterGroup: UUID?,
+        filterMember: UUID?,
         titleQuery: String?,
         dateFrom: Date?,
         dateToExclusive: Date?
@@ -205,10 +206,15 @@ final class CoreDataVisitRepository {
             // details.labels の id にヒットするもの
             predicates.append(NSPredicate(format: "ANY details.labels.id == %@", lf as CVarArg))
         }
-        
+
         if let gf = filterGroup {
             // details の groupId
             predicates.append(NSPredicate(format: "details.groupId == %@", gf as CVarArg))
+        }
+
+        if let mf = filterMember {
+            // details.members の id にヒットするもの
+            predicates.append(NSPredicate(format: "ANY details.members.id == %@", mf as CVarArg))
         }
         if let q = titleQuery, !q.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             // タイトルまたは住所に含まれる（OR検索）

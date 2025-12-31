@@ -53,13 +53,22 @@ struct Chip: View {
         }
     }
 
+    // 表示用のテキスト（10文字制限）
+    private var displayText: String {
+        if text.count > 10 {
+            return String(text.prefix(10)) + "..."
+        }
+        return text
+    }
+
     var body: some View {
         HStack(spacing: UIConstants.Spacing.small) {
             if let img = systemImage {
                 Image(systemName: img)
                     .imageScale(size == .small ? .small : .medium)
             }
-            Text(text).lineLimit(1)
+            Text(displayText)
+                .lineLimit(1)
 
             if showRemoveButton {
                 Button(action: onRemove) {

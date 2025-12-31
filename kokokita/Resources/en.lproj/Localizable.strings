@@ -27,6 +27,8 @@
 "visit.edit.titlePlaceholder" = "Title";
 "visit.edit.memoPlaceholder" = "Memo";
 "visit.edit.editSection" = "Edit";
+"visit.edit.basicInfoSection" = "Basic Information";
+"visit.edit.taxonomySection" = "Labels, Groups & Members";
 "visit.edit.saveButton" = "Save";
 "visit.edit.locationAcquiring" = "Getting current location…";
 "visit.edit.kokokamo" = "Nearby";
@@ -41,6 +43,8 @@
 "visit.edit.newGroup" = "New Group";
 "visit.edit.clearSelection" = "Clear Selection";
 "visit.edit.recordDateTime" = "Record Date/Time";
+"visit.edit.copyFromOtherVisit" = "Copy from Another Visit";
+"visit.edit.selectVisitToCopy" = "Select Source to Copy";
 
 // MARK: - Photo
 "photo.photo" = "Photo";
@@ -159,9 +163,9 @@
 
 // MARK: - Settings
 "settings.title" = "Menu";
-"settings.editLabels" = "Edit Labels";
-"settings.editGroups" = "Edit Groups";
-"settings.editMembers" = "Edit Members";
+"settings.editLabels" = "Labels";
+"settings.editGroups" = "Groups";
+"settings.editMembers" = "Members";
 "settings.dataMigration" = "Data Migration";
 "settings.resetAll" = "Reset (Delete All)";
 "settings.resetAllDescription" = "\"Reset\" deletes all records. This cannot be undone.";

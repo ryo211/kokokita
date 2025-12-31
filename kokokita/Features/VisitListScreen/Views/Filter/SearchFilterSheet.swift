@@ -73,7 +73,30 @@ struct SearchFilterSheet: View {
         .environment(\.locale, Locale(identifier: "ja_JP"))               // 日本語UI
         .environment(\.calendar, Calendar(identifier: .gregorian))        // ←西暦のまま
         // 和暦にしたい場合は上を .japanese に変更
-
+        .sheet(isPresented: $showLabelPicker) {
+            FilterLabelPickerSheet(
+                selectedIds: $store.labelFilters,
+                labelOptions: vm.labels,
+                isPresented: $showLabelPicker,
+                onDismiss: { vm.applyAndReload() }
+            )
+        }
+        .sheet(isPresented: $showGroupPicker) {
+            FilterGroupPickerSheet(
+                selectedIds: $store.groupFilters,
+                groupOptions: vm.groups,
+                isPresented: $showGroupPicker,
+                onDismiss: { vm.applyAndReload() }
+            )
+        }
+        .sheet(isPresented: $showMemberPicker) {
+            FilterMemberPickerSheet(
+                selectedIds: $store.memberFilters,
+                memberOptions: vm.members,
+                isPresented: $showMemberPicker,
+                onDismiss: { vm.applyAndReload() }
+            )
+        }
     }
 
     // MARK: - Form Sections
@@ -131,120 +154,183 @@ struct SearchFilterSheet: View {
 
     private var labelSection: some View {
         Section(L.SearchFilter.sectionLabel) {
-            Button {
-                showLabelPicker = true
-            } label: {
-                HStack {
-                    Text("選択")
-                        .foregroundStyle(.primary)
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            }
-            .sheet(isPresented: $showLabelPicker) {
-                FilterLabelPickerSheet(
-                    selectedIds: $store.labelFilters,
-                    labelOptions: vm.labels,
-                    isPresented: $showLabelPicker,
-                    onDismiss: { vm.applyAndReload() }
-                )
-            }
+            if store.labelFilters.isEmpty {
+                // 未選択時：選択ボタン + 追加ボタンを表示
+                HStack(spacing: UIConstants.Spacing.medium) {
+                    Button { showLabelPicker = true } label: {
+                        Label("選択", systemImage: "tag")
+                            .foregroundStyle(.purple)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
 
-            if !store.labelFilters.isEmpty {
-                let lmap = Dictionary(uniqueKeysWithValues: vm.labels.map { ($0.id, $0.name) })
-                FlowRow(spacing: 6, rowSpacing: 6) {
-                    ForEach(store.labelFilters, id: \.self) { lid in
-                        if let name = lmap[lid]?.trimmingCharacters(in: .whitespacesAndNewlines), !name.isEmpty {
-                            Chip(name, kind: .label) {
-                                store.labelFilters.removeAll { $0 == lid }
-                                vm.applyAndReload()
+                    Button {
+                        showLabelPicker = true
+                    } label: {
+                        Image(systemName: "plus.circle.fill")
+                            .foregroundStyle(.purple)
+                            .imageScale(.large)
+                    }
+                    .buttonStyle(.plain)
+                }
+            } else {
+                // 選択済み時：アイコン + チップ + 追加ボタンを表示
+                Button {
+                    showLabelPicker = true
+                } label: {
+                    HStack(alignment: .center, spacing: UIConstants.Spacing.extraLarge) {
+                        Image(systemName: "tag")
+                            .foregroundStyle(.purple)
+                            .imageScale(.medium)
+                            .frame(height: 28, alignment: .center)
+
+                        let lmap = Dictionary(uniqueKeysWithValues: vm.labels.map { ($0.id, $0.name) })
+                        FlowRow(spacing: 12, rowSpacing: 6) {
+                            ForEach(store.labelFilters, id: \.self) { lid in
+                                if let name = lmap[lid]?.trimmingCharacters(in: .whitespacesAndNewlines), !name.isEmpty {
+                                    Chip(name, kind: .label, size: .small, showRemoveButton: true) {
+                                        store.labelFilters.removeAll { $0 == lid }
+                                    }
+                                }
                             }
                         }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+
+                        // 追加ボタン（右端に固定）
+                        Button {
+                            showLabelPicker = true
+                        } label: {
+                            Image(systemName: "plus.circle.fill")
+                                .foregroundStyle(.purple)
+                                .imageScale(.large)
+                        }
+                        .buttonStyle(.plain)
+                        .frame(height: 28, alignment: .center)
                     }
+                    .padding(.vertical, UIConstants.Spacing.extraSmall)
                 }
-                .padding(.vertical, 4)
+                .buttonStyle(.plain)
             }
         }
     }
 
     private var groupSection: some View {
         Section(L.SearchFilter.sectionGroup) {
-            Button {
-                showGroupPicker = true
-            } label: {
-                HStack {
-                    Text("選択")
-                        .foregroundStyle(.primary)
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            }
-            .sheet(isPresented: $showGroupPicker) {
-                FilterGroupPickerSheet(
-                    selectedIds: $store.groupFilters,
-                    groupOptions: vm.groups,
-                    isPresented: $showGroupPicker,
-                    onDismiss: { vm.applyAndReload() }
-                )
-            }
+            if store.groupFilters.isEmpty {
+                // 未選択時：選択ボタン + 追加ボタンを表示
+                HStack(spacing: UIConstants.Spacing.medium) {
+                    Button { showGroupPicker = true } label: {
+                        Label("選択", systemImage: "folder")
+                            .foregroundStyle(.teal)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
 
-            if !store.groupFilters.isEmpty {
-                let gmap = Dictionary(uniqueKeysWithValues: vm.groups.map { ($0.id, $0.name) })
-                FlowRow(spacing: 6, rowSpacing: 6) {
-                    ForEach(store.groupFilters, id: \.self) { gid in
-                        if let name = gmap[gid]?.trimmingCharacters(in: .whitespacesAndNewlines), !name.isEmpty {
-                            Chip(name, kind: .group) {
-                                store.groupFilters.removeAll { $0 == gid }
-                                vm.applyAndReload()
+                    Button {
+                        showGroupPicker = true
+                    } label: {
+                        Image(systemName: "plus.circle.fill")
+                            .foregroundStyle(.teal)
+                            .imageScale(.large)
+                    }
+                    .buttonStyle(.plain)
+                }
+            } else {
+                // 選択済み時：アイコン + チップ + 追加ボタンを表示
+                Button {
+                    showGroupPicker = true
+                } label: {
+                    HStack(alignment: .center, spacing: UIConstants.Spacing.extraLarge) {
+                        Image(systemName: "folder")
+                            .foregroundStyle(.teal)
+                            .imageScale(.medium)
+                            .frame(height: 28, alignment: .center)
+
+                        let gmap = Dictionary(uniqueKeysWithValues: vm.groups.map { ($0.id, $0.name) })
+                        FlowRow(spacing: 12, rowSpacing: 6) {
+                            ForEach(store.groupFilters, id: \.self) { gid in
+                                if let name = gmap[gid]?.trimmingCharacters(in: .whitespacesAndNewlines), !name.isEmpty {
+                                    Chip(name, kind: .group, size: .small, showRemoveButton: true) {
+                                        store.groupFilters.removeAll { $0 == gid }
+                                    }
+                                }
                             }
                         }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+
+                        // 追加ボタン（右端に固定）
+                        Button {
+                            showGroupPicker = true
+                        } label: {
+                            Image(systemName: "plus.circle.fill")
+                                .foregroundStyle(.teal)
+                                .imageScale(.large)
+                        }
+                        .buttonStyle(.plain)
+                        .frame(height: 28, alignment: .center)
                     }
+                    .padding(.vertical, UIConstants.Spacing.extraSmall)
                 }
-                .padding(.vertical, 4)
+                .buttonStyle(.plain)
             }
         }
     }
 
     private var memberSection: some View {
         Section(L.SearchFilter.sectionMember) {
-            Button {
-                showMemberPicker = true
-            } label: {
-                HStack {
-                    Text("選択")
-                        .foregroundStyle(.primary)
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            }
-            .sheet(isPresented: $showMemberPicker) {
-                FilterMemberPickerSheet(
-                    selectedIds: $store.memberFilters,
-                    memberOptions: vm.members,
-                    isPresented: $showMemberPicker,
-                    onDismiss: { vm.applyAndReload() }
-                )
-            }
+            if store.memberFilters.isEmpty {
+                // 未選択時：選択ボタン + 追加ボタンを表示
+                HStack(spacing: UIConstants.Spacing.medium) {
+                    Button { showMemberPicker = true } label: {
+                        Label("選択", systemImage: "person")
+                            .foregroundStyle(.blue)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
 
-            if !store.memberFilters.isEmpty {
-                let mmap = Dictionary(uniqueKeysWithValues: vm.members.map { ($0.id, $0.name) })
-                FlowRow(spacing: 6, rowSpacing: 6) {
-                    ForEach(store.memberFilters, id: \.self) { mid in
-                        if let name = mmap[mid]?.trimmingCharacters(in: .whitespacesAndNewlines), !name.isEmpty {
-                            Chip(name, kind: .member) {
-                                store.memberFilters.removeAll { $0 == mid }
-                                vm.applyAndReload()
+                    Button {
+                        showMemberPicker = true
+                    } label: {
+                        Image(systemName: "plus.circle.fill")
+                            .foregroundStyle(.blue)
+                            .imageScale(.large)
+                    }
+                    .buttonStyle(.plain)
+                }
+            } else {
+                // 選択済み時：アイコン + チップ + 追加ボタンを表示
+                Button {
+                    showMemberPicker = true
+                } label: {
+                    HStack(alignment: .center, spacing: UIConstants.Spacing.extraLarge) {
+                        Image(systemName: "person")
+                            .foregroundStyle(.blue)
+                            .imageScale(.medium)
+                            .frame(height: 28, alignment: .center)
+
+                        let mmap = Dictionary(uniqueKeysWithValues: vm.members.map { ($0.id, $0.name) })
+                        FlowRow(spacing: 12, rowSpacing: 6) {
+                            ForEach(store.memberFilters, id: \.self) { mid in
+                                if let name = mmap[mid]?.trimmingCharacters(in: .whitespacesAndNewlines), !name.isEmpty {
+                                    Chip(name, kind: .member, size: .small, showRemoveButton: true) {
+                                        store.memberFilters.removeAll { $0 == mid }
+                                    }
+                                }
                             }
                         }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+
+                        // 追加ボタン（右端に固定）
+                        Button {
+                            showMemberPicker = true
+                        } label: {
+                            Image(systemName: "plus.circle.fill")
+                                .foregroundStyle(.blue)
+                                .imageScale(.large)
+                        }
+                        .buttonStyle(.plain)
+                        .frame(height: 28, alignment: .center)
                     }
+                    .padding(.vertical, UIConstants.Spacing.extraSmall)
                 }
-                .padding(.vertical, 4)
+                .buttonStyle(.plain)
             }
         }
     }

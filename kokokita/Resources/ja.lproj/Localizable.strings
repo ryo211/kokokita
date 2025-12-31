@@ -27,6 +27,8 @@
 "visit.edit.titlePlaceholder" = "タイトル";
 "visit.edit.memoPlaceholder" = "メモ";
 "visit.edit.editSection" = "編集";
+"visit.edit.basicInfoSection" = "基本情報";
+"visit.edit.taxonomySection" = "ラベル・グループ・メンバー";
 "visit.edit.saveButton" = "保存";
 "visit.edit.locationAcquiring" = "現在地を取得しています…";
 "visit.edit.kokokamo" = "ココカモ";
@@ -41,6 +43,8 @@
 "visit.edit.newGroup" = "グループ新規作成";
 "visit.edit.clearSelection" = "未選択にする";
 "visit.edit.recordDateTime" = "記録日時";
+"visit.edit.copyFromOtherVisit" = "別のココキタからコピー";
+"visit.edit.selectVisitToCopy" = "コピー元を選択";
 
 // MARK: - Photo
 "photo.photo" = "写真";
@@ -167,9 +171,9 @@
 
 // MARK: - Settings
 "settings.title" = "メニュー";
-"settings.editLabels" = "ラベルを編集";
-"settings.editGroups" = "グループを編集";
-"settings.editMembers" = "メンバーを編集";
+"settings.editLabels" = "ラベル";
+"settings.editGroups" = "グループ";
+"settings.editMembers" = "メンバー";
 "settings.dataMigration" = "データ移行";
 "settings.resetAll" = "初期化（全削除）";
 "settings.resetAllDescription" = "「初期化」は全ての記録を削除します。元に戻せません。";
