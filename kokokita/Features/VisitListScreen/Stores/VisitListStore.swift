@@ -174,10 +174,11 @@ final class VisitListStore {
             let from = dateFrom.map { dateHelper.startOfDay($0) }
             let toExclusive = dateTo.map { dateHelper.calculateEndExclusive($0) }
 
-            // 複数選択対応のため、ラベル・グループフィルタはクライアントサイドで適用
+            // 複数選択対応のため、ラベル・グループ・メンバーフィルタはクライアントサイドで適用
             var rows = try repo.fetchAll(
                 filterLabel: nil,
                 filterGroup: nil,
+                filterMember: nil,
                 titleQuery: title,
                 dateFrom: from,
                 dateToExclusive: toExclusive

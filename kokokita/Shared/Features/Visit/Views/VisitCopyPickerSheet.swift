@@ -144,6 +144,7 @@ struct VisitCopyPickerSheet: View {
             let allVisits = try repo.fetchAll(
                 filterLabel: nil,
                 filterGroup: nil,
+                filterMember: nil,
                 titleQuery: nil,
                 dateFrom: nil,
                 dateToExclusive: nil
