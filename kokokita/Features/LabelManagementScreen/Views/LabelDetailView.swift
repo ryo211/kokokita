@@ -46,33 +46,7 @@ struct LabelDetailView: View {
             if !relatedVisits.isEmpty {
                 Section {
                     ForEach(relatedVisits, id: \.id) { visit in
-                        NavigationLink {
-                            VisitDetailScreen(
-                                data: toDetailData(visit),
-                                visitId: visit.id,
-                                onBack: {},
-                                onEdit: { editingTarget = visit },
-                                onShare: {},
-                                onDelete: {
-                                    pendingDeleteVisitId = visit.id
-                                    showVisitDeleteConfirm = true
-                                },
-                                onUpdate: {
-                                    loadRelatedVisits()
-                                },
-                                onMapTap: nil
-                            )
-                        } label: {
-                            VisitRow(
-                                agg: visit,
-                                nameResolver: { labelIds, groupId, memberIds in
-                                    let labels = labelIds.compactMap { labelMap[$0] }
-                                    let group = groupId.flatMap { groupMap[$0] }
-                                    let members = memberIds.compactMap { memberMap[$0] }
-                                    return (labels, group, members)
-                                }
-                            )
-                        }
+                        visitRowView(for: visit)
                     }
                 } header: {
                     Text("このラベルを使用している記録")
@@ -140,6 +114,36 @@ struct LabelDetailView: View {
         } catch {
             Logger.error("Failed to delete visit: \(error.localizedDescription)")
         }
+    }
+
+    @ViewBuilder
+    private func visitRowView(for visit: VisitAggregate) -> some View {
+        NavigationLink {
+            VisitDetailScreen(
+                data: toDetailData(visit),
+                visitId: visit.id,
+                onBack: {},
+                onEdit: { editingTarget = visit },
+                onShare: {},
+                onDelete: {
+                    pendingDeleteVisitId = visit.id
+                    showVisitDeleteConfirm = true
+                },
+                onUpdate: {
+                    loadRelatedVisits()
+                },
+                onMapTap: nil
+            )
+        } label: {
+            VisitRow(agg: visit, nameResolver: nameResolver)
+        }
+    }
+
+    private func nameResolver(_ labelIds: [UUID], _ groupId: UUID?, _ memberIds: [UUID]) -> (labels: [String], group: String?, members: [String]) {
+        let labels = labelIds.compactMap { labelMap[$0] }
+        let group = groupId.flatMap { groupMap[$0] }
+        let members = memberIds.compactMap { memberMap[$0] }
+        return (labels, group, members)
     }
 
     private func loadRelatedVisits() {
