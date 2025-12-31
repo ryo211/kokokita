@@ -27,6 +27,8 @@
 "visit.edit.titlePlaceholder" = "Title";
 "visit.edit.memoPlaceholder" = "Memo";
 "visit.edit.editSection" = "Edit";
+"visit.edit.basicInfoSection" = "Basic Information";
+"visit.edit.taxonomySection" = "Labels, Groups & Members";
 "visit.edit.saveButton" = "Save";
 "visit.edit.locationAcquiring" = "Getting current location…";
 "visit.edit.kokokamo" = "Nearby";
@@ -41,6 +43,8 @@
 "visit.edit.newGroup" = "New Group";
 "visit.edit.clearSelection" = "Clear Selection";
 "visit.edit.recordDateTime" = "Record Date/Time";
+"visit.edit.copyFromOtherVisit" = "Copy from Another Visit";
+"visit.edit.selectVisitToCopy" = "Select Source to Copy";
 
 // MARK: - Photo
 "photo.photo" = "Photo";

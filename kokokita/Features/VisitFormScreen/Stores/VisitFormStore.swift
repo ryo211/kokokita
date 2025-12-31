@@ -380,4 +380,13 @@ final class VisitFormStore {
     func discardPhotoEditingIfNeeded() {
         photoEffects.discardEditingIfNeeded()
     }
+
+    // MARK: - Taxonomy Copy
+
+    /// 他のココキタからタクソノミー（ラベル、グループ、メンバー）をコピー
+    func copyTaxonomyFrom(_ aggregate: VisitAggregate) {
+        labelIds = Set(aggregate.details.labelIds)
+        groupId = aggregate.details.groupId
+        memberIds = Set(aggregate.details.memberIds)
+    }
 }

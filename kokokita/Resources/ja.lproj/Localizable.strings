@@ -27,6 +27,8 @@
 "visit.edit.titlePlaceholder" = "タイトル";
 "visit.edit.memoPlaceholder" = "メモ";
 "visit.edit.editSection" = "編集";
+"visit.edit.basicInfoSection" = "基本情報";
+"visit.edit.taxonomySection" = "ラベル・グループ・メンバー";
 "visit.edit.saveButton" = "保存";
 "visit.edit.locationAcquiring" = "現在地を取得しています…";
 "visit.edit.kokokamo" = "ココカモ";
@@ -41,6 +43,8 @@
 "visit.edit.newGroup" = "グループ新規作成";
 "visit.edit.clearSelection" = "未選択にする";
 "visit.edit.recordDateTime" = "記録日時";
+"visit.edit.copyFromOtherVisit" = "別のココキタからコピー";
+"visit.edit.selectVisitToCopy" = "コピー元を選択";
 
 // MARK: - Photo
 "photo.photo" = "写真";
