@@ -44,7 +44,7 @@ struct MemberDetailView: View {
         }
         .sheet(item: $editingTarget) { visit in
             NavigationStack {
-                VisitEditScreen(visitId: visit.id) {
+                EditView(aggregate: visit) {
                     editingTarget = nil
                     loadRelatedVisits()
                 }
