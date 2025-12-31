@@ -15,6 +15,9 @@ struct MemberDetailView: View {
     @State private var labelMap: [UUID: String] = [:]
     @State private var groupMap: [UUID: String] = [:]
     @State private var memberMap: [UUID: String] = [:]
+    @State private var editingTarget: VisitAggregate? = nil
+    @State private var showVisitDeleteConfirm = false
+    @State private var pendingDeleteVisitId: UUID? = nil
     private let repo = AppContainer.shared.repo
 
     init(member: MemberTag, onFinish: @escaping (_ updated: MemberTag?, _ deleted: Bool) -> Void) {
@@ -48,10 +51,15 @@ struct MemberDetailView: View {
                                 data: toDetailData(visit),
                                 visitId: visit.id,
                                 onBack: {},
-                                onEdit: {},
+                                onEdit: { editingTarget = visit },
                                 onShare: {},
-                                onDelete: {},
-                                onUpdate: {},
+                                onDelete: {
+                                    pendingDeleteVisitId = visit.id
+                                    showVisitDeleteConfirm = true
+                                },
+                                onUpdate: {
+                                    loadRelatedVisits()
+                                },
                                 onMapTap: nil
                             )
                         } label: {
@@ -81,10 +89,30 @@ struct MemberDetailView: View {
         .onAppear {
             loadRelatedVisits()
         }
+        .sheet(item: $editingTarget) { visit in
+            NavigationStack {
+                VisitEditScreen(visitId: visit.id) {
+                    editingTarget = nil
+                    loadRelatedVisits()
+                }
+            }
+        }
         .alert(L.MemberManagement.deleteReallyConfirm, isPresented: $showDeleteConfirm) {
             Button(L.Common.cancel, role: .cancel) {}
             Button(L.Common.delete, role: .destructive) { delete() }
         } message: { Text(L.MemberManagement.deleteIrreversible) }
+        .alert("記録を削除", isPresented: $showVisitDeleteConfirm) {
+            Button(L.Common.cancel, role: .cancel) {
+                pendingDeleteVisitId = nil
+            }
+            Button(L.Common.delete, role: .destructive) {
+                if let id = pendingDeleteVisitId {
+                    deleteVisit(id: id)
+                }
+            }
+        } message: {
+            Text("この記録を削除しますか？")
+        }
         .alert(L.Common.error, isPresented: Binding(get: { store.alert != nil }, set: { _ in store.alert = nil })) {
             Button(L.Common.ok, role: .cancel) {}
         } message: { Text(store.alert ?? "") }
@@ -101,6 +129,16 @@ struct MemberDetailView: View {
         if store.delete(id: member.id) {
             onFinish(nil, true)
             dismiss()
+        }
+    }
+
+    private func deleteVisit(id: UUID) {
+        do {
+            try repo.delete(id: id)
+            pendingDeleteVisitId = nil
+            loadRelatedVisits()
+        } catch {
+            Logger.error("Failed to delete visit: \(error.localizedDescription)")
         }
     }
 
