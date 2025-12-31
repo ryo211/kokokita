@@ -163,9 +163,9 @@
 
 // MARK: - Settings
 "settings.title" = "Menu";
-"settings.editLabels" = "Edit Labels";
-"settings.editGroups" = "Edit Groups";
-"settings.editMembers" = "Edit Members";
+"settings.editLabels" = "Labels";
+"settings.editGroups" = "Groups";
+"settings.editMembers" = "Members";
 "settings.dataMigration" = "Data Migration";
 "settings.resetAll" = "Reset (Delete All)";
 "settings.resetAllDescription" = "\"Reset\" deletes all records. This cannot be undone.";
