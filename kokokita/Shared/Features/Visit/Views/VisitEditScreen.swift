@@ -303,20 +303,171 @@ struct VisitEditScreen: View {
 
             // ラベル・グループ・メンバーセクション
             Section {
-                Button { labelPickerShown = true } label: {
-                    Label("\(selectedLabelTitle)", systemImage: "tag")
-                        .foregroundStyle(.purple)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                // ラベル
+                if vm.labelIds.isEmpty {
+                    // 未選択時：選択ボタン + 追加ボタンを表示
+                    HStack(spacing: UIConstants.Spacing.medium) {
+                        Button { labelPickerShown = true } label: {
+                            Label(L.VisitEdit.selectLabel, systemImage: "tag")
+                                .foregroundStyle(.purple)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+
+                        Button {
+                            labelPickerShown = true
+                        } label: {
+                            Image(systemName: "plus.circle.fill")
+                                .foregroundStyle(.purple)
+                                .imageScale(.large)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                } else {
+                    // 選択済み時：アイコン + チップ + 追加ボタンを表示
+                    Button {
+                        labelPickerShown = true
+                    } label: {
+                        HStack(alignment: .center, spacing: UIConstants.Spacing.extraLarge) {
+                            Image(systemName: "tag")
+                                .foregroundStyle(.purple)
+                                .imageScale(.medium)
+                                .frame(height: 28, alignment: .center)
+
+                            FlowRow(spacing: 12, rowSpacing: 6) {
+                                ForEach(Array(vm.labelIds), id: \.self) { labelId in
+                                    if let name = labelOptions.first(where: { $0.id == labelId })?.name {
+                                        Chip(name, kind: .label, size: .small, showRemoveButton: true) {
+                                            vm.labelIds.remove(labelId)
+                                        }
+                                    }
+                                }
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+
+                            // 追加ボタン（右端に固定）
+                            Button {
+                                labelPickerShown = true
+                            } label: {
+                                Image(systemName: "plus.circle.fill")
+                                    .foregroundStyle(.purple)
+                                    .imageScale(.large)
+                            }
+                            .buttonStyle(.plain)
+                            .frame(height: 28, alignment: .center)
+                        }
+                        .padding(.vertical, UIConstants.Spacing.extraSmall)
+                    }
+                    .buttonStyle(.plain)
                 }
-                Button { groupPickerShown = true } label: {
-                    Label("\(selectedGroupName)", systemImage: "folder")
-                        .foregroundStyle(.teal)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+
+                // グループ
+                if vm.groupId == nil {
+                    // 未選択時：選択ボタン + 追加ボタンを表示
+                    HStack(spacing: UIConstants.Spacing.medium) {
+                        Button { groupPickerShown = true } label: {
+                            Label(L.VisitEdit.selectGroup, systemImage: "folder")
+                                .foregroundStyle(.teal)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+
+                        Button {
+                            groupPickerShown = true
+                        } label: {
+                            Image(systemName: "plus.circle.fill")
+                                .foregroundStyle(.teal)
+                                .imageScale(.large)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                } else if let groupId = vm.groupId, let name = groupOptions.first(where: { $0.id == groupId })?.name {
+                    // 選択済み時：アイコン + チップ + 追加ボタンを表示
+                    Button {
+                        groupPickerShown = true
+                    } label: {
+                        HStack(alignment: .center, spacing: UIConstants.Spacing.extraLarge) {
+                            Image(systemName: "folder")
+                                .foregroundStyle(.teal)
+                                .imageScale(.medium)
+                                .frame(height: 28, alignment: .center)
+
+                            FlowRow(spacing: 12, rowSpacing: 6) {
+                                Chip(name, kind: .group, size: .small, showRemoveButton: true) {
+                                    vm.groupId = nil
+                                }
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+
+                            // 追加ボタン（右端に固定）
+                            Button {
+                                groupPickerShown = true
+                            } label: {
+                                Image(systemName: "plus.circle.fill")
+                                    .foregroundStyle(.teal)
+                                    .imageScale(.large)
+                            }
+                            .buttonStyle(.plain)
+                            .frame(height: 28, alignment: .center)
+                        }
+                        .padding(.vertical, UIConstants.Spacing.extraSmall)
+                    }
+                    .buttonStyle(.plain)
                 }
-                Button { memberPickerShown = true } label: {
-                    Label("\(selectedMemberTitle)", systemImage: "person")
-                        .foregroundStyle(.blue)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+
+                // メンバー
+                if vm.memberIds.isEmpty {
+                    // 未選択時：選択ボタン + 追加ボタンを表示
+                    HStack(spacing: UIConstants.Spacing.medium) {
+                        Button { memberPickerShown = true } label: {
+                            Label(L.VisitEdit.selectMember, systemImage: "person")
+                                .foregroundStyle(.blue)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+
+                        Button {
+                            memberPickerShown = true
+                        } label: {
+                            Image(systemName: "plus.circle.fill")
+                                .foregroundStyle(.blue)
+                                .imageScale(.large)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                } else {
+                    // 選択済み時：アイコン + チップ + 追加ボタンを表示
+                    Button {
+                        memberPickerShown = true
+                    } label: {
+                        HStack(alignment: .center, spacing: UIConstants.Spacing.extraLarge) {
+                            Image(systemName: "person")
+                                .foregroundStyle(.blue)
+                                .imageScale(.medium)
+                                .frame(height: 28, alignment: .center)
+
+                            FlowRow(spacing: 12, rowSpacing: 6) {
+                                ForEach(Array(vm.memberIds), id: \.self) { memberId in
+                                    if let name = memberOptions.first(where: { $0.id == memberId })?.name {
+                                        Chip(name, kind: .member, size: .small, showRemoveButton: true) {
+                                            vm.memberIds.remove(memberId)
+                                        }
+                                    }
+                                }
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+
+                            // 追加ボタン（右端に固定）
+                            Button {
+                                memberPickerShown = true
+                            } label: {
+                                Image(systemName: "plus.circle.fill")
+                                    .foregroundStyle(.blue)
+                                    .imageScale(.large)
+                            }
+                            .buttonStyle(.plain)
+                            .frame(height: 28, alignment: .center)
+                        }
+                        .padding(.vertical, UIConstants.Spacing.extraSmall)
+                    }
+                    .buttonStyle(.plain)
                 }
             } header: {
                 Text(L.VisitEdit.taxonomySection)

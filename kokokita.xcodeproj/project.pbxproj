@@ -320,14 +320,14 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 6;
+				CURRENT_PROJECT_VERSION = 7;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_ASSET_PATHS = "\"kokokita/Preview Content\"";
 				DEVELOPMENT_TEAM = G3W2XG2N42;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = kokokita/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "ココキタ";
+				INFOPLIST_KEY_CFBundleDisplayName = "ココキタ(開発)";
 				INFOPLIST_KEY_LSApplicationCategoryType = "";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Kokokita uses the camera to take photos that can be attached to your visit records. For example, you can capture a photo of a location you visited and save it with your record. Photos are stored locally on your device.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Kokokita uses your location to record where you have been. For example, when you tap the \"Kokokita\" button, the app captures your current GPS coordinates and saves them with a tamper-proof digital signature. Location data is stored locally on your device and never shared without your permission.";
@@ -342,8 +342,8 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.1;
-				PRODUCT_BUNDLE_IDENTIFIER = com.irodori.kokokita.app;
+				MARKETING_VERSION = 1.0.2;
+				PRODUCT_BUNDLE_IDENTIFIER = com.irodori.kokokita.app.dev;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -357,13 +357,13 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 6;
+				CURRENT_PROJECT_VERSION = 7;
 				DEVELOPMENT_ASSET_PATHS = "\"kokokita/Preview Content\"";
 				DEVELOPMENT_TEAM = G3W2XG2N42;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = kokokita/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "ココキタ";
+				INFOPLIST_KEY_CFBundleDisplayName = "ココキタ(開発)";
 				INFOPLIST_KEY_LSApplicationCategoryType = "";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Kokokita uses the camera to take photos that can be attached to your visit records. For example, you can capture a photo of a location you visited and save it with your record. Photos are stored locally on your device.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Kokokita uses your location to record where you have been. For example, when you tap the \"Kokokita\" button, the app captures your current GPS coordinates and saves them with a tamper-proof digital signature. Location data is stored locally on your device and never shared without your permission.";
@@ -378,8 +378,8 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.1;
-				PRODUCT_BUNDLE_IDENTIFIER = com.irodori.kokokita.app;
+				MARKETING_VERSION = 1.0.2;
+				PRODUCT_BUNDLE_IDENTIFIER = com.irodori.kokokita.app.dev;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
