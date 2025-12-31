@@ -156,7 +156,7 @@ struct LabelDetailView: View {
             return FacilityInfo(
                 name: name,
                 address: agg.details.facilityAddress,
-                phoneNumber: nil
+                phone: nil
             )
         }()
 
