@@ -100,6 +100,7 @@ actor DataBackupService {
         let visitAggregates = try repo.fetchAll(
             filterLabel: nil,
             filterGroup: nil,
+            filterMember: nil,
             titleQuery: nil,
             dateFrom: nil,
             dateToExclusive: nil
