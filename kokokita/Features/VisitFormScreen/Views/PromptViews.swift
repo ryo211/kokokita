@@ -385,8 +385,8 @@ struct PostKokokitaConfirmationSheet: View {
                                 .font(.subheadline.bold())
                                 .foregroundStyle(.primary)
 
-                            if let category = poi.poiCategory {
-                                Text(category.localizedName)
+                            if let category = poi.category {
+                                Text(category)
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                             }
@@ -455,7 +455,7 @@ struct PostKokokitaConfirmationSheet: View {
         // Visit情報を読み込み
         let repo = AppContainer.shared.repo
         do {
-            if let loadedVisit = try repo.fetchById(id: visitId) {
+            if let loadedVisit = try repo.get(by: visitId) {
                 self.visit = loadedVisit
 
                 // POI検索を開始

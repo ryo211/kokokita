@@ -506,7 +506,7 @@ private struct EditVisitSheet: View {
     private func loadVisit() async {
         let repo = AppContainer.shared.repo
         do {
-            self.visit = try repo.fetchById(id: visitId)
+            self.visit = try repo.get(by: visitId)
         } catch {
             Logger.error("Failed to load visit for editing", error: error)
         }
