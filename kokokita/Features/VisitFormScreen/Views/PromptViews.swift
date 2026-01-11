@@ -1,4 +1,5 @@
 import SwiftUI
+import CoreLocation
 
 struct PostKokokitaPromptSheet: View {
     @Binding var locationData: LocationData  // ← `let`から`@Binding`に変更
@@ -175,6 +176,351 @@ struct PostKokokitaPromptSheet: View {
         }
         .frame(maxWidth: .infinity)
     }
+}
 
+// MARK: - PostKokokitaConfirmationSheet
 
+/// ココキタ保存後の確認シート
+/// 保存直後に表示され、周辺施設の自動検索と編集・削除の選択肢を提供
+struct PostKokokitaConfirmationSheet: View {
+    let visitId: UUID
+    let onEnterInfo: (UUID) -> Void
+    let onDelete: (UUID) -> Void
+    @Environment(\.dismiss) private var dismiss
+
+    @State private var visit: VisitAggregate?
+    @State private var poiState: POISearchState = .idle
+    @State private var showDeleteConfirm = false
+
+    // 1%の確率でレア画像を表示
+    private var logoImageName: String {
+        Double.random(in: 0..<1) < 0.01 ? "kokokita_irodori" : "kokokita_irodori_blue"
+    }
+
+    var body: some View {
+        GeometryReader { geometry in
+            VStack(spacing: 0) {
+                // スクロール可能なコンテンツ
+                ScrollView {
+                    VStack(spacing: 16) {
+                        // 見出し
+                        header
+                            .padding(.top, 8)
+
+                        // 基本情報（日付・住所）
+                        if let visit = visit {
+                            basicInfo(visit: visit)
+                        }
+
+                        // 地図（高さを抑える）
+                        if let visit = visit {
+                            mapSection(visit: visit, maxHeight: geometry.size.height * 0.3)
+                        }
+
+                        // ココカモセクション
+                        kokokamoSection
+                    }
+                    .padding()
+                }
+
+                // 下部ボタン（固定）
+                bottomButtons
+            }
+        }
+        .background(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(.regularMaterial)
+        )
+        .presentationDragIndicator(.visible)
+        .task {
+            await loadVisitAndSearchPOI()
+        }
+        .alert(L.Confirmation.deleteConfirmTitle, isPresented: $showDeleteConfirm) {
+            Button(L.Common.delete, role: .destructive) {
+                onDelete(visitId)
+                dismiss()
+            }
+            Button(L.Common.cancel, role: .cancel) {}
+        } message: {
+            Text(L.Confirmation.deleteConfirmMessage)
+        }
+    }
+
+    // MARK: - Header
+
+    private var header: some View {
+        HStack(spacing: 10) {
+            Image(logoImageName)
+                .resizable()
+                .scaledToFit()
+                .frame(width: 42, height: 42)
+            Text(L.Location.kokokitaCompleted)
+                .font(.system(size: 24, weight: .semibold, design: .rounded))
+                .tracking(1.2)
+                .foregroundColor(.accentColor)
+        }
+    }
+
+    // MARK: - Basic Info
+
+    private func basicInfo(visit: VisitAggregate) -> some View {
+        VStack(spacing: 4) {
+            Text(visit.visit.timestampUTC.kokokitaVisitString)
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+
+            if let addr = visit.details.resolvedAddress, !addr.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                Text(addr)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .lineLimit(2)
+                    .padding(.horizontal, 16)
+            }
+        }
+    }
+
+    // MARK: - Map
+
+    private func mapSection(visit: VisitAggregate, maxHeight: CGFloat) -> some View {
+        MapPreview(
+            lat: visit.visit.latitude,
+            lon: visit.visit.longitude,
+            showCoordinateOverlay: true,
+            decimals: 5
+        )
+        .frame(height: min(maxHeight, 200))
+        .cornerRadius(12)
+    }
+
+    // MARK: - Kokokamo Section
+
+    @ViewBuilder
+    private var kokokamoSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(L.Confirmation.selectFacility)
+                .font(.headline)
+                .padding(.horizontal)
+
+            switch poiState {
+            case .idle:
+                EmptyView()
+
+            case .loading:
+                loadingView
+
+            case .success(let pois):
+                if pois.isEmpty {
+                    emptyPOIView
+                } else {
+                    poiListView(pois: pois)
+                }
+
+            case .noInternet:
+                noInternetView
+
+            case .error(let message):
+                errorView(message: message)
+            }
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private var loadingView: some View {
+        VStack(spacing: 12) {
+            ProgressView()
+            Text(L.Confirmation.loadingPOI)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding()
+    }
+
+    private var emptyPOIView: some View {
+        Text(L.Confirmation.noPOIFound)
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .frame(maxWidth: .infinity)
+            .padding()
+    }
+
+    private var noInternetView: some View {
+        VStack(spacing: 8) {
+            Image(systemName: "wifi.slash")
+                .font(.title2)
+                .foregroundStyle(.secondary)
+            Text(L.Confirmation.noInternet)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity)
+        .padding()
+    }
+
+    private func errorView(message: String) -> some View {
+        VStack(spacing: 8) {
+            Image(systemName: "exclamationmark.triangle")
+                .font(.title2)
+                .foregroundStyle(.orange)
+            Text(message)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity)
+        .padding()
+    }
+
+    private func poiListView(pois: [PlacePOI]) -> some View {
+        VStack(spacing: 8) {
+            ForEach(pois) { poi in
+                Button {
+                    applyPOIAndOpenEditor(poi)
+                } label: {
+                    HStack(alignment: .top, spacing: 12) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(poi.name)
+                                .font(.subheadline.bold())
+                                .foregroundStyle(.primary)
+
+                            if let category = poi.poiCategory {
+                                Text(category.localizedName)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+
+                            if let addr = poi.address, !addr.isEmpty {
+                                Text(addr)
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                                    .lineLimit(2)
+                            }
+                        }
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding()
+                    .background(Color(.systemGray6))
+                    .cornerRadius(10)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(.horizontal)
+    }
+
+    // MARK: - Bottom Buttons
+
+    private var bottomButtons: some View {
+        VStack(spacing: 0) {
+            Divider()
+
+            HStack(spacing: 12) {
+                // 情報を入力ボタン
+                Button {
+                    onEnterInfo(visitId)
+                } label: {
+                    Text(L.Confirmation.enterInfo)
+                        .font(.headline)
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+
+                // 削除ボタン
+                Button {
+                    showDeleteConfirm = true
+                } label: {
+                    Text(L.Confirmation.deleteRecord)
+                        .font(.headline)
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.large)
+                .tint(.red)
+            }
+            .padding()
+        }
+        .background(.ultraThinMaterial)
+    }
+
+    // MARK: - Data Loading & POI Search
+
+    @MainActor
+    private func loadVisitAndSearchPOI() async {
+        // Visit情報を読み込み
+        let repo = AppContainer.shared.repo
+        do {
+            if let loadedVisit = try repo.fetchById(id: visitId) {
+                self.visit = loadedVisit
+
+                // POI検索を開始
+                await searchPOI(latitude: loadedVisit.visit.latitude, longitude: loadedVisit.visit.longitude)
+            }
+        } catch {
+            Logger.error("Failed to load visit", error: error)
+        }
+    }
+
+    @MainActor
+    private func searchPOI(latitude: Double, longitude: Double) async {
+        poiState = .loading
+
+        let poiService = AppContainer.shared.poi
+        let center = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+
+        do {
+            let pois = try await poiService.nearbyPOI(center: center, radius: AppConfig.poiSearchRadius)
+            poiState = .success(pois)
+        } catch {
+            // ネットワークエラーかどうかを判定
+            if isNetworkError(error) {
+                poiState = .noInternet
+            } else {
+                poiState = .error(error.localizedDescription)
+            }
+            Logger.error("POI search failed", error: error)
+        }
+    }
+
+    private func isNetworkError(_ error: Error) -> Bool {
+        // NSURLErrorDomain のネットワークエラーをチェック
+        let nsError = error as NSError
+        return nsError.domain == NSURLErrorDomain &&
+            (nsError.code == NSURLErrorNotConnectedToInternet ||
+             nsError.code == NSURLErrorNetworkConnectionLost)
+    }
+
+    @MainActor
+    private func applyPOIAndOpenEditor(_ poi: PlacePOI) {
+        // VisitDetailsに施設情報を適用
+        let repo = AppContainer.shared.repo
+        do {
+            try repo.updateDetails(id: visitId) { details in
+                details.title = poi.name
+                details.facilityName = poi.name
+                details.facilityAddress = poi.address
+                details.facilityCategory = poi.poiCategoryRaw
+            }
+
+            // 編集画面を開く
+            onEnterInfo(visitId)
+        } catch {
+            Logger.error("Failed to apply POI", error: error)
+        }
+    }
+}
+
+// MARK: - POI Search State
+
+private enum POISearchState {
+    case idle
+    case loading
+    case success([PlacePOI])
+    case noInternet
+    case error(String)
 }

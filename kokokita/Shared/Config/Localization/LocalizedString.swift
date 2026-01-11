@@ -309,6 +309,18 @@ enum L {
         static let tapToDeselect = localized("kokokamo.tapToDeselect")
     }
 
+    // MARK: - Confirmation Sheet
+    enum Confirmation {
+        static let enterInfo = localized("confirmation.enterInfo")
+        static let deleteRecord = localized("confirmation.deleteRecord")
+        static let loadingPOI = localized("confirmation.loadingPOI")
+        static let noInternet = localized("confirmation.noInternet")
+        static let noPOIFound = localized("confirmation.noPOIFound")
+        static let selectFacility = localized("confirmation.selectFacility")
+        static let deleteConfirmTitle = localized("confirmation.deleteConfirmTitle")
+        static let deleteConfirmMessage = localized("confirmation.deleteConfirmMessage")
+    }
+
     // MARK: - Helper
     private static func localized(_ key: String, comment: String = "") -> String {
         NSLocalizedString(key, comment: comment)

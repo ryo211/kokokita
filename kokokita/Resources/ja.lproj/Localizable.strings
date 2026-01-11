@@ -262,3 +262,13 @@
 "kokokamo.notSelected" = "未選択";
 "kokokamo.tapToSelect" = "タップで選択";
 "kokokamo.tapToDeselect" = "タップで解除";
+
+// MARK: - Confirmation Sheet
+"confirmation.enterInfo" = "情報を入力";
+"confirmation.deleteRecord" = "削除";
+"confirmation.loadingPOI" = "周辺施設を検索中...";
+"confirmation.noInternet" = "インターネットに接続されていないため、周辺施設情報を取得できません。";
+"confirmation.noPOIFound" = "周辺に施設が見つかりませんでした";
+"confirmation.selectFacility" = "施設を選択して自動入力";
+"confirmation.deleteConfirmTitle" = "この記録を削除しますか？";
+"confirmation.deleteConfirmMessage" = "この操作は取り消せません。";
