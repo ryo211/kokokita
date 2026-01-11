@@ -225,11 +225,10 @@ struct PostKokokitaConfirmationSheet: View {
                     // ココカモセクションのタイトル
                     HStack(spacing: 6) {
                         Image(systemName: "building.2.crop.circle.fill")
-                            .foregroundStyle(.accentColor)
+                            .foregroundStyle(Color.accentColor)
                             .font(.title3)
                         Text(L.Confirmation.selectFacility)
                             .font(.headline)
-                            .foregroundStyle(.primary)
                         Spacer()
                     }
 
