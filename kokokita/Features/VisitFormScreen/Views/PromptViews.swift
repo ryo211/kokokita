@@ -218,7 +218,7 @@ struct PostKokokitaConfirmationSheet: View {
                     }
                 }
                 .padding(.horizontal)
-                .padding(.bottom, 12)
+                .padding(.bottom, 24)
 
                 // ココカモセクション
                 VStack(alignment: .leading, spacing: 8) {
