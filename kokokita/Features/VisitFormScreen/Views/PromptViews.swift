@@ -215,15 +215,23 @@ struct PostKokokitaConfirmationSheet: View {
                     // 地図（高さを抑える）
                     if let visit = visit {
                         mapSection(visit: visit, maxHeight: geometry.size.height * 0.3)
+                            .padding(.bottom, 8)
                     }
+                }
+                .padding(.horizontal)
 
+                // ココカモセクション
+                VStack(alignment: .leading, spacing: 8) {
                     // ココカモセクションのタイトル
-                    HStack {
+                    HStack(spacing: 6) {
+                        Image(systemName: "building.2.crop.circle.fill")
+                            .foregroundStyle(.accentColor)
+                            .font(.title3)
                         Text(L.Confirmation.selectFacility)
                             .font(.headline)
+                            .foregroundStyle(.primary)
                         Spacer()
                     }
-                    .padding(.top, 4)
 
                     // カテゴリフィルタ
                     if case .success(let pois) = poiState, !pois.isEmpty {
@@ -258,7 +266,6 @@ struct PostKokokitaConfirmationSheet: View {
                             }
                             Spacer(minLength: 0)
                         }
-                        .padding(.top, 8)
                     }
                 }
                 .padding(.horizontal)
