@@ -191,6 +191,7 @@ struct PostKokokitaConfirmationSheet: View {
     @State private var visit: VisitAggregate?
     @State private var poiState: POISearchState = .idle
     @State private var selectedCategory: KKCategory? = nil
+    @State private var nearbyVisits: [VisitAggregate] = []
 
     // 1%の確率でレア画像を表示
     private var logoImageName: String {
@@ -217,61 +218,70 @@ struct PostKokokitaConfirmationSheet: View {
                     }
                 }
                 .padding(.horizontal)
-                .padding(.bottom, 24)
+                .padding(.bottom, 16)
 
-                // ココカモセクション
-                VStack(alignment: .leading, spacing: 8) {
-                    // ココカモセクションのタイトル
-                    HStack(spacing: 6) {
-                        Image(systemName: "building.2.crop.circle.fill")
-                            .foregroundStyle(Color.accentColor)
-                            .font(.title3)
-                        Text(L.Confirmation.selectFacility)
-                            .font(.headline)
-                        Spacer()
-                    }
+                // ココカモセクション全体（背景付き）
+                VStack(spacing: 0) {
+                    // ココカモセクションのヘッダー
+                    VStack(alignment: .leading, spacing: 8) {
+                        // ココカモセクションのタイトル
+                        HStack(spacing: 6) {
+                            Image(systemName: "building.2.crop.circle.fill")
+                                .foregroundStyle(Color.accentColor)
+                                .font(.title3)
+                            Text(L.Confirmation.selectFacility)
+                                .font(.headline)
+                            Spacer()
+                        }
 
-                    // カテゴリフィルタ
-                    if case .success(let pois) = poiState, !pois.isEmpty {
-                        HStack(spacing: 12) {
-                            ForEach(KKCategory.allCases) { cat in
-                                let isOn = (selectedCategory == cat)
-                                Button {
-                                    #if os(iOS)
-                                    UIImpactFeedbackGenerator(style: .soft).impactOccurred()
-                                    #endif
-                                    selectedCategory = isOn ? nil : cat
-                                } label: {
-                                    VStack(spacing: 4) {
-                                        Image(systemName: cat.symbolBase + (isOn ? ".fill" : ""))
-                                            .font(.body)
-                                            .foregroundStyle(isOn ? Color.white : Color.primary)
-                                            .padding(6)
-                                            .background(
-                                                Circle()
-                                                    .fill(isOn ? cat.highlightColor : Color(.systemGray5))
-                                            )
-                                            .shadow(color: isOn ? cat.highlightColor.opacity(0.3) : .clear,
-                                                    radius: isOn ? 6 : 0, x: 0, y: 2)
+                        // カテゴリフィルタ
+                        if case .success(let pois) = poiState, !pois.isEmpty {
+                            HStack(spacing: 12) {
+                                ForEach(KKCategory.allCases) { cat in
+                                    let isOn = (selectedCategory == cat)
+                                    Button {
+                                        #if os(iOS)
+                                        UIImpactFeedbackGenerator(style: .soft).impactOccurred()
+                                        #endif
+                                        selectedCategory = isOn ? nil : cat
+                                    } label: {
+                                        VStack(spacing: 4) {
+                                            Image(systemName: cat.symbolBase + (isOn ? ".fill" : ""))
+                                                .font(.body)
+                                                .foregroundStyle(isOn ? Color.white : Color.primary)
+                                                .padding(6)
+                                                .background(
+                                                    Circle()
+                                                        .fill(isOn ? cat.highlightColor : Color(.systemGray5))
+                                                )
+                                                .shadow(color: isOn ? cat.highlightColor.opacity(0.3) : .clear,
+                                                        radius: isOn ? 6 : 0, x: 0, y: 2)
 
-                                        Text(cat.localizedName)
-                                            .font(.caption2)
-                                            .foregroundStyle(isOn ? cat.highlightColor : .secondary)
+                                            Text(cat.localizedName)
+                                                .font(.caption2)
+                                                .foregroundStyle(isOn ? cat.highlightColor : .secondary)
+                                        }
                                     }
+                                    .buttonStyle(.plain)
+                                    .animation(.easeOut(duration: 0.15), value: isOn)
                                 }
-                                .buttonStyle(.plain)
-                                .animation(.easeOut(duration: 0.15), value: isOn)
+                                Spacer(minLength: 0)
                             }
-                            Spacer(minLength: 0)
                         }
                     }
-                }
-                .padding(.horizontal)
-                .padding(.bottom, 8)
+                    .padding(.horizontal)
+                    .padding(.top, 12)
+                    .padding(.bottom, 8)
 
-                // スクロール可能なココカモセクション
-                kokokamoScrollSection
-                    .frame(maxHeight: .infinity)
+                    // スクロール可能なココカモセクション
+                    kokokamoScrollSection
+                        .frame(maxHeight: .infinity)
+                }
+                .background(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .fill(Color(.systemGray5))
+                )
+                .padding(.horizontal, 8)
 
                 // 下部ボタン（固定）
                 bottomButtons
@@ -415,7 +425,17 @@ struct PostKokokitaConfirmationSheet: View {
     }
 
     private func poiListView(pois: [PlacePOI]) -> some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 16) {
+            // 近隣の過去記録セクション
+            if !nearbyVisits.isEmpty {
+                nearbyVisitsSection
+            }
+
+            // POIリストセクション
+            if !nearbyVisits.isEmpty {
+                sectionHeader(L.Confirmation.nearbyPlacesHeader)
+            }
+
             ForEach(pois) { poi in
                 Button {
                     applyPOIAndOpenEditor(poi)
@@ -452,6 +472,68 @@ struct PostKokokitaConfirmationSheet: View {
             }
         }
         .padding(.horizontal)
+    }
+
+    // MARK: - Nearby Visits Section
+
+    private var nearbyVisitsSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            sectionHeader(L.Confirmation.recentVisitsHeader)
+
+            ForEach(nearbyVisits, id: \.visit.id) { pastVisit in
+                Button {
+                    applyPastVisitAndOpenEditor(pastVisit)
+                } label: {
+                    HStack(alignment: .top, spacing: 12) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            // タイトルまたは施設名
+                            Text(displayName(for: pastVisit))
+                                .font(.subheadline.bold())
+                                .foregroundStyle(.primary)
+
+                            // 日付
+                            Text(pastVisit.visit.timestampUTC.kokokitaVisitString)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+
+                            // 住所
+                            if let addr = pastVisit.details.resolvedAddress, !addr.isEmpty {
+                                Text(addr)
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                                    .lineLimit(2)
+                            }
+                        }
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding()
+                    .background(Color(.systemGray6))
+                    .cornerRadius(10)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+
+    private func sectionHeader(_ text: String) -> some View {
+        Text(text)
+            .font(.caption.bold())
+            .foregroundStyle(.secondary)
+            .textCase(.uppercase)
+            .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func displayName(for visit: VisitAggregate) -> String {
+        if let title = visit.details.title, !title.isEmpty {
+            return title
+        } else if let facilityName = visit.details.facilityName, !facilityName.isEmpty {
+            return facilityName
+        } else {
+            return L.Home.noTitle
+        }
     }
 
     // MARK: - Bottom Buttons
@@ -509,6 +591,21 @@ struct PostKokokitaConfirmationSheet: View {
             if let loadedVisit = try repo.get(by: visitId) {
                 self.visit = loadedVisit
 
+                // 近隣の過去記録を検索（100m以内、最大3件）
+                do {
+                    let nearby = try repo.fetchNearby(
+                        latitude: loadedVisit.visit.latitude,
+                        longitude: loadedVisit.visit.longitude,
+                        radius: 100.0,
+                        excludingId: visitId,
+                        limit: 3
+                    )
+                    self.nearbyVisits = nearby
+                } catch {
+                    Logger.error("Failed to fetch nearby visits", error: error)
+                    // エラーが発生しても続行（nearbyVisitsは空のまま）
+                }
+
                 // POI検索を開始
                 await searchPOI(latitude: loadedVisit.visit.latitude, longitude: loadedVisit.visit.longitude)
             }
@@ -562,6 +659,33 @@ struct PostKokokitaConfirmationSheet: View {
             onEnterInfo(visitId)
         } catch {
             Logger.error("Failed to apply POI", error: error)
+        }
+    }
+
+    @MainActor
+    private func applyPastVisitAndOpenEditor(_ pastVisit: VisitAggregate) {
+        // 過去記録の情報を現在のvisitにコピー
+        let repo = AppContainer.shared.repo
+        do {
+            try repo.updateDetails(id: visitId) { details in
+                // タイトルと施設情報をコピー
+                details.title = pastVisit.details.title
+                details.facilityName = pastVisit.details.facilityName
+                details.facilityAddress = pastVisit.details.facilityAddress
+                details.facilityCategory = pastVisit.details.facilityCategory
+
+                // ラベル、グループ、メンバーもコピー
+                details.labelIds = pastVisit.details.labelIds
+                details.groupId = pastVisit.details.groupId
+                details.memberIds = pastVisit.details.memberIds
+
+                // メモはコピーしない（新規記録として独立させる）
+            }
+
+            // 編集画面を開く
+            onEnterInfo(visitId)
+        } catch {
+            Logger.error("Failed to apply past visit", error: error)
         }
     }
 }

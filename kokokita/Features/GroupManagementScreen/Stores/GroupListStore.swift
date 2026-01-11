@@ -8,17 +8,21 @@ final class GroupListStore {
     // MARK: - State
 
     var items: [GroupTag] = []
+    var visitCounts: [UUID: Int] = [:] // 各グループに関連する訪問記録の件数
     var loading = false
     var alert: String?
 
     // MARK: - Dependencies
 
     private let repository: CoreDataTaxonomyRepository
+    private let visitRepository: CoreDataVisitRepository
 
     // MARK: - Initialization
 
-    init(repository: CoreDataTaxonomyRepository = AppContainer.shared.taxonomyRepo) {
+    init(repository: CoreDataTaxonomyRepository = AppContainer.shared.taxonomyRepo,
+         visitRepository: CoreDataVisitRepository = AppContainer.shared.repo) {
         self.repository = repository
+        self.visitRepository = visitRepository
     }
 
     // MARK: - Actions
@@ -31,6 +35,21 @@ final class GroupListStore {
         do {
             let rows = try repository.allGroups()
             items = filterAndSort(rows)
+
+            // 各グループの訪問記録数を取得
+            var counts: [UUID: Int] = [:]
+            for group in items {
+                let visits = try visitRepository.fetchAll(
+                    filterLabel: nil,
+                    filterGroup: group.id,
+                    filterMember: nil,
+                    titleQuery: nil,
+                    dateFrom: nil,
+                    dateToExclusive: nil
+                )
+                counts[group.id] = visits.count
+            }
+            visitCounts = counts
         } catch {
             alert = error.localizedDescription
         }

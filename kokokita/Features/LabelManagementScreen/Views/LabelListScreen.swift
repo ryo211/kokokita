@@ -19,7 +19,16 @@ struct LabelListScreen: View {
                         }
                     }
                 } label: {
-                    HStack { Image(systemName: "tag"); Text(tag.name) }
+                    HStack {
+                        Image(systemName: "tag")
+                        Text(tag.name)
+                        Spacer()
+                        if let count = store.visitCounts[tag.id] {
+                            Text("\(count)\(L.Home.itemsCount)")
+                                .foregroundStyle(.secondary)
+                                .font(.subheadline)
+                        }
+                    }
                 }
             }
         }

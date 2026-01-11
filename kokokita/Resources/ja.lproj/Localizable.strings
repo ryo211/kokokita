@@ -75,6 +75,8 @@
 "detail.facility" = "施設情報";
 "detail.deleteConfirmTitle" = "この記録を削除しますか？";
 "detail.deleteConfirmMessage" = "この操作は取り消せません。";
+"detail.deleteVisitTitle" = "記録を削除";
+"detail.deleteVisitMessage" = "この記録を削除しますか？";
 
 // MARK: - Menu
 "menu.title" = "メニュー";
@@ -138,6 +140,7 @@
 "label.duplicateName" = "同じ名前のラベルが既にあります。";
 "label.detailTitle" = "ラベル詳細";
 "label.deleteIrreversible" = "この操作は取り消せません。";
+"label.relatedVisitsHeader" = "このラベルを使用している記録";
 
 // MARK: - Group Management
 "group.title" = "グループ";
@@ -153,6 +156,7 @@
 "group.duplicateName" = "同じ名前のグループが既にあります。";
 "group.detailTitle" = "グループ詳細";
 "group.deleteIrreversible" = "この操作は取り消せません。";
+"group.relatedVisitsHeader" = "このグループを使用している記録";
 
 // MARK: - Member Management
 "member.title" = "メンバー";
@@ -168,6 +172,7 @@
 "member.duplicateName" = "同じ名前のメンバーが既にあります。";
 "member.detailTitle" = "メンバー詳細";
 "member.deleteIrreversible" = "この操作は取り消せません。";
+"member.relatedVisitsHeader" = "このメンバーを使用している記録";
 
 // MARK: - Settings
 "settings.title" = "メニュー";
@@ -272,3 +277,5 @@
 "confirmation.selectFacility" = "ココカモ（周辺の施設から自動入力）";
 "confirmation.deleteConfirmTitle" = "この記録を削除しますか？";
 "confirmation.deleteConfirmMessage" = "この操作は取り消せません。";
+"confirmation.recentVisitsHeader" = "過去に来たことがある場所です";
+"confirmation.nearbyPlacesHeader" = "周辺の施設";
