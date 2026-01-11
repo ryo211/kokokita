@@ -215,10 +215,10 @@ struct PostKokokitaConfirmationSheet: View {
                     // 地図（高さを抑える）
                     if let visit = visit {
                         mapSection(visit: visit, maxHeight: geometry.size.height * 0.3)
-                            .padding(.bottom, 8)
                     }
                 }
                 .padding(.horizontal)
+                .padding(.bottom, 12)
 
                 // ココカモセクション
                 VStack(alignment: .leading, spacing: 8) {
