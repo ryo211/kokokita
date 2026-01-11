@@ -200,28 +200,36 @@ struct PostKokokitaConfirmationSheet: View {
     var body: some View {
         GeometryReader { geometry in
             VStack(spacing: 0) {
-                // スクロール可能なコンテンツ
-                ScrollView {
-                    VStack(spacing: 16) {
-                        // 見出し
-                        header
-                            .padding(.top, 8)
+                // 固定ヘッダー部分（スクロールしない）
+                VStack(spacing: 16) {
+                    // 見出し
+                    header
+                        .padding(.top, 8)
 
-                        // 基本情報（日付・住所）
-                        if let visit = visit {
-                            basicInfo(visit: visit)
-                        }
-
-                        // 地図（高さを抑える）
-                        if let visit = visit {
-                            mapSection(visit: visit, maxHeight: geometry.size.height * 0.3)
-                        }
-
-                        // ココカモセクション
-                        kokokamoSection
+                    // 基本情報（日付・住所）
+                    if let visit = visit {
+                        basicInfo(visit: visit)
                     }
-                    .padding()
+
+                    // 地図（高さを抑える）
+                    if let visit = visit {
+                        mapSection(visit: visit, maxHeight: geometry.size.height * 0.3)
+                    }
+
+                    // ココカモセクションのタイトル
+                    HStack {
+                        Text(L.Confirmation.selectFacility)
+                            .font(.headline)
+                        Spacer()
+                    }
+                    .padding(.top, 4)
                 }
+                .padding(.horizontal)
+                .padding(.bottom, 8)
+
+                // スクロール可能なココカモセクション
+                kokokamoScrollSection
+                    .frame(maxHeight: .infinity)
 
                 // 下部ボタン（固定）
                 bottomButtons
@@ -296,34 +304,29 @@ struct PostKokokitaConfirmationSheet: View {
     // MARK: - Kokokamo Section
 
     @ViewBuilder
-    private var kokokamoSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(L.Confirmation.selectFacility)
-                .font(.headline)
-                .padding(.horizontal)
+    private var kokokamoScrollSection: some View {
+        switch poiState {
+        case .idle:
+            EmptyView()
 
-            switch poiState {
-            case .idle:
-                EmptyView()
+        case .loading:
+            loadingView
 
-            case .loading:
-                loadingView
-
-            case .success(let pois):
-                if pois.isEmpty {
-                    emptyPOIView
-                } else {
+        case .success(let pois):
+            if pois.isEmpty {
+                emptyPOIView
+            } else {
+                ScrollView {
                     poiListView(pois: pois)
                 }
-
-            case .noInternet:
-                noInternetView
-
-            case .error(let message):
-                errorView(message: message)
             }
+
+        case .noInternet:
+            noInternetView
+
+        case .error(let message):
+            errorView(message: message)
         }
-        .frame(maxWidth: .infinity)
     }
 
     private var loadingView: some View {
