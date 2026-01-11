@@ -227,8 +227,38 @@ struct PostKokokitaConfirmationSheet: View {
 
                     // カテゴリフィルタ
                     if case .success(let pois) = poiState, !pois.isEmpty {
-                        KKFilterBar(selected: $selectedCategory, showLabels: false)
-                            .padding(.top, 8)
+                        HStack(spacing: 12) {
+                            ForEach(KKCategory.allCases) { cat in
+                                let isOn = (selectedCategory == cat)
+                                Button {
+                                    #if os(iOS)
+                                    UIImpactFeedbackGenerator(style: .soft).impactOccurred()
+                                    #endif
+                                    selectedCategory = isOn ? nil : cat
+                                } label: {
+                                    VStack(spacing: 4) {
+                                        Image(systemName: cat.symbolBase + (isOn ? ".fill" : ""))
+                                            .font(.body)
+                                            .foregroundStyle(isOn ? Color.white : Color.primary)
+                                            .padding(6)
+                                            .background(
+                                                Circle()
+                                                    .fill(isOn ? cat.highlightColor : Color(.systemGray5))
+                                            )
+                                            .shadow(color: isOn ? cat.highlightColor.opacity(0.3) : .clear,
+                                                    radius: isOn ? 6 : 0, x: 0, y: 2)
+
+                                        Text(cat.localizedName)
+                                            .font(.caption2)
+                                            .foregroundStyle(isOn ? cat.highlightColor : .secondary)
+                                    }
+                                }
+                                .buttonStyle(.plain)
+                                .animation(.easeOut(duration: 0.15), value: isOn)
+                            }
+                            Spacer(minLength: 0)
+                        }
+                        .padding(.top, 8)
                     }
                 }
                 .padding(.horizontal)

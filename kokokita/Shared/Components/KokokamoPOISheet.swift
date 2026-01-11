@@ -155,9 +155,10 @@ public extension KKCategory {
 struct KKFilterBar: View {
     @Binding var selected: KKCategory?
     var showLabels: Bool = true   // ラベル表示切り替え
+    var compact: Bool = false     // コンパクトモード
 
     var body: some View {
-        HStack(spacing: 16) {
+        HStack(spacing: compact ? 12 : 16) {
             ForEach(KKCategory.allCases) { cat in
                 let isOn = (selected == cat)
                 Button {
@@ -167,11 +168,11 @@ struct KKFilterBar: View {
                     #endif
                     selected = isOn ? nil : cat
                 } label: {
-                    VStack(spacing: 6) {
+                    VStack(spacing: compact ? 4 : 6) {
                         Image(systemName: cat.symbolBase + (isOn ? ".fill" : ""))
-                            .font(.title2) // アイコンサイズ
+                            .font(compact ? .body : .title2) // アイコンサイズ
                             .foregroundStyle(isOn ? Color.white : Color.primary)
-                            .padding(10)
+                            .padding(compact ? 6 : 10)
                             .background(
                                 Circle()
                                     .fill(isOn ? cat.highlightColor : Color(.systemGray5))
@@ -181,7 +182,7 @@ struct KKFilterBar: View {
 
                         if showLabels {
                             Text(cat.localizedName)
-                                .font(.caption)
+                                .font(compact ? .caption2 : .caption)
                                 .foregroundStyle(isOn ? cat.highlightColor : .secondary)
                         }
                     }
