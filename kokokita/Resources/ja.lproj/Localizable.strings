@@ -265,10 +265,10 @@
 
 // MARK: - Confirmation Sheet
 "confirmation.enterInfo" = "情報を入力";
-"confirmation.deleteRecord" = "削除";
+"confirmation.deleteRecord" = "記録を取り消し";
 "confirmation.loadingPOI" = "周辺施設を検索中...";
 "confirmation.noInternet" = "インターネットに接続されていないため、周辺施設情報を取得できません。";
 "confirmation.noPOIFound" = "周辺に施設が見つかりませんでした";
-"confirmation.selectFacility" = "ココカモ？（周辺の施設から自動入力）";
+"confirmation.selectFacility" = "ココカモ（周辺の施設から自動入力）";
 "confirmation.deleteConfirmTitle" = "この記録を削除しますか？";
 "confirmation.deleteConfirmMessage" = "この操作は取り消せません。";

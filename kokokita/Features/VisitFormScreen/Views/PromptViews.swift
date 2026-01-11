@@ -190,7 +190,6 @@ struct PostKokokitaConfirmationSheet: View {
 
     @State private var visit: VisitAggregate?
     @State private var poiState: POISearchState = .idle
-    @State private var showDeleteConfirm = false
     @State private var selectedCategory: KKCategory? = nil
 
     // 1%の確率でレア画像を表示
@@ -285,15 +284,6 @@ struct PostKokokitaConfirmationSheet: View {
         .presentationDragIndicator(.visible)
         .task {
             await loadVisitAndSearchPOI()
-        }
-        .alert(L.Confirmation.deleteConfirmTitle, isPresented: $showDeleteConfirm) {
-            Button(L.Common.delete, role: .destructive) {
-                onDelete(visitId)
-                dismiss()
-            }
-            Button(L.Common.cancel, role: .cancel) {}
-        } message: {
-            Text(L.Confirmation.deleteConfirmMessage)
         }
     }
 
@@ -484,7 +474,8 @@ struct PostKokokitaConfirmationSheet: View {
 
                 // 削除ボタン
                 Button {
-                    showDeleteConfirm = true
+                    onDelete(visitId)
+                    dismiss()
                 } label: {
                     Text(L.Confirmation.deleteRecord)
                         .font(.headline)
