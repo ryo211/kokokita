@@ -1,4 +1,5 @@
 import Foundation
+import MapKit
 
 /// 周辺施設（POI）データ
 public struct PlacePOI: Identifiable, Equatable {
@@ -23,5 +24,16 @@ public struct PlacePOI: Identifiable, Equatable {
         self.address = address
         self.phone = phone
         self.poiCategoryRaw = poiCategoryRaw
+    }
+
+    /// MKPointOfInterestCategoryに変換
+    public var poiCategory: MKPointOfInterestCategory? {
+        guard let raw = poiCategoryRaw else { return nil }
+        return MKPointOfInterestCategory(rawValue: raw)
+    }
+
+    /// ココカモの3分類カテゴリ
+    public var kkCategory: KKCategory {
+        poiCategory?.kkCategory ?? .other
     }
 }

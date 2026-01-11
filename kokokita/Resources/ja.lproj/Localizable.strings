@@ -269,6 +269,6 @@
 "confirmation.loadingPOI" = "周辺施設を検索中...";
 "confirmation.noInternet" = "インターネットに接続されていないため、周辺施設情報を取得できません。";
 "confirmation.noPOIFound" = "周辺に施設が見つかりませんでした";
-"confirmation.selectFacility" = "施設を選択して自動入力";
+"confirmation.selectFacility" = "ココカモ？（周辺の施設から自動入力）";
 "confirmation.deleteConfirmTitle" = "この記録を削除しますか？";
 "confirmation.deleteConfirmMessage" = "この操作は取り消せません。";

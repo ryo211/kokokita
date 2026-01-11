@@ -191,6 +191,7 @@ struct PostKokokitaConfirmationSheet: View {
     @State private var visit: VisitAggregate?
     @State private var poiState: POISearchState = .idle
     @State private var showDeleteConfirm = false
+    @State private var selectedCategory: KKCategory? = nil
 
     // 1%の確率でレア画像を表示
     private var logoImageName: String {
@@ -223,6 +224,12 @@ struct PostKokokitaConfirmationSheet: View {
                         Spacer()
                     }
                     .padding(.top, 4)
+
+                    // カテゴリフィルタ
+                    if case .success(let pois) = poiState, !pois.isEmpty {
+                        KKFilterBar(selected: $selectedCategory, showLabels: false)
+                            .padding(.top, 8)
+                    }
                 }
                 .padding(.horizontal)
                 .padding(.bottom, 8)
@@ -316,8 +323,13 @@ struct PostKokokitaConfirmationSheet: View {
             if pois.isEmpty {
                 emptyPOIView
             } else {
-                ScrollView {
-                    poiListView(pois: pois)
+                let filteredPois = filterPOIs(pois)
+                if filteredPois.isEmpty {
+                    emptyPOIView
+                } else {
+                    ScrollView {
+                        poiListView(pois: filteredPois)
+                    }
                 }
             }
 
@@ -388,8 +400,8 @@ struct PostKokokitaConfirmationSheet: View {
                                 .font(.subheadline.bold())
                                 .foregroundStyle(.primary)
 
-                            if let category = poi.category {
-                                Text(category)
+                            if let poiCategory = poi.poiCategory {
+                                Text(poiCategory.localizedName)
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                             }
@@ -449,6 +461,15 @@ struct PostKokokitaConfirmationSheet: View {
             .padding()
         }
         .background(.ultraThinMaterial)
+    }
+
+    // MARK: - POI Filtering
+
+    private func filterPOIs(_ pois: [PlacePOI]) -> [PlacePOI] {
+        guard let category = selectedCategory else {
+            return pois
+        }
+        return pois.filter { $0.kkCategory == category }
     }
 
     // MARK: - Data Loading & POI Search

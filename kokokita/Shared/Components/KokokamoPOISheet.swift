@@ -132,7 +132,7 @@ struct KokokamoPOISheet<Item: Identifiable>: View {
 //}
 
 // KKCategory の見た目設定（アイコン＆色）
-extension KKCategory {
+public extension KKCategory {
     /// ベースの丸アイコン名（押下時は ".fill" を付ける）
     var symbolBase: String {
         switch self {
