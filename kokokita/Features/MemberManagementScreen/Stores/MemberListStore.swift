@@ -8,17 +8,21 @@ final class MemberListStore {
     // MARK: - State
 
     var items: [MemberTag] = []
+    var visitCounts: [UUID: Int] = [:] // 各メンバーに関連する訪問記録の件数
     var loading = false
     var alert: String?
 
     // MARK: - Dependencies
 
     private let repository: CoreDataTaxonomyRepository
+    private let visitRepository: CoreDataVisitRepository
 
     // MARK: - Initialization
 
-    init(repository: CoreDataTaxonomyRepository = AppContainer.shared.taxonomyRepo) {
+    init(repository: CoreDataTaxonomyRepository = AppContainer.shared.taxonomyRepo,
+         visitRepository: CoreDataVisitRepository = AppContainer.shared.repo) {
         self.repository = repository
+        self.visitRepository = visitRepository
     }
 
     // MARK: - Actions
@@ -31,6 +35,21 @@ final class MemberListStore {
         do {
             let rows = try repository.allMembers()
             items = filterAndSort(rows)
+
+            // 各メンバーの訪問記録数を取得
+            var counts: [UUID: Int] = [:]
+            for member in items {
+                let visits = try visitRepository.fetchAll(
+                    filterLabel: nil,
+                    filterGroup: nil,
+                    filterMember: member.id,
+                    titleQuery: nil,
+                    dateFrom: nil,
+                    dateToExclusive: nil
+                )
+                counts[member.id] = visits.count
+            }
+            visitCounts = counts
         } catch {
             alert = error.localizedDescription
         }

@@ -131,13 +131,13 @@ extension MKPointOfInterestCategory {
     }
 
     /// アプリの3分類（飲食 / 観光 / その他）に正規化
-    var kkCategory: KKCategory {
+    public var kkCategory: KKCategory {
         switch self {
         // —— 飲食系
         case .restaurant, .cafe, .bakery, .brewery, .winery, .foodMarket, .nightlife:
             return .food
 
-        // —— 観光系（“行って楽しむ/観る/遊ぶ”寄り）
+        // —— 観光系（"行って楽しむ/観る/遊ぶ"寄り）
         case .museum, .park, .nationalPark, .aquarium, .zoo, .landmark,
              .amusementPark, .stadium, .theater, .beach, .campground, .marina:
             return .sightseeing
@@ -149,14 +149,14 @@ extension MKPointOfInterestCategory {
     }
 }
 
-enum KKCategory: String, CaseIterable, Identifiable {
+public enum KKCategory: String, CaseIterable, Identifiable {
     case food
     case sightseeing
     case other
 
-    var id: String { rawValue }
+    public var id: String { rawValue }
 
-    var localizedName: String {
+    public var localizedName: String {
         let isJapanese = Locale.current.language.languageCode?.identifier == "ja"
         switch self {
         case .food:

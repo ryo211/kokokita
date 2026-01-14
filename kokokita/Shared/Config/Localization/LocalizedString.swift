@@ -86,6 +86,8 @@ enum L {
         static let facility = localized("detail.facility")
         static let deleteConfirmTitle = localized("detail.deleteConfirmTitle")
         static let deleteConfirmMessage = localized("detail.deleteConfirmMessage")
+        static let deleteVisitTitle = localized("detail.deleteVisitTitle")
+        static let deleteVisitMessage = localized("detail.deleteVisitMessage")
     }
 
     // MARK: - Menu
@@ -153,6 +155,7 @@ enum L {
         static let duplicateName = localized("label.duplicateName")
         static let detailTitle = localized("label.detailTitle")
         static let deleteIrreversible = localized("label.deleteIrreversible")
+        static let relatedVisitsHeader = localized("label.relatedVisitsHeader")
     }
 
     // MARK: - Group Management
@@ -170,6 +173,7 @@ enum L {
         static let duplicateName = localized("group.duplicateName")
         static let detailTitle = localized("group.detailTitle")
         static let deleteIrreversible = localized("group.deleteIrreversible")
+        static let relatedVisitsHeader = localized("group.relatedVisitsHeader")
     }
 
     // MARK: - Member Management
@@ -187,6 +191,7 @@ enum L {
         static let duplicateName = localized("member.duplicateName")
         static let detailTitle = localized("member.detailTitle")
         static let deleteIrreversible = localized("member.deleteIrreversible")
+        static let relatedVisitsHeader = localized("member.relatedVisitsHeader")
     }
 
     // MARK: - Settings
@@ -307,6 +312,20 @@ enum L {
         static let notSelected = localized("kokokamo.notSelected")
         static let tapToSelect = localized("kokokamo.tapToSelect")
         static let tapToDeselect = localized("kokokamo.tapToDeselect")
+    }
+
+    // MARK: - Confirmation Sheet
+    enum Confirmation {
+        static let enterInfo = localized("confirmation.enterInfo")
+        static let deleteRecord = localized("confirmation.deleteRecord")
+        static let loadingPOI = localized("confirmation.loadingPOI")
+        static let noInternet = localized("confirmation.noInternet")
+        static let noPOIFound = localized("confirmation.noPOIFound")
+        static let selectFacility = localized("confirmation.selectFacility")
+        static let deleteConfirmTitle = localized("confirmation.deleteConfirmTitle")
+        static let deleteConfirmMessage = localized("confirmation.deleteConfirmMessage")
+        static let recentVisitsHeader = localized("confirmation.recentVisitsHeader")
+        static let nearbyPlacesHeader = localized("confirmation.nearbyPlacesHeader")
     }
 
     // MARK: - Helper

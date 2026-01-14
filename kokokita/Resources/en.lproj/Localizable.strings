@@ -75,6 +75,8 @@
 "detail.facility" = "Facility Info";
 "detail.deleteConfirmTitle" = "Delete this record?";
 "detail.deleteConfirmMessage" = "This action cannot be undone.";
+"detail.deleteVisitTitle" = "Delete Record";
+"detail.deleteVisitMessage" = "Delete this record?";
 
 // MARK: - Menu
 "menu.title" = "Menu";
@@ -130,6 +132,7 @@
 "label.duplicateName" = "A label with the same name already exists.";
 "label.detailTitle" = "Label Details";
 "label.deleteIrreversible" = "This action cannot be undone.";
+"label.relatedVisitsHeader" = "Records using this label";
 
 // MARK: - Group Management
 "group.title" = "Groups";
@@ -145,6 +148,7 @@
 "group.duplicateName" = "A group with the same name already exists.";
 "group.detailTitle" = "Group Details";
 "group.deleteIrreversible" = "This action cannot be undone.";
+"group.relatedVisitsHeader" = "Records using this group";
 
 // MARK: - Member Management
 "member.title" = "Members";
@@ -160,6 +164,7 @@
 "member.duplicateName" = "A member with the same name already exists.";
 "member.detailTitle" = "Member Details";
 "member.deleteIrreversible" = "This action cannot be undone.";
+"member.relatedVisitsHeader" = "Records using this member";
 
 // MARK: - Settings
 "settings.title" = "Menu";
@@ -260,3 +265,15 @@
 "kokokamo.notSelected" = "Not selected";
 "kokokamo.tapToSelect" = "Tap to select";
 "kokokamo.tapToDeselect" = "Tap to deselect";
+
+// MARK: - Confirmation Sheet
+"confirmation.enterInfo" = "Enter Info";
+"confirmation.deleteRecord" = "Cancel Record";
+"confirmation.loadingPOI" = "Searching nearby places...";
+"confirmation.noInternet" = "Cannot fetch nearby places without an internet connection.";
+"confirmation.noPOIFound" = "No places found nearby";
+"confirmation.selectFacility" = "Kokokamo (Auto-fill from nearby places)";
+"confirmation.deleteConfirmTitle" = "Delete this record?";
+"confirmation.deleteConfirmMessage" = "This action cannot be undone.";
+"confirmation.recentVisitsHeader" = "You've been here before";
+"confirmation.nearbyPlacesHeader" = "Nearby Places";
