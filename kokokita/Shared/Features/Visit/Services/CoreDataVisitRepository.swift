@@ -253,6 +253,66 @@ final class CoreDataVisitRepository {
         return toAggregate(v)
     }
 
+    /// 指定位置から近隣の過去記録を検索（新しい順、最大limit件）
+    func fetchNearby(
+        latitude: Double,
+        longitude: Double,
+        radius: Double,
+        excludingId: UUID? = nil,
+        limit: Int = 3
+    ) throws -> [VisitAggregate] {
+        // バウンディングボックスで事前絞り込み
+        // 100m ≈ 0.001度（緯度経度の概算）
+        let degreeOffset = radius / 111000.0 // 1度 ≈ 111km
+
+        let request: NSFetchRequest<VisitEntity> = VisitEntity.fetchRequest()
+
+        var predicates: [NSPredicate] = [
+            NSPredicate(format: "latitude BETWEEN {%f, %f}", latitude - degreeOffset, latitude + degreeOffset),
+            NSPredicate(format: "longitude BETWEEN {%f, %f}", longitude - degreeOffset, longitude + degreeOffset)
+        ]
+
+        // 自分自身を除外
+        if let excludeId = excludingId {
+            predicates.append(NSPredicate(format: "id != %@", excludeId as CVarArg))
+        }
+
+        request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: predicates)
+        request.sortDescriptors = [NSSortDescriptor(key: #keyPath(VisitEntity.timestampUTC), ascending: false)]
+
+        let candidates = try ctx.fetch(request)
+
+        // 正確な距離で絞り込み
+        let nearby = candidates.filter { entity in
+            let distance = calculateDistance(
+                lat1: latitude, lon1: longitude,
+                lat2: entity.latitude, lon2: entity.longitude
+            )
+            return distance <= radius
+        }
+
+        // 上位limit件のみ取得
+        let limitedResults = Array(nearby.prefix(limit))
+
+        return limitedResults.compactMap { self.toAggregate($0) }
+    }
+
+    /// Haversine公式で2点間の距離を計算（メートル単位）
+    private func calculateDistance(lat1: Double, lon1: Double, lat2: Double, lon2: Double) -> Double {
+        let earthRadius = 6371000.0 // 地球の半径（メートル）
+
+        let dLat = (lat2 - lat1) * .pi / 180.0
+        let dLon = (lon2 - lon1) * .pi / 180.0
+
+        let a = sin(dLat / 2) * sin(dLat / 2) +
+                cos(lat1 * .pi / 180.0) * cos(lat2 * .pi / 180.0) *
+                sin(dLon / 2) * sin(dLon / 2)
+
+        let c = 2 * atan2(sqrt(a), sqrt(1 - a))
+
+        return earthRadius * c
+    }
+
     // MARK: - TaxonomyRepository
 
     func allLabels() throws -> [LabelTag] {

@@ -132,6 +132,30 @@ xcodebuild -project kokokita.xcodeproj -scheme kokokita -sdk iphonesimulator bui
 - 型ごとに整理された拡張機能は`kokokita/Support/Extensions/`に配置
 - UI定数は`UIConstants.swift`に集約
 
+### ローカライズ必須ルール
+
+**ユーザーに表示される文言は必ずローカライズすること。ハードコーディングは厳禁です。**
+
+1. **文言表示の原則**
+   - UI上のすべてのテキスト（ボタン、ラベル、メッセージ、エラー文等）は`L`列挙型経由でローカライズ文字列を使用
+   - 例: `Text("保存")` ❌ → `Text(L.Common.save)` ✅
+   - 例: `"記録を削除"` ❌ → `L.Detail.deleteVisitTitle` ✅
+
+2. **新規文言追加の手順**
+   - `ja.lproj/Localizable.strings`に日本語の文字列を追加
+   - `en.lproj/Localizable.strings`に英語の文字列を追加
+   - `LocalizedString.swift`の`L`列挙型に対応するプロパティを追加
+   - コード内で`L.カテゴリ.キー名`形式で参照
+
+3. **チェックポイント**
+   - 実装完了前に、すべての表示文字列がローカライズされているか確認
+   - Grepで`Text("`や`"記録`などのパターンを検索してハードコードを検出
+   - アラートのタイトル、メッセージも必ずローカライズ
+
+4. **例外**
+   - ログ出力やデバッグ用の文字列（ユーザーに表示されないもの）
+   - 技術的な識別子やキー（例: UserDefaultsのキー名）
+
 ## 最近の変更
 
 最近のコミットに基づく変更:

@@ -29,6 +29,8 @@ struct RootTabView: View {
     @State private var showLocationLoading = false
     @State private var promptSheetLocationData: LocationData?
     @State private var createScreenData: CreateScreenData?
+    @State private var confirmationSheetVisitId: UUID?
+    @State private var editVisitId: UUID?
     @State private var locationErrorMessage: String? = nil
     @Environment(AppUIState.self) private var ui
     #if DEBUG
@@ -153,40 +155,20 @@ struct RootTabView: View {
             }
         }
 
-        // PostKokokitaPromptSheet
+        // PostKokokitaConfirmationSheet（保存後の確認シート）
         .sheet(isPresented: Binding(
-            get: { promptSheetLocationData != nil },
-            set: { if !$0 { promptSheetLocationData = nil } }
+            get: { confirmationSheetVisitId != nil },
+            set: { if !$0 { confirmationSheetVisitId = nil } }
         )) {
-            if promptSheetLocationData != nil {
-                PostKokokitaPromptSheet(
-                    locationData: Binding(
-                        get: { promptSheetLocationData ?? LocationData(timestamp: Date(), latitude: 0, longitude: 0, accuracy: nil, address: nil, flags: LocationSourceFlags(isSimulatedBySoftware: nil, isProducedByAccessory: nil)) },
-                        set: { promptSheetLocationData = $0 }
-                    ),
-                    onQuickSave: {
-                        // 即保存
-                        if let data = promptSheetLocationData {
-                            quickSaveLocation(data)
-                        }
-                        promptSheetLocationData = nil
+            if let visitId = confirmationSheetVisitId {
+                PostKokokitaConfirmationSheet(
+                    visitId: visitId,
+                    onEnterInfo: { id in
+                        confirmationSheetVisitId = nil
+                        editVisitId = id
                     },
-                    onOpenEditor: {
-                        // 編集画面を開く
-                        if let data = promptSheetLocationData {
-                            createScreenData = CreateScreenData(locationData: data, shouldOpenPOI: false)
-                        }
-                        promptSheetLocationData = nil
-                    },
-                    onOpenPOI: {
-                        // ココカモを開く
-                        if let data = promptSheetLocationData {
-                            createScreenData = CreateScreenData(locationData: data, shouldOpenPOI: true)
-                        }
-                        promptSheetLocationData = nil
-                    },
-                    onCancel: {
-                        promptSheetLocationData = nil
+                    onDelete: { id in
+                        deleteVisit(id: id)
                     }
                 )
                 .iPadSheetSize()
@@ -200,6 +182,20 @@ struct RootTabView: View {
             VisitFormScreen(initialLocationData: screenData.locationData, shouldOpenPOI: screenData.shouldOpenPOI)
                 .iPadSheetSize()
                 .ignoresSafeArea(.keyboard, edges: .bottom)
+        }
+
+        // 編集モーダル
+        .sheet(isPresented: Binding(
+            get: { editVisitId != nil },
+            set: { if !$0 { editVisitId = nil } }
+        ), onDismiss: {
+            NotificationCenter.default.post(name: .visitsChanged, object: nil)
+        }) {
+            if let visitId = editVisitId {
+                EditVisitSheet(visitId: visitId)
+                    .iPadSheetSize()
+                    .ignoresSafeArea(.keyboard, edges: .bottom)
+            }
         }
 
         // 位置情報権限アラート
@@ -264,21 +260,7 @@ struct RootTabView: View {
             )
 
             // 低精度で素早く取得（1秒未満）
-            let quickResult = try await locationService.requestQuickLocation { address in
-                // バックグラウンドで住所が取得できた時
-                Task { @MainActor in
-                    if let data = self.promptSheetLocationData {
-                        self.promptSheetLocationData = LocationData(
-                            timestamp: data.timestamp,  // 同じtimestampを保持
-                            latitude: data.latitude,
-                            longitude: data.longitude,
-                            accuracy: data.accuracy,
-                            address: address,
-                            flags: data.flags
-                        )
-                    }
-                }
-            }
+            let quickResult = try await locationService.requestQuickLocation { _ in }
 
             let quickData = LocationData(
                 timestamp: quickResult.timestamp,
@@ -289,48 +271,22 @@ struct RootTabView: View {
                 flags: quickResult.flags
             )
 
-            // すぐにローディングを閉じてPromptSheet表示（素早いフィードバック）
-            showLocationLoading = false
-            promptSheetLocationData = quickData
+            // すぐに保存してconfirmationSheetを表示（素早いフィードバック）
+            if let savedId = quickSaveLocation(quickData) {
+                showLocationLoading = false
+                confirmationSheetVisitId = savedId
 
-            // バックグラウンドで高精度取得
-            Task {
-                do {
-                    let refinedResult = try await locationService.refineLocation { address in
-                        // バックグラウンドで住所が取得できた時
-                        Task { @MainActor in
-                            if let data = self.promptSheetLocationData {
-                                self.promptSheetLocationData = LocationData(
-                                    timestamp: data.timestamp,  // 同じtimestampを保持
-                                    latitude: data.latitude,
-                                    longitude: data.longitude,
-                                    accuracy: data.accuracy,
-                                    address: address,
-                                    flags: data.flags
-                                )
-                            }
-                        }
-                    }
-                    
-                    // 高精度の結果で更新（シートが表示されている場合のみ）
-                    await MainActor.run {
-                        if self.promptSheetLocationData != nil {
-                            // 同じtimestampを使用してIDを保持
-                            self.promptSheetLocationData = LocationData(
-                                timestamp: quickData.timestamp,  // 初回のtimestamp
-                                latitude: refinedResult.latitude,
-                                longitude: refinedResult.longitude,
-                                accuracy: refinedResult.accuracy,
-                                address: refinedResult.address ?? quickData.address,
-                                flags: refinedResult.flags
-                            )
-                            Logger.info("Location refined to higher accuracy: \(refinedResult.accuracy ?? 0)m")
-                        }
-                    }
-                } catch {
-                    // 高精度取得失敗しても低精度の結果があるので問題なし
-                    Logger.warning("Failed to refine location, using quick result: \(error.localizedDescription)")
+                // バックグラウンドで高精度取得して更新
+                Task {
+                    await refineLocationAndUpdate(
+                        savedId: savedId,
+                        locationService: locationService,
+                        quickData: quickData
+                    )
                 }
+            } else {
+                showLocationLoading = false
+                locationErrorMessage = L.Error.saveFailed
             }
 
         } catch {
@@ -351,7 +307,46 @@ struct RootTabView: View {
         }
     }
 
-    private func quickSaveLocation(_ data: LocationData) {
+    @MainActor
+    private func refineLocationAndUpdate(
+        savedId: UUID,
+        locationService: LocationGeocodingService,
+        quickData: LocationData
+    ) async {
+        do {
+            let refinedResult = try await locationService.refineLocation { _ in }
+
+            // 高精度の結果で更新
+            let repo = AppContainer.shared.repo
+            try repo.updateDetails(id: savedId) { details in
+                details.resolvedAddress = refinedResult.address ?? quickData.address
+            }
+
+            // Visitの位置情報も更新（デバッグモードのみ）
+            #if DEBUG
+            let integ = AppContainer.shared.integ
+            let newIntegrity = try integ.signImmutablePayload(
+                id: savedId,
+                timestampUTC: quickData.timestamp,
+                lat: refinedResult.latitude,
+                lon: refinedResult.longitude,
+                acc: refinedResult.accuracy,
+                flags: refinedResult.flags,
+                createdAtUTC: quickData.timestamp
+            )
+            try repo.updateVisitTimestamp(id: savedId, newTimestamp: quickData.timestamp, newIntegrity: newIntegrity)
+            #endif
+
+            Logger.info("Location refined to higher accuracy: \(refinedResult.accuracy ?? 0)m")
+            NotificationCenter.default.post(name: .visitsChanged, object: nil)
+        } catch {
+            // 高精度取得失敗しても低精度の結果があるので問題なし
+            Logger.warning("Failed to refine location, using quick result: \(error.localizedDescription)")
+        }
+    }
+
+    @discardableResult
+    private func quickSaveLocation(_ data: LocationData) -> UUID? {
         let repo = AppContainer.shared.repo
         let integ = AppContainer.shared.integ
 
@@ -392,8 +387,21 @@ struct RootTabView: View {
 
             try repo.create(visit: visit, details: details)
             NotificationCenter.default.post(name: .visitsChanged, object: nil)
+            return id
         } catch {
             Logger.error("Quick save failed", error: error)
+            return nil
+        }
+    }
+
+    private func deleteVisit(id: UUID) {
+        let repo = AppContainer.shared.repo
+        do {
+            try repo.delete(id: id)
+            NotificationCenter.default.post(name: .visitsChanged, object: nil)
+        } catch {
+            Logger.error("Failed to delete visit", error: error)
+            locationErrorMessage = L.Error.deleteFailed
         }
     }
 
@@ -468,6 +476,40 @@ private struct CustomBottomBar: View {
             .foregroundStyle(current == tab ? .primary : .secondary)
         }
         .buttonStyle(.plain)
+    }
+}
+
+// MARK: - Edit Visit Sheet
+
+private struct EditVisitSheet: View {
+    let visitId: UUID
+
+    @Environment(\.dismiss) private var dismiss
+    @State private var visit: VisitAggregate?
+
+    var body: some View {
+        Group {
+            if let visit = visit {
+                EditView(aggregate: visit) {
+                    dismiss()
+                }
+            } else {
+                ProgressView()
+                    .task {
+                        await loadVisit()
+                    }
+            }
+        }
+    }
+
+    @MainActor
+    private func loadVisit() async {
+        let repo = AppContainer.shared.repo
+        do {
+            self.visit = try repo.get(by: visitId)
+        } catch {
+            Logger.error("Failed to load visit for editing", error: error)
+        }
     }
 }
 

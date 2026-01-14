@@ -54,7 +54,7 @@ struct GroupDetailView: View {
             Button(L.Common.cancel, role: .cancel) {}
             Button(L.Common.delete, role: .destructive) { delete() }
         } message: { Text(L.GroupManagement.deleteIrreversible) }
-        .alert("記録を削除", isPresented: $showVisitDeleteConfirm) {
+        .alert(L.Detail.deleteVisitTitle, isPresented: $showVisitDeleteConfirm) {
             Button(L.Common.cancel, role: .cancel) {
                 pendingDeleteVisitId = nil
             }
@@ -64,7 +64,7 @@ struct GroupDetailView: View {
                 }
             }
         } message: {
-            Text("この記録を削除しますか？")
+            Text(L.Detail.deleteVisitMessage)
         }
         .alert(L.Common.error, isPresented: Binding(get: { store.alert != nil }, set: { _ in store.alert = nil })) {
             Button(L.Common.ok, role: .cancel) {}
@@ -119,7 +119,7 @@ struct GroupDetailView: View {
                     visitRowView(for: visit)
                 }
             } header: {
-                Text("このグループを使用している記録")
+                Text("\(L.GroupManagement.relatedVisitsHeader) (\(relatedVisits.count)\(L.Home.itemsCount))")
             }
         }
     }
@@ -199,7 +199,7 @@ struct GroupDetailView: View {
             let t = agg.details.title?.trimmingCharacters(in: .whitespacesAndNewlines)
             if let t, !t.isEmpty { return t }
             if let f = agg.details.facilityName, !f.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { return f }
-            return "タイトルなし"
+            return L.Home.noTitle
         }()
 
         let labels: [String] = agg.details.labelIds.compactMap { labelMap[$0] }

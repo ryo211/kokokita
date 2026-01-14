@@ -8,17 +8,21 @@ final class LabelListStore {
     // MARK: - State
 
     var items: [LabelTag] = []
+    var visitCounts: [UUID: Int] = [:] // 各ラベルに関連する訪問記録の件数
     var loading = false
     var alert: String?
 
     // MARK: - Dependencies
 
     private let repository: CoreDataTaxonomyRepository
+    private let visitRepository: CoreDataVisitRepository
 
     // MARK: - Initialization
 
-    init(repository: CoreDataTaxonomyRepository = AppContainer.shared.taxonomyRepo) {
+    init(repository: CoreDataTaxonomyRepository = AppContainer.shared.taxonomyRepo,
+         visitRepository: CoreDataVisitRepository = AppContainer.shared.repo) {
         self.repository = repository
+        self.visitRepository = visitRepository
     }
 
     // MARK: - Actions
@@ -31,6 +35,21 @@ final class LabelListStore {
         do {
             let rows = try repository.allLabels()
             items = filterAndSort(rows)
+
+            // 各ラベルの訪問記録数を取得
+            var counts: [UUID: Int] = [:]
+            for label in items {
+                let visits = try visitRepository.fetchAll(
+                    filterLabel: label.id,
+                    filterGroup: nil,
+                    filterMember: nil,
+                    titleQuery: nil,
+                    dateFrom: nil,
+                    dateToExclusive: nil
+                )
+                counts[label.id] = visits.count
+            }
+            visitCounts = counts
         } catch {
             alert = error.localizedDescription
         }
