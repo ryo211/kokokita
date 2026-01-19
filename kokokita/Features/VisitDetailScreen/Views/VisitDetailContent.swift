@@ -5,10 +5,12 @@ struct VisitDetailContent: View {
     let data: VisitDetailData
     let mapSnapshot: UIImage?        // isSharingの時に使う
     var isSharing: Bool = false
+    var nearbyVisits: [VisitAggregate] = []
     var onLabelTap: (() -> Void)? = nil
     var onGroupTap: (() -> Void)? = nil
     var onMemberTap: (() -> Void)? = nil
     var onMapTap: (() -> Void)? = nil
+    var onNearbyVisitTap: ((VisitAggregate) -> Void)? = nil
     @Binding var photoFullScreenIndex: Int?
 
     var body: some View {
@@ -175,12 +177,81 @@ struct VisitDetailContent: View {
                 }
                 .padding(.horizontal)
             }
+
+            // 近くの過去記録セクション（共有時は非表示）
+            if !isSharing && !nearbyVisits.isEmpty {
+                nearbyVisitsSection
+            }
         }
         .padding(.bottom, 16)
         .background(
             LinearGradient(colors: [Color(.systemBackground), Color(.secondarySystemBackground)],
                            startPoint: .top, endPoint: .bottom)
         )
+    }
+
+    // MARK: - Nearby Visits Section
+
+    @ViewBuilder
+    private var nearbyVisitsSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label(L.Detail.nearbyPastRecords, systemImage: "clock.arrow.circlepath")
+                .font(.headline)
+                .padding(.horizontal)
+
+            VStack(spacing: 12) {
+                ForEach(nearbyVisits, id: \.visit.id) { visit in
+                    Button {
+                        onNearbyVisitTap?(visit)
+                    } label: {
+                        nearbyVisitRow(visit)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(.horizontal)
+        }
+    }
+
+    private func nearbyVisitRow(_ visit: VisitAggregate) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            VStack(alignment: .leading, spacing: 4) {
+                // タイトルまたは施設名
+                Text(displayName(for: visit))
+                    .font(.subheadline.bold())
+                    .foregroundStyle(.primary)
+
+                // 日付
+                Text(visit.visit.timestampUTC.kokokitaVisitString)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                // 住所
+                if let addr = visit.details.resolvedAddress?.trimmed, !addr.isEmpty {
+                    Text(addr)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(2)
+                }
+            }
+            Spacer()
+            Image(systemName: "chevron.right")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .padding()
+        .background(Color(.systemGray6))
+        .cornerRadius(10)
+    }
+
+    private func displayName(for visit: VisitAggregate) -> String {
+        if let title = visit.details.title?.trimmed, !title.isEmpty {
+            return title
+        }
+        if let facility = visit.details.facilityName?.trimmed, !facility.isEmpty {
+            return facility
+        }
+        return L.Home.noTitle
     }
 }
 
