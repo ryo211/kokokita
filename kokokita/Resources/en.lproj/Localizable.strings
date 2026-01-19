@@ -274,7 +274,7 @@
 "confirmation.loadingPOI" = "Searching nearby places...";
 "confirmation.noInternet" = "Cannot fetch nearby places without an internet connection.";
 "confirmation.noPOIFound" = "No places found nearby";
-"confirmation.selectFacility" = "Kokokamo (Auto-fill from nearby places)";
+"confirmation.selectFacility" = "Location Candidates";
 "confirmation.deleteConfirmTitle" = "Delete this record?";
 "confirmation.deleteConfirmMessage" = "This action cannot be undone.";
 "confirmation.recentVisitsHeader" = "You've been here before";
