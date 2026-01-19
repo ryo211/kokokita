@@ -9,6 +9,7 @@ struct VisitDetailContent: View {
     var nearbyVisitsData: [VisitDetailData] = []
     var sameGroupVisits: [VisitAggregate] = []
     var sameGroupVisitsData: [VisitDetailData] = []
+    var currentGroupName: String? = nil
     var onLabelTap: (() -> Void)? = nil
     var onGroupTap: (() -> Void)? = nil
     var onMemberTap: (() -> Void)? = nil
@@ -285,7 +286,12 @@ struct VisitDetailContent: View {
     @ViewBuilder
     private var sameGroupVisitsSection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Label("\(L.Detail.sameGroupRecords)（\(sameGroupVisits.count)\(L.Home.itemsCount)）", systemImage: "folder")
+            let labelText = if let groupName = currentGroupName {
+                "他の\(groupName)の記録（\(sameGroupVisits.count)\(L.Home.itemsCount)）"
+            } else {
+                "\(L.Detail.sameGroupRecords)（\(sameGroupVisits.count)\(L.Home.itemsCount)）"
+            }
+            Label(labelText, systemImage: "folder")
                 .font(.headline)
                 .padding(.horizontal)
 

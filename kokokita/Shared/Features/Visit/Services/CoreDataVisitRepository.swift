@@ -259,7 +259,7 @@ final class CoreDataVisitRepository {
         longitude: Double,
         radius: Double,
         excludingId: UUID? = nil,
-        limit: Int = 3
+        limit: Int? = 3
     ) throws -> [VisitAggregate] {
         // バウンディングボックスで事前絞り込み
         // 100m ≈ 0.001度（緯度経度の概算）
@@ -291,10 +291,14 @@ final class CoreDataVisitRepository {
             return distance <= radius
         }
 
-        // 上位limit件のみ取得
-        let limitedResults = Array(nearby.prefix(limit))
+        // limitが指定されている場合は上位limit件のみ取得
+        let results = if let limit = limit {
+            Array(nearby.prefix(limit))
+        } else {
+            nearby
+        }
 
-        return limitedResults.compactMap { self.toAggregate($0) }
+        return results.compactMap { self.toAggregate($0) }
     }
 
     /// Haversine公式で2点間の距離を計算（メートル単位）
