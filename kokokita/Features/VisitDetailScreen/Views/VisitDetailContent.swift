@@ -287,9 +287,6 @@ struct VisitDetailContent: View {
     private var sameGroupVisitsSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack(spacing: 6) {
-                Image(systemName: "folder")
-                    .font(.headline)
-
                 if let groupName = currentGroupName {
                     Chip(groupName, kind: .group, showRemoveButton: false)
                     Text("の他の記録（\(sameGroupVisits.count)\(L.Home.itemsCount)）")
