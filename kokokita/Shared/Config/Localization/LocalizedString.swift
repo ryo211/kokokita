@@ -88,6 +88,7 @@ enum L {
         static let deleteConfirmMessage = localized("detail.deleteConfirmMessage")
         static let deleteVisitTitle = localized("detail.deleteVisitTitle")
         static let deleteVisitMessage = localized("detail.deleteVisitMessage")
+        static let nearbyPastRecords = localized("detail.nearbyPastRecords")
     }
 
     // MARK: - Menu
