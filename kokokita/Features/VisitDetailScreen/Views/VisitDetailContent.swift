@@ -286,14 +286,20 @@ struct VisitDetailContent: View {
     @ViewBuilder
     private var sameGroupVisitsSection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            let labelText = if let groupName = currentGroupName {
-                "他の\(groupName)の記録（\(sameGroupVisits.count)\(L.Home.itemsCount)）"
-            } else {
-                "\(L.Detail.sameGroupRecords)（\(sameGroupVisits.count)\(L.Home.itemsCount)）"
+            HStack(spacing: 6) {
+                Image(systemName: "folder")
+                    .font(.headline)
+
+                if let groupName = currentGroupName {
+                    Chip(groupName, kind: .group, showRemoveButton: false)
+                    Text("の他の記録（\(sameGroupVisits.count)\(L.Home.itemsCount)）")
+                        .font(.headline)
+                } else {
+                    Text("\(L.Detail.sameGroupRecords)（\(sameGroupVisits.count)\(L.Home.itemsCount)）")
+                        .font(.headline)
+                }
             }
-            Label(labelText, systemImage: "folder")
-                .font(.headline)
-                .padding(.horizontal)
+            .padding(.horizontal)
 
             VStack(spacing: 0) {
                 ForEach(Array(sameGroupVisits.enumerated()), id: \.element.visit.id) { index, visit in
