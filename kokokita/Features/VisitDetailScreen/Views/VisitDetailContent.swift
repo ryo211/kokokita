@@ -6,11 +6,11 @@ struct VisitDetailContent: View {
     let mapSnapshot: UIImage?        // isSharingの時に使う
     var isSharing: Bool = false
     var nearbyVisits: [VisitAggregate] = []
+    var nearbyVisitsData: [VisitDetailData] = []
     var onLabelTap: (() -> Void)? = nil
     var onGroupTap: (() -> Void)? = nil
     var onMemberTap: (() -> Void)? = nil
     var onMapTap: (() -> Void)? = nil
-    var onNearbyVisitTap: ((VisitAggregate) -> Void)? = nil
     @Binding var photoFullScreenIndex: Int?
 
     var body: some View {
@@ -200,13 +200,18 @@ struct VisitDetailContent: View {
                 .padding(.horizontal)
 
             VStack(spacing: 12) {
-                ForEach(nearbyVisits, id: \.visit.id) { visit in
-                    Button {
-                        onNearbyVisitTap?(visit)
-                    } label: {
-                        nearbyVisitRow(visit)
+                ForEach(Array(nearbyVisits.enumerated()), id: \.element.visit.id) { index, visit in
+                    if index < nearbyVisitsData.count {
+                        NavigationLink {
+                            VisitDetailScreen(
+                                data: nearbyVisitsData[index],
+                                visitId: visit.visit.id
+                            )
+                        } label: {
+                            nearbyVisitRow(visit)
+                        }
+                        .buttonStyle(.plain)
                     }
-                    .buttonStyle(.plain)
                 }
             }
             .padding(.horizontal)

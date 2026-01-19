@@ -50,7 +50,7 @@ struct VisitDetailScreen: View {
 
     // 近くの過去記録
     @State private var nearbyVisits: [VisitAggregate] = []
-    @State private var selectedNearbyVisitId: UUID? = nil
+    @State private var nearbyVisitsData: [VisitDetailData] = []
 
     // SNSカードの論理サイズ（表示用は1/3で描画、保存はscale=3で 1080x1350）
     private let logicalSize = CGSize(width: AppConfig.shareImageLogicalWidth,
@@ -96,15 +96,13 @@ struct VisitDetailScreen: View {
                     mapSnapshot: nil,
                     isSharing: false,
                     nearbyVisits: nearbyVisits,
+                    nearbyVisitsData: nearbyVisitsData,
                     onLabelTap: { labelPickerShown = true },
                     onGroupTap: { groupPickerShown = true },
                     onMemberTap: { memberPickerShown = true },
                     onMapTap: {
                         dismiss()
                         onMapTap?()
-                    },
-                    onNearbyVisitTap: { visit in
-                        selectedNearbyVisitId = visit.visit.id
                     },
                     photoFullScreenIndex: $photoFullScreenIndex
                 )
@@ -274,20 +272,6 @@ struct VisitDetailScreen: View {
             await loadTaxonomyData()
             await loadNearbyVisits()
         }
-        .navigationDestination(item: $selectedNearbyVisitId) { nearbyVisitId in
-            if let nearbyVisit = nearbyVisits.first(where: { $0.visit.id == nearbyVisitId }) {
-                VisitDetailScreen(
-                    data: toDetailData(nearbyVisit),
-                    visitId: nearbyVisit.visit.id,
-                    onBack: {},
-                    onEdit: {},
-                    onShare: {},
-                    onDelete: {},
-                    onUpdate: {},
-                    onMapTap: nil
-                )
-            }
-        }
         .onChange(of: photoFullScreenIndex) { oldValue, newValue in
             if newValue != nil {
                 // 写真が開いた時: フッターを非表示
@@ -342,6 +326,7 @@ struct VisitDetailScreen: View {
             )
             // 日付順、降順でソート
             nearbyVisits = nearby.sorted { $0.visit.timestampUTC > $1.visit.timestampUTC }
+            nearbyVisitsData = nearbyVisits.map { toDetailData($0) }
         } catch {
             Logger.error("Failed to fetch nearby visits", error: error)
         }
@@ -532,6 +517,7 @@ struct VisitDetailScreen: View {
                     mapSnapshot: mapImage,
                     isSharing: true,
                     nearbyVisits: [],  // 共有時は近くの記録は含めない
+                    nearbyVisitsData: [],
                     photoFullScreenIndex: .constant(nil)
                 )
                 .padding(.all, UIConstants.Spacing.xxLarge)
