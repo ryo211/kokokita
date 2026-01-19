@@ -77,7 +77,7 @@
 "detail.deleteConfirmMessage" = "This action cannot be undone.";
 "detail.deleteVisitTitle" = "Delete Record";
 "detail.deleteVisitMessage" = "Delete this record?";
-"detail.nearbyPastRecords" = "Past Records at This Location";
+"detail.nearbyPastRecords" = "Records at This Location";
 
 // MARK: - Menu
 "menu.title" = "Menu";
