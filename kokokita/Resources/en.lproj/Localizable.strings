@@ -78,6 +78,7 @@
 "detail.deleteVisitTitle" = "Delete Record";
 "detail.deleteVisitMessage" = "Delete this record?";
 "detail.nearbyPastRecords" = "Records at This Location";
+"detail.sameGroupRecords" = "Records in This Group";
 
 // MARK: - Menu
 "menu.title" = "Menu";

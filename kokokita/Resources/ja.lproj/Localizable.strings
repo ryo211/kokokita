@@ -78,6 +78,7 @@
 "detail.deleteVisitTitle" = "記録を削除";
 "detail.deleteVisitMessage" = "この記録を削除しますか？";
 "detail.nearbyPastRecords" = "同じ場所の記録";
+"detail.sameGroupRecords" = "同じグループの記録";
 
 // MARK: - Menu
 "menu.title" = "メニュー";

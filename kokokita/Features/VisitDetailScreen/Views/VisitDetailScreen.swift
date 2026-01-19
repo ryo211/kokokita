@@ -52,6 +52,10 @@ struct VisitDetailScreen: View {
     @State private var nearbyVisits: [VisitAggregate] = []
     @State private var nearbyVisitsData: [VisitDetailData] = []
 
+    // 同じグループの記録
+    @State private var sameGroupVisits: [VisitAggregate] = []
+    @State private var sameGroupVisitsData: [VisitDetailData] = []
+
     // SNSカードの論理サイズ（表示用は1/3で描画、保存はscale=3で 1080x1350）
     private let logicalSize = CGSize(width: AppConfig.shareImageLogicalWidth,
                                       height: AppConfig.shareImageLogicalHeight)
@@ -97,6 +101,8 @@ struct VisitDetailScreen: View {
                     isSharing: false,
                     nearbyVisits: nearbyVisits,
                     nearbyVisitsData: nearbyVisitsData,
+                    sameGroupVisits: sameGroupVisits,
+                    sameGroupVisitsData: sameGroupVisitsData,
                     onLabelTap: { labelPickerShown = true },
                     onGroupTap: { groupPickerShown = true },
                     onMemberTap: { memberPickerShown = true },
@@ -271,6 +277,7 @@ struct VisitDetailScreen: View {
         .task {
             await loadTaxonomyData()
             await loadNearbyVisits()
+            await loadSameGroupVisits()
         }
         .onChange(of: photoFullScreenIndex) { oldValue, newValue in
             if newValue != nil {
@@ -329,6 +336,34 @@ struct VisitDetailScreen: View {
             nearbyVisitsData = nearbyVisits.map { toDetailData($0) }
         } catch {
             Logger.error("Failed to fetch nearby visits", error: error)
+        }
+    }
+
+    private func loadSameGroupVisits() async {
+        let repo = AppContainer.shared.repo
+        guard let currentVisit = try? repo.get(by: visitId) else { return }
+        guard let groupId = currentVisit.details.groupId else { return }
+
+        do {
+            let visits = try repo.fetchAll(
+                filterLabel: nil,
+                filterGroup: groupId,
+                filterMember: nil,
+                titleQuery: nil,
+                dateFrom: nil,
+                dateToExclusive: nil
+            )
+
+            // 現在の記録を除外し、日付順（降順）でソート、最大3件
+            let filtered = visits
+                .filter { $0.visit.id != visitId }
+                .sorted { $0.visit.timestampUTC > $1.visit.timestampUTC }
+                .prefix(3)
+
+            sameGroupVisits = Array(filtered)
+            sameGroupVisitsData = sameGroupVisits.map { toDetailData($0) }
+        } catch {
+            Logger.error("Failed to fetch same group visits", error: error)
         }
     }
 
@@ -518,6 +553,8 @@ struct VisitDetailScreen: View {
                     isSharing: true,
                     nearbyVisits: [],  // 共有時は近くの記録は含めない
                     nearbyVisitsData: [],
+                    sameGroupVisits: [],  // 共有時はグループ記録は含めない
+                    sameGroupVisitsData: [],
                     photoFullScreenIndex: .constant(nil)
                 )
                 .padding(.all, UIConstants.Spacing.xxLarge)

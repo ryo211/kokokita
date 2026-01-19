@@ -7,6 +7,8 @@ struct VisitDetailContent: View {
     var isSharing: Bool = false
     var nearbyVisits: [VisitAggregate] = []
     var nearbyVisitsData: [VisitDetailData] = []
+    var sameGroupVisits: [VisitAggregate] = []
+    var sameGroupVisitsData: [VisitDetailData] = []
     var onLabelTap: (() -> Void)? = nil
     var onGroupTap: (() -> Void)? = nil
     var onMemberTap: (() -> Void)? = nil
@@ -183,6 +185,12 @@ struct VisitDetailContent: View {
                 nearbyVisitsSection
                     .padding(.top, 24)  // 上のコンテンツとの距離を確保
             }
+
+            // 同じグループの記録セクション（共有時は非表示）
+            if !isSharing && !sameGroupVisits.isEmpty {
+                sameGroupVisitsSection
+                    .padding(.top, 24)  // 上のコンテンツとの距離を確保
+            }
         }
         .padding(.bottom, 16)
         .background(
@@ -270,6 +278,41 @@ struct VisitDetailContent: View {
             return facility
         }
         return L.Home.noTitle
+    }
+
+    // MARK: - Same Group Visits Section
+
+    @ViewBuilder
+    private var sameGroupVisitsSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Label("\(L.Detail.sameGroupRecords)（\(sameGroupVisits.count)\(L.Home.itemsCount)）", systemImage: "folder")
+                .font(.headline)
+                .padding(.horizontal)
+
+            VStack(spacing: 0) {
+                ForEach(Array(sameGroupVisits.enumerated()), id: \.element.visit.id) { index, visit in
+                    if index < sameGroupVisitsData.count {
+                        NavigationLink {
+                            VisitDetailScreen(
+                                data: sameGroupVisitsData[index],
+                                visitId: visit.visit.id
+                            )
+                        } label: {
+                            nearbyVisitRow(visit)
+                        }
+                        .buttonStyle(.plain)
+
+                        // 最後以外に区切り線を追加
+                        if index < sameGroupVisits.count - 1 {
+                            Divider()
+                                .padding(.horizontal)
+                                .padding(.vertical, 8)
+                        }
+                    }
+                }
+            }
+            .padding(.horizontal)
+        }
     }
 }
 
