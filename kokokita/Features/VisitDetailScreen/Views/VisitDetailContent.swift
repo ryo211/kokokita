@@ -196,7 +196,7 @@ struct VisitDetailContent: View {
     @ViewBuilder
     private var nearbyVisitsSection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Label(L.Detail.nearbyPastRecords, systemImage: "clock.arrow.circlepath")
+            Label("\(L.Detail.nearbyPastRecords)（\(nearbyVisits.count)\(L.Home.itemsCount)）", systemImage: "clock.arrow.circlepath")
                 .font(.headline)
                 .padding(.horizontal)
 
