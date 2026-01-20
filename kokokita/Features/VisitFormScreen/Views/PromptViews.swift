@@ -33,7 +33,7 @@ struct PostKokokitaPromptSheet: View {
                         .tracking(1.2)  // 文字間隔を広げる
                         .foregroundColor(.accentColor)
                 }
-                .padding(.top, 8)
+                .padding(.top, 20)
 
                 // 最低限の情報（小さく）
                 VStack(spacing: 4) {
@@ -204,7 +204,7 @@ struct PostKokokitaConfirmationSheet: View {
                 VStack(spacing: 16) {
                     // 見出し
                     header
-                        .padding(.top, 8)
+                        .padding(.top, 20)
 
                     // 基本情報（日付・住所）
                     if let visit = visit {
