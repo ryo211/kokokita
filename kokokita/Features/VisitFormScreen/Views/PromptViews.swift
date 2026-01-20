@@ -190,7 +190,6 @@ struct PostKokokitaConfirmationSheet: View {
 
     @State private var visit: VisitAggregate?
     @State private var poiState: POISearchState = .idle
-    @State private var selectedCategory: KKCategory? = nil
     @State private var nearbyVisits: [VisitAggregate] = []
 
     // 1%の確率でレア画像を表示
@@ -324,13 +323,8 @@ struct PostKokokitaConfirmationSheet: View {
             if pois.isEmpty {
                 emptyPOIView
             } else {
-                let filteredPois = filterPOIs(pois)
-                if filteredPois.isEmpty {
-                    emptyPOIView
-                } else {
-                    ScrollView {
-                        poiListView(pois: filteredPois)
-                    }
+                ScrollView {
+                    poiListView(pois: pois)
                 }
             }
 
@@ -401,9 +395,6 @@ struct PostKokokitaConfirmationSheet: View {
                 sectionHeader(L.Confirmation.nearbyPlacesHeader)
             }
 
-            // カテゴリフィルタ（「周辺の施設」ヘッダーの下に配置）
-            categoryFilterButtons
-
             ForEach(pois) { poi in
                 Button {
                     applyPOIAndOpenEditor(poi)
@@ -440,43 +431,6 @@ struct PostKokokitaConfirmationSheet: View {
             }
         }
         .padding(.horizontal)
-    }
-
-    // MARK: - Category Filter Buttons
-
-    @ViewBuilder
-    private var categoryFilterButtons: some View {
-        HStack(spacing: 12) {
-            ForEach(KKCategory.allCases) { cat in
-                let isOn = (selectedCategory == cat)
-                Button {
-                    #if os(iOS)
-                    UIImpactFeedbackGenerator(style: .soft).impactOccurred()
-                    #endif
-                    selectedCategory = isOn ? nil : cat
-                } label: {
-                    VStack(spacing: 4) {
-                        Image(systemName: cat.symbolBase + (isOn ? ".fill" : ""))
-                            .font(.body)
-                            .foregroundStyle(isOn ? Color.white : Color.primary)
-                            .padding(6)
-                            .background(
-                                Circle()
-                                    .fill(isOn ? cat.highlightColor : Color(.systemGray5))
-                            )
-                            .shadow(color: isOn ? cat.highlightColor.opacity(0.3) : .clear,
-                                    radius: isOn ? 6 : 0, x: 0, y: 2)
-
-                        Text(cat.localizedName)
-                            .font(.caption2)
-                            .foregroundStyle(isOn ? cat.highlightColor : .secondary)
-                    }
-                }
-                .buttonStyle(.plain)
-                .animation(.easeOut(duration: 0.15), value: isOn)
-            }
-            Spacer(minLength: 0)
-        }
     }
 
     // MARK: - Nearby Visits Section
@@ -575,15 +529,6 @@ struct PostKokokitaConfirmationSheet: View {
             .padding()
         }
         .background(.ultraThinMaterial)
-    }
-
-    // MARK: - POI Filtering
-
-    private func filterPOIs(_ pois: [PlacePOI]) -> [PlacePOI] {
-        guard let category = selectedCategory else {
-            return pois
-        }
-        return pois.filter { $0.kkCategory == category }
     }
 
     // MARK: - Data Loading & POI Search
