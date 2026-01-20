@@ -77,7 +77,7 @@
 "detail.deleteConfirmMessage" = "この操作は取り消せません。";
 "detail.deleteVisitTitle" = "記録を削除";
 "detail.deleteVisitMessage" = "この記録を削除しますか？";
-"detail.nearbyPastRecords" = "同じ場所の記録";
+"detail.nearbyPastRecords" = "この近くで過去に記録した場所";
 "detail.sameGroupRecords" = "同じグループの記録";
 
 // MARK: - Menu
