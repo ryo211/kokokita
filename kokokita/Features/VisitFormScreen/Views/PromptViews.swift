@@ -324,7 +324,9 @@ struct PostKokokitaConfirmationSheet: View {
                 emptyPOIView
             } else {
                 ScrollView {
-                    poiListView(pois: pois)
+                    LazyVStack(spacing: 0, pinnedViews: .sectionHeaders) {
+                        poiListView(pois: pois)
+                    }
                 }
             }
 
@@ -383,18 +385,28 @@ struct PostKokokitaConfirmationSheet: View {
         .padding()
     }
 
+    @ViewBuilder
     private func poiListView(pois: [PlacePOI]) -> some View {
-        VStack(spacing: 16) {
-            // 近隣の過去記録セクション
-            if !nearbyVisits.isEmpty {
-                nearbyVisitsSection
+        // 近隣の過去記録セクション
+        if !nearbyVisits.isEmpty {
+            Section {
+                ForEach(nearbyVisits, id: \.visit.id) { pastVisit in
+                    Button {
+                        applyPastVisitAndOpenEditor(pastVisit)
+                    } label: {
+                        nearbyVisitRow(pastVisit)
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.horizontal)
+                }
+                .padding(.vertical, 8)
+            } header: {
+                stickyHeader(L.Confirmation.recentVisitsHeader)
             }
+        }
 
-            // POIリストセクション
-            if !nearbyVisits.isEmpty {
-                sectionHeader(L.Confirmation.nearbyPlacesHeader)
-            }
-
+        // POIリストセクション
+        Section {
             ForEach(pois) { poi in
                 Button {
                     applyPOIAndOpenEditor(poi)
@@ -428,61 +440,58 @@ struct PostKokokitaConfirmationSheet: View {
                     .cornerRadius(10)
                 }
                 .buttonStyle(.plain)
+                .padding(.horizontal)
             }
-        }
-        .padding(.horizontal)
-    }
-
-    // MARK: - Nearby Visits Section
-
-    private var nearbyVisitsSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            sectionHeader(L.Confirmation.recentVisitsHeader)
-
-            ForEach(nearbyVisits, id: \.visit.id) { pastVisit in
-                Button {
-                    applyPastVisitAndOpenEditor(pastVisit)
-                } label: {
-                    HStack(alignment: .top, spacing: 12) {
-                        VStack(alignment: .leading, spacing: 4) {
-                            // タイトルまたは施設名
-                            Text(displayName(for: pastVisit))
-                                .font(.subheadline.bold())
-                                .foregroundStyle(.primary)
-
-                            // 日付
-                            Text(pastVisit.visit.timestampUTC.kokokitaVisitString)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-
-                            // 住所
-                            if let addr = pastVisit.details.resolvedAddress, !addr.isEmpty {
-                                Text(addr)
-                                    .font(.caption2)
-                                    .foregroundStyle(.secondary)
-                                    .lineLimit(2)
-                            }
-                        }
-                        Spacer()
-                        Image(systemName: "chevron.right")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                    .padding()
-                    .background(Color(.systemGray6))
-                    .cornerRadius(10)
-                }
-                .buttonStyle(.plain)
-            }
+            .padding(.vertical, 8)
+        } header: {
+            stickyHeader(L.Confirmation.nearbyPlacesHeader)
         }
     }
 
-    private func sectionHeader(_ text: String) -> some View {
+    // MARK: - Sticky Header
+
+    private func stickyHeader(_ text: String) -> some View {
         Text(text)
             .font(.caption.bold())
             .foregroundStyle(.secondary)
             .textCase(.uppercase)
             .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal)
+            .padding(.vertical, 8)
+            .background(Color(.systemGray5))
+    }
+
+    // MARK: - Nearby Visit Row
+
+    private func nearbyVisitRow(_ pastVisit: VisitAggregate) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            VStack(alignment: .leading, spacing: 4) {
+                // タイトルまたは施設名
+                Text(displayName(for: pastVisit))
+                    .font(.subheadline.bold())
+                    .foregroundStyle(.primary)
+
+                // 日付
+                Text(pastVisit.visit.timestampUTC.kokokitaVisitString)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                // 住所
+                if let addr = pastVisit.details.resolvedAddress, !addr.isEmpty {
+                    Text(addr)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(2)
+                }
+            }
+            Spacer()
+            Image(systemName: "chevron.right")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .padding()
+        .background(Color(.systemGray6))
+        .cornerRadius(10)
     }
 
     private func displayName(for visit: VisitAggregate) -> String {
