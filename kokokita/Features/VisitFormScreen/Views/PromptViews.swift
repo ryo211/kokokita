@@ -233,41 +233,6 @@ struct PostKokokitaConfirmationSheet: View {
                                 .font(.headline)
                             Spacer()
                         }
-
-                        // カテゴリフィルタ
-                        if case .success(let pois) = poiState, !pois.isEmpty {
-                            HStack(spacing: 12) {
-                                ForEach(KKCategory.allCases) { cat in
-                                    let isOn = (selectedCategory == cat)
-                                    Button {
-                                        #if os(iOS)
-                                        UIImpactFeedbackGenerator(style: .soft).impactOccurred()
-                                        #endif
-                                        selectedCategory = isOn ? nil : cat
-                                    } label: {
-                                        VStack(spacing: 4) {
-                                            Image(systemName: cat.symbolBase + (isOn ? ".fill" : ""))
-                                                .font(.body)
-                                                .foregroundStyle(isOn ? Color.white : Color.primary)
-                                                .padding(6)
-                                                .background(
-                                                    Circle()
-                                                        .fill(isOn ? cat.highlightColor : Color(.systemGray5))
-                                                )
-                                                .shadow(color: isOn ? cat.highlightColor.opacity(0.3) : .clear,
-                                                        radius: isOn ? 6 : 0, x: 0, y: 2)
-
-                                            Text(cat.localizedName)
-                                                .font(.caption2)
-                                                .foregroundStyle(isOn ? cat.highlightColor : .secondary)
-                                        }
-                                    }
-                                    .buttonStyle(.plain)
-                                    .animation(.easeOut(duration: 0.15), value: isOn)
-                                }
-                                Spacer(minLength: 0)
-                            }
-                        }
                     }
                     .padding(.horizontal)
                     .padding(.top, 12)
@@ -436,6 +401,9 @@ struct PostKokokitaConfirmationSheet: View {
                 sectionHeader(L.Confirmation.nearbyPlacesHeader)
             }
 
+            // カテゴリフィルタ（「周辺の施設」ヘッダーの下に配置）
+            categoryFilterButtons
+
             ForEach(pois) { poi in
                 Button {
                     applyPOIAndOpenEditor(poi)
@@ -472,6 +440,43 @@ struct PostKokokitaConfirmationSheet: View {
             }
         }
         .padding(.horizontal)
+    }
+
+    // MARK: - Category Filter Buttons
+
+    @ViewBuilder
+    private var categoryFilterButtons: some View {
+        HStack(spacing: 12) {
+            ForEach(KKCategory.allCases) { cat in
+                let isOn = (selectedCategory == cat)
+                Button {
+                    #if os(iOS)
+                    UIImpactFeedbackGenerator(style: .soft).impactOccurred()
+                    #endif
+                    selectedCategory = isOn ? nil : cat
+                } label: {
+                    VStack(spacing: 4) {
+                        Image(systemName: cat.symbolBase + (isOn ? ".fill" : ""))
+                            .font(.body)
+                            .foregroundStyle(isOn ? Color.white : Color.primary)
+                            .padding(6)
+                            .background(
+                                Circle()
+                                    .fill(isOn ? cat.highlightColor : Color(.systemGray5))
+                            )
+                            .shadow(color: isOn ? cat.highlightColor.opacity(0.3) : .clear,
+                                    radius: isOn ? 6 : 0, x: 0, y: 2)
+
+                        Text(cat.localizedName)
+                            .font(.caption2)
+                            .foregroundStyle(isOn ? cat.highlightColor : .secondary)
+                    }
+                }
+                .buttonStyle(.plain)
+                .animation(.easeOut(duration: 0.15), value: isOn)
+            }
+            Spacer(minLength: 0)
+        }
     }
 
     // MARK: - Nearby Visits Section

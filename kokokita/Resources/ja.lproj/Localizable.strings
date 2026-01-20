@@ -279,5 +279,5 @@
 "confirmation.selectFacility" = "場所の候補";
 "confirmation.deleteConfirmTitle" = "この記録を削除しますか？";
 "confirmation.deleteConfirmMessage" = "この操作は取り消せません。";
-"confirmation.recentVisitsHeader" = "過去に来たことがある場所です";
+"confirmation.recentVisitsHeader" = "この近くで過去に記録した場所";
 "confirmation.nearbyPlacesHeader" = "周辺の施設";

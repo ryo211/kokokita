@@ -277,5 +277,5 @@
 "confirmation.selectFacility" = "Location Candidates";
 "confirmation.deleteConfirmTitle" = "Delete this record?";
 "confirmation.deleteConfirmMessage" = "This action cannot be undone.";
-"confirmation.recentVisitsHeader" = "You've been here before";
+"confirmation.recentVisitsHeader" = "Past Records Nearby";
 "confirmation.nearbyPlacesHeader" = "Nearby Places";
