@@ -62,6 +62,8 @@
 "home.deleteConfirmMessage" = "This action cannot be undone.";
 "home.noTitle" = "(No Title)";
 "home.itemsCount" = "items";
+"home.switchToMap" = "Switch to Map";
+"home.switchToList" = "Switch to List";
 
 // MARK: - Detail
 "detail.share" = "Share";
@@ -77,7 +79,8 @@
 "detail.deleteConfirmMessage" = "This action cannot be undone.";
 "detail.deleteVisitTitle" = "Delete Record";
 "detail.deleteVisitMessage" = "Delete this record?";
-"detail.nearbyPastRecords" = "Past Records at This Location";
+"detail.nearbyPastRecords" = "Past Records Nearby";
+"detail.sameGroupRecords" = "Records in This Group";
 
 // MARK: - Menu
 "menu.title" = "Menu";
@@ -273,8 +276,8 @@
 "confirmation.loadingPOI" = "Searching nearby places...";
 "confirmation.noInternet" = "Cannot fetch nearby places without an internet connection.";
 "confirmation.noPOIFound" = "No places found nearby";
-"confirmation.selectFacility" = "Kokokamo (Auto-fill from nearby places)";
+"confirmation.selectFacility" = "Choose from Candidate Spots";
 "confirmation.deleteConfirmTitle" = "Delete this record?";
 "confirmation.deleteConfirmMessage" = "This action cannot be undone.";
-"confirmation.recentVisitsHeader" = "You've been here before";
+"confirmation.recentVisitsHeader" = "Past Records Nearby";
 "confirmation.nearbyPlacesHeader" = "Nearby Places";
