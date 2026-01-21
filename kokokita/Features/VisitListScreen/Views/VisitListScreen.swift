@@ -284,23 +284,26 @@ struct VisitListScreen: View {
     // MARK: - Mode Toggle Button
 
     private var modeToggleButton: some View {
-        ZStack {
-            Circle()
-                .fill(Color.blue)
-                .frame(width: 56, height: 56)
-                .shadow(radius: 4)
-
-            Image(systemName: displayMode == .list ? "map" : "list.bullet")
-                .font(.title2)
-                .foregroundStyle(.white)
-        }
-        .frame(width: 80, height: 80)  // タップ領域を大きく
-        .contentShape(Rectangle())  // 矩形全体をタップ可能に
-        .onTapGesture {
+        Button {
             let newMode: VisitListDisplayMode = displayMode == .list ? .map : .list
             withAnimation(.easeInOut(duration: 0.25)) {
                 displayMode = newMode
             }
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: displayMode == .list ? "map" : "list.bullet")
+                    .font(.callout)
+                Text(displayMode == .list ? L.Home.switchToMap : L.Home.switchToList)
+                    .font(.callout.bold())
+            }
+            .foregroundStyle(.white)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .background(
+                Capsule()
+                    .fill(Color.blue)
+                    .shadow(radius: 4)
+            )
         }
     }
 

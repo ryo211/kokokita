@@ -62,6 +62,8 @@
 "home.deleteConfirmMessage" = "This action cannot be undone.";
 "home.noTitle" = "(No Title)";
 "home.itemsCount" = "items";
+"home.switchToMap" = "Switch to Map";
+"home.switchToList" = "Switch to List";
 
 // MARK: - Detail
 "detail.share" = "Share";

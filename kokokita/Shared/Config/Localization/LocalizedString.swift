@@ -71,6 +71,8 @@ enum L {
         static let deleteConfirmMessage = localized("home.deleteConfirmMessage")
         static let noTitle = localized("home.noTitle")
         static let itemsCount = localized("home.itemsCount")
+        static let switchToMap = localized("home.switchToMap")
+        static let switchToList = localized("home.switchToList")
     }
 
     // MARK: - Detail
