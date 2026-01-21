@@ -33,7 +33,7 @@ struct PostKokokitaPromptSheet: View {
                         .tracking(1.2)  // 文字間隔を広げる
                         .foregroundColor(.accentColor)
                 }
-                .padding(.top, 8)
+                .padding(.top, 20)
 
                 // 最低限の情報（小さく）
                 VStack(spacing: 4) {
@@ -190,7 +190,6 @@ struct PostKokokitaConfirmationSheet: View {
 
     @State private var visit: VisitAggregate?
     @State private var poiState: POISearchState = .idle
-    @State private var selectedCategory: KKCategory? = nil
     @State private var nearbyVisits: [VisitAggregate] = []
 
     // 1%の確率でレア画像を表示
@@ -205,7 +204,7 @@ struct PostKokokitaConfirmationSheet: View {
                 VStack(spacing: 16) {
                     // 見出し
                     header
-                        .padding(.top, 8)
+                        .padding(.top, 20)
 
                     // 基本情報（日付・住所）
                     if let visit = visit {
@@ -232,41 +231,6 @@ struct PostKokokitaConfirmationSheet: View {
                             Text(L.Confirmation.selectFacility)
                                 .font(.headline)
                             Spacer()
-                        }
-
-                        // カテゴリフィルタ
-                        if case .success(let pois) = poiState, !pois.isEmpty {
-                            HStack(spacing: 12) {
-                                ForEach(KKCategory.allCases) { cat in
-                                    let isOn = (selectedCategory == cat)
-                                    Button {
-                                        #if os(iOS)
-                                        UIImpactFeedbackGenerator(style: .soft).impactOccurred()
-                                        #endif
-                                        selectedCategory = isOn ? nil : cat
-                                    } label: {
-                                        VStack(spacing: 4) {
-                                            Image(systemName: cat.symbolBase + (isOn ? ".fill" : ""))
-                                                .font(.body)
-                                                .foregroundStyle(isOn ? Color.white : Color.primary)
-                                                .padding(6)
-                                                .background(
-                                                    Circle()
-                                                        .fill(isOn ? cat.highlightColor : Color(.systemGray5))
-                                                )
-                                                .shadow(color: isOn ? cat.highlightColor.opacity(0.3) : .clear,
-                                                        radius: isOn ? 6 : 0, x: 0, y: 2)
-
-                                            Text(cat.localizedName)
-                                                .font(.caption2)
-                                                .foregroundStyle(isOn ? cat.highlightColor : .secondary)
-                                        }
-                                    }
-                                    .buttonStyle(.plain)
-                                    .animation(.easeOut(duration: 0.15), value: isOn)
-                                }
-                                Spacer(minLength: 0)
-                            }
                         }
                     }
                     .padding(.horizontal)
@@ -359,12 +323,9 @@ struct PostKokokitaConfirmationSheet: View {
             if pois.isEmpty {
                 emptyPOIView
             } else {
-                let filteredPois = filterPOIs(pois)
-                if filteredPois.isEmpty {
-                    emptyPOIView
-                } else {
-                    ScrollView {
-                        poiListView(pois: filteredPois)
+                ScrollView {
+                    LazyVStack(spacing: 0, pinnedViews: .sectionHeaders) {
+                        poiListView(pois: pois)
                     }
                 }
             }
@@ -424,18 +385,28 @@ struct PostKokokitaConfirmationSheet: View {
         .padding()
     }
 
+    @ViewBuilder
     private func poiListView(pois: [PlacePOI]) -> some View {
-        VStack(spacing: 16) {
-            // 近隣の過去記録セクション
-            if !nearbyVisits.isEmpty {
-                nearbyVisitsSection
+        // 近隣の過去記録セクション
+        if !nearbyVisits.isEmpty {
+            Section {
+                ForEach(nearbyVisits, id: \.visit.id) { pastVisit in
+                    Button {
+                        applyPastVisitAndOpenEditor(pastVisit)
+                    } label: {
+                        nearbyVisitRow(pastVisit)
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.horizontal)
+                }
+                .padding(.vertical, 8)
+            } header: {
+                stickyHeader(L.Confirmation.recentVisitsHeader)
             }
+        }
 
-            // POIリストセクション
-            if !nearbyVisits.isEmpty {
-                sectionHeader(L.Confirmation.nearbyPlacesHeader)
-            }
-
+        // POIリストセクション
+        Section {
             ForEach(pois) { poi in
                 Button {
                     applyPOIAndOpenEditor(poi)
@@ -469,61 +440,58 @@ struct PostKokokitaConfirmationSheet: View {
                     .cornerRadius(10)
                 }
                 .buttonStyle(.plain)
+                .padding(.horizontal)
             }
-        }
-        .padding(.horizontal)
-    }
-
-    // MARK: - Nearby Visits Section
-
-    private var nearbyVisitsSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            sectionHeader(L.Confirmation.recentVisitsHeader)
-
-            ForEach(nearbyVisits, id: \.visit.id) { pastVisit in
-                Button {
-                    applyPastVisitAndOpenEditor(pastVisit)
-                } label: {
-                    HStack(alignment: .top, spacing: 12) {
-                        VStack(alignment: .leading, spacing: 4) {
-                            // タイトルまたは施設名
-                            Text(displayName(for: pastVisit))
-                                .font(.subheadline.bold())
-                                .foregroundStyle(.primary)
-
-                            // 日付
-                            Text(pastVisit.visit.timestampUTC.kokokitaVisitString)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-
-                            // 住所
-                            if let addr = pastVisit.details.resolvedAddress, !addr.isEmpty {
-                                Text(addr)
-                                    .font(.caption2)
-                                    .foregroundStyle(.secondary)
-                                    .lineLimit(2)
-                            }
-                        }
-                        Spacer()
-                        Image(systemName: "chevron.right")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                    .padding()
-                    .background(Color(.systemGray6))
-                    .cornerRadius(10)
-                }
-                .buttonStyle(.plain)
-            }
+            .padding(.vertical, 8)
+        } header: {
+            stickyHeader(L.Confirmation.nearbyPlacesHeader)
         }
     }
 
-    private func sectionHeader(_ text: String) -> some View {
+    // MARK: - Sticky Header
+
+    private func stickyHeader(_ text: String) -> some View {
         Text(text)
             .font(.caption.bold())
             .foregroundStyle(.secondary)
             .textCase(.uppercase)
             .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal)
+            .padding(.vertical, 8)
+            .background(Color(.systemGray5))
+    }
+
+    // MARK: - Nearby Visit Row
+
+    private func nearbyVisitRow(_ pastVisit: VisitAggregate) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            VStack(alignment: .leading, spacing: 4) {
+                // タイトルまたは施設名
+                Text(displayName(for: pastVisit))
+                    .font(.subheadline.bold())
+                    .foregroundStyle(.primary)
+
+                // 日付
+                Text(pastVisit.visit.timestampUTC.kokokitaVisitString)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                // 住所
+                if let addr = pastVisit.details.resolvedAddress, !addr.isEmpty {
+                    Text(addr)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(2)
+                }
+            }
+            Spacer()
+            Image(systemName: "chevron.right")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .padding()
+        .background(Color(.systemGray6))
+        .cornerRadius(10)
     }
 
     private func displayName(for visit: VisitAggregate) -> String {
@@ -570,15 +538,6 @@ struct PostKokokitaConfirmationSheet: View {
             .padding()
         }
         .background(.ultraThinMaterial)
-    }
-
-    // MARK: - POI Filtering
-
-    private func filterPOIs(_ pois: [PlacePOI]) -> [PlacePOI] {
-        guard let category = selectedCategory else {
-            return pois
-        }
-        return pois.filter { $0.kkCategory == category }
     }
 
     // MARK: - Data Loading & POI Search

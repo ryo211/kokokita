@@ -50,7 +50,12 @@ struct VisitDetailScreen: View {
 
     // 近くの過去記録
     @State private var nearbyVisits: [VisitAggregate] = []
-    @State private var selectedNearbyVisitId: UUID? = nil
+    @State private var nearbyVisitsData: [VisitDetailData] = []
+
+    // 同じグループの記録
+    @State private var sameGroupVisits: [VisitAggregate] = []
+    @State private var sameGroupVisitsData: [VisitDetailData] = []
+    @State private var currentGroupName: String? = nil
 
     // SNSカードの論理サイズ（表示用は1/3で描画、保存はscale=3で 1080x1350）
     private let logicalSize = CGSize(width: AppConfig.shareImageLogicalWidth,
@@ -96,15 +101,16 @@ struct VisitDetailScreen: View {
                     mapSnapshot: nil,
                     isSharing: false,
                     nearbyVisits: nearbyVisits,
+                    nearbyVisitsData: nearbyVisitsData,
+                    sameGroupVisits: sameGroupVisits,
+                    sameGroupVisitsData: sameGroupVisitsData,
+                    currentGroupName: currentGroupName,
                     onLabelTap: { labelPickerShown = true },
                     onGroupTap: { groupPickerShown = true },
                     onMemberTap: { memberPickerShown = true },
                     onMapTap: {
                         dismiss()
                         onMapTap?()
-                    },
-                    onNearbyVisitTap: { visit in
-                        selectedNearbyVisitId = visit.visit.id
                     },
                     photoFullScreenIndex: $photoFullScreenIndex
                 )
@@ -273,20 +279,7 @@ struct VisitDetailScreen: View {
         .task {
             await loadTaxonomyData()
             await loadNearbyVisits()
-        }
-        .navigationDestination(item: $selectedNearbyVisitId) { nearbyVisitId in
-            if let nearbyVisit = nearbyVisits.first(where: { $0.visit.id == nearbyVisitId }) {
-                VisitDetailScreen(
-                    data: toDetailData(nearbyVisit),
-                    visitId: nearbyVisit.visit.id,
-                    onBack: {},
-                    onEdit: {},
-                    onShare: {},
-                    onDelete: {},
-                    onUpdate: {},
-                    onMapTap: nil
-                )
-            }
+            await loadSameGroupVisits()
         }
         .onChange(of: photoFullScreenIndex) { oldValue, newValue in
             if newValue != nil {
@@ -338,12 +331,42 @@ struct VisitDetailScreen: View {
                 longitude: currentVisit.visit.longitude,
                 radius: 100.0,
                 excludingId: visitId,
-                limit: 3
+                limit: nil  // 制限なし、すべて表示
             )
             // 日付順、降順でソート
             nearbyVisits = nearby.sorted { $0.visit.timestampUTC > $1.visit.timestampUTC }
+            nearbyVisitsData = nearbyVisits.map { toDetailData($0) }
         } catch {
             Logger.error("Failed to fetch nearby visits", error: error)
+        }
+    }
+
+    private func loadSameGroupVisits() async {
+        let repo = AppContainer.shared.repo
+        guard let currentVisit = try? repo.get(by: visitId) else { return }
+        guard let groupId = currentVisit.details.groupId else { return }
+
+        // グループ名を取得
+        currentGroupName = groupOptions.first(where: { $0.id == groupId })?.name
+
+        do {
+            let visits = try repo.fetchAll(
+                filterLabel: nil,
+                filterGroup: groupId,
+                filterMember: nil,
+                titleQuery: nil,
+                dateFrom: nil,
+                dateToExclusive: nil
+            )
+
+            // 現在の記録を除外し、日付順（降順）でソート
+            sameGroupVisits = visits
+                .filter { $0.visit.id != visitId }
+                .sorted { $0.visit.timestampUTC > $1.visit.timestampUTC }
+
+            sameGroupVisitsData = sameGroupVisits.map { toDetailData($0) }
+        } catch {
+            Logger.error("Failed to fetch same group visits", error: error)
         }
     }
 
@@ -532,6 +555,10 @@ struct VisitDetailScreen: View {
                     mapSnapshot: mapImage,
                     isSharing: true,
                     nearbyVisits: [],  // 共有時は近くの記録は含めない
+                    nearbyVisitsData: [],
+                    sameGroupVisits: [],  // 共有時はグループ記録は含めない
+                    sameGroupVisitsData: [],
+                    currentGroupName: nil,
                     photoFullScreenIndex: .constant(nil)
                 )
                 .padding(.all, UIConstants.Spacing.xxLarge)
