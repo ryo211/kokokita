@@ -48,6 +48,15 @@ struct VisitDetailScreen: View {
     @State private var photoFullScreenIndex: Int? = nil
     @State private var photoDragOffset: CGFloat = 0
 
+    // 近くの過去記録
+    @State private var nearbyVisits: [VisitAggregate] = []
+    @State private var nearbyVisitsData: [VisitDetailData] = []
+
+    // 同じグループの記録
+    @State private var sameGroupVisits: [VisitAggregate] = []
+    @State private var sameGroupVisitsData: [VisitDetailData] = []
+    @State private var currentGroupName: String? = nil
+
     // SNSカードの論理サイズ（表示用は1/3で描画、保存はscale=3で 1080x1350）
     private let logicalSize = CGSize(width: AppConfig.shareImageLogicalWidth,
                                       height: AppConfig.shareImageLogicalHeight)
@@ -91,6 +100,11 @@ struct VisitDetailScreen: View {
                     data: data,
                     mapSnapshot: nil,
                     isSharing: false,
+                    nearbyVisits: nearbyVisits,
+                    nearbyVisitsData: nearbyVisitsData,
+                    sameGroupVisits: sameGroupVisits,
+                    sameGroupVisitsData: sameGroupVisitsData,
+                    currentGroupName: currentGroupName,
                     onLabelTap: { labelPickerShown = true },
                     onGroupTap: { groupPickerShown = true },
                     onMemberTap: { memberPickerShown = true },
@@ -264,6 +278,8 @@ struct VisitDetailScreen: View {
         }
         .task {
             await loadTaxonomyData()
+            await loadNearbyVisits()
+            await loadSameGroupVisits()
         }
         .onChange(of: photoFullScreenIndex) { oldValue, newValue in
             if newValue != nil {
@@ -303,6 +319,104 @@ struct VisitDetailScreen: View {
             selectedGroupId = agg.details.groupId
             selectedMemberIds = Set(agg.details.memberIds)
         }
+    }
+
+    private func loadNearbyVisits() async {
+        let repo = AppContainer.shared.repo
+        guard let currentVisit = try? repo.get(by: visitId) else { return }
+
+        do {
+            let nearby = try repo.fetchNearby(
+                latitude: currentVisit.visit.latitude,
+                longitude: currentVisit.visit.longitude,
+                radius: 100.0,
+                excludingId: visitId,
+                limit: nil  // 制限なし、すべて表示
+            )
+            // 日付順、降順でソート
+            nearbyVisits = nearby.sorted { $0.visit.timestampUTC > $1.visit.timestampUTC }
+            nearbyVisitsData = nearbyVisits.map { toDetailData($0) }
+        } catch {
+            Logger.error("Failed to fetch nearby visits", error: error)
+        }
+    }
+
+    private func loadSameGroupVisits() async {
+        let repo = AppContainer.shared.repo
+        guard let currentVisit = try? repo.get(by: visitId) else { return }
+        guard let groupId = currentVisit.details.groupId else { return }
+
+        // グループ名を取得
+        currentGroupName = groupOptions.first(where: { $0.id == groupId })?.name
+
+        do {
+            let visits = try repo.fetchAll(
+                filterLabel: nil,
+                filterGroup: groupId,
+                filterMember: nil,
+                titleQuery: nil,
+                dateFrom: nil,
+                dateToExclusive: nil
+            )
+
+            // 現在の記録を除外し、日付順（降順）でソート
+            sameGroupVisits = visits
+                .filter { $0.visit.id != visitId }
+                .sorted { $0.visit.timestampUTC > $1.visit.timestampUTC }
+
+            sameGroupVisitsData = sameGroupVisits.map { toDetailData($0) }
+        } catch {
+            Logger.error("Failed to fetch same group visits", error: error)
+        }
+    }
+
+    private func toDetailData(_ agg: VisitAggregate) -> VisitDetailData {
+        let title: String = {
+            let t = agg.details.title?.trimmingCharacters(in: .whitespacesAndNewlines)
+            if let t, !t.isEmpty { return t }
+            if let f = agg.details.facilityName, !f.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { return f }
+            return L.Home.noTitle
+        }()
+
+        let labels: [String] = agg.details.labelIds.compactMap { id in
+            labelOptions.first(where: { $0.id == id })?.name
+        }
+        let group: String? = agg.details.groupId.flatMap { id in
+            groupOptions.first(where: { $0.id == id })?.name
+        }
+        let members: [String] = agg.details.memberIds.compactMap { id in
+            memberOptions.first(where: { $0.id == id })?.name
+        }
+
+        let coord: CLLocationCoordinate2D? = {
+            let lat = agg.visit.latitude
+            let lon = agg.visit.longitude
+            if lat == 0 && lon == 0 { return nil }
+            return CLLocationCoordinate2D(latitude: lat, longitude: lon)
+        }()
+
+        let facility: FacilityInfo? = {
+            guard let name = agg.details.facilityName else { return nil }
+            return FacilityInfo(
+                name: name,
+                address: agg.details.facilityAddress,
+                phone: nil
+            )
+        }()
+
+        return VisitDetailData(
+            title: title,
+            labels: labels,
+            group: group,
+            members: members,
+            timestamp: agg.visit.timestampUTC,
+            address: agg.details.resolvedAddress,
+            coordinate: coord,
+            memo: agg.details.comment,
+            facility: facility,
+            facilityCategory: agg.details.facilityCategory,
+            photoPaths: agg.details.photoPaths
+        )
     }
 
     // MARK: - 新規作成
@@ -440,6 +554,11 @@ struct VisitDetailScreen: View {
                     data: data,
                     mapSnapshot: mapImage,
                     isSharing: true,
+                    nearbyVisits: [],  // 共有時は近くの記録は含めない
+                    nearbyVisitsData: [],
+                    sameGroupVisits: [],  // 共有時はグループ記録は含めない
+                    sameGroupVisitsData: [],
+                    currentGroupName: nil,
                     photoFullScreenIndex: .constant(nil)
                 )
                 .padding(.all, UIConstants.Spacing.xxLarge)

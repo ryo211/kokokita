@@ -71,6 +71,8 @@ enum L {
         static let deleteConfirmMessage = localized("home.deleteConfirmMessage")
         static let noTitle = localized("home.noTitle")
         static let itemsCount = localized("home.itemsCount")
+        static let switchToMap = localized("home.switchToMap")
+        static let switchToList = localized("home.switchToList")
     }
 
     // MARK: - Detail
@@ -88,6 +90,8 @@ enum L {
         static let deleteConfirmMessage = localized("detail.deleteConfirmMessage")
         static let deleteVisitTitle = localized("detail.deleteVisitTitle")
         static let deleteVisitMessage = localized("detail.deleteVisitMessage")
+        static let nearbyPastRecords = localized("detail.nearbyPastRecords")
+        static let sameGroupRecords = localized("detail.sameGroupRecords")
     }
 
     // MARK: - Menu

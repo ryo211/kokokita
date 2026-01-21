@@ -5,6 +5,11 @@ struct VisitDetailContent: View {
     let data: VisitDetailData
     let mapSnapshot: UIImage?        // isSharingの時に使う
     var isSharing: Bool = false
+    var nearbyVisits: [VisitAggregate] = []
+    var nearbyVisitsData: [VisitDetailData] = []
+    var sameGroupVisits: [VisitAggregate] = []
+    var sameGroupVisitsData: [VisitDetailData] = []
+    var currentGroupName: String? = nil
     var onLabelTap: (() -> Void)? = nil
     var onGroupTap: (() -> Void)? = nil
     var onMemberTap: (() -> Void)? = nil
@@ -175,12 +180,148 @@ struct VisitDetailContent: View {
                 }
                 .padding(.horizontal)
             }
+
+            // 近くの過去記録セクション（共有時は非表示）
+            if !isSharing && !nearbyVisits.isEmpty {
+                nearbyVisitsSection
+                    .padding(.top, 24)  // 上のコンテンツとの距離を確保
+            }
+
+            // 同じグループの記録セクション（共有時は非表示）
+            if !isSharing && !sameGroupVisits.isEmpty {
+                sameGroupVisitsSection
+                    .padding(.top, 24)  // 上のコンテンツとの距離を確保
+            }
         }
         .padding(.bottom, 16)
         .background(
             LinearGradient(colors: [Color(.systemBackground), Color(.secondarySystemBackground)],
                            startPoint: .top, endPoint: .bottom)
         )
+    }
+
+    // MARK: - Nearby Visits Section
+
+    @ViewBuilder
+    private var nearbyVisitsSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Label("\(L.Detail.nearbyPastRecords)（\(nearbyVisits.count)\(L.Home.itemsCount)）", systemImage: "clock.arrow.circlepath")
+                .font(.headline)
+                .padding(.horizontal)
+
+            VStack(spacing: 0) {
+                ForEach(Array(nearbyVisits.enumerated()), id: \.element.visit.id) { index, visit in
+                    if index < nearbyVisitsData.count {
+                        NavigationLink {
+                            VisitDetailScreen(
+                                data: nearbyVisitsData[index],
+                                visitId: visit.visit.id
+                            )
+                        } label: {
+                            nearbyVisitRow(visit)
+                        }
+                        .buttonStyle(.plain)
+
+                        // 最後以外に区切り線を追加
+                        if index < nearbyVisits.count - 1 {
+                            Divider()
+                                .padding(.horizontal)
+                                .padding(.vertical, 8)
+                        }
+                    }
+                }
+            }
+            .padding(.horizontal)
+        }
+    }
+
+    private func nearbyVisitRow(_ visit: VisitAggregate) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            VStack(alignment: .leading, spacing: 4) {
+                // タイトルまたは施設名
+                Text(displayName(for: visit))
+                    .font(.subheadline.bold())
+                    .foregroundStyle(.primary)
+
+                // 日付
+                Text(visit.visit.timestampUTC.kokokitaVisitString)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                // 住所
+                if let addr = visit.details.resolvedAddress?.trimmed, !addr.isEmpty {
+                    Text(addr)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(2)
+                }
+            }
+            Spacer()
+            Image(systemName: "chevron.right")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color(.systemBackground))
+        .cornerRadius(8)
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(Color(.systemGray4), lineWidth: 1)
+        )
+    }
+
+    private func displayName(for visit: VisitAggregate) -> String {
+        if let title = visit.details.title?.trimmed, !title.isEmpty {
+            return title
+        }
+        if let facility = visit.details.facilityName?.trimmed, !facility.isEmpty {
+            return facility
+        }
+        return L.Home.noTitle
+    }
+
+    // MARK: - Same Group Visits Section
+
+    @ViewBuilder
+    private var sameGroupVisitsSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(spacing: 6) {
+                if let groupName = currentGroupName {
+                    Chip(groupName, kind: .group, showRemoveButton: false)
+                    Text("の他の記録（\(sameGroupVisits.count)\(L.Home.itemsCount)）")
+                        .font(.headline)
+                } else {
+                    Text("\(L.Detail.sameGroupRecords)（\(sameGroupVisits.count)\(L.Home.itemsCount)）")
+                        .font(.headline)
+                }
+            }
+            .padding(.horizontal)
+
+            VStack(spacing: 0) {
+                ForEach(Array(sameGroupVisits.enumerated()), id: \.element.visit.id) { index, visit in
+                    if index < sameGroupVisitsData.count {
+                        NavigationLink {
+                            VisitDetailScreen(
+                                data: sameGroupVisitsData[index],
+                                visitId: visit.visit.id
+                            )
+                        } label: {
+                            nearbyVisitRow(visit)
+                        }
+                        .buttonStyle(.plain)
+
+                        // 最後以外に区切り線を追加
+                        if index < sameGroupVisits.count - 1 {
+                            Divider()
+                                .padding(.horizontal)
+                                .padding(.vertical, 8)
+                        }
+                    }
+                }
+            }
+            .padding(.horizontal)
+        }
     }
 }
 
