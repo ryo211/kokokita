@@ -290,15 +290,15 @@ struct VisitListScreen: View {
                 displayMode = newMode
             }
         } label: {
-            HStack(spacing: 6) {
+            HStack(spacing: 4) {
                 Image(systemName: displayMode == .list ? "map" : "list.bullet")
-                    .font(.callout)
+                    .font(.caption)
                 Text(displayMode == .list ? L.Home.switchToMap : L.Home.switchToList)
-                    .font(.callout.bold())
+                    .font(.caption.bold())
             }
             .foregroundStyle(.white)
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
             .background(
                 Capsule()
                     .fill(Color.blue)
