@@ -474,12 +474,14 @@ private struct CustomBottomBar: View {
             VStack(spacing: 4) {
                 Image(systemName: icon)
                     .font(.title3)
+                    .scaleEffect(current == tab ? 1.08 : 1.0)
                 Text(title)
                     .font(.caption2)
             }
             .frame(maxWidth: .infinity)
             .frame(height: 64)
             .foregroundStyle(current == tab ? Color.accentColor : Color.primary.opacity(0.5))
+            .scaleEffect(current == tab ? 1.02 : 0.98)
             .background(
                 ZStack {
                     if current == tab {
@@ -564,7 +566,7 @@ private struct CustomBottomBar: View {
             )
         }
         .buttonStyle(.plain)
-        .animation(.interpolatingSpring(stiffness: 200, damping: 20), value: current == tab)
+        .animation(.interpolatingSpring(stiffness: 150, damping: 18), value: current == tab)
     }
 }
 
