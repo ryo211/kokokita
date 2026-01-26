@@ -479,28 +479,32 @@ private struct CustomBottomBar: View {
             }
             .frame(maxWidth: .infinity)
             .frame(height: 64)
-            .foregroundStyle(current == tab ? Color.white : Color.primary.opacity(0.5))
+            .foregroundStyle(current == tab ? Color.accentColor : Color.primary.opacity(0.5))
             .background(
                 ZStack {
                     if current == tab {
-                        // 選択時: Liquid glass背景
+                        // 選択時: 控えめなLiquid glass背景
                         RoundedRectangle(cornerRadius: 20, style: .continuous)
-                            .fill(
-                                LinearGradient(
-                                    colors: [
-                                        Color.accentColor.opacity(0.95),
-                                        Color.accentColor.opacity(0.75)
-                                    ],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
+                            .fill(.ultraThinMaterial)
                             .overlay {
                                 RoundedRectangle(cornerRadius: 20, style: .continuous)
                                     .fill(
                                         LinearGradient(
                                             colors: [
-                                                Color.white.opacity(0.25),
+                                                Color.accentColor.opacity(0.15),
+                                                Color.accentColor.opacity(0.08)
+                                            ],
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        )
+                                    )
+                            }
+                            .overlay {
+                                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [
+                                                Color.white.opacity(0.2),
                                                 Color.clear
                                             ],
                                             startPoint: .top,
@@ -508,8 +512,21 @@ private struct CustomBottomBar: View {
                                         )
                                     )
                             }
-                            .shadow(color: Color.accentColor.opacity(0.35), radius: 8, x: 0, y: 2)
-                            .shadow(color: Color.accentColor.opacity(0.15), radius: 3, x: 0, y: 1)
+                            .overlay {
+                                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                                    .strokeBorder(
+                                        LinearGradient(
+                                            colors: [
+                                                Color.accentColor.opacity(0.3),
+                                                Color.accentColor.opacity(0.15)
+                                            ],
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        ),
+                                        lineWidth: 1
+                                    )
+                            }
+                            .shadow(color: Color.black.opacity(0.08), radius: 6, x: 0, y: 2)
                     } else {
                         // 非選択時: 薄いガラス背景
                         RoundedRectangle(cornerRadius: 20, style: .continuous)
