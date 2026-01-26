@@ -121,58 +121,102 @@ struct PostKokokitaPromptSheet: View {
         action: @escaping () -> Void
     ) -> some View {
         VStack(spacing: 4) {
-            // ボタン本体を固定高さにして位置を揃える（アイコンを上に配置、タイトルは改行可能）
-            let content = VStack(spacing: 6) {
-                Image(systemName: systemImage)
-                    .font(.title2)
-                    .frame(height: 28)  // アイコンの高さを固定
-                Text(title)
-                    .font(.subheadline.bold())
-                    .lineLimit(2)  // 2行まで改行可能にして「そのまま保存」を2行表示
-                    .multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            .frame(maxWidth: .infinity)
-            .frame(height: 56)  // タイトル改行対応のため高さを拡大
-
-            // ★ Button は"必ず1つだけ"作る
-            if #available(iOS 15.0, *) {
-                if primary {
-                    Button(action: action) { content }
-                        .buttonStyle(BorderedProminentButtonStyle())
-                        .controlSize(.large)
-                        .buttonBorderShape(.roundedRectangle(radius: 14))
-                        .disabled(isDisabled)
-                } else {
-                    Button(action: action) { content }
-                        .buttonStyle(BorderedButtonStyle())
-                        .controlSize(.large)
-                        .buttonBorderShape(.roundedRectangle(radius: 14))
-                        .disabled(isDisabled)
+            // ボタン本体（Liquid Glassスタイル）
+            Button(action: action) {
+                VStack(spacing: 6) {
+                    Image(systemName: systemImage)
+                        .font(.title2)
+                        .frame(height: 28)
+                    Text(title)
+                        .font(.subheadline.bold())
+                        .lineLimit(2)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
-            } else {
-                // フォールバック（旧OS向け）
-                Button(action: action) { content }
-                    .buttonStyle(PlainButtonStyle())
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
-                    .background(primary ? Color.accentColor : Color.clear)
-                    .foregroundColor(primary ? .white : .accentColor)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 14)
-                            .stroke(Color.accentColor, lineWidth: primary ? 0 : 1)
-                    )
-                    .clipShape(RoundedRectangle(cornerRadius: 14))
-                    .disabled(isDisabled)
+                .foregroundStyle(primary ? (isDisabled ? Color.white.opacity(0.5) : Color.white) : Color.primary.opacity(0.75))
+                .frame(maxWidth: .infinity)
+                .frame(height: 56)
+                .background(
+                    ZStack {
+                        if primary {
+                            // プライマリボタン: Liquid Glassアクセントカラー
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .fill(
+                                    LinearGradient(
+                                        colors: isDisabled ? [
+                                            Color.gray.opacity(0.6),
+                                            Color.gray.opacity(0.4)
+                                        ] : [
+                                            Color.accentColor.opacity(0.95),
+                                            Color.accentColor.opacity(0.75)
+                                        ],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .overlay {
+                                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                        .fill(
+                                            LinearGradient(
+                                                colors: [
+                                                    Color.white.opacity(0.25),
+                                                    Color.clear
+                                                ],
+                                                startPoint: .top,
+                                                endPoint: .bottom
+                                            )
+                                        )
+                                }
+                                .shadow(
+                                    color: isDisabled ? Color.black.opacity(0.15) : Color.accentColor.opacity(0.35),
+                                    radius: 8, x: 0, y: 2
+                                )
+                        } else {
+                            // セカンダリボタン: Liquid Glassホワイト系
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .fill(.ultraThinMaterial)
+                                .overlay {
+                                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                        .fill(
+                                            LinearGradient(
+                                                colors: [
+                                                    Color.white.opacity(0.12),
+                                                    Color.white.opacity(0.03)
+                                                ],
+                                                startPoint: .topLeading,
+                                                endPoint: .bottomTrailing
+                                            )
+                                        )
+                                }
+                                .overlay {
+                                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                        .strokeBorder(
+                                            LinearGradient(
+                                                colors: [
+                                                    Color.white.opacity(0.2),
+                                                    Color.white.opacity(0.08)
+                                                ],
+                                                startPoint: .topLeading,
+                                                endPoint: .bottomTrailing
+                                            ),
+                                            lineWidth: 0.5
+                                        )
+                                }
+                                .shadow(color: Color.black.opacity(0.08), radius: 6, x: 0, y: 2)
+                        }
+                    }
+                )
             }
+            .buttonStyle(.plain)
+            .disabled(isDisabled)
 
-            // 説明文を固定高さの領域に配置（改行されてもボタンの位置に影響しない）
+            // 説明文を固定高さの領域に配置
             Text(subtitle)
                 .font(.caption2)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
                 .lineLimit(2)
-                .frame(height: 32, alignment: .top)  // 固定高さで説明文用の領域を確保
+                .frame(height: 32, alignment: .top)
         }
         .frame(maxWidth: .infinity)
     }
@@ -504,40 +548,124 @@ struct PostKokokitaConfirmationSheet: View {
         }
     }
 
-    // MARK: - Bottom Buttons
+    // MARK: - Bottom Buttons (Liquid Glass)
 
     private var bottomButtons: some View {
         VStack(spacing: 0) {
             Divider()
 
             HStack(spacing: 12) {
-                // 情報を入力ボタン
+                // 情報を入力ボタン（Liquid Glassプライマリ）
                 Button {
                     onEnterInfo(visitId)
                 } label: {
                     Text(L.Confirmation.enterInfo)
                         .font(.headline)
+                        .foregroundStyle(Color.white)
                         .frame(maxWidth: .infinity)
+                        .frame(height: 50)
+                        .background(
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [
+                                                Color.accentColor.opacity(0.95),
+                                                Color.accentColor.opacity(0.75)
+                                            ],
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        )
+                                    )
+                                    .overlay {
+                                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                            .fill(
+                                                LinearGradient(
+                                                    colors: [
+                                                        Color.white.opacity(0.25),
+                                                        Color.clear
+                                                    ],
+                                                    startPoint: .top,
+                                                    endPoint: .bottom
+                                                )
+                                            )
+                                    }
+                                    .shadow(color: Color.accentColor.opacity(0.35), radius: 8, x: 0, y: 2)
+                                    .shadow(color: Color.accentColor.opacity(0.15), radius: 3, x: 0, y: 1)
+                            }
+                        )
                 }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
+                .buttonStyle(.plain)
 
-                // 削除ボタン
+                // 削除ボタン（Liquid Glassセカンダリ、赤色強調）
                 Button {
                     onDelete(visitId)
                     dismiss()
                 } label: {
                     Text(L.Confirmation.deleteRecord)
                         .font(.headline)
+                        .foregroundStyle(Color.red)
                         .frame(maxWidth: .infinity)
+                        .frame(height: 50)
+                        .background(
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                    .fill(.ultraThinMaterial)
+                                    .overlay {
+                                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                            .fill(
+                                                LinearGradient(
+                                                    colors: [
+                                                        Color.white.opacity(0.12),
+                                                        Color.white.opacity(0.03)
+                                                    ],
+                                                    startPoint: .topLeading,
+                                                    endPoint: .bottomTrailing
+                                                )
+                                            )
+                                    }
+                                    .overlay {
+                                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                            .strokeBorder(
+                                                LinearGradient(
+                                                    colors: [
+                                                        Color.red.opacity(0.3),
+                                                        Color.red.opacity(0.1)
+                                                    ],
+                                                    startPoint: .topLeading,
+                                                    endPoint: .bottomTrailing
+                                                ),
+                                                lineWidth: 1
+                                            )
+                                    }
+                                    .shadow(color: Color.black.opacity(0.08), radius: 6, x: 0, y: 2)
+                            }
+                        )
                 }
-                .buttonStyle(.bordered)
-                .controlSize(.large)
-                .tint(.red)
+                .buttonStyle(.plain)
             }
             .padding()
         }
-        .background(.ultraThinMaterial)
+        .background(
+            // Liquid Glass背景
+            ZStack {
+                Rectangle()
+                    .fill(.ultraThinMaterial)
+                    .overlay {
+                        Rectangle()
+                            .fill(
+                                LinearGradient(
+                                    colors: [
+                                        Color.white.opacity(0.05),
+                                        Color.clear
+                                    ],
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                )
+                            )
+                    }
+            }
+        )
     }
 
     // MARK: - Data Loading & POI Search
