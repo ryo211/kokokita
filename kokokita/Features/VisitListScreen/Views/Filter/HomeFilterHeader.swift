@@ -10,11 +10,42 @@ struct HomeFilterHeader: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .center, spacing: 12) {
-                // 検索ボタン（左側に移動）
+                // 検索ボタン（Liquid Glass風の円形ボタン）
                 Button(action: onTapSearch) {
                     Image(systemName: "magnifyingglass")
-                        .font(.title2)
-                        .foregroundStyle(Color.blue)
+                        .font(.body)
+                        .foregroundStyle(Color.white)
+                        .frame(width: 40, height: 40)
+                        .background(
+                            ZStack {
+                                Circle()
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [
+                                                Color.blue.opacity(0.95),
+                                                Color.blue.opacity(0.75)
+                                            ],
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        )
+                                    )
+                                    .overlay {
+                                        Circle()
+                                            .fill(
+                                                LinearGradient(
+                                                    colors: [
+                                                        Color.white.opacity(0.25),
+                                                        Color.clear
+                                                    ],
+                                                    startPoint: .top,
+                                                    endPoint: .bottom
+                                                )
+                                            )
+                                    }
+                                    .shadow(color: Color.blue.opacity(0.35), radius: 8, x: 0, y: 2)
+                                    .shadow(color: Color.blue.opacity(0.15), radius: 3, x: 0, y: 1)
+                            }
+                        )
                 }
                 .buttonStyle(.plain)
 
@@ -30,19 +61,53 @@ struct HomeFilterHeader: View {
 
                 Spacer()
 
-                // ソートボタン（右側）
+                // ソートボタン（Liquid Glass風のカプセル型ボタン）
                 Button {
                     vm.toggleSort()
                 } label: {
-                    // 降順（最新が上）がデフォ。アイコンと説明を状態で出し分け。
                     HStack(spacing: 6) {
                         Text(vm.sortAscending ? L.SearchFilter.sortOldest : L.SearchFilter.sortNewest)
                             .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                        Image(systemName: vm.sortAscending ? "chevron.up"
-                                                           : "chevron.down")
+                        Image(systemName: vm.sortAscending ? "chevron.up" : "chevron.down")
                             .font(.system(size: 12))
                     }
+                    .foregroundStyle(Color.primary.opacity(0.6))
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(
+                        ZStack {
+                            Capsule(style: .continuous)
+                                .fill(.ultraThinMaterial)
+                                .overlay {
+                                    Capsule(style: .continuous)
+                                        .fill(
+                                            LinearGradient(
+                                                colors: [
+                                                    Color.white.opacity(0.08),
+                                                    Color.white.opacity(0.02)
+                                                ],
+                                                startPoint: .topLeading,
+                                                endPoint: .bottomTrailing
+                                            )
+                                        )
+                                }
+                                .overlay {
+                                    Capsule(style: .continuous)
+                                        .strokeBorder(
+                                            LinearGradient(
+                                                colors: [
+                                                    Color.white.opacity(0.15),
+                                                    Color.white.opacity(0.05)
+                                                ],
+                                                startPoint: .topLeading,
+                                                endPoint: .bottomTrailing
+                                            ),
+                                            lineWidth: 0.5
+                                        )
+                                }
+                                .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 1)
+                        }
+                    )
                 }
                 .buttonStyle(.plain)
             }
