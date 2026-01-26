@@ -428,14 +428,37 @@ private struct CustomBottomBar: View {
                 // 左: ホームボタン（Liquid Glass風）
                 liquidGlassButton(icon: "house.fill", title: L.Tab.home, tab: .home)
 
-                // 中央: ココキタボタン
+                // 中央: ココキタボタン（Liquid Glassスタイル）
                 Button(action: onCenterTap) {
                     ZStack {
                         Circle()
-                            .fill(Color.accentColor)
+                            .fill(
+                                LinearGradient(
+                                    colors: [
+                                        Color.accentColor.opacity(0.95),
+                                        Color.accentColor.opacity(0.75)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .overlay {
+                                Circle()
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [
+                                                Color.white.opacity(0.25),
+                                                Color.clear
+                                            ],
+                                            startPoint: .top,
+                                            endPoint: .bottom
+                                        )
+                                    )
+                            }
                             .frame(width: UIConstants.Size.centerButtonSize,
                                    height: UIConstants.Size.centerButtonSize)
-                            .shadow(radius: UIConstants.Shadow.radiusMedium * 3, y: UIConstants.Shadow.radiusMedium)
+                            .shadow(color: Color.accentColor.opacity(0.35), radius: 8, x: 0, y: 2)
+                            .shadow(color: Color.accentColor.opacity(0.15), radius: 3, x: 0, y: 1)
 
                         VStack(spacing: 0) {
                             Image("kokokita_irodori_white")
