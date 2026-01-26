@@ -322,22 +322,26 @@ struct VisitListScreen: View {
                 // スライディングインジケーター（ヌルッと動く部分）
                 let buttonWidth = (geometry.size.width - 8) / 2
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                Color.blue.opacity(0.95),
-                                Color.blue.opacity(0.75)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
+                    .fill(.ultraThinMaterial)
                     .overlay {
                         RoundedRectangle(cornerRadius: 12, style: .continuous)
                             .fill(
                                 LinearGradient(
                                     colors: [
-                                        Color.white.opacity(0.3),
+                                        Color.accentColor.opacity(0.15),
+                                        Color.accentColor.opacity(0.08)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                    }
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .fill(
+                                LinearGradient(
+                                    colors: [
+                                        Color.white.opacity(0.2),
                                         Color.clear
                                     ],
                                     startPoint: .top,
@@ -345,11 +349,24 @@ struct VisitListScreen: View {
                                 )
                             )
                     }
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .strokeBorder(
+                                LinearGradient(
+                                    colors: [
+                                        Color.accentColor.opacity(0.3),
+                                        Color.accentColor.opacity(0.15)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 1
+                            )
+                    }
                     .frame(width: buttonWidth, height: geometry.size.height - 8)
-                    .shadow(color: Color.blue.opacity(0.4), radius: 8, x: 0, y: 2)
-                    .shadow(color: Color.blue.opacity(0.2), radius: 4, x: 0, y: 1)
+                    .shadow(color: Color.black.opacity(0.08), radius: 6, x: 0, y: 2)
                     .offset(x: displayMode == .list ? 4 : buttonWidth + 4)
-                    .animation(.interpolatingSpring(stiffness: 200, damping: 20), value: displayMode)
+                    .animation(.interpolatingSpring(stiffness: 150, damping: 18), value: displayMode)
 
                 // ボタンラベル
                 HStack(spacing: 0) {
@@ -363,7 +380,7 @@ struct VisitListScreen: View {
                             Text("一覧")
                                 .font(.caption.bold())
                         }
-                        .foregroundStyle(displayMode == .list ? Color.white : Color.primary.opacity(0.5))
+                        .foregroundStyle(displayMode == .list ? Color.accentColor : Color.primary.opacity(0.5))
                         .frame(width: buttonWidth)
                         .contentShape(Rectangle())
                     }
@@ -379,7 +396,7 @@ struct VisitListScreen: View {
                             Text("地図")
                                 .font(.caption.bold())
                         }
-                        .foregroundStyle(displayMode == .map ? Color.white : Color.primary.opacity(0.5))
+                        .foregroundStyle(displayMode == .map ? Color.accentColor : Color.primary.opacity(0.5))
                         .frame(width: buttonWidth)
                         .contentShape(Rectangle())
                     }
