@@ -424,10 +424,12 @@ private struct CustomBottomBar: View {
                 .frame(height: UIConstants.Size.tabBarHeight)
                 .overlay(Divider(), alignment: .top)
 
-            HStack {
-                barButton(icon: "house.fill", title: L.Tab.home, tab: .home)
-                // barButton(icon: "map.fill", title: "地図", tab: .map)
+            HStack(spacing: 0) {
+                // Liquid Glass風のホーム/メニュー切り替え
+                liquidGlassTabSwitch
+                    .frame(maxWidth: .infinity)
 
+                // 中央のココキタボタン
                 Button(action: onCenterTap) {
                     ZStack {
                         Circle()
@@ -456,26 +458,122 @@ private struct CustomBottomBar: View {
                 }
                 .accessibilityLabel(L.Tab.kokokita)
 
-                // barButton(icon: "calendar", title: "カレンダー", tab: .calendar)
-                barButton(icon: "ellipsis.circle.fill", title: L.Tab.menu, tab: .menu)
+                Spacer()
+                    .frame(maxWidth: .infinity)
             }
             .padding(.horizontal, UIConstants.Spacing.extraLarge + 8)
             .padding(.bottom, UIConstants.Spacing.medium)
         }
     }
 
-    private func barButton(icon: String, title: String, tab: RootTab) -> some View {
-        Button {
-            onSelect(tab)
-        } label: {
-            VStack(spacing: UIConstants.Spacing.small) {
-                Image(systemName: icon).font(.title3)
-                Text(title).font(.caption2)
+    // MARK: - Liquid Glass Tab Switch
+
+    private var liquidGlassTabSwitch: some View {
+        GeometryReader { geometry in
+            ZStack(alignment: .leading) {
+                // 背景コンテナ（Liquid glass）
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .fill(.ultraThinMaterial)
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 20, style: .continuous)
+                            .fill(
+                                LinearGradient(
+                                    colors: [
+                                        Color.white.opacity(0.12),
+                                        Color.white.opacity(0.04)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                    }
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 20, style: .continuous)
+                            .strokeBorder(
+                                LinearGradient(
+                                    colors: [
+                                        Color.white.opacity(0.2),
+                                        Color.white.opacity(0.08)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 0.5
+                            )
+                    }
+                    .shadow(color: Color.black.opacity(0.08), radius: 8, x: 0, y: 2)
+                    .shadow(color: Color.black.opacity(0.04), radius: 2, x: 0, y: 1)
+
+                // スライディングインジケーター
+                let buttonWidth = (geometry.size.width - 8) / 2
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                Color.accentColor.opacity(0.95),
+                                Color.accentColor.opacity(0.75)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .fill(
+                                LinearGradient(
+                                    colors: [
+                                        Color.white.opacity(0.25),
+                                        Color.clear
+                                    ],
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                )
+                            )
+                    }
+                    .frame(width: buttonWidth, height: geometry.size.height - 8)
+                    .shadow(color: Color.accentColor.opacity(0.35), radius: 6, x: 0, y: 2)
+                    .shadow(color: Color.accentColor.opacity(0.15), radius: 3, x: 0, y: 1)
+                    .offset(x: current == .home ? 4 : buttonWidth + 4)
+                    .animation(.interpolatingSpring(stiffness: 200, damping: 20), value: current)
+
+                // ボタンラベル
+                HStack(spacing: 0) {
+                    // ホームボタン
+                    Button {
+                        onSelect(.home)
+                    } label: {
+                        VStack(spacing: 4) {
+                            Image(systemName: "house.fill")
+                                .font(.title3)
+                            Text(L.Tab.home)
+                                .font(.caption2)
+                        }
+                        .foregroundStyle(current == .home ? Color.white : Color.primary.opacity(0.4))
+                        .frame(width: buttonWidth)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+
+                    // メニューボタン
+                    Button {
+                        onSelect(.menu)
+                    } label: {
+                        VStack(spacing: 4) {
+                            Image(systemName: "ellipsis.circle.fill")
+                                .font(.title3)
+                            Text(L.Tab.menu)
+                                .font(.caption2)
+                        }
+                        .foregroundStyle(current == .menu ? Color.white : Color.primary.opacity(0.4))
+                        .frame(width: buttonWidth)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                }
+                .padding(4)
             }
-            .frame(maxWidth: .infinity)
-            .foregroundStyle(current == tab ? .primary : .secondary)
         }
-        .buttonStyle(.plain)
+        .frame(height: 64)
     }
 }
 
