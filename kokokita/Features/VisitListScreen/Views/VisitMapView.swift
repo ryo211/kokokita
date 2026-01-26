@@ -146,7 +146,7 @@ struct VisitMapView: View {
         }
     }
 
-    // MARK: - Current Location Button
+    // MARK: - Current Location Button (Liquid Glass)
     private var currentLocationButton: some View {
         Button {
             Task {
@@ -154,10 +154,69 @@ struct VisitMapView: View {
             }
         } label: {
             ZStack {
-                Circle()
-                    .fill(showCurrentLocation ? Color.blue : Color.white)
-                    .frame(width: 44, height: 44)
-                    .shadow(radius: 4)
+                if showCurrentLocation {
+                    // アクティブ状態: Liquid Glassプライマリスタイル
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    Color.blue.opacity(0.95),
+                                    Color.blue.opacity(0.75)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .overlay {
+                            Circle()
+                                .fill(
+                                    LinearGradient(
+                                        colors: [
+                                            Color.white.opacity(0.25),
+                                            Color.clear
+                                        ],
+                                        startPoint: .top,
+                                        endPoint: .bottom
+                                    )
+                                )
+                        }
+                        .frame(width: 44, height: 44)
+                        .shadow(color: Color.blue.opacity(0.35), radius: 8, x: 0, y: 2)
+                        .shadow(color: Color.blue.opacity(0.15), radius: 3, x: 0, y: 1)
+                } else {
+                    // 非アクティブ状態: Liquid Glassセカンダリスタイル
+                    Circle()
+                        .fill(.ultraThinMaterial)
+                        .overlay {
+                            Circle()
+                                .fill(
+                                    LinearGradient(
+                                        colors: [
+                                            Color.white.opacity(0.12),
+                                            Color.white.opacity(0.03)
+                                        ],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                        }
+                        .overlay {
+                            Circle()
+                                .strokeBorder(
+                                    LinearGradient(
+                                        colors: [
+                                            Color.white.opacity(0.2),
+                                            Color.white.opacity(0.08)
+                                        ],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    ),
+                                    lineWidth: 0.5
+                                )
+                        }
+                        .frame(width: 44, height: 44)
+                        .shadow(color: Color.black.opacity(0.08), radius: 6, x: 0, y: 2)
+                }
 
                 if isLoadingLocation {
                     ProgressView()
@@ -170,6 +229,7 @@ struct VisitMapView: View {
             }
         }
         .buttonStyle(.plain)
+        .animation(.interpolatingSpring(stiffness: 200, damping: 20), value: showCurrentLocation)
     }
 
     private func toggleCurrentLocation() async {
@@ -350,9 +410,43 @@ struct VisitMapDetailSheet: View {
             .padding(.horizontal, 16)
             .padding(.bottom, 16)
         }
-        .background(.regularMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
-        .shadow(radius: 8)
+        .background(
+            // Liquid Glass背景
+            ZStack {
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(.ultraThinMaterial)
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .fill(
+                                LinearGradient(
+                                    colors: [
+                                        Color.white.opacity(0.15),
+                                        Color.white.opacity(0.05)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                    }
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .strokeBorder(
+                                LinearGradient(
+                                    colors: [
+                                        Color.white.opacity(0.25),
+                                        Color.white.opacity(0.1)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 0.5
+                            )
+                    }
+                    .shadow(color: Color.black.opacity(0.12), radius: 10, x: 0, y: 4)
+                    .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
+            }
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         .padding(.horizontal, 8)
         .padding(.bottom, 8)
         .offset(y: dragOffset)
