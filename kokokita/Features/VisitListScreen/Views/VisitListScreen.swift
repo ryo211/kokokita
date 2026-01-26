@@ -281,30 +281,120 @@ struct VisitListScreen: View {
         .background(Color(.systemBackground))
     }
 
-    // MARK: - Mode Toggle Button
+    // MARK: - Mode Toggle Button (Liquid Glass Style)
 
     private var modeToggleButton: some View {
-        Button {
-            let newMode: VisitListDisplayMode = displayMode == .list ? .map : .list
-            withAnimation(.easeInOut(duration: 0.25)) {
-                displayMode = newMode
-            }
-        } label: {
-            HStack(spacing: 5) {
-                Image(systemName: displayMode == .list ? "map" : "list.bullet")
-                    .font(.footnote)
-                Text(displayMode == .list ? L.Home.switchToMap : L.Home.switchToList)
-                    .font(.footnote.bold())
-            }
-            .foregroundStyle(.white)
-            .padding(.horizontal, 14)
-            .padding(.vertical, 10)
-            .background(
-                Capsule()
-                    .fill(Color.blue)
-                    .shadow(radius: 4)
+        HStack(spacing: 0) {
+            // 一覧ボタン
+            modeToggleOption(
+                title: "一覧",
+                icon: "list.bullet",
+                isSelected: displayMode == .list,
+                action: {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                        displayMode = .list
+                    }
+                }
+            )
+
+            // 地図ボタン
+            modeToggleOption(
+                title: "地図",
+                icon: "map",
+                isSelected: displayMode == .map,
+                action: {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                        displayMode = .map
+                    }
+                }
             )
         }
+        .padding(4)
+        .background(
+            // Liquid glass effect
+            ZStack {
+                // ベース背景
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(.ultraThinMaterial)
+
+                // グラデーションオーバーレイ
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                Color.white.opacity(0.2),
+                                Color.white.opacity(0.05)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+
+                // 外枠
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .strokeBorder(
+                        LinearGradient(
+                            colors: [
+                                Color.white.opacity(0.3),
+                                Color.white.opacity(0.1)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 1
+                    )
+            }
+        )
+        .shadow(color: Color.black.opacity(0.15), radius: 8, x: 0, y: 4)
+        .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
+    }
+
+    private func modeToggleOption(title: String, icon: String, isSelected: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 4) {
+                Image(systemName: icon)
+                    .font(.caption)
+                Text(title)
+                    .font(.caption.bold())
+            }
+            .foregroundStyle(isSelected ? Color.white : Color.primary.opacity(0.6))
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(
+                Group {
+                    if isSelected {
+                        // 選択時の背景（Liquid glass）
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .fill(
+                                    LinearGradient(
+                                        colors: [
+                                            Color.blue.opacity(0.9),
+                                            Color.blue.opacity(0.7)
+                                        ],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .fill(
+                                    LinearGradient(
+                                        colors: [
+                                            Color.white.opacity(0.2),
+                                            Color.clear
+                                        ],
+                                        startPoint: .top,
+                                        endPoint: .bottom
+                                    )
+                                )
+                        }
+                        .shadow(color: Color.blue.opacity(0.3), radius: 4, x: 0, y: 2)
+                    }
+                }
+            )
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Map Content
