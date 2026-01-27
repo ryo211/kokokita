@@ -199,11 +199,11 @@ struct VisitListScreen: View {
                 }
             }
 
-            // 右下にトグルボタン（シート表示時は上にずらす、スクロール時は非表示）
+            // 右下にトグルボタン（シート表示時は上にずらす、スクロール時はうっすら表示）
             modeToggleButton
                 .padding(.trailing, 16)
                 .padding(.bottom, mapSheetHeight > 0 ? mapSheetHeight + 24 : 32)
-                .opacity(showModeToggle || displayMode == .map ? 1.0 : 0.0)
+                .opacity(showModeToggle || displayMode == .map ? 1.0 : 0.3)
         }
     }
     
@@ -448,7 +448,7 @@ struct VisitListScreen: View {
 
     // スクロール検知とボタンの表示制御
     private func handleScroll() {
-        // スクロール中はボタンを非表示
+        // スクロール中はボタンをうっすら表示
         withAnimation(.easeOut(duration: 0.15)) {
             showModeToggle = false
         }
@@ -456,8 +456,8 @@ struct VisitListScreen: View {
         // 既存のタイマーをキャンセル
         scrollTimer?.invalidate()
 
-        // 0.8秒後にボタンを再表示
-        scrollTimer = Timer.scheduledTimer(withTimeInterval: 0.8, repeats: false) { _ in
+        // 0.5秒後にボタンを完全表示
+        scrollTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { _ in
             withAnimation(.easeIn(duration: 0.25)) {
                 showModeToggle = true
             }
