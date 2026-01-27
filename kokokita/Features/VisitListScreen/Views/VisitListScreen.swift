@@ -136,9 +136,21 @@ struct VisitListScreen: View {
             .tint(.red)
         }
         .listRowBackground(
-            (pendingDeleteId == agg.id && showDeleteConfirm)
-            ? Color.red.opacity(0.06)
-            : Color.clear
+            Group {
+                if pendingDeleteId == agg.id && showDeleteConfirm {
+                    // 削除確認時: 薄い赤背景
+                    LinearGradient(
+                        colors: [
+                            Color.red.opacity(0.08),
+                            Color.red.opacity(0.04)
+                        ],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                } else {
+                    Color.clear
+                }
+            }
         )
     }
 
