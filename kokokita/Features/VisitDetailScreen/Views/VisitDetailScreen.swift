@@ -84,39 +84,7 @@ struct VisitDetailScreen: View {
                 .ignoresSafeArea()
 
             ScrollView {
-                VisitDetailContent(
-                    data: data,
-                    mapSnapshot: nil,
-                    isSharing: false,
-                    nearbyVisits: nearbyVisits,
-                    nearbyVisitsData: nearbyVisitsData,
-                    sameGroupVisits: sameGroupVisits,
-                    sameGroupVisitsData: sameGroupVisitsData,
-                    currentGroupName: currentGroupName,
-                    onLabelTap: { labelName in
-                        // タップされたラベル名から対応するLabelTagを見つける
-                        if let label = labelOptions.first(where: { $0.name == labelName }) {
-                            selectedLabel = label
-                        }
-                    },
-                    onGroupTap: { groupName in
-                        // タップされたグループ名から対応するGroupTagを見つける
-                        if let group = groupOptions.first(where: { $0.name == groupName }) {
-                            selectedGroup = group
-                        }
-                    },
-                    onMemberTap: { memberName in
-                        // タップされたメンバー名から対応するMemberTagを見つける
-                        if let member = memberOptions.first(where: { $0.name == memberName }) {
-                            selectedMember = member
-                        }
-                    },
-                    onMapTap: {
-                        dismiss()
-                        onMapTap?()
-                    },
-                    photoFullScreenIndex: $photoFullScreenIndex
-                )
+                detailContent
             }
 
             // 写真全画面表示オーバーレイ
@@ -236,6 +204,49 @@ struct VisitDetailScreen: View {
             appUIState.isTabBarHidden = false
             appUIState.tabBarOpacity = 1
         }
+    }
+
+    // MARK: - Detail Content
+    private var detailContent: some View {
+        VisitDetailContent(
+            data: data,
+            mapSnapshot: nil,
+            isSharing: false,
+            nearbyVisits: nearbyVisits,
+            nearbyVisitsData: nearbyVisitsData,
+            sameGroupVisits: sameGroupVisits,
+            sameGroupVisitsData: sameGroupVisitsData,
+            currentGroupName: currentGroupName,
+            onLabelTap: handleLabelTap,
+            onGroupTap: handleGroupTap,
+            onMemberTap: handleMemberTap,
+            onMapTap: handleMapTap,
+            photoFullScreenIndex: $photoFullScreenIndex
+        )
+    }
+
+    // MARK: - Tap Handlers
+    private func handleLabelTap(_ labelName: String) {
+        if let label = labelOptions.first(where: { $0.name == labelName }) {
+            selectedLabel = label
+        }
+    }
+
+    private func handleGroupTap(_ groupName: String) {
+        if let group = groupOptions.first(where: { $0.name == groupName }) {
+            selectedGroup = group
+        }
+    }
+
+    private func handleMemberTap(_ memberName: String) {
+        if let member = memberOptions.first(where: { $0.name == memberName }) {
+            selectedMember = member
+        }
+    }
+
+    private func handleMapTap() {
+        dismiss()
+        onMapTap?()
     }
 
     // MARK: - データロード
