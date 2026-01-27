@@ -30,6 +30,15 @@ struct VisitListScreen: View {
     private var groupMap: [UUID: String] { store.groups.nameMap }
     private var memberMap: [UUID: String] { store.members.nameMap }
 
+    // トグルボタンの透明度（地図モードは常に完全表示、リストモードはスクロール状態で変化）
+    private var toggleButtonOpacity: Double {
+        if displayMode == .map {
+            return 1.0
+        } else {
+            return showModeToggle ? 1.0 : 0.1
+        }
+    }
+
     var body: some View {
         mainContent
             .environment(router)
@@ -38,6 +47,12 @@ struct VisitListScreen: View {
             }
             .sheet(item: detailSheetBinding) { agg in
                 detailSheet(for: agg)
+            }
+            .onAppear {
+                // 画面表示時（タブ切り替え含む）は常にボタンを完全表示
+                scrollTimer?.invalidate()
+                scrollTimer = nil
+                showModeToggle = true
             }
     }
 
@@ -53,12 +68,6 @@ struct VisitListScreen: View {
             }
         }
         .task { store.reload() }
-        .onAppear {
-            // 画面表示時はボタンを完全表示（タイマーもクリア）
-            scrollTimer?.invalidate()
-            scrollTimer = nil
-            showModeToggle = true
-        }
         .onReceive(NotificationCenter.default.publisher(for: .visitsChanged)) { _ in
             Task { store.reload() }
         }
@@ -88,12 +97,6 @@ struct VisitListScreen: View {
             }
         }
         .listStyle(.plain)
-        .onAppear {
-            // リスト表示時はボタンを完全表示
-            scrollTimer?.invalidate()
-            scrollTimer = nil
-            showModeToggle = true
-        }
         .alert(
             L.Home.deleteConfirmTitle,
             isPresented: Binding(
@@ -165,12 +168,6 @@ struct VisitListScreen: View {
         NavigationStack {
             contentStack
         }
-        .onAppear {
-            // 画面表示時はボタンを完全表示（タブ切り替え対応）
-            scrollTimer?.invalidate()
-            scrollTimer = nil
-            showModeToggle = true
-        }
         .alert(
             item: Binding(
                 get: { store.alert.map { AlertMsg(id: UUID(), text: $0) } },
@@ -190,10 +187,13 @@ struct VisitListScreen: View {
         }
         .onChange(of: displayMode) { oldValue, newValue in
             mapSheetHeight = 0
-            // モード変更時はタイマーをキャンセルしてボタンを完全表示
+            // モード変更時はスクロールタイマーをリセット
             scrollTimer?.invalidate()
             scrollTimer = nil
-            showModeToggle = true
+            // 一覧モードに切り替えた時はボタンを完全表示
+            if newValue == .list {
+                showModeToggle = true
+            }
         }
     }
     
@@ -221,7 +221,7 @@ struct VisitListScreen: View {
             modeToggleButton
                 .padding(.trailing, 16)
                 .padding(.bottom, mapSheetHeight > 0 ? mapSheetHeight + 24 : 32)
-                .opacity((displayMode == .list && !showModeToggle) ? 0.1 : 1.0)
+                .opacity(toggleButtonOpacity)
                 .animation(.easeInOut(duration: 0.2), value: showModeToggle)
         }
     }
