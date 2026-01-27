@@ -43,7 +43,7 @@
 "visit.edit.newGroup" = "グループ新規作成";
 "visit.edit.clearSelection" = "未選択にする";
 "visit.edit.recordDateTime" = "記録日時";
-"visit.edit.copyFromOtherVisit" = "別のココキタからコピー";
+"visit.edit.copyFromOtherVisit" = "過去の記録からコピー";
 "visit.edit.selectVisitToCopy" = "コピー元を選択";
 
 // MARK: - Photo
@@ -144,7 +144,7 @@
 "label.duplicateName" = "同じ名前のラベルが既にあります。";
 "label.detailTitle" = "ラベル詳細";
 "label.deleteIrreversible" = "この操作は取り消せません。";
-"label.relatedVisitsHeader" = "このラベルを使用している記録";
+"label.relatedVisitsHeader" = "このラベルの記録";
 
 // MARK: - Group Management
 "group.title" = "グループ";
@@ -160,7 +160,7 @@
 "group.duplicateName" = "同じ名前のグループが既にあります。";
 "group.detailTitle" = "グループ詳細";
 "group.deleteIrreversible" = "この操作は取り消せません。";
-"group.relatedVisitsHeader" = "このグループを使用している記録";
+"group.relatedVisitsHeader" = "このグループの記録";
 
 // MARK: - Member Management
 "member.title" = "メンバー";
@@ -176,7 +176,7 @@
 "member.duplicateName" = "同じ名前のメンバーが既にあります。";
 "member.detailTitle" = "メンバー詳細";
 "member.deleteIrreversible" = "この操作は取り消せません。";
-"member.relatedVisitsHeader" = "このメンバーを使用している記録";
+"member.relatedVisitsHeader" = "このメンバーの記録";
 
 // MARK: - Settings
 "settings.title" = "メニュー";

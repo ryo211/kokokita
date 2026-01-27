@@ -8,6 +8,8 @@ struct GroupDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var store = GroupListStore()
     @State private var name: String
+    @State private var editingName: String = ""
+    @State private var showEditSheet = false
     @State private var showDeleteConfirm = false
 
     // 関連する訪問記録の表示用
@@ -27,17 +29,81 @@ struct GroupDetailView: View {
     }
 
     var body: some View {
-        Form {
-            nameSection
-            deleteSection
-            relatedVisitsSection
+        VStack(spacing: 0) {
+            // 固定部分：名前表示と編集ボタン、ヘッダー
+            VStack(spacing: 0) {
+                nameSection
+                    .padding(.horizontal)
+                    .padding(.vertical, 16)
+
+                if !relatedVisits.isEmpty {
+                    HStack {
+                        Text("\(L.GroupManagement.relatedVisitsHeader) (\(relatedVisits.count)\(L.Home.itemsCount))")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                    }
+                    .padding(.horizontal)
+                    .padding(.top, 12)
+                    .padding(.bottom, 16)
+                }
+
+                Divider()
+            }
+            .background(Color(.systemBackground))
+
+            // スクロール可能な部分：関連する記録のリストのみ
+            if !relatedVisits.isEmpty {
+                List {
+                    ForEach(relatedVisits, id: \.id) { visit in
+                        visitRowView(for: visit)
+                    }
+                }
+                .listStyle(.plain)
+            } else {
+                Spacer()
+            }
         }
         .navigationTitle(L.GroupManagement.detailTitle)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button(L.Common.save) { save() }
-                    .disabled(store.loading || !GroupValidator.isNotEmpty(name))
+                Button(role: .destructive) {
+                    showDeleteConfirm = true
+                } label: {
+                    Image(systemName: "trash")
+                }
             }
+        }
+        .sheet(isPresented: $showEditSheet) {
+            NavigationStack {
+                Form {
+                    Section {
+                        TextField(L.GroupManagement.namePlaceholder, text: $editingName)
+                            .submitLabel(.done)
+                            .onSubmit {
+                                if GroupValidator.isNotEmpty(editingName) {
+                                    saveEdit()
+                                }
+                            }
+                    }
+                }
+                .navigationTitle(L.Common.edit)
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button(L.Common.cancel) {
+                            showEditSheet = false
+                        }
+                    }
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button(L.Common.save) {
+                            saveEdit()
+                        }
+                        .disabled(store.loading || !GroupValidator.isNotEmpty(editingName))
+                    }
+                }
+            }
+            .presentationDetents([.height(200)])
         }
         .onAppear {
             loadRelatedVisits()
@@ -78,6 +144,13 @@ struct GroupDetailView: View {
         }
     }
 
+    private func saveEdit() {
+        if store.update(id: group.id, name: editingName) {
+            name = editingName
+            showEditSheet = false
+        }
+    }
+
     private func delete() {
         if store.delete(id: group.id) {
             onFinish(nil, true)
@@ -88,26 +161,25 @@ struct GroupDetailView: View {
     // MARK: - Sections
 
     private var nameSection: some View {
-        Section {
-            TextField(L.GroupManagement.namePlaceholder, text: $name)
-                .submitLabel(.done)
-                .onSubmit {
-                    if GroupValidator.isNotEmpty(name) {
-                        save()
-                    }
-                }
-        }
-    }
-
-    private var deleteSection: some View {
-        Section {
-            Button(role: .destructive) {
-                showDeleteConfirm = true
-            } label: {
-                Label(L.GroupManagement.deleteConfirm, systemImage: "trash")
+        HStack {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(L.GroupManagement.namePlaceholder)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Text(name)
+                    .font(.body)
             }
-        } footer: {
-            Text(L.GroupManagement.deleteFooter)
+            Spacer()
+            Button {
+                editingName = name
+                showEditSheet = true
+            } label: {
+                HStack(spacing: 4) {
+                    Image(systemName: "pencil")
+                    Text(L.Common.edit)
+                }
+                .font(.subheadline)
+            }
         }
     }
 
@@ -155,7 +227,7 @@ struct GroupDetailView: View {
                 onMapTap: nil
             )
         } label: {
-            VisitRow(agg: visit, nameResolver: nameResolver)
+            VisitRow(agg: visit, nameResolver: nameResolver, compact: true)
         }
     }
 

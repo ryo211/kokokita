@@ -36,6 +36,7 @@ struct Chip: View {
         switch size {
         case .regular: return .caption
         case .small:   return .caption2
+        case .xsmall:  return .caption2
         }
     }
 
@@ -43,6 +44,7 @@ struct Chip: View {
         switch size {
         case .regular: return UIConstants.Padding.chipVertical
         case .small:   return UIConstants.Padding.chipSmallVertical
+        case .xsmall:  return 2
         }
     }
 
@@ -50,6 +52,15 @@ struct Chip: View {
         switch size {
         case .regular: return UIConstants.Padding.chipHorizontal
         case .small:   return UIConstants.Padding.chipSmallHorizontal
+        case .xsmall:  return 6
+        }
+    }
+
+    private var iconScale: Image.Scale {
+        switch size {
+        case .regular: return .medium
+        case .small:   return .small
+        case .xsmall:  return .small
         }
     }
 
@@ -62,10 +73,10 @@ struct Chip: View {
     }
 
     var body: some View {
-        HStack(spacing: UIConstants.Spacing.small) {
+        HStack(spacing: size == .xsmall ? 2 : UIConstants.Spacing.small) {
             if let img = systemImage {
                 Image(systemName: img)
-                    .imageScale(size == .small ? .small : .medium)
+                    .imageScale(iconScale)
             }
             Text(displayText)
                 .lineLimit(1)
@@ -73,7 +84,7 @@ struct Chip: View {
             if showRemoveButton {
                 Button(action: onRemove) {
                     Image(systemName: "xmark.circle.fill")
-                        .imageScale(size == .small ? .small : .medium)
+                        .imageScale(iconScale)
                 }
                 .buttonStyle(.plain)
             }
@@ -129,4 +140,5 @@ enum ChipKind {
 enum ChipSize {
     case regular   // 通常サイズ（デフォルト）
     case small     // 記録一覧などの小型
+    case xsmall    // より小型（タクソノミー詳細画面など）
 }

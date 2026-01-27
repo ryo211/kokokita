@@ -5,49 +5,52 @@ import MapKit
 struct VisitRow: View {
     let agg: VisitAggregate
     let nameResolver: (_ labelIds: [UUID], _ groupId: UUID?, _ memberIds: [UUID]) -> (labels: [String], group: String?, members: [String])
+    var compact: Bool = false  // コンパクトモード
 
     var body: some View {
           let names = nameResolver(agg.details.labelIds, agg.details.groupId, agg.details.memberIds)
 
-          VStack(alignment: .leading, spacing: 4) {
+          VStack(alignment: .leading, spacing: compact ? 2 : 4) {
               HStack {
                   Text(agg.visit.timestampUTC.kokokitaVisitString)
-                      .font(.footnote)
+                      .font(compact ? .caption : .footnote)
                       .foregroundStyle(.secondary)
                   Spacer()
               }
               Text(agg.details.resolvedAddress ?? "")
-                  .font(.footnote)
+                  .font(compact ? .caption : .footnote)
                   .foregroundStyle(.secondary)
+                  .lineLimit(compact ? 1 : 2)
 
               if let title = agg.details.title, !title.isEmpty {
-                  VStack(alignment: .leading, spacing: 2) {
+                  VStack(alignment: .leading, spacing: compact ? 1 : 2) {
                       Text(title)
-                          .font(.headline)
+                          .font(compact ? .subheadline : .headline)
+                          .lineLimit(compact ? 1 : 2)
                       if let catRaw = agg.details.facilityCategory {
                           let category = MKPointOfInterestCategory(rawValue: catRaw)
                           Text(category.localizedName)
-                              .font(.caption)
+                              .font(compact ? .caption2 : .caption)
                               .foregroundStyle(.secondary)
                       }
                   }
               }
 
               // ラベル／グループ／メンバー名のバッジを表示
-              HStack(spacing: 8) {
-                  FlowRow(spacing: 6, rowSpacing: 6) {
+              HStack(spacing: compact ? 4 : 8) {
+                  FlowRow(spacing: compact ? 4 : 6, rowSpacing: compact ? 4 : 6) {
                       if let g = names.group {
-                          Chip(g, kind: .group, size: .small, showRemoveButton: false)
+                          Chip(g, kind: .group, size: compact ? .xsmall : .small, showRemoveButton: false)
                       }
                       ForEach(names.labels, id: \.self) { n in
-                          Chip(n, kind: .label, size: .small, showRemoveButton: false)
+                          Chip(n, kind: .label, size: compact ? .xsmall : .small, showRemoveButton: false)
                       }
                       ForEach(names.members, id: \.self) { n in
-                          Chip(n, kind: .member, size: .small, showRemoveButton: false)
+                          Chip(n, kind: .member, size: compact ? .xsmall : .small, showRemoveButton: false)
                       }
                   }
               }
-              .padding(.top, 2)
+              .padding(.top, compact ? 1 : 2)
           }
       }
   }

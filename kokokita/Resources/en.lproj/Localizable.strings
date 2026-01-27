@@ -136,7 +136,7 @@
 "label.duplicateName" = "A label with the same name already exists.";
 "label.detailTitle" = "Label Details";
 "label.deleteIrreversible" = "This action cannot be undone.";
-"label.relatedVisitsHeader" = "Records using this label";
+"label.relatedVisitsHeader" = "Records with this label";
 
 // MARK: - Group Management
 "group.title" = "Groups";
@@ -152,7 +152,7 @@
 "group.duplicateName" = "A group with the same name already exists.";
 "group.detailTitle" = "Group Details";
 "group.deleteIrreversible" = "This action cannot be undone.";
-"group.relatedVisitsHeader" = "Records using this group";
+"group.relatedVisitsHeader" = "Records with this group";
 
 // MARK: - Member Management
 "member.title" = "Members";
@@ -168,7 +168,7 @@
 "member.duplicateName" = "A member with the same name already exists.";
 "member.detailTitle" = "Member Details";
 "member.deleteIrreversible" = "This action cannot be undone.";
-"member.relatedVisitsHeader" = "Records using this member";
+"member.relatedVisitsHeader" = "Records with this member";
 
 // MARK: - Settings
 "settings.title" = "Menu";

@@ -202,10 +202,12 @@ struct VisitListScreen: View {
                 }
             }
 
-            // 右下にトグルボタン（シート表示時は上にずらす）
-            modeToggleButton
-                .padding(.trailing, 16)
-                .padding(.bottom, mapSheetHeight > 0 ? mapSheetHeight + 24 : 32)
+            // 右下にトグルボタン（簡易詳細シート表示時は非表示）
+            if selectedMapItemId == nil {
+                modeToggleButton
+                    .padding(.trailing, 16)
+                    .padding(.bottom, mapSheetHeight > 0 ? mapSheetHeight + 24 : 32)
+            }
         }
     }
     

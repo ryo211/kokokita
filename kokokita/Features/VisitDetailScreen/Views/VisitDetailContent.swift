@@ -105,25 +105,21 @@ struct VisitDetailContent: View {
             
             // 時刻・住所カード
             InfoCard {
-                HStack(alignment: .top, spacing: 12) {
+                HStack(alignment: .center, spacing: 12) {
                     Image(systemName: "clock")
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(data.timestamp.kokokitaVisitString)
-                            .font(.footnote)
-                            .foregroundStyle(.secondary)
-                    }
+                    Text(data.timestamp.kokokitaVisitString)
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
                     Spacer(minLength: 0)
                 }
 
                 if let addr = data.address?.trimmed, !addr.isEmpty {
                     Divider().padding(.vertical, 6)
-                    HStack(alignment: .top, spacing: 12) {
+                    HStack(alignment: .center, spacing: 12) {
                         Image(systemName: "mappin.and.ellipse")
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(addr)
-                                .font(.footnote)
-                                .foregroundStyle(.secondary)
-                        }
+                        Text(addr)
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
                         Spacer(minLength: 0)
                     }
                 }
