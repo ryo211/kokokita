@@ -10,9 +10,9 @@ struct VisitDetailContent: View {
     var sameGroupVisits: [VisitAggregate] = []
     var sameGroupVisitsData: [VisitDetailData] = []
     var currentGroupName: String? = nil
-    var onLabelTap: (() -> Void)? = nil
-    var onGroupTap: (() -> Void)? = nil
-    var onMemberTap: (() -> Void)? = nil
+    var onLabelTap: ((String) -> Void)? = nil
+    var onGroupTap: ((String) -> Void)? = nil
+    var onMemberTap: ((String) -> Void)? = nil
     var onMapTap: (() -> Void)? = nil
     @Binding var photoFullScreenIndex: Int?
 
@@ -59,7 +59,7 @@ struct VisitDetailContent: View {
                             Chip(group, kind: .group, showRemoveButton: false)
                                 .onTapGesture {
                                     if !isSharing {
-                                        onGroupTap?()
+                                        onGroupTap?(group)
                                     }
                                 }
                         }
@@ -74,7 +74,7 @@ struct VisitDetailContent: View {
                                     Chip(t, kind: .label, showRemoveButton: false)
                                         .onTapGesture {
                                             if !isSharing {
-                                                onLabelTap?()
+                                                onLabelTap?(t)
                                             }
                                         }
                                 }
@@ -91,7 +91,7 @@ struct VisitDetailContent: View {
                                     Chip(t, kind: .member, showRemoveButton: false)
                                         .onTapGesture {
                                             if !isSharing {
-                                                onMemberTap?()
+                                                onMemberTap?(t)
                                             }
                                         }
                                 }

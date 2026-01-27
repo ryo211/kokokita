@@ -23,26 +23,14 @@ struct VisitDetailScreen: View {
     @State private var sharePayload: SharePayload? = nil
     @State private var showDeleteAlert = false
 
-    // チップ編集用の状態
-    @State private var labelPickerShown = false
-    @State private var groupPickerShown = false
-    @State private var memberPickerShown = false
-
-    @State private var labelCreateShown = false
-    @State private var groupCreateShown = false
-    @State private var memberCreateShown = false
-
-    @State private var newLabelName = ""
-    @State private var newGroupName = ""
-    @State private var newMemberName = ""
+    // タクソノミー詳細画面への遷移用
+    @State private var selectedLabel: LabelTag? = nil
+    @State private var selectedGroup: GroupTag? = nil
+    @State private var selectedMember: MemberTag? = nil
 
     @State private var labelOptions: [LabelTag] = []
     @State private var groupOptions: [GroupTag] = []
     @State private var memberOptions: [MemberTag] = []
-
-    @State private var selectedLabelIds: Set<UUID> = []
-    @State private var selectedGroupId: UUID? = nil
-    @State private var selectedMemberIds: Set<UUID> = []
 
     // 写真全画面表示用
     @State private var photoFullScreenIndex: Int? = nil
@@ -105,9 +93,24 @@ struct VisitDetailScreen: View {
                     sameGroupVisits: sameGroupVisits,
                     sameGroupVisitsData: sameGroupVisitsData,
                     currentGroupName: currentGroupName,
-                    onLabelTap: { labelPickerShown = true },
-                    onGroupTap: { groupPickerShown = true },
-                    onMemberTap: { memberPickerShown = true },
+                    onLabelTap: { labelName in
+                        // タップされたラベル名から対応するLabelTagを見つける
+                        if let label = labelOptions.first(where: { $0.name == labelName }) {
+                            selectedLabel = label
+                        }
+                    },
+                    onGroupTap: { groupName in
+                        // タップされたグループ名から対応するGroupTagを見つける
+                        if let group = groupOptions.first(where: { $0.name == groupName }) {
+                            selectedGroup = group
+                        }
+                    },
+                    onMemberTap: { memberName in
+                        // タップされたメンバー名から対応するMemberTagを見つける
+                        if let member = memberOptions.first(where: { $0.name == memberName }) {
+                            selectedMember = member
+                        }
+                    },
                     onMapTap: {
                         dismiss()
                         onMapTap?()
@@ -179,101 +182,29 @@ struct VisitDetailScreen: View {
         } message: {
             Text(L.Detail.deleteConfirmMessage)
         }
-        // ラベルピッカー
-        .sheet(isPresented: $labelPickerShown) {
-            NavigationStack {
-                LabelPickerSheet(
-                    selectedIds: $selectedLabelIds,
-                    labelOptions: $labelOptions,
-                    isPresented: $labelPickerShown,
-                    showCreateSheet: $labelCreateShown,
-                    showDoneButton: false
-                )
-                .navigationTitle(L.LabelManagement.selectTitle)
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button(L.Common.close) { labelPickerShown = false }
-                    }
-                    ToolbarItem(placement: .confirmationAction) {
-                        Button(L.Common.save) {
-                            saveLabels()
-                            labelPickerShown = false
-                        }
-                    }
+        // タクソノミー詳細画面への遷移
+        .navigationDestination(item: $selectedLabel) { label in
+            LabelDetailView(label: label) { updated, deleted in
+                selectedLabel = nil
+                if !deleted {
+                    onUpdate()
                 }
-            }
-            .sheet(isPresented: $labelCreateShown) {
-                LabelCreateSheet(
-                    newLabelName: $newLabelName,
-                    isPresented: $labelCreateShown,
-                    onCreate: createLabelAndSelect
-                )
             }
         }
-        // グループピッカー
-        .sheet(isPresented: $groupPickerShown) {
-            NavigationStack {
-                GroupPickerSheet(
-                    selectedId: $selectedGroupId,
-                    groupOptions: $groupOptions,
-                    isPresented: $groupPickerShown,
-                    showCreateSheet: $groupCreateShown,
-                    showClearButton: true,
-                    showDoneButton: false
-                )
-                .navigationTitle(L.GroupManagement.selectTitle)
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button(L.Common.close) { groupPickerShown = false }
-                    }
-                    ToolbarItem(placement: .confirmationAction) {
-                        Button(L.Common.save) {
-                            saveGroup()
-                            groupPickerShown = false
-                        }
-                    }
+        .navigationDestination(item: $selectedGroup) { group in
+            GroupDetailView(group: group) { updated, deleted in
+                selectedGroup = nil
+                if !deleted {
+                    onUpdate()
                 }
-            }
-            .sheet(isPresented: $groupCreateShown) {
-                GroupCreateSheet(
-                    newGroupName: $newGroupName,
-                    isPresented: $groupCreateShown,
-                    onCreate: createGroupAndSelect
-                )
             }
         }
-        // メンバーピッカー
-        .sheet(isPresented: $memberPickerShown) {
-            NavigationStack {
-                MemberPickerSheet(
-                    selectedIds: $selectedMemberIds,
-                    memberOptions: $memberOptions,
-                    isPresented: $memberPickerShown,
-                    showCreateSheet: $memberCreateShown,
-                    showDoneButton: false
-                )
-                .navigationTitle(L.MemberManagement.selectTitle)
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button(L.Common.close) { memberPickerShown = false }
-                    }
-                    ToolbarItem(placement: .confirmationAction) {
-                        Button(L.Common.save) {
-                            saveMembers()
-                            memberPickerShown = false
-                        }
-                    }
+        .navigationDestination(item: $selectedMember) { member in
+            MemberDetailView(member: member) { updated, deleted in
+                selectedMember = nil
+                if !deleted {
+                    onUpdate()
                 }
-            }
-            .sheet(isPresented: $memberCreateShown) {
-                MemberCreateSheet(
-                    newMemberName: $newMemberName,
-                    isPresented: $memberCreateShown,
-                    onCreate: createMemberAndSelect
-                )
             }
         }
         .task {
@@ -312,13 +243,6 @@ struct VisitDetailScreen: View {
         labelOptions = ((try? AppContainer.shared.repo.allLabels()) ?? []).sortedByName
         groupOptions = ((try? AppContainer.shared.repo.allGroups()) ?? []).sortedByName
         memberOptions = ((try? AppContainer.shared.repo.allMembers()) ?? []).sortedByName
-
-        // 現在の値を取得
-        if let agg = try? AppContainer.shared.repo.get(by: visitId) {
-            selectedLabelIds = Set(agg.details.labelIds)
-            selectedGroupId = agg.details.groupId
-            selectedMemberIds = Set(agg.details.memberIds)
-        }
     }
 
     private func loadNearbyVisits() async {
@@ -419,104 +343,6 @@ struct VisitDetailScreen: View {
         )
     }
 
-    // MARK: - 新規作成
-    private func createLabelAndSelect() {
-        let name = newLabelName.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !name.isEmpty else { return }
-
-        if let exist = labelOptions.first(where: { $0.name == name }) {
-            selectedLabelIds.insert(exist.id)
-        } else {
-            do {
-                let id = try AppContainer.shared.repo.createLabel(name: name)
-                let tag = LabelTag(id: id, name: name)
-                labelOptions.append(tag)
-                selectedLabelIds.insert(id)
-                NotificationCenter.default.post(name: .taxonomyChanged, object: nil)
-            } catch {
-                Logger.error("Failed to create label", error: error)
-            }
-        }
-        newLabelName = ""
-        labelCreateShown = false
-    }
-
-    private func createGroupAndSelect() {
-        let name = newGroupName.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !name.isEmpty else { return }
-
-        if let exist = groupOptions.first(where: { $0.name == name }) {
-            selectedGroupId = exist.id
-        } else {
-            do {
-                let id = try AppContainer.shared.repo.createGroup(name: name)
-                let tag = GroupTag(id: id, name: name)
-                groupOptions.append(tag)
-                selectedGroupId = id
-                NotificationCenter.default.post(name: .taxonomyChanged, object: nil)
-            } catch {
-                Logger.error("Failed to create group", error: error)
-            }
-        }
-        newGroupName = ""
-        groupCreateShown = false
-    }
-
-    private func createMemberAndSelect() {
-        let name = newMemberName.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !name.isEmpty else { return }
-
-        if let exist = memberOptions.first(where: { $0.name == name }) {
-            selectedMemberIds.insert(exist.id)
-        } else {
-            do {
-                let id = try AppContainer.shared.repo.createMember(name: name)
-                let tag = MemberTag(id: id, name: name)
-                memberOptions.append(tag)
-                selectedMemberIds.insert(id)
-                NotificationCenter.default.post(name: .taxonomyChanged, object: nil)
-            } catch {
-                Logger.error("Failed to create member", error: error)
-            }
-        }
-        newMemberName = ""
-        memberCreateShown = false
-    }
-
-    // MARK: - 保存処理
-    private func saveLabels() {
-        do {
-            try AppContainer.shared.repo.updateDetails(id: visitId) { details in
-                details.labelIds = Array(selectedLabelIds)
-            }
-            onUpdate()
-        } catch {
-            Logger.error("Failed to update labels", error: error)
-        }
-    }
-
-    private func saveGroup() {
-        do {
-            try AppContainer.shared.repo.updateDetails(id: visitId) { details in
-                details.groupId = selectedGroupId
-            }
-            onUpdate()
-        } catch {
-            Logger.error("Failed to update group", error: error)
-        }
-    }
-
-    private func saveMembers() {
-        do {
-            try AppContainer.shared.repo.updateDetails(id: visitId) { details in
-                details.memberIds = Array(selectedMemberIds)
-            }
-            onUpdate()
-        } catch {
-            Logger.error("Failed to update members", error: error)
-        }
-    }
-    
     private func shareText() -> String {
         var lines: [String] = []
         lines.append("【\(L.App.name)】")
