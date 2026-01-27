@@ -88,6 +88,12 @@ struct VisitListScreen: View {
             }
         }
         .listStyle(.plain)
+        .onAppear {
+            // リスト表示時はボタンを完全表示
+            scrollTimer?.invalidate()
+            scrollTimer = nil
+            showModeToggle = true
+        }
         .alert(
             L.Home.deleteConfirmTitle,
             isPresented: Binding(
@@ -159,6 +165,12 @@ struct VisitListScreen: View {
         NavigationStack {
             contentStack
         }
+        .onAppear {
+            // 画面表示時はボタンを完全表示（タブ切り替え対応）
+            scrollTimer?.invalidate()
+            scrollTimer = nil
+            showModeToggle = true
+        }
         .alert(
             item: Binding(
                 get: { store.alert.map { AlertMsg(id: UUID(), text: $0) } },
@@ -176,12 +188,12 @@ struct VisitListScreen: View {
                 mapSheetHeight = 0
             }
         }
-        .onChange(of: displayMode) {
+        .onChange(of: displayMode) { oldValue, newValue in
             mapSheetHeight = 0
-            // モード変更時はボタンを表示
-            withAnimation {
-                showModeToggle = true
-            }
+            // モード変更時はタイマーをキャンセルしてボタンを完全表示
+            scrollTimer?.invalidate()
+            scrollTimer = nil
+            showModeToggle = true
         }
     }
     
@@ -209,7 +221,8 @@ struct VisitListScreen: View {
             modeToggleButton
                 .padding(.trailing, 16)
                 .padding(.bottom, mapSheetHeight > 0 ? mapSheetHeight + 24 : 32)
-                .opacity(showModeToggle || displayMode == .map ? 1.0 : 0.1)
+                .opacity((displayMode == .list && !showModeToggle) ? 0.1 : 1.0)
+                .animation(.easeInOut(duration: 0.2), value: showModeToggle)
         }
     }
     
