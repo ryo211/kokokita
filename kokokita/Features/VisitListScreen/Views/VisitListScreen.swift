@@ -22,6 +22,8 @@ struct VisitListScreen: View {
     @State private var selectedMapItemId: UUID? = nil
     @State private var detailSheetItemId: UUID? = nil
     @State private var mapSheetHeight: CGFloat = 0
+    @State private var showModeToggle = true
+    @State private var scrollTimer: Timer?
 
     // 名前辞書（型を固定して軽くする）
     private var labelMap: [UUID: String] { store.labels.nameMap }
@@ -66,6 +68,9 @@ struct VisitListScreen: View {
                 Section {
                     ForEach(group.items) { agg in
                         listRowView(for: agg)
+                            .onAppear {
+                                handleScroll()
+                            }
                     }
                 } header: {
                     Text(formatDateHeader(group.date))
@@ -167,6 +172,10 @@ struct VisitListScreen: View {
         }
         .onChange(of: displayMode) {
             mapSheetHeight = 0
+            // モード変更時はボタンを表示
+            withAnimation {
+                showModeToggle = true
+            }
         }
     }
     
@@ -190,10 +199,13 @@ struct VisitListScreen: View {
                 }
             }
 
-            // 右下にトグルボタン（シート表示時は上にずらす）
-            modeToggleButton
-                .padding(.trailing, 16)
-                .padding(.bottom, mapSheetHeight > 0 ? mapSheetHeight + 16 : 16)
+            // 右下にトグルボタン（シート表示時は上にずらす、スクロール時は非表示）
+            if showModeToggle || displayMode == .map {
+                modeToggleButton
+                    .padding(.trailing, 16)
+                    .padding(.bottom, mapSheetHeight > 0 ? mapSheetHeight + 24 : 80)
+                    .transition(.move(edge: .trailing).combined(with: .opacity))
+            }
         }
     }
     
@@ -433,6 +445,24 @@ struct VisitListScreen: View {
             return L.Date.yesterday
         } else {
             return AppDateFormatters.listDateHeader.string(from: date)
+        }
+    }
+
+    // スクロール検知とボタンの表示制御
+    private func handleScroll() {
+        // スクロール中はボタンを非表示
+        withAnimation(.easeOut(duration: 0.2)) {
+            showModeToggle = false
+        }
+
+        // 既存のタイマーをキャンセル
+        scrollTimer?.invalidate()
+
+        // 1.5秒後にボタンを再表示
+        scrollTimer = Timer.scheduledTimer(withTimeInterval: 1.5, repeats: false) { _ in
+            withAnimation(.easeIn(duration: 0.3)) {
+                showModeToggle = true
+            }
         }
     }
 
