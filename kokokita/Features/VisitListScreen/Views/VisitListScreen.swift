@@ -53,6 +53,12 @@ struct VisitListScreen: View {
             }
         }
         .task { store.reload() }
+        .onAppear {
+            // 画面表示時はボタンを完全表示（タイマーもクリア）
+            scrollTimer?.invalidate()
+            scrollTimer = nil
+            showModeToggle = true
+        }
         .onReceive(NotificationCenter.default.publisher(for: .visitsChanged)) { _ in
             Task { store.reload() }
         }
@@ -203,7 +209,7 @@ struct VisitListScreen: View {
             modeToggleButton
                 .padding(.trailing, 16)
                 .padding(.bottom, mapSheetHeight > 0 ? mapSheetHeight + 24 : 32)
-                .opacity(showModeToggle || displayMode == .map ? 1.0 : 0.3)
+                .opacity(showModeToggle || displayMode == .map ? 1.0 : 0.1)
         }
     }
     
