@@ -22,22 +22,11 @@ struct VisitListScreen: View {
     @State private var selectedMapItemId: UUID? = nil
     @State private var detailSheetItemId: UUID? = nil
     @State private var mapSheetHeight: CGFloat = 0
-    @State private var showModeToggle = true
-    @State private var scrollTimer: Timer?
 
     // 名前辞書（型を固定して軽くする）
     private var labelMap: [UUID: String] { store.labels.nameMap }
     private var groupMap: [UUID: String] { store.groups.nameMap }
     private var memberMap: [UUID: String] { store.members.nameMap }
-
-    // トグルボタンの透明度（地図モードは常に完全表示、リストモードはスクロール状態で変化）
-    private var toggleButtonOpacity: Double {
-        if displayMode == .map {
-            return 1.0
-        } else {
-            return showModeToggle ? 1.0 : 0.1
-        }
-    }
 
     var body: some View {
         mainContent
@@ -47,12 +36,6 @@ struct VisitListScreen: View {
             }
             .sheet(item: detailSheetBinding) { agg in
                 detailSheet(for: agg)
-            }
-            .onAppear {
-                // 画面表示時（タブ切り替え含む）は常にボタンを完全表示
-                scrollTimer?.invalidate()
-                scrollTimer = nil
-                showModeToggle = true
             }
     }
 
@@ -83,9 +66,6 @@ struct VisitListScreen: View {
                 Section {
                     ForEach(group.items) { agg in
                         listRowView(for: agg)
-                            .onAppear {
-                                handleScroll()
-                            }
                     }
                 } header: {
                     Text(formatDateHeader(group.date))
@@ -185,15 +165,8 @@ struct VisitListScreen: View {
                 mapSheetHeight = 0
             }
         }
-        .onChange(of: displayMode) { oldValue, newValue in
+        .onChange(of: displayMode) {
             mapSheetHeight = 0
-            // モード変更時はスクロールタイマーをリセット
-            scrollTimer?.invalidate()
-            scrollTimer = nil
-            // 一覧モードに切り替えた時はボタンを完全表示
-            if newValue == .list {
-                showModeToggle = true
-            }
         }
     }
     
@@ -217,12 +190,10 @@ struct VisitListScreen: View {
                 }
             }
 
-            // 右下にトグルボタン（シート表示時は上にずらす、スクロール時はうっすら表示）
+            // 右下にトグルボタン（シート表示時は上にずらす）
             modeToggleButton
                 .padding(.trailing, 16)
                 .padding(.bottom, mapSheetHeight > 0 ? mapSheetHeight + 24 : 32)
-                .opacity(toggleButtonOpacity)
-                .animation(.easeInOut(duration: 0.2), value: showModeToggle)
         }
     }
     
@@ -462,24 +433,6 @@ struct VisitListScreen: View {
             return L.Date.yesterday
         } else {
             return AppDateFormatters.listDateHeader.string(from: date)
-        }
-    }
-
-    // スクロール検知とボタンの表示制御
-    private func handleScroll() {
-        // スクロール中はボタンをうっすら表示
-        withAnimation(.easeOut(duration: 0.15)) {
-            showModeToggle = false
-        }
-
-        // 既存のタイマーをキャンセル
-        scrollTimer?.invalidate()
-
-        // 0.5秒後にボタンを完全表示
-        scrollTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { _ in
-            withAnimation(.easeIn(duration: 0.25)) {
-                showModeToggle = true
-            }
         }
     }
 
