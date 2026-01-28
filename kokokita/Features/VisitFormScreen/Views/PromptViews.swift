@@ -229,6 +229,7 @@ struct PostKokokitaPromptSheet: View {
 struct PostKokokitaConfirmationSheet: View {
     let visitId: UUID
     let onEnterInfo: (UUID) -> Void
+    let onViewDetail: (UUID) -> Void
     let onDelete: (UUID) -> Void
     @Environment(\.dismiss) private var dismiss
 
@@ -255,7 +256,7 @@ struct PostKokokitaConfirmationSheet: View {
                         basicInfo(visit: visit)
                     }
 
-                    // 地図（高さを抑える）
+                    // 地図
                     if let visit = visit {
                         mapSection(visit: visit, maxHeight: geometry.size.height * 0.3)
                     }
@@ -308,15 +309,34 @@ struct PostKokokitaConfirmationSheet: View {
     // MARK: - Header
 
     private var header: some View {
-        HStack(spacing: 10) {
-            Image(logoImageName)
-                .resizable()
-                .scaledToFit()
-                .frame(width: 42, height: 42)
-            Text(L.Location.kokokitaCompleted)
-                .font(.system(size: 24, weight: .semibold, design: .rounded))
-                .tracking(1.2)
-                .foregroundColor(.accentColor)
+        VStack(spacing: 12) {
+            // ココキタ完了ヘッダー
+            HStack(spacing: 10) {
+                Image(logoImageName)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 42, height: 42)
+                Text(L.Location.kokokitaCompleted)
+                    .font(.system(size: 24, weight: .semibold, design: .rounded))
+                    .tracking(1.2)
+                    .foregroundColor(.accentColor)
+            }
+
+            // 現在地を記録しました + 記録を見るリンク
+            VStack(spacing: 4) {
+                Text(L.Confirmation.recordedLocation)
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+
+                Button {
+                    onViewDetail(visitId)
+                } label: {
+                    Text(L.Confirmation.viewDetail)
+                        .font(.caption)
+                        .foregroundStyle(Color.accentColor)
+                }
+                .buttonStyle(.plain)
+            }
         }
     }
 

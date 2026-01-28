@@ -183,30 +183,28 @@ struct VisitListScreen: View {
     }
     
     private var contentStack: some View {
-        ZStack(alignment: .bottomTrailing) {
-            VStack(spacing: 0) {
-                HomeFilterHeader(store: store) {
+        VStack(spacing: 0) {
+            HomeFilterHeader(
+                store: store,
+                displayMode: displayMode,
+                onTapSearch: {
                     showSearchSheet = true
+                },
+                onToggleDisplayMode: { newMode in
+                    displayMode = newMode
                 }
-                .sheet(isPresented: $showSearchSheet) {
-                    NavigationStack { SearchFilterSheet(store: store) { showSearchSheet = false } }
-                    .iPadSheetSize()
-                }
-
-                // 表示モードで切り替え
-                switch displayMode {
-                case .list:
-                    listContent()
-                case .map:
-                    mapContent()
-                }
+            )
+            .sheet(isPresented: $showSearchSheet) {
+                NavigationStack { SearchFilterSheet(store: store) { showSearchSheet = false } }
+                .iPadSheetSize()
             }
 
-            // 右下にトグルボタン（簡易詳細シート表示時は非表示）
-            if selectedMapItemId == nil {
-                modeToggleButton
-                    .padding(.trailing, 16)
-                    .padding(.bottom, mapSheetHeight > 0 ? mapSheetHeight + 24 : 32)
+            // 表示モードで切り替え
+            switch displayMode {
+            case .list:
+                listContent()
+            case .map:
+                mapContent()
             }
         }
     }
@@ -293,133 +291,6 @@ struct VisitListScreen: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color(.systemBackground))
-    }
-
-    // MARK: - Mode Toggle Button (Liquid Glass Style)
-
-    private var modeToggleButton: some View {
-        GeometryReader { geometry in
-            ZStack(alignment: .leading) {
-                // 背景コンテナ（Liquid glass）
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(.ultraThinMaterial)
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .fill(
-                                LinearGradient(
-                                    colors: [
-                                        Color.white.opacity(0.15),
-                                        Color.white.opacity(0.05)
-                                    ],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                    }
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .strokeBorder(
-                                LinearGradient(
-                                    colors: [
-                                        Color.white.opacity(0.25),
-                                        Color.white.opacity(0.1)
-                                    ],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
-                                lineWidth: 0.5
-                            )
-                    }
-                    .shadow(color: Color.black.opacity(0.12), radius: 10, x: 0, y: 4)
-                    .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
-
-                // スライディングインジケーター（ヌルッと動く部分）
-                let buttonWidth = (geometry.size.width - 8) / 2
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(.ultraThinMaterial)
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .fill(
-                                LinearGradient(
-                                    colors: [
-                                        Color.accentColor.opacity(0.15),
-                                        Color.accentColor.opacity(0.08)
-                                    ],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                    }
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .fill(
-                                LinearGradient(
-                                    colors: [
-                                        Color.white.opacity(0.2),
-                                        Color.clear
-                                    ],
-                                    startPoint: .top,
-                                    endPoint: .bottom
-                                )
-                            )
-                    }
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .strokeBorder(
-                                LinearGradient(
-                                    colors: [
-                                        Color.accentColor.opacity(0.3),
-                                        Color.accentColor.opacity(0.15)
-                                    ],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
-                                lineWidth: 1
-                            )
-                    }
-                    .frame(width: buttonWidth, height: geometry.size.height - 8)
-                    .shadow(color: Color.black.opacity(0.08), radius: 6, x: 0, y: 2)
-                    .offset(x: displayMode == .list ? 4 : buttonWidth + 4)
-                    .animation(.interpolatingSpring(stiffness: 150, damping: 18), value: displayMode)
-
-                // ボタンラベル
-                HStack(spacing: 0) {
-                    // 一覧ボタン
-                    Button {
-                        displayMode = .list
-                    } label: {
-                        HStack(spacing: 4) {
-                            Image(systemName: "list.bullet")
-                                .font(.caption)
-                            Text("一覧")
-                                .font(.caption.bold())
-                        }
-                        .foregroundStyle(displayMode == .list ? Color.accentColor : Color.primary.opacity(0.5))
-                        .frame(width: buttonWidth)
-                        .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-
-                    // 地図ボタン
-                    Button {
-                        displayMode = .map
-                    } label: {
-                        HStack(spacing: 4) {
-                            Image(systemName: "map")
-                                .font(.caption)
-                            Text("地図")
-                                .font(.caption.bold())
-                        }
-                        .foregroundStyle(displayMode == .map ? Color.accentColor : Color.primary.opacity(0.5))
-                        .frame(width: buttonWidth)
-                        .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                }
-                .padding(4)
-            }
-        }
-        .frame(width: 160, height: 44)
     }
 
     // MARK: - Map Content

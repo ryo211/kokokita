@@ -128,7 +128,7 @@ enum ChipKind {
         case .label:       return .purple
         case .group:       return .teal
         case .member:      return .blue
-        case .category:    return .green
+        case .category:    return .orange
         case .keyword:     return .red
         case .period:      return .orange
         case .poiCategory: return .green

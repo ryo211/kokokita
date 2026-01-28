@@ -140,8 +140,10 @@ enum L {
     // MARK: - Tab Bar
     enum Tab {
         static let home = localized("tab.home")
+        static let records = localized("tab.records")
         static let menu = localized("tab.menu")
         static let kokokita = localized("tab.kokokita")
+        static let course = localized("tab.course")
     }
 
     // MARK: - Label Management
@@ -321,7 +323,9 @@ enum L {
     // MARK: - Confirmation Sheet
     enum Confirmation {
         static let enterInfo = localized("confirmation.enterInfo")
+        static let viewDetail = localized("confirmation.viewDetail")
         static let deleteRecord = localized("confirmation.deleteRecord")
+        static let recordedLocation = localized("confirmation.recordedLocation")
         static let loadingPOI = localized("confirmation.loadingPOI")
         static let noInternet = localized("confirmation.noInternet")
         static let noPOIFound = localized("confirmation.noPOIFound")
@@ -330,6 +334,32 @@ enum L {
         static let deleteConfirmMessage = localized("confirmation.deleteConfirmMessage")
         static let recentVisitsHeader = localized("confirmation.recentVisitsHeader")
         static let nearbyPlacesHeader = localized("confirmation.nearbyPlacesHeader")
+    }
+
+    // MARK: - New Home Screen
+    enum NewHome {
+        static let title = localized("newhome.title")
+        static let recordLocation = localized("newhome.recordLocation")
+        static let recentRecords = localized("newhome.recentRecords")
+        static let viewAllRecords = localized("newhome.viewAllRecords")
+        static let noRecentRecords = localized("newhome.noRecentRecords")
+    }
+
+    // MARK: - Settings Sheet
+    enum SettingsSheet {
+        static let title = localized("settingssheet.title")
+        static let resetAll = localized("settingssheet.resetAll")
+        static let followOnX = localized("settingssheet.followOnX")
+        static let help = localized("settingssheet.help")
+        static let developerTools = localized("settingssheet.developerTools")
+        static let version = localized("settingssheet.version")
+    }
+
+    // MARK: - Course Screen
+    enum Course {
+        static let title = localized("course.title")
+        static let comingSoon = localized("course.comingSoon")
+        static let description = localized("course.description")
     }
 
     // MARK: - Helper

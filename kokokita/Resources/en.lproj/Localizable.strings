@@ -92,8 +92,10 @@
 
 // MARK: - Tab Bar
 "tab.home" = "Home";
+"tab.records" = "Records";
 "tab.menu" = "Menu";
 "tab.kokokita" = "Kokokita";
+"tab.course" = "Course";
 
 // MARK: - Error Messages
 "error.locationSimulated" = "Location data appears to be simulated or from an external accessory and cannot be recorded.";
@@ -272,7 +274,9 @@
 
 // MARK: - Confirmation Sheet
 "confirmation.enterInfo" = "Enter Info";
+"confirmation.viewDetail" = "View Record";
 "confirmation.deleteRecord" = "Cancel Record";
+"confirmation.recordedLocation" = "Location Recorded";
 "confirmation.loadingPOI" = "Searching nearby places...";
 "confirmation.noInternet" = "Cannot fetch nearby places without an internet connection.";
 "confirmation.noPOIFound" = "No places found nearby";
@@ -281,3 +285,23 @@
 "confirmation.deleteConfirmMessage" = "This action cannot be undone.";
 "confirmation.recentVisitsHeader" = "Past Records Nearby";
 "confirmation.nearbyPlacesHeader" = "Nearby Places";
+
+// MARK: - New Home Screen
+"newhome.title" = "Kokokita";
+"newhome.recordLocation" = "Record Current Location";
+"newhome.recentRecords" = "Recent Records";
+"newhome.viewAllRecords" = "View All";
+"newhome.noRecentRecords" = "No records yet";
+
+// MARK: - Settings Sheet
+"settingssheet.title" = "Settings";
+"settingssheet.resetAll" = "Reset All";
+"settingssheet.followOnX" = "Follow on X";
+"settingssheet.help" = "Help";
+"settingssheet.developerTools" = "Developer Tools";
+"settingssheet.version" = "Version";
+
+// MARK: - Course Screen
+"course.title" = "Course";
+"course.comingSoon" = "Coming Soon";
+"course.description" = "Course feature will be available soon";

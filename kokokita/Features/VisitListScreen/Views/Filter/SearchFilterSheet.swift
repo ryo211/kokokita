@@ -97,6 +97,13 @@ struct SearchFilterSheet: View {
                 onDismiss: { vm.applyAndReload() }
             )
         }
+        .sheet(isPresented: $showCategoryPicker) {
+            FilterCategoryPickerSheet(
+                selectedCategories: $store.categoryFilters,
+                isPresented: $showCategoryPicker,
+                onDismiss: { vm.applyAndReload() }
+            )
+        }
     }
 
     // MARK: - Form Sections
@@ -155,13 +162,18 @@ struct SearchFilterSheet: View {
     private var labelSection: some View {
         Section(L.SearchFilter.sectionLabel) {
             if store.labelFilters.isEmpty {
-                // 未選択時：選択ボタン + 追加ボタンを表示
-                HStack(spacing: UIConstants.Spacing.medium) {
+                // 未選択時：アイコン + 選択ボタン + 追加ボタンを表示
+                HStack(alignment: .center, spacing: UIConstants.Spacing.extraLarge) {
+                    Image(systemName: "tag")
+                        .foregroundStyle(.purple)
+                        .imageScale(.medium)
+                        .frame(height: 28, alignment: .center)
+
                     Button { showLabelPicker = true } label: {
-                        Label("選択", systemImage: "tag")
-                            .foregroundStyle(.purple)
-                            .frame(maxWidth: .infinity, alignment: .leading)
+                        Text("選択")
                     }
+                    .foregroundStyle(.purple)
+                    .frame(maxWidth: .infinity, alignment: .leading)
 
                     Button {
                         showLabelPicker = true
@@ -171,7 +183,9 @@ struct SearchFilterSheet: View {
                             .imageScale(.large)
                     }
                     .buttonStyle(.plain)
+                    .frame(height: 28, alignment: .center)
                 }
+                .padding(.vertical, UIConstants.Spacing.extraSmall)
             } else {
                 // 選択済み時：アイコン + チップ + 追加ボタンを表示
                 Button {
@@ -189,6 +203,7 @@ struct SearchFilterSheet: View {
                                 if let name = lmap[lid]?.trimmingCharacters(in: .whitespacesAndNewlines), !name.isEmpty {
                                     Chip(name, kind: .label, size: .small, showRemoveButton: true) {
                                         store.labelFilters.removeAll { $0 == lid }
+                                        vm.applyAndReload()
                                     }
                                 }
                             }
@@ -216,13 +231,18 @@ struct SearchFilterSheet: View {
     private var groupSection: some View {
         Section(L.SearchFilter.sectionGroup) {
             if store.groupFilters.isEmpty {
-                // 未選択時：選択ボタン + 追加ボタンを表示
-                HStack(spacing: UIConstants.Spacing.medium) {
+                // 未選択時：アイコン + 選択ボタン + 追加ボタンを表示
+                HStack(alignment: .center, spacing: UIConstants.Spacing.extraLarge) {
+                    Image(systemName: "folder")
+                        .foregroundStyle(.teal)
+                        .imageScale(.medium)
+                        .frame(height: 28, alignment: .center)
+
                     Button { showGroupPicker = true } label: {
-                        Label("選択", systemImage: "folder")
-                            .foregroundStyle(.teal)
-                            .frame(maxWidth: .infinity, alignment: .leading)
+                        Text("選択")
                     }
+                    .foregroundStyle(.teal)
+                    .frame(maxWidth: .infinity, alignment: .leading)
 
                     Button {
                         showGroupPicker = true
@@ -232,7 +252,9 @@ struct SearchFilterSheet: View {
                             .imageScale(.large)
                     }
                     .buttonStyle(.plain)
+                    .frame(height: 28, alignment: .center)
                 }
+                .padding(.vertical, UIConstants.Spacing.extraSmall)
             } else {
                 // 選択済み時：アイコン + チップ + 追加ボタンを表示
                 Button {
@@ -250,6 +272,7 @@ struct SearchFilterSheet: View {
                                 if let name = gmap[gid]?.trimmingCharacters(in: .whitespacesAndNewlines), !name.isEmpty {
                                     Chip(name, kind: .group, size: .small, showRemoveButton: true) {
                                         store.groupFilters.removeAll { $0 == gid }
+                                        vm.applyAndReload()
                                     }
                                 }
                             }
@@ -277,13 +300,18 @@ struct SearchFilterSheet: View {
     private var memberSection: some View {
         Section(L.SearchFilter.sectionMember) {
             if store.memberFilters.isEmpty {
-                // 未選択時：選択ボタン + 追加ボタンを表示
-                HStack(spacing: UIConstants.Spacing.medium) {
+                // 未選択時：アイコン + 選択ボタン + 追加ボタンを表示
+                HStack(alignment: .center, spacing: UIConstants.Spacing.extraLarge) {
+                    Image(systemName: "person")
+                        .foregroundStyle(.blue)
+                        .imageScale(.medium)
+                        .frame(height: 28, alignment: .center)
+
                     Button { showMemberPicker = true } label: {
-                        Label("選択", systemImage: "person")
-                            .foregroundStyle(.blue)
-                            .frame(maxWidth: .infinity, alignment: .leading)
+                        Text("選択")
                     }
+                    .foregroundStyle(.blue)
+                    .frame(maxWidth: .infinity, alignment: .leading)
 
                     Button {
                         showMemberPicker = true
@@ -293,7 +321,9 @@ struct SearchFilterSheet: View {
                             .imageScale(.large)
                     }
                     .buttonStyle(.plain)
+                    .frame(height: 28, alignment: .center)
                 }
+                .padding(.vertical, UIConstants.Spacing.extraSmall)
             } else {
                 // 選択済み時：アイコン + チップ + 追加ボタンを表示
                 Button {
@@ -311,6 +341,7 @@ struct SearchFilterSheet: View {
                                 if let name = mmap[mid]?.trimmingCharacters(in: .whitespacesAndNewlines), !name.isEmpty {
                                     Chip(name, kind: .member, size: .small, showRemoveButton: true) {
                                         store.memberFilters.removeAll { $0 == mid }
+                                        vm.applyAndReload()
                                     }
                                 }
                             }
@@ -337,38 +368,68 @@ struct SearchFilterSheet: View {
 
     private var categorySection: some View {
         Section(L.SearchFilter.sectionCategory) {
-            Button {
-                showCategoryPicker = true
-            } label: {
-                HStack {
-                    Text("選択")
-                        .foregroundStyle(.primary)
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            }
-            .sheet(isPresented: $showCategoryPicker) {
-                FilterCategoryPickerSheet(
-                    selectedCategories: $store.categoryFilters,
-                    isPresented: $showCategoryPicker,
-                    onDismiss: { vm.applyAndReload() }
-                )
-            }
+            if store.categoryFilters.isEmpty {
+                // 未選択時：アイコン + 選択ボタン + 追加ボタンを表示
+                HStack(alignment: .center, spacing: UIConstants.Spacing.extraLarge) {
+                    Image(systemName: "mappin.and.ellipse")
+                        .foregroundStyle(.orange)
+                        .imageScale(.medium)
+                        .frame(height: 28, alignment: .center)
 
-            if !store.categoryFilters.isEmpty {
-                FlowRow(spacing: 6, rowSpacing: 6) {
-                    ForEach(store.categoryFilters, id: \.self) { catRaw in
-                        let category = MKPointOfInterestCategory(rawValue: catRaw)
-                        let name = category.localizedName
-                        Chip(name, kind: .category) {
-                            store.categoryFilters.removeAll { $0 == catRaw }
-                            vm.applyAndReload()
-                        }
+                    Button { showCategoryPicker = true } label: {
+                        Text("選択")
                     }
+                    .foregroundStyle(.orange)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                    Button {
+                        showCategoryPicker = true
+                    } label: {
+                        Image(systemName: "plus.circle.fill")
+                            .foregroundStyle(.orange)
+                            .imageScale(.large)
+                    }
+                    .buttonStyle(.plain)
+                    .frame(height: 28, alignment: .center)
                 }
-                .padding(.vertical, 4)
+                .padding(.vertical, UIConstants.Spacing.extraSmall)
+            } else {
+                // 選択済み時：アイコン + チップ + 追加ボタンを表示
+                Button {
+                    showCategoryPicker = true
+                } label: {
+                    HStack(alignment: .center, spacing: UIConstants.Spacing.extraLarge) {
+                        Image(systemName: "mappin.and.ellipse")
+                            .foregroundStyle(.orange)
+                            .imageScale(.medium)
+                            .frame(height: 28, alignment: .center)
+
+                        FlowRow(spacing: 12, rowSpacing: 6) {
+                            ForEach(store.categoryFilters, id: \.self) { catRaw in
+                                let category = MKPointOfInterestCategory(rawValue: catRaw)
+                                let name = category.localizedName
+                                Chip(name, kind: .category, size: .small, showRemoveButton: true) {
+                                    store.categoryFilters.removeAll { $0 == catRaw }
+                                    vm.applyAndReload()
+                                }
+                            }
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+
+                        // 追加ボタン（右端に固定）
+                        Button {
+                            showCategoryPicker = true
+                        } label: {
+                            Image(systemName: "plus.circle.fill")
+                                .foregroundStyle(.orange)
+                                .imageScale(.large)
+                        }
+                        .buttonStyle(.plain)
+                        .frame(height: 28, alignment: .center)
+                    }
+                    .padding(.vertical, UIConstants.Spacing.extraSmall)
+                }
+                .buttonStyle(.plain)
             }
         }
     }

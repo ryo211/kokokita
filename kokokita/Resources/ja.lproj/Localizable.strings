@@ -92,8 +92,10 @@
 
 // MARK: - Tab Bar
 "tab.home" = "ホーム";
+"tab.records" = "記録";
 "tab.menu" = "メニュー";
 "tab.kokokita" = "ココキタ";
+"tab.course" = "コース";
 
 // MARK: - Location
 "location.acquiringLocation" = "位置情報を取得中...";
@@ -274,7 +276,9 @@
 
 // MARK: - Confirmation Sheet
 "confirmation.enterInfo" = "情報を入力";
+"confirmation.viewDetail" = "記録を見る";
 "confirmation.deleteRecord" = "記録を取り消し";
+"confirmation.recordedLocation" = "現在地を記録しました";
 "confirmation.loadingPOI" = "周辺施設を検索中...";
 "confirmation.noInternet" = "インターネットに接続されていないため、周辺施設情報を取得できません。";
 "confirmation.noPOIFound" = "周辺に施設が見つかりませんでした";
@@ -283,3 +287,23 @@
 "confirmation.deleteConfirmMessage" = "この操作は取り消せません。";
 "confirmation.recentVisitsHeader" = "この近くで過去に記録した場所";
 "confirmation.nearbyPlacesHeader" = "周辺の施設";
+
+// MARK: - New Home Screen
+"newhome.title" = "ココキタ";
+"newhome.recordLocation" = "現在地を記録する";
+"newhome.recentRecords" = "最近の記録";
+"newhome.viewAllRecords" = "すべて見る";
+"newhome.noRecentRecords" = "まだ記録がありません";
+
+// MARK: - Settings Sheet
+"settingssheet.title" = "設定";
+"settingssheet.resetAll" = "すべてリセット";
+"settingssheet.followOnX" = "Xでフォロー";
+"settingssheet.help" = "ヘルプ";
+"settingssheet.developerTools" = "開発者ツール";
+"settingssheet.version" = "バージョン";
+
+// MARK: - Course Screen
+"course.title" = "コース";
+"course.comingSoon" = "準備中";
+"course.description" = "コース機能は近日公開予定です";
