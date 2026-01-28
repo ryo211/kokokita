@@ -1,8 +1,9 @@
 import SwiftUI
 
 struct GroupListScreen: View {
+    @Binding var showCreate: Bool
+
     @State private var store = GroupListStore()
-    @State private var showCreate = false
     @State private var newGroupName = ""
 
     var body: some View {
@@ -20,7 +21,6 @@ struct GroupListScreen: View {
                     }
                 } label: {
                     HStack {
-                        Image(systemName: "folder")
                         Text(tag.name)
                         Spacer()
                         if let count = store.visitCounts[tag.id] {
@@ -32,6 +32,7 @@ struct GroupListScreen: View {
                 }
             }
         }
+        .listStyle(.plain)
         .overlay {
             if store.loading {
                 ProgressView().controlSize(.large)
@@ -40,18 +41,10 @@ struct GroupListScreen: View {
                     description: Text(L.GroupManagement.emptyDescription))
             }
         }
-        .navigationTitle(L.GroupManagement.title)
-        .navigationBarTitleDisplayMode(.inline)
         .task { await store.load() }
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    newGroupName = ""
-                    showCreate = true
-                } label: {
-                    Image(systemName: "plus")
-                }
-                .accessibilityLabel(L.GroupManagement.createAccessibility)
+        .onChange(of: showCreate) { _, isShowing in
+            if isShowing {
+                newGroupName = ""
             }
         }
         .sheet(isPresented: $showCreate) {

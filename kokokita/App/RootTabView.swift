@@ -58,29 +58,29 @@ struct RootTabView: View {
         VStack(spacing: 0) {
             // ===== コンテンツ領域（フッター分を除いた残り全体） =====
             ZStack(alignment: .bottomTrailing) {
-                switch tab {
-                case .home:
-                    HomeScreen(
-                        onKokokitaTap: {
-                            checkLocationPermissionAndCreate()
-                        },
-                        onViewAllTap: {
-                            tab = .records
-                        }
-                    )
+                // 全ての画面を重ねて配置
+                HomeScreen(
+                    onKokokitaTap: {
+                        checkLocationPermissionAndCreate()
+                    },
+                    onViewAllTap: {
+                        tab = .records
+                    }
+                )
+                .opacity(tab == .home ? 1 : 0)
+                .zIndex(tab == .home ? 1 : 0)
 
-                case .records:
-                    NavigationStack { VisitListScreen() }
+                NavigationStack { VisitListScreen() }
+                    .opacity(tab == .records ? 1 : 0)
+                    .zIndex(tab == .records ? 1 : 0)
 
-                case .course:
-                    CourseScreen()
+                CourseScreen()
+                    .opacity(tab == .course ? 1 : 0)
+                    .zIndex(tab == .course ? 1 : 0)
 
-                case .menu:
-                    NavigationStack { SettingsHomeScreen() }
-
-                case .center:
-                    Color.clear // 中央ボタンは別途 sheet 起動
-                }
+                NavigationStack { SettingsHomeScreen() }
+                    .opacity(tab == .menu ? 1 : 0)
+                    .zIndex(tab == .menu ? 1 : 0)
 
                 // ホーム画面以外: 右下にココキタボタン
                 if tab != .home {
@@ -89,6 +89,7 @@ struct RootTabView: View {
                     }
                     .padding(.trailing, 16)
                     .padding(.bottom, 16)
+                    .zIndex(999)
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)

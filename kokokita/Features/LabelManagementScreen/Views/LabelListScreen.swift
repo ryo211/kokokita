@@ -1,8 +1,9 @@
 import SwiftUI
 
 struct LabelListScreen: View {
+    @Binding var showCreate: Bool
+
     @State private var store = LabelListStore()
-    @State private var showCreate = false
     @State private var newLabelName = ""
 
     var body: some View {
@@ -20,7 +21,6 @@ struct LabelListScreen: View {
                     }
                 } label: {
                     HStack {
-                        Image(systemName: "tag")
                         Text(tag.name)
                         Spacer()
                         if let count = store.visitCounts[tag.id] {
@@ -32,6 +32,7 @@ struct LabelListScreen: View {
                 }
             }
         }
+        .listStyle(.plain)
         .overlay {
             if store.loading {
                 ProgressView().controlSize(.large)
@@ -40,18 +41,10 @@ struct LabelListScreen: View {
                     description: Text(L.LabelManagement.emptyDescription))
             }
         }
-        .navigationTitle(L.LabelManagement.title)
-        .navigationBarTitleDisplayMode(.inline)
         .task { await store.load() }
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    newLabelName = ""
-                    showCreate = true
-                } label: {
-                    Image(systemName: "plus")
-                }
-                .accessibilityLabel(L.LabelManagement.createAccessibility)
+        .onChange(of: showCreate) { _, isShowing in
+            if isShowing {
+                newLabelName = ""
             }
         }
         .sheet(isPresented: $showCreate) {
