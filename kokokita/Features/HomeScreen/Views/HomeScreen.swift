@@ -56,7 +56,7 @@ struct HomeScreen: View {
 
                     Spacer()
 
-                    // 最近の記録カルーセル（高さ固定）
+                    // 最近の記録セクション（高さ固定でボタンのジャンプを防止）
                     Group {
                         if let visits = recentVisits {
                             if !visits.isEmpty {
@@ -65,11 +65,10 @@ struct HomeScreen: View {
                                 emptyRecordsPlaceholder
                             }
                         } else {
-                            // データ取得中は何も表示しない
                             Color.clear
                         }
                     }
-                    .frame(height: 140)
+                    .frame(height: 150)
                 }
                 .padding(.bottom, 24)
             }
@@ -179,7 +178,7 @@ struct HomeScreen: View {
     // MARK: - Recent Records Section
 
     private var recentRecordsSection: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 0) {
             HStack {
                 Text(L.NewHome.recentRecords)
                     .font(.caption)
@@ -194,6 +193,8 @@ struct HomeScreen: View {
                 }
             }
             .padding(.horizontal, 20)
+            .padding(.top, 32)
+//            .padding(.bottom, 4)
 
             RecentRecordsCarousel(
                 records: recentRecords,

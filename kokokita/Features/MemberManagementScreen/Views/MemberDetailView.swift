@@ -166,8 +166,12 @@ struct MemberDetailView: View {
                 Text(L.MemberManagement.namePlaceholder)
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                Text(name)
-                    .font(.body)
+                HStack(spacing: 6) {
+                    Image(systemName: "person")
+                        .imageScale(.small)
+                    Text(name)
+                        .font(.body)
+                }
             }
             Spacer()
             Button {

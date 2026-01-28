@@ -47,6 +47,7 @@ struct RecentRecordsCarousel: View {
             }
             .scrollTargetLayout()
             .padding(.horizontal, 20)
+            .padding(.top, 0)
         }
         .scrollTargetBehavior(.viewAligned)
         .scrollClipDisabled()
@@ -82,6 +83,7 @@ struct RecentRecordsCarousel: View {
                 }
             }
             .padding(.horizontal, 20)
+            .padding(.top, 0)
         }
         .frame(height: 120)
     }
@@ -93,81 +95,68 @@ struct RecentRecordsCarousel: View {
             // 相対日付（〜日前）
             Text(relativeDate(for: agg.visit.timestampUTC))
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.accentColor.opacity(0.7))
 
             // タイトル
             Text(displayTitle(for: agg))
                 .font(.subheadline.bold())
-                .foregroundStyle(.primary)
+                .foregroundStyle(Color.accentColor)
                 .lineLimit(2)
 
             // 住所
             if let address = agg.details.resolvedAddress?.trimmed, !address.isEmpty {
                 Text(address)
                     .font(.caption2)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.accentColor.opacity(0.6))
                     .lineLimit(2)
             }
         }
         .frame(width: 280, alignment: .leading)
         .padding(12)
         .background(
+            // パターンB: タブバー選択状態風の薄青背景
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(.thinMaterial)
+                .fill(Color.accentColor.opacity(0.08))
                 .overlay {
-                    // ハイライトのリムライト（液体ガラス感）
+                    // 輪郭線
                     RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .strokeBorder(
-                            LinearGradient(
-                                colors: [
-                                    Color.white.opacity(0.65),
-                                    Color.white.opacity(0.08)
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            lineWidth: 1.2
-                        )
+                        .strokeBorder(Color.accentColor.opacity(0.2), lineWidth: 1)
                 }
-                .overlay {
-                    // 面のゆるい反射
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .fill(
-                            LinearGradient(
-                                colors: [
-                                    Color.white.opacity(0.28),
-                                    Color.white.opacity(0.0)
-                                ],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
-                        )
-                        .blendMode(.screen)
-                }
-                .overlay {
-                    // 角のきらっと感
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .fill(
-                            RadialGradient(
-                                colors: [
-                                    Color.white.opacity(0.32),
-                                    Color.clear
-                                ],
-                                center: .topLeading,
-                                startRadius: 0,
-                                endRadius: 160
-                            )
-                        )
-                        .blendMode(.screen)
-                }
-                .overlay {
-                    // うっすら色味を乗せてガラス感を強調
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .fill(Color.white.opacity(0.8))
-                }
-                .shadow(color: Color.black.opacity(0.24), radius: 28, x: 0, y: 16)
-                .shadow(color: Color.black.opacity(0.12), radius: 8, x: 0, y: 4)
-                .shadow(color: Color.white.opacity(0.45), radius: 14, x: 0, y: -10)
+                .shadow(color: Color.black.opacity(0.06), radius: 2, x: 0, y: 1)
+                .shadow(color: Color.black.opacity(0.12), radius: 12, x: 0, y: 6)
+                .shadow(color: Color.black.opacity(0.08), radius: 24, x: 0, y: 12)
+
+            // パターンA（保持）
+//            RoundedRectangle(cornerRadius: 16, style: .continuous)
+//                .fill(Color(.systemBackground))
+//                .overlay {
+//                    // 内側に薄いグレー背景
+//                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+//                        .fill(Color.black.opacity(0.02))
+//                }
+//                .overlay {
+//                    // 控えめな輪郭線
+//                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+//                        .strokeBorder(Color.black.opacity(0.08), lineWidth: 1)
+//                }
+//                .overlay {
+//                    // ハイライトのリムライト（上部のみ）
+//                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+//                        .strokeBorder(
+//                            LinearGradient(
+//                                colors: [
+//                                    Color.white.opacity(0.6),
+//                                    Color.clear
+//                                ],
+//                                startPoint: .top,
+//                                endPoint: .bottom
+//                            ),
+//                            lineWidth: 1
+//                        )
+//                }
+//                .shadow(color: Color.black.opacity(0.06), radius: 2, x: 0, y: 1)
+//                .shadow(color: Color.black.opacity(0.12), radius: 12, x: 0, y: 6)
+//                .shadow(color: Color.black.opacity(0.08), radius: 24, x: 0, y: 12)
         )
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
     }

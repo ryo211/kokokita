@@ -22,11 +22,32 @@ struct VisitListScreen: View {
     @State private var selectedMapItemId: UUID? = nil
     @State private var detailSheetItemId: UUID? = nil
     @State private var mapSheetHeight: CGFloat = 0
+    @State private var showCalendarSheet = false
+    @State private var selectedDate: Date? = nil
 
     // 名前辞書（型を固定して軽くする）
     private var labelMap: [UUID: String] { store.labels.nameMap }
     private var groupMap: [UUID: String] { store.groups.nameMap }
     private var memberMap: [UUID: String] { store.members.nameMap }
+
+    // カレンダー表示用：日付ごとの記録タイトルマップ
+    private var visitsByDateMap: [Date: [String]] {
+        var map: [Date: [String]] = [:]
+        for group in store.groupedByDate {
+            let date = Calendar.current.startOfDay(for: group.date)
+            let titles = group.items.map { agg in
+                if let title = agg.details.title?.trimmingCharacters(in: .whitespacesAndNewlines), !title.isEmpty {
+                    return title
+                }
+                if let facility = agg.details.facilityName?.trimmingCharacters(in: .whitespacesAndNewlines), !facility.isEmpty {
+                    return facility
+                }
+                return L.Home.noTitle
+            }
+            map[date] = titles
+        }
+        return map
+    }
 
     var body: some View {
         mainContent
@@ -36,6 +57,18 @@ struct VisitListScreen: View {
             }
             .sheet(item: detailSheetBinding) { agg in
                 detailSheet(for: agg)
+            }
+            .sheet(isPresented: $showCalendarSheet) {
+                CalendarPickerSheet(
+                    visitsByDate: visitsByDateMap,
+                    onSelectDate: { date in
+                        showCalendarSheet = false
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                            selectedDate = date
+                        }
+                    }
+                )
+                .iPadSheetSize()
             }
     }
 
@@ -61,22 +94,38 @@ struct VisitListScreen: View {
 
     // リスト表示本体（型推論を軽くするため分離）
     private var actualListView: some View {
-        List {
-            ForEach(store.groupedByDate) { group in
-                Section {
-                    ForEach(group.items) { agg in
-                        listRowView(for: agg)
+        ScrollViewReader { proxy in
+            List {
+                ForEach(store.groupedByDate) { group in
+                    Section {
+                        ForEach(group.items) { agg in
+                            listRowView(for: agg)
+                        }
+                    } header: {
+                        Button {
+                            showCalendarSheet = true
+                        } label: {
+                            Text(formatDateHeader(group.date))
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .frame(maxWidth: .infinity, alignment: .center)
+                                .textCase(nil)
+                        }
+                        .buttonStyle(.plain)
                     }
-                } header: {
-                    Text(formatDateHeader(group.date))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        .textCase(nil)
+                    .id(Calendar.current.startOfDay(for: group.date))
+                }
+            }
+            .listStyle(.plain)
+            .onChange(of: selectedDate) { _, newDate in
+                if let date = newDate {
+                    withAnimation {
+                        proxy.scrollTo(date, anchor: .top)
+                    }
+                    selectedDate = nil
                 }
             }
         }
-        .listStyle(.plain)
         .alert(
             L.Home.deleteConfirmTitle,
             isPresented: Binding(
