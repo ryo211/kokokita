@@ -237,34 +237,38 @@ struct VisitDetailContent: View {
                 // タイトルまたは施設名
                 Text(displayName(for: visit))
                     .font(.subheadline.bold())
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(Color.accentColor)
 
                 // 日付
                 Text(visit.visit.timestampUTC.kokokitaVisitString)
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.accentColor.opacity(0.7))
 
                 // 住所
                 if let addr = visit.details.resolvedAddress?.trimmed, !addr.isEmpty {
                     Text(addr)
                         .font(.caption2)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.accentColor.opacity(0.7))
                         .lineLimit(2)
                 }
             }
             Spacer()
             Image(systemName: "chevron.right")
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.accentColor)
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(.systemBackground))
-        .cornerRadius(8)
-        .overlay(
-            RoundedRectangle(cornerRadius: 8)
-                .stroke(Color(.systemGray4), lineWidth: 1)
+        .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(Color.accentColor.opacity(0.08))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .strokeBorder(Color.accentColor.opacity(0.2), lineWidth: 1)
+                }
         )
+        .cornerRadius(12)
+        .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: 5)
     }
 
     private func displayName(for visit: VisitAggregate) -> String {

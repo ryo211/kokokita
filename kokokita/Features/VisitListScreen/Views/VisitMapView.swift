@@ -365,16 +365,17 @@ struct VisitMapDetailSheet: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text(title)
                         .font(.headline)
+                        .foregroundStyle(Color.accentColor)
                         .lineLimit(2)
 
                     Text(aggregate.visit.timestampUTC.kokokitaVisitString)
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.accentColor.opacity(0.7))
 
                     if let address = aggregate.details.resolvedAddress {
                         Text(address)
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.accentColor.opacity(0.7))
                             .lineLimit(2)
                     }
 
@@ -404,49 +405,29 @@ struct VisitMapDetailSheet: View {
                 } label: {
                     Image(systemName: "xmark.circle.fill")
                         .font(.title3)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.accentColor)
                 }
             }
             .padding(.horizontal, 16)
             .padding(.bottom, 16)
         }
         .background(
-            // Liquid Glass背景
             ZStack {
+                // 不透明な背景
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(.ultraThinMaterial)
+                    .fill(Color(.systemBackground))
+
+                // 薄青い色のオーバーレイ
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(Color.accentColor.opacity(0.08))
                     .overlay {
                         RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .fill(
-                                LinearGradient(
-                                    colors: [
-                                        Color.white.opacity(0.15),
-                                        Color.white.opacity(0.05)
-                                    ],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
+                            .strokeBorder(Color.accentColor.opacity(0.2), lineWidth: 1)
                     }
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .strokeBorder(
-                                LinearGradient(
-                                    colors: [
-                                        Color.white.opacity(0.25),
-                                        Color.white.opacity(0.1)
-                                    ],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
-                                lineWidth: 0.5
-                            )
-                    }
-                    .shadow(color: Color.black.opacity(0.12), radius: 10, x: 0, y: 4)
-                    .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
             }
         )
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: 5)
         .padding(.horizontal, 8)
         .padding(.bottom, 8)
         .offset(y: dragOffset)
