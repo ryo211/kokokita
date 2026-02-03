@@ -10,4 +10,6 @@ final class AppUIState {
     var isMapSheetVisible: Bool = false
     /// カレンダー表示モードかどうか
     var isCalendarVisible: Bool = false
+    /// 地図画面で特定の訪問記録にフォーカスするリクエスト（他タブからの遷移用）
+    var mapFocusVisitId: UUID? = nil
 }

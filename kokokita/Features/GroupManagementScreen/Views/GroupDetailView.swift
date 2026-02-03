@@ -10,6 +10,7 @@ struct GroupDetailView: View {
     var onFinish: (_ updated: GroupTag?, _ deleted: Bool) -> Void
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(AppUIState.self) private var ui
     @State private var store = GroupListStore()
     @State private var name: String
     @State private var editingName: String = ""
@@ -80,7 +81,7 @@ struct GroupDetailView: View {
                             onUpdate: {
                                 loadRelatedVisits()
                             },
-                            onMapTap: nil
+                            onMapTap: { ui.mapFocusVisitId = selection.id }
                         )
                     }
                 }

@@ -11,6 +11,7 @@ struct RecentRecordsCarousel: View {
     let memberMap: [UUID: String]
     let onUpdate: () -> Void
 
+    @Environment(AppUIState.self) private var ui
     @State private var editingTarget: VisitAggregate? = nil
 
     var body: some View {
@@ -52,7 +53,7 @@ struct RecentRecordsCarousel: View {
                             onUpdate: {
                                 onUpdate()
                             },
-                            onMapTap: nil
+                            onMapTap: { ui.mapFocusVisitId = agg.id }
                         )
                     } label: {
                         ClearBlueHorizontalCard(
@@ -92,7 +93,7 @@ struct RecentRecordsCarousel: View {
                             onUpdate: {
                                 onUpdate()
                             },
-                            onMapTap: nil
+                            onMapTap: { ui.mapFocusVisitId = agg.id }
                         )
                     } label: {
                         ClearBlueHorizontalCard(

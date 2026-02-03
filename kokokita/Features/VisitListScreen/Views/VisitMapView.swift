@@ -105,10 +105,37 @@ struct VisitMapView: View {
             sheetHeight = height
         }
         .task {
-            updateCameraPosition()
+            // 初期選択がある場合はそのピンにズーム、なければ全体表示
+            if let id = selectedItemId {
+                focusOnItem(id: id, animated: false)
+            } else {
+                updateCameraPosition()
+            }
         }
         .onChange(of: items) {
             updateCameraPosition()
+        }
+        .onChange(of: selectedItemId) { _, newId in
+            guard let newId else { return }
+            focusOnItem(id: newId, animated: true)
+        }
+    }
+
+    /// 指定IDのピンを画面中心にしてズームイン
+    private func focusOnItem(id: UUID, animated: Bool) {
+        guard let agg = items.first(where: { $0.id == id }),
+              agg.visit.latitude != 0 || agg.visit.longitude != 0 else { return }
+        let region = MKCoordinateRegion(
+            center: CLLocationCoordinate2D(latitude: agg.visit.latitude, longitude: agg.visit.longitude),
+            latitudinalMeters: 500,
+            longitudinalMeters: 500
+        )
+        if animated {
+            withAnimation(.easeInOut(duration: 0.3)) {
+                cameraPosition = .region(region)
+            }
+        } else {
+            cameraPosition = .region(region)
         }
     }
 

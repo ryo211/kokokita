@@ -10,6 +10,7 @@ struct LabelDetailView: View {
     var onFinish: (_ updated: LabelTag?, _ deleted: Bool) -> Void
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(AppUIState.self) private var ui
     @State private var store = LabelListStore()
     @State private var name: String
     @State private var editingName: String = ""
@@ -80,7 +81,7 @@ struct LabelDetailView: View {
                             onUpdate: {
                                 loadRelatedVisits()
                             },
-                            onMapTap: nil
+                            onMapTap: { ui.mapFocusVisitId = selection.id }
                         )
                     }
                 }

@@ -248,6 +248,12 @@ struct RootTabView: View {
                 NotificationCenter.default.post(name: .visitsChanged, object: nil)
             }
         }
+        // 他タブからの地図フォーカスリクエストを処理
+        .onChange(of: ui.mapFocusVisitId) { _, newId in
+            if newId != nil {
+                tab = .records
+            }
+        }
     }
 
     // MARK: - Helper Methods
@@ -979,6 +985,7 @@ private struct DetailVisitSheet: View {
     let visitId: UUID
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(AppUIState.self) private var ui
     @State private var visit: VisitAggregate?
     @State private var labelMap: [UUID: String] = [:]
     @State private var groupMap: [UUID: String] = [:]
@@ -999,7 +1006,10 @@ private struct DetailVisitSheet: View {
                             dismiss()
                         },
                         onUpdate: {},
-                        onMapTap: nil
+                        onMapTap: {
+                            dismiss()
+                            ui.mapFocusVisitId = visitId
+                        }
                     )
                 }
             } else {

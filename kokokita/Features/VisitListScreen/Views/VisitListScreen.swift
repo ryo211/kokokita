@@ -286,6 +286,14 @@ struct VisitListScreen: View {
             // 地図シートの表示状態をAppUIStateに反映
             ui.isMapSheetVisible = (newValue != nil && displayMode == .map)
         }
+        // 他タブからの地図フォーカスリクエストを処理
+        .onChange(of: ui.mapFocusVisitId) { _, newId in
+            guard let visitId = newId else { return }
+            // リクエストを消費
+            ui.mapFocusVisitId = nil
+            displayMode = .map
+            selectedMapItemId = visitId
+        }
         .onChange(of: displayMode) {
             mapSheetHeight = 0
             if displayMode == .map {
