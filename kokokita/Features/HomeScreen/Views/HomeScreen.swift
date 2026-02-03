@@ -89,14 +89,16 @@ struct HomeScreen: View {
             }
         }
         .task {
-            // アニメーション開始（初回のみ）-
-             if !hasStartedAnimation {
-                 hasStartedAnimation = true
-                 withAnimation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true)) {
-                     isPulsing.toggle()
-                 }
-             }
-
+            // アニメーション開始（初回のみ）
+            if !hasStartedAnimation {
+                hasStartedAnimation = true
+                withAnimation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true)) {
+                    isPulsing.toggle()
+                }
+            }
+        }
+        .onAppear {
+            // 画面表示のたびに最新データを読み込む
             store.reload()
             loadRecentVisits()
         }
@@ -230,7 +232,7 @@ struct HomeScreen: View {
     private func loadRecentVisits() {
         let repo = AppContainer.shared.repo
         do {
-            // 全記録から最新3件を取得（フィルタなし、日付降順でソート）
+            // 全記録から最新5件を取得（フィルタなし、日付降順でソート）
             let allVisits = try repo.fetchAll(
                 filterLabel: nil,
                 filterGroup: nil,
@@ -239,7 +241,7 @@ struct HomeScreen: View {
                 dateFrom: nil,
                 dateToExclusive: nil
             )
-            let newRecents = Array(allVisits.sorted(by: { $0.visit.timestampUTC > $1.visit.timestampUTC }).prefix(3))
+            let newRecents = Array(allVisits.sorted(by: { $0.visit.timestampUTC > $1.visit.timestampUTC }).prefix(5))
 
             // アニメーション付きで更新
             withAnimation {

@@ -342,16 +342,6 @@ struct VisitMapDetailSheet: View {
 
     @State private var dragOffset: CGFloat = 0
 
-    private var title: String {
-        if let t = aggregate.details.title, !t.isEmpty {
-            return t
-        }
-        if let f = aggregate.details.facilityName, !f.isEmpty {
-            return f
-        }
-        return L.Home.noTitle
-    }
-
     var body: some View {
         VStack(spacing: 0) {
             // ドラッグハンドル
@@ -359,57 +349,17 @@ struct VisitMapDetailSheet: View {
                 .fill(Color.secondary.opacity(0.3))
                 .frame(width: 36, height: 4)
                 .padding(.top, 8)
-                .padding(.bottom, 12)
+                .padding(.bottom, 6)
 
-            HStack(alignment: .top, spacing: 12) {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(title)
-                        .font(.headline)
-                        .foregroundStyle(Color.accentColor)
-                        .lineLimit(2)
-
-                    Text(aggregate.visit.timestampUTC.kokokitaVisitString)
-                        .font(.caption)
-                        .foregroundStyle(Color.accentColor.opacity(0.7))
-
-                    if let address = aggregate.details.resolvedAddress {
-                        Text(address)
-                            .font(.caption)
-                            .foregroundStyle(Color.accentColor.opacity(0.7))
-                            .lineLimit(2)
-                    }
-
-                    // ラベル/グループ/メンバー
-                    FlowRow(spacing: 6, rowSpacing: 6) {
-                        if let gid = aggregate.details.groupId, let gname = groupMap[gid] {
-                            Chip(gname, kind: .group, size: .small, showRemoveButton: false)
-                        }
-                        ForEach(aggregate.details.labelIds.prefix(2), id: \.self) { lid in
-                            if let lname = labelMap[lid] {
-                                Chip(lname, kind: .label, size: .small, showRemoveButton: false)
-                            }
-                        }
-                        ForEach(aggregate.details.memberIds.prefix(2), id: \.self) { mid in
-                            if let mname = memberMap[mid] {
-                                Chip(mname, kind: .member, size: .small, showRemoveButton: false)
-                            }
-                        }
-                    }
-                }
-
-                Spacer()
-
-                // 閉じるボタン
-                Button {
-                    onClose()
-                } label: {
-                    Image(systemName: "xmark.circle.fill")
-                        .font(.title3)
-                        .foregroundStyle(Color.accentColor)
-                }
-            }
-            .padding(.horizontal, 16)
-            .padding(.bottom, 16)
+            // ClearBlueHorizontalCardのmapSheet用コンテンツを使用
+            ClearBlueHorizontalCard(
+                aggregate: aggregate,
+                variant: .mapSheet,
+                labelMap: labelMap,
+                groupMap: groupMap,
+                memberMap: memberMap,
+                onClose: onClose
+            )
         }
         .background(
             ZStack {
@@ -419,10 +369,10 @@ struct VisitMapDetailSheet: View {
 
                 // 薄青い色のオーバーレイ
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(Color.accentColor.opacity(0.08))
+                    .fill(VisitCardStyle.clearBlueBackground)
                     .overlay {
                         RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .strokeBorder(Color.accentColor.opacity(0.2), lineWidth: 1)
+                            .strokeBorder(VisitCardStyle.clearBlueBorder, lineWidth: VisitCardStyle.clearBlueBorderWidth)
                     }
             }
         )

@@ -1,6 +1,10 @@
 import SwiftUI
 import CoreLocation
 
+private struct VisitSelection: Identifiable, Hashable {
+    let id: UUID
+}
+
 struct MemberDetailView: View {
     let member: MemberTag
     var onFinish: (_ updated: MemberTag?, _ deleted: Bool) -> Void
@@ -20,6 +24,7 @@ struct MemberDetailView: View {
     @State private var editingTarget: VisitAggregate? = nil
     @State private var showVisitDeleteConfirm = false
     @State private var pendingDeleteVisitId: UUID? = nil
+    @State private var selectedVisit: VisitSelection? = nil
     private let repo = AppContainer.shared.repo
 
     init(member: MemberTag, onFinish: @escaping (_ updated: MemberTag?, _ deleted: Bool) -> Void) {
@@ -60,11 +65,30 @@ struct MemberDetailView: View {
                     }
                 }
                 .listStyle(.plain)
+                .navigationDestination(item: $selectedVisit) { selection in
+                    if let visit = relatedVisits.first(where: { $0.id == selection.id }) {
+                        VisitDetailScreen(
+                            data: toDetailData(visit),
+                            visitId: selection.id,
+                            onBack: {},
+                            onEdit: { editingTarget = visit },
+                            onShare: {},
+                            onDelete: {
+                                pendingDeleteVisitId = selection.id
+                                showVisitDeleteConfirm = true
+                            },
+                            onUpdate: {
+                                loadRelatedVisits()
+                            },
+                            onMapTap: nil
+                        )
+                    }
+                }
             } else {
                 Spacer()
             }
         }
-        .navigationTitle(L.MemberManagement.detailTitle)
+        .navigationTitle("")
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button(role: .destructive) {
@@ -161,28 +185,36 @@ struct MemberDetailView: View {
     // MARK: - Sections
 
     private var nameSection: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(L.MemberManagement.namePlaceholder)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                HStack(spacing: 6) {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(L.MemberManagement.namePlaceholder)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            HStack(alignment: .bottom) {
+                HStack(spacing: 8) {
                     Image(systemName: "person")
-                        .imageScale(.small)
+                        .imageScale(.medium)
+                        .font(.title3)
                     Text(name)
-                        .font(.body)
+                        .font(.title3.bold())
+                }
+                Spacer()
+                Button {
+                    editingName = name
+                    showEditSheet = true
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "pencil")
+                        Text(L.Common.edit)
+                    }
+                    .font(.subheadline)
                 }
             }
-            Spacer()
-            Button {
-                editingName = name
-                showEditSheet = true
-            } label: {
-                HStack(spacing: 4) {
-                    Image(systemName: "pencil")
-                    Text(L.Common.edit)
-                }
-                .font(.subheadline)
+            .padding(.bottom, 4)
+            .overlay(alignment: .bottom) {
+                Rectangle()
+                    .fill(Color.primary.opacity(0.3))
+                    .frame(height: 1)
             }
         }
     }
@@ -214,22 +246,8 @@ struct MemberDetailView: View {
 
     @ViewBuilder
     private func visitRowView(for visit: VisitAggregate) -> some View {
-        NavigationLink {
-            VisitDetailScreen(
-                data: toDetailData(visit),
-                visitId: visit.id,
-                onBack: {},
-                onEdit: { editingTarget = visit },
-                onShare: {},
-                onDelete: {
-                    pendingDeleteVisitId = visit.id
-                    showVisitDeleteConfirm = true
-                },
-                onUpdate: {
-                    loadRelatedVisits()
-                },
-                onMapTap: nil
-            )
+        Button {
+            selectedVisit = VisitSelection(id: visit.id)
         } label: {
             VisitRow(agg: visit, nameResolver: nameResolver, compact: true)
         }

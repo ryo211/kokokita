@@ -4,6 +4,7 @@ import CoreLocation
 enum VisitListDisplayMode {
     case list
     case map
+    case calendar
 }
 
 struct VisitListScreen: View {
@@ -22,8 +23,8 @@ struct VisitListScreen: View {
     @State private var selectedMapItemId: UUID? = nil
     @State private var detailSheetItemId: UUID? = nil
     @State private var mapSheetHeight: CGFloat = 0
-    @State private var showCalendarSheet = false
     @State private var selectedDate: Date? = nil
+    @State private var calendarSelectedVisitId: UUID? = nil
 
     // 名前辞書（型を固定して軽くする）
     private var labelMap: [UUID: String] { store.labels.nameMap }
@@ -49,6 +50,16 @@ struct VisitListScreen: View {
         return map
     }
 
+    // カレンダー表示用：日付ごとの VisitAggregate マップ
+    private var aggregatesByDateMap: [Date: [VisitAggregate]] {
+        var map: [Date: [VisitAggregate]] = [:]
+        for group in store.groupedByDate {
+            let date = Calendar.current.startOfDay(for: group.date)
+            map[date] = group.items
+        }
+        return map
+    }
+
     var body: some View {
         mainContent
             .environment(router)
@@ -58,29 +69,26 @@ struct VisitListScreen: View {
             .sheet(item: detailSheetBinding) { agg in
                 detailSheet(for: agg)
             }
-            .sheet(isPresented: $showCalendarSheet) {
-                CalendarPickerSheet(
-                    visitsByDate: visitsByDateMap,
-                    onSelectDate: { date in
-                        showCalendarSheet = false
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                            selectedDate = date
-                        }
-                    }
-                )
-                .iPadSheetSize()
-            }
     }
 
     // MARK: - List（分離して軽く）
     @ViewBuilder
     private func listContent() -> some View {
-        Group {
-            if store.items.isEmpty {
-                // 空の状態UI
-                emptyStateView
-            } else {
-                actualListView
+        ZStack(alignment: .topTrailing) {
+            Group {
+                if store.items.isEmpty {
+                    // 空の状態UI
+                    emptyStateView
+                } else {
+                    actualListView
+                }
+            }
+
+            // ソートボタン（リスト右上に固定表示）
+            if !store.items.isEmpty {
+                sortButton
+                    .padding(.trailing, 16)
+                    .padding(.top, 8)
             }
         }
         .task { store.reload() }
@@ -90,6 +98,58 @@ struct VisitListScreen: View {
         .onReceive(NotificationCenter.default.publisher(for: .taxonomyChanged)) { _ in
             Task { await store.reloadTaxonomyThenData() }
         }
+    }
+
+    // ソートボタン（Liquid Glass風カプセル）
+    private var sortButton: some View {
+        Button {
+            store.toggleSort()
+        } label: {
+            HStack(spacing: 4) {
+                Text(store.sortAscending ? L.SearchFilter.sortOldest : L.SearchFilter.sortNewest)
+                    .font(.system(size: 11, weight: .medium))
+                Image(systemName: store.sortAscending ? "chevron.up" : "chevron.down")
+                    .font(.system(size: 10))
+            }
+            .foregroundStyle(Color.primary.opacity(0.6))
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(
+                ZStack {
+                    Capsule(style: .continuous)
+                        .fill(.ultraThinMaterial)
+                        .overlay {
+                            Capsule(style: .continuous)
+                                .fill(
+                                    LinearGradient(
+                                        colors: [
+                                            Color.white.opacity(0.08),
+                                            Color.white.opacity(0.02)
+                                        ],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                        }
+                        .overlay {
+                            Capsule(style: .continuous)
+                                .strokeBorder(
+                                    LinearGradient(
+                                        colors: [
+                                            Color.white.opacity(0.15),
+                                            Color.white.opacity(0.05)
+                                        ],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    ),
+                                    lineWidth: 0.5
+                                )
+                        }
+                        .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 1)
+                }
+            )
+        }
+        .buttonStyle(.plain)
     }
 
     // リスト表示本体（型推論を軽くするため分離）
@@ -102,16 +162,11 @@ struct VisitListScreen: View {
                             listRowView(for: agg)
                         }
                     } header: {
-                        Button {
-                            showCalendarSheet = true
-                        } label: {
-                            Text(formatDateHeader(group.date))
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                                .frame(maxWidth: .infinity, alignment: .center)
-                                .textCase(nil)
-                        }
-                        .buttonStyle(.plain)
+                        Text(formatDateHeader(group.date))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .frame(maxWidth: .infinity, alignment: .center)
+                            .textCase(nil)
                     }
                     .id(Calendar.current.startOfDay(for: group.date))
                 }
@@ -196,6 +251,9 @@ struct VisitListScreen: View {
                         startPoint: .leading,
                         endPoint: .trailing
                     )
+                } else if isWithin24Hours(agg.visit.timestampUTC) {
+                    // 直近24時間の記録: 非常に控えめな青色背景
+                    Color.accentColor.opacity(0.03)
                 } else {
                     Color.clear
                 }
@@ -225,9 +283,21 @@ struct VisitListScreen: View {
             if newValue == nil {
                 mapSheetHeight = 0
             }
+            // 地図シートの表示状態をAppUIStateに反映
+            ui.isMapSheetVisible = (newValue != nil && displayMode == .map)
         }
         .onChange(of: displayMode) {
             mapSheetHeight = 0
+            if displayMode == .map {
+                // 地図に戻った時、選択中のアイテムがあればシート表示状態を復元
+                ui.isMapSheetVisible = (selectedMapItemId != nil)
+            } else {
+                ui.isMapSheetVisible = false
+            }
+            // カレンダーモードから離れた時はパネル非表示状態にリセット
+            if displayMode != .calendar {
+                ui.isCalendarVisible = false
+            }
         }
     }
     
@@ -254,6 +324,36 @@ struct VisitListScreen: View {
                 listContent()
             case .map:
                 mapContent()
+            case .calendar:
+                calendarContent()
+            }
+        }
+        .navigationDestination(isPresented: Binding(
+            get: { calendarSelectedVisitId != nil },
+            set: { if !$0 { calendarSelectedVisitId = nil } }
+        )) {
+            if let agg = calendarSelectedVisitId.flatMap({ id in store.items.first(where: { $0.id == id }) }) {
+                VisitDetailScreen(
+                    data: toDetailData(agg),
+                    visitId: agg.id,
+                    onBack: {},
+                    onEdit: { editingTarget = agg },
+                    onShare: {},
+                    onDelete: {
+                        withAnimation {
+                            store.delete(id: agg.id)
+                        }
+                        calendarSelectedVisitId = nil
+                    },
+                    onUpdate: {
+                        Task { store.reload() }
+                    },
+                    onMapTap: {
+                        calendarSelectedVisitId = nil
+                        displayMode = .map
+                        selectedMapItemId = agg.id
+                    }
+                )
             }
         }
     }
@@ -359,6 +459,31 @@ struct VisitListScreen: View {
         )
     }
 
+    // MARK: - Calendar Content
+    @ViewBuilder
+    private func calendarContent() -> some View {
+        CalendarContentView(
+            visitsByDate: visitsByDateMap,
+            aggregatesByDate: aggregatesByDateMap,
+            labelMap: labelMap,
+            groupMap: groupMap,
+            memberMap: memberMap,
+            onTapVisit: { agg in
+                calendarSelectedVisitId = agg.id
+            },
+            onPanelVisibilityChanged: { visible in
+                ui.isCalendarVisible = visible
+            }
+        )
+        .task { store.reload() }
+        .onReceive(NotificationCenter.default.publisher(for: .visitsChanged)) { _ in
+            Task { store.reload() }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .taxonomyChanged)) { _ in
+            Task { await store.reloadTaxonomyThenData() }
+        }
+    }
+
     private func formatDateHeader(_ date: Date) -> String {
         let calendar = Calendar.current
         if calendar.isDateInToday(date) {
@@ -368,6 +493,12 @@ struct VisitListScreen: View {
         } else {
             return AppDateFormatters.listDateHeader.string(from: date)
         }
+    }
+
+    private func isWithin24Hours(_ date: Date) -> Bool {
+        let now = Date()
+        let timeInterval = now.timeIntervalSince(date)
+        return timeInterval >= 0 && timeInterval < 24 * 60 * 60 // 24時間 = 86400秒
     }
 
     private func toDetailData(_ agg: VisitAggregate) -> VisitDetailData {

@@ -63,60 +63,8 @@ struct HomeFilterHeader: View {
 
                 Spacer()
 
-                // 中央: 一覧/地図切り替えボタン
+                // 右寄せ: 一覧/地図/カレンダー切り替えボタン
                 modeToggleButton
-
-                Spacer()
-
-                // ソートボタン（Liquid Glass風のカプセル型ボタン）
-                Button {
-                    vm.toggleSort()
-                } label: {
-                    HStack(spacing: 4) {
-                        Text(vm.sortAscending ? L.SearchFilter.sortOldest : L.SearchFilter.sortNewest)
-                            .font(.system(size: 11, weight: .medium))
-                        Image(systemName: vm.sortAscending ? "chevron.up" : "chevron.down")
-                            .font(.system(size: 10))
-                    }
-                    .foregroundStyle(Color.primary.opacity(0.6))
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
-                    .background(
-                        ZStack {
-                            Capsule(style: .continuous)
-                                .fill(.ultraThinMaterial)
-                                .overlay {
-                                    Capsule(style: .continuous)
-                                        .fill(
-                                            LinearGradient(
-                                                colors: [
-                                                    Color.white.opacity(0.08),
-                                                    Color.white.opacity(0.02)
-                                                ],
-                                                startPoint: .topLeading,
-                                                endPoint: .bottomTrailing
-                                            )
-                                        )
-                                }
-                                .overlay {
-                                    Capsule(style: .continuous)
-                                        .strokeBorder(
-                                            LinearGradient(
-                                                colors: [
-                                                    Color.white.opacity(0.15),
-                                                    Color.white.opacity(0.05)
-                                                ],
-                                                startPoint: .topLeading,
-                                                endPoint: .bottomTrailing
-                                            ),
-                                            lineWidth: 0.5
-                                        )
-                                }
-                                .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 1)
-                        }
-                    )
-                }
-                .buttonStyle(.plain)
             }
 
             // 1) キーワード
@@ -253,7 +201,7 @@ struct HomeFilterHeader: View {
                     .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
 
                 // スライディングインジケーター（ヌルッと動く部分）
-                let buttonWidth = (geometry.size.width - 8) / 2
+                let buttonWidth = (geometry.size.width - 8) / 3
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .fill(.ultraThinMaterial)
                     .overlay {
@@ -298,7 +246,7 @@ struct HomeFilterHeader: View {
                     }
                     .frame(width: buttonWidth, height: geometry.size.height - 8)
                     .shadow(color: Color.black.opacity(0.08), radius: 6, x: 0, y: 2)
-                    .offset(x: displayMode == .list ? 4 : buttonWidth + 4)
+                    .offset(x: indicatorOffset(buttonWidth: buttonWidth))
                     .animation(.interpolatingSpring(stiffness: 150, damping: 18), value: displayMode)
 
                 // ボタンラベル
@@ -310,7 +258,7 @@ struct HomeFilterHeader: View {
                         HStack(spacing: 3) {
                             Image(systemName: "list.bullet")
                                 .font(.system(size: 11))
-                            Text("一覧")
+                            Text(L.Home.modeList)
                                 .font(.system(size: 11, weight: .bold))
                         }
                         .foregroundStyle(displayMode == .list ? Color.accentColor : Color.primary.opacity(0.5))
@@ -326,10 +274,26 @@ struct HomeFilterHeader: View {
                         HStack(spacing: 3) {
                             Image(systemName: "map")
                                 .font(.system(size: 11))
-                            Text("地図")
+                            Text(L.Home.modeMap)
                                 .font(.system(size: 11, weight: .bold))
                         }
                         .foregroundStyle(displayMode == .map ? Color.accentColor : Color.primary.opacity(0.5))
+                        .frame(width: buttonWidth)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+
+                    // カレンダーボタン
+                    Button {
+                        onToggleDisplayMode(.calendar)
+                    } label: {
+                        HStack(spacing: 3) {
+                            Image(systemName: "calendar")
+                                .font(.system(size: 11))
+                            Text(L.Home.modeCalendar)
+                                .font(.system(size: 11, weight: .bold))
+                        }
+                        .foregroundStyle(displayMode == .calendar ? Color.accentColor : Color.primary.opacity(0.5))
                         .frame(width: buttonWidth)
                         .contentShape(Rectangle())
                     }
@@ -338,6 +302,14 @@ struct HomeFilterHeader: View {
                 .padding(3)
             }
         }
-        .frame(width: 120, height: 36)
+        .frame(width: 230, height: 36)
+    }
+
+    private func indicatorOffset(buttonWidth: CGFloat) -> CGFloat {
+        switch displayMode {
+        case .list: return 4
+        case .map: return buttonWidth + 4
+        case .calendar: return buttonWidth * 2 + 4
+        }
     }
 }

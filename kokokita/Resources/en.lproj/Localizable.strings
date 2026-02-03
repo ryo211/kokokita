@@ -60,10 +60,13 @@
 "home.search.placeholder" = "Search";
 "home.deleteConfirmTitle" = "Delete this record?";
 "home.deleteConfirmMessage" = "This action cannot be undone.";
-"home.noTitle" = "(No Title)";
+"home.noTitle" = "";
 "home.itemsCount" = "items";
 "home.switchToMap" = "Switch to Map";
 "home.switchToList" = "Switch to List";
+"home.modeList" = "List";
+"home.modeMap" = "Map";
+"home.modeCalendar" = "Cal";
 
 // MARK: - Detail
 "detail.share" = "Share";
@@ -79,7 +82,7 @@
 "detail.deleteConfirmMessage" = "This action cannot be undone.";
 "detail.deleteVisitTitle" = "Delete Record";
 "detail.deleteVisitMessage" = "Delete this record?";
-"detail.nearbyPastRecords" = "Past Records Nearby";
+"detail.nearbyPastRecords" = "Nearby Records";
 "detail.sameGroupRecords" = "Records in This Group";
 
 // MARK: - Menu

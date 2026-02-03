@@ -60,10 +60,13 @@
 "home.search.placeholder" = "検索";
 "home.deleteConfirmTitle" = "この記録を削除しますか？";
 "home.deleteConfirmMessage" = "この操作は取り消せません。";
-"home.noTitle" = "（タイトルなし）";
+"home.noTitle" = "";
 "home.itemsCount" = "件";
 "home.switchToMap" = "地図に切り替え";
 "home.switchToList" = "一覧に切り替え";
+"home.modeList" = "一覧";
+"home.modeMap" = "地図";
+"home.modeCalendar" = "カレンダー";
 
 // MARK: - Detail
 "detail.share" = "共有";
@@ -79,7 +82,7 @@
 "detail.deleteConfirmMessage" = "この操作は取り消せません。";
 "detail.deleteVisitTitle" = "記録を削除";
 "detail.deleteVisitMessage" = "この記録を削除しますか？";
-"detail.nearbyPastRecords" = "この近くで過去に記録した場所";
+"detail.nearbyPastRecords" = "近くの記録";
 "detail.sameGroupRecords" = "同じグループの記録";
 
 // MARK: - Menu

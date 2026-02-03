@@ -82,8 +82,8 @@ struct RootTabView: View {
                     .opacity(tab == .menu ? 1 : 0)
                     .zIndex(tab == .menu ? 1 : 0)
 
-                // ホーム画面以外: 右下にココキタボタン
-                if tab != .home {
+                // 記録画面のみ: 右下にココキタボタン（地図シート・カレンダー表示中は非表示）
+                if tab == .records && !ui.isMapSheetVisible && !ui.isCalendarVisible {
                     FloatingKokokitaButton {
                         checkLocationPermissionAndCreate()
                     }
@@ -241,6 +241,12 @@ struct RootTabView: View {
             }
         } message: {
             Text(locationErrorMessage ?? "")
+        }
+        // タブ切り替え時にデータを更新（HomeScreenはopacityで切り替えのためonAppearが効かない）
+        .onChange(of: tab) { _, newTab in
+            if newTab == .home {
+                NotificationCenter.default.post(name: .visitsChanged, object: nil)
+            }
         }
     }
 

@@ -73,6 +73,9 @@ enum L {
         static let itemsCount = localized("home.itemsCount")
         static let switchToMap = localized("home.switchToMap")
         static let switchToList = localized("home.switchToList")
+        static let modeList = localized("home.modeList")
+        static let modeMap = localized("home.modeMap")
+        static let modeCalendar = localized("home.modeCalendar")
     }
 
     // MARK: - Detail
