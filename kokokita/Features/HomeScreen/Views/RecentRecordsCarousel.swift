@@ -9,6 +9,7 @@ struct RecentRecordsCarousel: View {
     let labelMap: [UUID: String]
     let groupMap: [UUID: String]
     let memberMap: [UUID: String]
+    var labelColorMap: [String: Color] = [:]
     let onUpdate: () -> Void
 
     @Environment(AppUIState.self) private var ui
@@ -58,7 +59,11 @@ struct RecentRecordsCarousel: View {
                     } label: {
                         ClearBlueHorizontalCard(
                             aggregate: agg,
-                            variant: .carousel
+                            variant: .carousel,
+                            labelMap: labelMap,
+                            groupMap: groupMap,
+                            memberMap: memberMap,
+                            labelColorMap: labelColorMap
                         )
                     }
                     .buttonStyle(.plain)
@@ -98,7 +103,11 @@ struct RecentRecordsCarousel: View {
                     } label: {
                         ClearBlueHorizontalCard(
                             aggregate: agg,
-                            variant: .carousel
+                            variant: .carousel,
+                            labelMap: labelMap,
+                            groupMap: groupMap,
+                            memberMap: memberMap,
+                            labelColorMap: labelColorMap
                         )
                     }
                     .buttonStyle(.plain)

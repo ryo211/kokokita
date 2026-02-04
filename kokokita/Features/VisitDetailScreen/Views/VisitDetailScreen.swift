@@ -45,6 +45,9 @@ struct VisitDetailScreen: View {
     @State private var sameGroupVisitsData: [VisitDetailData] = []
     @State private var currentGroupName: String? = nil
 
+    /// ラベル名→色のマップ（labelOptions から構築）
+    private var labelColorMap: [String: Color] { labelOptions.colorMap }
+
     // SNSカードの論理サイズ（表示用は1/3で描画、保存はscale=3で 1080x1350）
     private let logicalSize = CGSize(width: AppConfig.shareImageLogicalWidth,
                                       height: AppConfig.shareImageLogicalHeight)
@@ -221,6 +224,7 @@ struct VisitDetailScreen: View {
             onGroupTap: handleGroupTap,
             onMemberTap: handleMemberTap,
             onMapTap: handleMapTap,
+            labelColorMap: labelColorMap,
             photoFullScreenIndex: $photoFullScreenIndex
         )
     }
@@ -396,6 +400,7 @@ struct VisitDetailScreen: View {
                     sameGroupVisits: [],  // 共有時はグループ記録は含めない
                     sameGroupVisitsData: [],
                     currentGroupName: nil,
+                    labelColorMap: labelColorMap,
                     photoFullScreenIndex: .constant(nil)
                 )
                 .padding(.all, UIConstants.Spacing.xxLarge)

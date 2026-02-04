@@ -3,6 +3,7 @@ import SwiftUI
 /// ラベル新規作成シート
 struct LabelCreateSheet: View {
     @Binding var newLabelName: String
+    @Binding var newLabelColorId: String?
     @Binding var isPresented: Bool
     var onCreate: () -> Void
 
@@ -19,6 +20,13 @@ struct LabelCreateSheet: View {
                         }
                 }
                 Section {
+                    LabelColorPicker(selectedColorId: newLabelColorId) { colorId in
+                        newLabelColorId = colorId
+                    }
+                } header: {
+                    Text(L.LabelColor.sectionTitle)
+                }
+                Section {
                     Button(L.VisitEdit.createAndSelect) {
                         onCreate()
                     }
@@ -26,6 +34,7 @@ struct LabelCreateSheet: View {
 
                     Button(L.Common.cancel, role: .cancel) {
                         newLabelName = ""
+                        newLabelColorId = nil
                         isPresented = false
                     }
                 }

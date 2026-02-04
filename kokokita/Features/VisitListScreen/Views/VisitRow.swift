@@ -7,6 +7,7 @@ struct VisitRow: View {
     let nameResolver: (_ labelIds: [UUID], _ groupId: UUID?, _ memberIds: [UUID]) -> (labels: [String], group: String?, members: [String])
     var compact: Bool = false  // コンパクトモード
     var showPhoto: Bool = true  // 写真表示（一覧画面で使用）
+    var labelColorMap: [String: Color] = [:]  // ラベル名→色のマップ
 
     /// サムネイルサイズ（小さめに設定）
     private var photoSize: CGFloat {
@@ -56,21 +57,23 @@ struct VisitRow: View {
                 }
             }
 
-            // ラベル／グループ／メンバー名のバッジを表示
-            HStack(spacing: compact ? 4 : 8) {
+            // グループ（フォルダ帰属表示）
+            if let g = names.group {
+                GroupBadge(name: g, compact: compact)
+            }
+
+            // ラベル／メンバー名のバッジを表示
+            if !names.labels.isEmpty || !names.members.isEmpty {
                 FlowRow(spacing: compact ? 4 : 6, rowSpacing: compact ? 4 : 6) {
-                    if let g = names.group {
-                        Chip(g, kind: .group, size: compact ? .xsmall : .small, showRemoveButton: false)
-                    }
                     ForEach(names.labels, id: \.self) { n in
-                        Chip(n, kind: .label, size: compact ? .xsmall : .small, showRemoveButton: false)
+                        Chip(n, kind: .label, size: compact ? .xsmall : .small, showRemoveButton: false, colorDot: labelColorMap[n])
                     }
                     ForEach(names.members, id: \.self) { n in
                         Chip(n, kind: .member, size: compact ? .xsmall : .small, showRemoveButton: false)
                     }
                 }
+                .padding(.top, compact ? 1 : 2)
             }
-            .padding(.top, compact ? 1 : 2)
 
             // 写真サムネイル（一番下に横一列で表示）
             if showPhoto && hasPhoto {

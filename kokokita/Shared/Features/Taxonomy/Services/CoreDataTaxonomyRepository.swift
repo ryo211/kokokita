@@ -19,7 +19,7 @@ final class CoreDataTaxonomyRepository {
                 Logger.warning("Label entity missing required fields (id or name)")
                 return nil
             }
-            return LabelTag(id: id, name: name)
+            return LabelTag(id: id, name: name, colorId: row.colorId)
         }
     }
 
@@ -53,7 +53,7 @@ final class CoreDataTaxonomyRepository {
         let req: NSFetchRequest<LabelEntity> = LabelEntity.fetchRequest()
         req.predicate = NSPredicate(format: "name == %@", name)
         if let hit = try ctx.fetch(req).first, let id = hit.id, let nm = hit.name {
-            return LabelTag(id: id, name: nm)
+            return LabelTag(id: id, name: nm, colorId: hit.colorId)
         }
         let e = LabelEntity(context: ctx)
         let newId = UUID()
@@ -105,7 +105,7 @@ final class CoreDataTaxonomyRepository {
 
     // MARK: - Create Operations
 
-    func createLabel(name: String) throws -> UUID {
+    func createLabel(name: String, colorId: String? = nil) throws -> UUID {
         let trimmed = name.trimmed
         guard !trimmed.isEmpty else {
             Logger.warning("Attempted to create label with empty name")
@@ -116,6 +116,7 @@ final class CoreDataTaxonomyRepository {
         let newId = UUID()
         e.id = newId
         e.name = trimmed
+        e.colorId = colorId
         try ctx.save()
         guard let savedId = e.id else {
             Logger.error("Label entity ID is nil after save")
@@ -188,6 +189,16 @@ final class CoreDataTaxonomyRepository {
             return
         }
         member.name = newName
+        try ctx.save()
+    }
+
+    /// ラベルの色を更新
+    func updateLabelColor(id: UUID, colorId: String?) throws {
+        guard let label = try fetchEntity(LabelEntity.self, id: id) else {
+            Logger.warning("Label not found for color update: \(id)")
+            return
+        }
+        label.colorId = colorId
         try ctx.save()
     }
 

@@ -14,6 +14,7 @@ struct VisitDetailContent: View {
     var onGroupTap: ((String) -> Void)? = nil
     var onMemberTap: ((String) -> Void)? = nil
     var onMapTap: (() -> Void)? = nil
+    var labelColorMap: [String: Color] = [:]
     @Binding var photoFullScreenIndex: Int?
 
     var body: some View {
@@ -28,7 +29,7 @@ struct VisitDetailContent: View {
                     .padding(.bottom, UIConstants.Spacing.small)
             }
 
-            // タイトル + ラベル/グループ（くっつくイメージ）
+            // タイトル + グループ + ラベル/メンバー
             VStack(alignment: .leading, spacing: UIConstants.Spacing.medium) {
                 HStack(spacing: UIConstants.Spacing.medium) {
                     VStack(alignment: .leading, spacing: 2) {
@@ -52,26 +53,24 @@ struct VisitDetailContent: View {
                     )
                 }
 
-                VStack(alignment: .leading, spacing: 6) {
-                    // グループ（1行）
-                    if let group = data.group?.trimmed, !group.isEmpty {
-                        FlowRow(spacing: 6, rowSpacing: 6) {
-                            Chip(group, kind: .group, showRemoveButton: false)
-                                .onTapGesture {
-                                    if !isSharing {
-                                        onGroupTap?(group)
-                                    }
-                                }
+                // グループ（フォルダ帰属表示）
+                if let group = data.group?.trimmed, !group.isEmpty {
+                    GroupBadge(name: group)
+                        .onTapGesture {
+                            if !isSharing {
+                                onGroupTap?(group)
+                            }
                         }
-                    }
+                }
 
+                VStack(alignment: .leading, spacing: 6) {
                     // ラベル（複数あり得る）
                     if !data.labels.isEmpty {
                         FlowRow(spacing: 6, rowSpacing: 6) {
                             ForEach(data.labels, id: \.self) { name in
                                 let t = name.trimmed
                                 if !t.isEmpty {
-                                    Chip(t, kind: .label, showRemoveButton: false)
+                                    Chip(t, kind: .label, showRemoveButton: false, colorDot: labelColorMap[t])
                                         .onTapGesture {
                                             if !isSharing {
                                                 onLabelTap?(t)

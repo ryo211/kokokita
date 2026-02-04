@@ -167,6 +167,23 @@ enum L {
         static let relatedVisitsHeader = localized("label.relatedVisitsHeader")
     }
 
+    // MARK: - Label Color
+    enum LabelColor {
+        static let sectionTitle = localized("labelColor.sectionTitle")
+        static let noColor = localized("labelColor.noColor")
+        static let red = localized("labelColor.red")
+        static let orange = localized("labelColor.orange")
+        static let amber = localized("labelColor.amber")
+        static let green = localized("labelColor.green")
+        static let teal = localized("labelColor.teal")
+        static let cyan = localized("labelColor.cyan")
+        static let blue = localized("labelColor.blue")
+        static let indigo = localized("labelColor.indigo")
+        static let purple = localized("labelColor.purple")
+        static let pink = localized("labelColor.pink")
+        static let brown = localized("labelColor.brown")
+    }
+
     // MARK: - Group Management
     enum GroupManagement {
         static let title = localized("group.title")

@@ -143,6 +143,21 @@
 "label.deleteIrreversible" = "This action cannot be undone.";
 "label.relatedVisitsHeader" = "Records with this label";
 
+// MARK: - Label Color
+"labelColor.sectionTitle" = "Color";
+"labelColor.noColor" = "No Color";
+"labelColor.red" = "Red";
+"labelColor.orange" = "Orange";
+"labelColor.amber" = "Amber";
+"labelColor.green" = "Green";
+"labelColor.teal" = "Teal";
+"labelColor.cyan" = "Cyan";
+"labelColor.blue" = "Blue";
+"labelColor.indigo" = "Indigo";
+"labelColor.purple" = "Purple";
+"labelColor.pink" = "Pink";
+"labelColor.brown" = "Brown";
+
 // MARK: - Group Management
 "group.title" = "Groups";
 "group.namePlaceholder" = "Group Name";

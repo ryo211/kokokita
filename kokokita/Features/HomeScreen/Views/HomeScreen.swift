@@ -203,6 +203,7 @@ struct HomeScreen: View {
                 labelMap: store.labels.nameMap,
                 groupMap: store.groups.nameMap,
                 memberMap: store.members.nameMap,
+                labelColorMap: store.labels.colorMap,
                 onUpdate: {
                     loadRecentVisits()
                 }

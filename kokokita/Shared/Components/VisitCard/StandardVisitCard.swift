@@ -19,6 +19,9 @@ struct StandardVisitCard: View {
     /// コンパクトモード
     var compact: Bool = false
 
+    /// ラベル名→色のマップ
+    var labelColorMap: [String: Color] = [:]
+
     // MARK: - Computed Properties
 
     /// 今日の記録かどうか
@@ -66,21 +69,23 @@ struct StandardVisitCard: View {
                 }
             }
 
-            // ラベル／グループ／メンバーのバッジ
-            HStack(spacing: compact ? 4 : 8) {
+            // グループ（フォルダ帰属表示）
+            if let g = names.group {
+                GroupBadge(name: g, compact: compact)
+            }
+
+            // ラベル／メンバーのバッジ
+            if !names.labels.isEmpty || !names.members.isEmpty {
                 FlowRow(spacing: compact ? 4 : 6, rowSpacing: compact ? 4 : 6) {
-                    if let g = names.group {
-                        Chip(g, kind: .group, size: compact ? .xsmall : .small, showRemoveButton: false)
-                    }
                     ForEach(names.labels, id: \.self) { n in
-                        Chip(n, kind: .label, size: compact ? .xsmall : .small, showRemoveButton: false)
+                        Chip(n, kind: .label, size: compact ? .xsmall : .small, showRemoveButton: false, colorDot: labelColorMap[n])
                     }
                     ForEach(names.members, id: \.self) { n in
                         Chip(n, kind: .member, size: compact ? .xsmall : .small, showRemoveButton: false)
                     }
                 }
+                .padding(.top, compact ? 1 : 2)
             }
-            .padding(.top, compact ? 1 : 2)
         }
     }
 }
@@ -94,10 +99,12 @@ extension StandardVisitCard {
         labelMap: [UUID: String],
         groupMap: [UUID: String],
         memberMap: [UUID: String],
-        compact: Bool = false
+        compact: Bool = false,
+        labelColorMap: [String: Color] = [:]
     ) {
         self.aggregate = aggregate
         self.compact = compact
+        self.labelColorMap = labelColorMap
         self.nameResolver = { labelIds, groupId, memberIds in
             let labels = labelIds.compactMap { labelMap[$0] }
             let group = groupId.flatMap { groupMap[$0] }

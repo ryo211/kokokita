@@ -33,8 +33,8 @@ struct SearchFilterSheet: View {
         Form {
             keywordSection
             periodSection
-            labelSection
             groupSection
+            labelSection
             memberSection
             categorySection
         }
@@ -165,21 +165,21 @@ struct SearchFilterSheet: View {
                 // 未選択時：アイコン + 選択ボタン + 追加ボタンを表示
                 HStack(alignment: .center, spacing: UIConstants.Spacing.extraLarge) {
                     Image(systemName: "tag")
-                        .foregroundStyle(.purple)
+                        .foregroundStyle(ChipKind.defaultTint)
                         .imageScale(.medium)
                         .frame(height: 28, alignment: .center)
 
                     Button { showLabelPicker = true } label: {
                         Text("選択")
                     }
-                    .foregroundStyle(.purple)
+                    .foregroundStyle(ChipKind.defaultTint)
                     .frame(maxWidth: .infinity, alignment: .leading)
 
                     Button {
                         showLabelPicker = true
                     } label: {
                         Image(systemName: "plus.circle.fill")
-                            .foregroundStyle(.purple)
+                            .foregroundStyle(ChipKind.defaultTint)
                             .imageScale(.large)
                     }
                     .buttonStyle(.plain)
@@ -193,15 +193,16 @@ struct SearchFilterSheet: View {
                 } label: {
                     HStack(alignment: .center, spacing: UIConstants.Spacing.extraLarge) {
                         Image(systemName: "tag")
-                            .foregroundStyle(.purple)
+                            .foregroundStyle(ChipKind.defaultTint)
                             .imageScale(.medium)
                             .frame(height: 28, alignment: .center)
 
                         let lmap = Dictionary(uniqueKeysWithValues: vm.labels.map { ($0.id, $0.name) })
+                        let lColorMap = vm.labels.colorMap
                         FlowRow(spacing: 12, rowSpacing: 6) {
                             ForEach(store.labelFilters, id: \.self) { lid in
                                 if let name = lmap[lid]?.trimmingCharacters(in: .whitespacesAndNewlines), !name.isEmpty {
-                                    Chip(name, kind: .label, size: .small, showRemoveButton: true) {
+                                    Chip(name, kind: .label, size: .small, showRemoveButton: true, colorDot: lColorMap[name]) {
                                         store.labelFilters.removeAll { $0 == lid }
                                         vm.applyAndReload()
                                     }
@@ -215,7 +216,7 @@ struct SearchFilterSheet: View {
                             showLabelPicker = true
                         } label: {
                             Image(systemName: "plus.circle.fill")
-                                .foregroundStyle(.purple)
+                                .foregroundStyle(ChipKind.defaultTint)
                                 .imageScale(.large)
                         }
                         .buttonStyle(.plain)
@@ -234,21 +235,21 @@ struct SearchFilterSheet: View {
                 // 未選択時：アイコン + 選択ボタン + 追加ボタンを表示
                 HStack(alignment: .center, spacing: UIConstants.Spacing.extraLarge) {
                     Image(systemName: "folder")
-                        .foregroundStyle(.teal)
+                        .foregroundStyle(ChipKind.defaultTint)
                         .imageScale(.medium)
                         .frame(height: 28, alignment: .center)
 
                     Button { showGroupPicker = true } label: {
                         Text("選択")
                     }
-                    .foregroundStyle(.teal)
+                    .foregroundStyle(ChipKind.defaultTint)
                     .frame(maxWidth: .infinity, alignment: .leading)
 
                     Button {
                         showGroupPicker = true
                     } label: {
                         Image(systemName: "plus.circle.fill")
-                            .foregroundStyle(.teal)
+                            .foregroundStyle(ChipKind.defaultTint)
                             .imageScale(.large)
                     }
                     .buttonStyle(.plain)
@@ -262,7 +263,7 @@ struct SearchFilterSheet: View {
                 } label: {
                     HStack(alignment: .center, spacing: UIConstants.Spacing.extraLarge) {
                         Image(systemName: "folder")
-                            .foregroundStyle(.teal)
+                            .foregroundStyle(ChipKind.defaultTint)
                             .imageScale(.medium)
                             .frame(height: 28, alignment: .center)
 
@@ -284,7 +285,7 @@ struct SearchFilterSheet: View {
                             showGroupPicker = true
                         } label: {
                             Image(systemName: "plus.circle.fill")
-                                .foregroundStyle(.teal)
+                                .foregroundStyle(ChipKind.defaultTint)
                                 .imageScale(.large)
                         }
                         .buttonStyle(.plain)
@@ -303,21 +304,21 @@ struct SearchFilterSheet: View {
                 // 未選択時：アイコン + 選択ボタン + 追加ボタンを表示
                 HStack(alignment: .center, spacing: UIConstants.Spacing.extraLarge) {
                     Image(systemName: "person")
-                        .foregroundStyle(.blue)
+                        .foregroundStyle(ChipKind.defaultTint)
                         .imageScale(.medium)
                         .frame(height: 28, alignment: .center)
 
                     Button { showMemberPicker = true } label: {
                         Text("選択")
                     }
-                    .foregroundStyle(.blue)
+                    .foregroundStyle(ChipKind.defaultTint)
                     .frame(maxWidth: .infinity, alignment: .leading)
 
                     Button {
                         showMemberPicker = true
                     } label: {
                         Image(systemName: "plus.circle.fill")
-                            .foregroundStyle(.blue)
+                            .foregroundStyle(ChipKind.defaultTint)
                             .imageScale(.large)
                     }
                     .buttonStyle(.plain)
@@ -331,7 +332,7 @@ struct SearchFilterSheet: View {
                 } label: {
                     HStack(alignment: .center, spacing: UIConstants.Spacing.extraLarge) {
                         Image(systemName: "person")
-                            .foregroundStyle(.blue)
+                            .foregroundStyle(ChipKind.defaultTint)
                             .imageScale(.medium)
                             .frame(height: 28, alignment: .center)
 
@@ -353,7 +354,7 @@ struct SearchFilterSheet: View {
                             showMemberPicker = true
                         } label: {
                             Image(systemName: "plus.circle.fill")
-                                .foregroundStyle(.blue)
+                                .foregroundStyle(ChipKind.defaultTint)
                                 .imageScale(.large)
                         }
                         .buttonStyle(.plain)
@@ -372,21 +373,21 @@ struct SearchFilterSheet: View {
                 // 未選択時：アイコン + 選択ボタン + 追加ボタンを表示
                 HStack(alignment: .center, spacing: UIConstants.Spacing.extraLarge) {
                     Image(systemName: "mappin.and.ellipse")
-                        .foregroundStyle(.orange)
+                        .foregroundStyle(ChipKind.defaultTint)
                         .imageScale(.medium)
                         .frame(height: 28, alignment: .center)
 
                     Button { showCategoryPicker = true } label: {
                         Text("選択")
                     }
-                    .foregroundStyle(.orange)
+                    .foregroundStyle(ChipKind.defaultTint)
                     .frame(maxWidth: .infinity, alignment: .leading)
 
                     Button {
                         showCategoryPicker = true
                     } label: {
                         Image(systemName: "plus.circle.fill")
-                            .foregroundStyle(.orange)
+                            .foregroundStyle(ChipKind.defaultTint)
                             .imageScale(.large)
                     }
                     .buttonStyle(.plain)
@@ -400,7 +401,7 @@ struct SearchFilterSheet: View {
                 } label: {
                     HStack(alignment: .center, spacing: UIConstants.Spacing.extraLarge) {
                         Image(systemName: "mappin.and.ellipse")
-                            .foregroundStyle(.orange)
+                            .foregroundStyle(ChipKind.defaultTint)
                             .imageScale(.medium)
                             .frame(height: 28, alignment: .center)
 
@@ -421,7 +422,7 @@ struct SearchFilterSheet: View {
                             showCategoryPicker = true
                         } label: {
                             Image(systemName: "plus.circle.fill")
-                                .foregroundStyle(.orange)
+                                .foregroundStyle(ChipKind.defaultTint)
                                 .imageScale(.large)
                         }
                         .buttonStyle(.plain)

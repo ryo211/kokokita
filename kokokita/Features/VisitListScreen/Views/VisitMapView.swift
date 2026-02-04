@@ -14,6 +14,7 @@ struct VisitMapView: View {
     let labelMap: [UUID: String]
     let groupMap: [UUID: String]
     let memberMap: [UUID: String]
+    var labelColorMap: [String: Color] = [:]
     @Binding var selectedItemId: UUID?
     @Binding var sheetHeight: CGFloat
     let onShowDetail: (UUID) -> Void
@@ -45,11 +46,12 @@ struct VisitMapView: View {
                 ForEach(sortedItems) { agg in
                     if agg.visit.latitude != 0 || agg.visit.longitude != 0 {
                         let isSelected = selectedItemId == agg.id
+                        let pinColor = firstLabelColor(for: agg)
                         Annotation("", coordinate: CLLocationCoordinate2D(
                             latitude: agg.visit.latitude,
                             longitude: agg.visit.longitude
                         )) {
-                            MapPinView(isSelected: isSelected)
+                            MapPinView(isSelected: isSelected, pinColor: pinColor)
                                 .onTapGesture {
                                     selectedItemId = agg.id
                                 }
@@ -90,6 +92,7 @@ struct VisitMapView: View {
                     labelMap: labelMap,
                     groupMap: groupMap,
                     memberMap: memberMap,
+                    labelColorMap: labelColorMap,
                     onClose: {
                         selectedItemId = nil
                     },
@@ -119,6 +122,15 @@ struct VisitMapView: View {
             guard let newId else { return }
             focusOnItem(id: newId, animated: true)
         }
+    }
+
+    /// 訪問記録の先頭ラベル色を取得（名前順でソートして最初のラベルの色）
+    private func firstLabelColor(for agg: VisitAggregate) -> Color? {
+        let names = agg.details.labelIds
+            .compactMap { labelMap[$0] }
+            .sorted { $0.localizedCompare($1) == .orderedAscending }
+        guard let firstName = names.first else { return nil }
+        return labelColorMap[firstName]
     }
 
     /// 指定IDのピンを画面中心にしてズームイン
@@ -312,25 +324,31 @@ struct VisitMapView: View {
 // MARK: - Map Pin View
 struct MapPinView: View {
     let isSelected: Bool
+    var pinColor: Color?
+
+    /// ピンの表示色（ラベル色 > デフォルト赤）
+    private var baseColor: Color {
+        pinColor ?? .red
+    }
 
     var body: some View {
         ZStack {
             // 選択時は外側に目立つハロー効果
             if isSelected {
                 Circle()
-                    .fill(Color.blue.opacity(0.3))
+                    .fill(baseColor.opacity(0.3))
                     .frame(width: 36, height: 36)
             }
 
             Circle()
-                .fill(isSelected ? Color.blue : Color.red)
+                .fill(isSelected ? baseColor : baseColor)
                 .frame(width: isSelected ? 28 : 16, height: isSelected ? 28 : 16)
 
             Circle()
                 .stroke(Color.white, lineWidth: isSelected ? 3 : 2)
                 .frame(width: isSelected ? 28 : 16, height: isSelected ? 28 : 16)
         }
-        .shadow(color: isSelected ? Color.blue.opacity(0.5) : Color.black.opacity(0.3),
+        .shadow(color: isSelected ? baseColor.opacity(0.5) : Color.black.opacity(0.3),
                 radius: isSelected ? 6 : 2)
     }
 }
@@ -364,6 +382,7 @@ struct VisitMapDetailSheet: View {
     let labelMap: [UUID: String]
     let groupMap: [UUID: String]
     let memberMap: [UUID: String]
+    var labelColorMap: [String: Color] = [:]
     let onClose: () -> Void
     let onTap: () -> Void
 
@@ -385,6 +404,7 @@ struct VisitMapDetailSheet: View {
                 labelMap: labelMap,
                 groupMap: groupMap,
                 memberMap: memberMap,
+                labelColorMap: labelColorMap,
                 onClose: onClose
             )
         }

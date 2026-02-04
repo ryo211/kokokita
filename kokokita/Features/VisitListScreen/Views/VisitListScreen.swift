@@ -31,6 +31,9 @@ struct VisitListScreen: View {
     private var groupMap: [UUID: String] { store.groups.nameMap }
     private var memberMap: [UUID: String] { store.members.nameMap }
 
+    /// ラベル名→色のマップ
+    private var labelColorMap: [String: Color] { store.labels.colorMap }
+
     // カレンダー表示用：日付ごとの記録タイトルマップ
     private var visitsByDateMap: [Date: [String]] {
         var map: [Date: [String]] = [:]
@@ -228,7 +231,7 @@ struct VisitListScreen: View {
                 }
             )
         } label: {
-            VisitListRow(agg: agg, labelMap: labelMap, groupMap: groupMap, memberMap: memberMap)
+            VisitListRow(agg: agg, labelMap: labelMap, groupMap: groupMap, memberMap: memberMap, labelColorMap: labelColorMap)
         }
         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
             Button() {
@@ -458,6 +461,7 @@ struct VisitListScreen: View {
             labelMap: labelMap,
             groupMap: groupMap,
             memberMap: memberMap,
+            labelColorMap: labelColorMap,
             selectedItemId: $selectedMapItemId,
             sheetHeight: $mapSheetHeight,
             onShowDetail: { id in
@@ -476,6 +480,7 @@ struct VisitListScreen: View {
             labelMap: labelMap,
             groupMap: groupMap,
             memberMap: memberMap,
+            labelColorMap: labelColorMap,
             onTapVisit: { agg in
                 calendarSelectedVisitId = agg.id
             },
@@ -557,13 +562,18 @@ private struct VisitListRow: View {
     let labelMap: [UUID: String]
     let groupMap: [UUID: String]
     let memberMap: [UUID: String]
+    var labelColorMap: [String: Color] = [:]
 
     var body: some View {
         let labelNames = agg.details.labelIds.compactMap { labelMap[$0] }
         let groupName  = agg.details.groupId.flatMap { groupMap[$0] }
         let memberNames = agg.details.memberIds.compactMap { memberMap[$0] }
-        VisitRow(agg: agg) { _, _, _ in
-            (labels: labelNames, group: groupName, members: memberNames)
-        }
+        VisitRow(
+            agg: agg,
+            nameResolver: { _, _, _ in
+                (labels: labelNames, group: groupName, members: memberNames)
+            },
+            labelColorMap: labelColorMap
+        )
     }
 }

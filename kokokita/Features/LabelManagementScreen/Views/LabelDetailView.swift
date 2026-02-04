@@ -16,12 +16,14 @@ struct LabelDetailView: View {
     @State private var editingName: String = ""
     @State private var showEditSheet = false
     @State private var showDeleteConfirm = false
+    @State private var currentColorId: String?
 
     // 関連する訪問記録の表示用
     @State private var relatedVisits: [VisitAggregate] = []
     @State private var labelMap: [UUID: String] = [:]
     @State private var groupMap: [UUID: String] = [:]
     @State private var memberMap: [UUID: String] = [:]
+    @State private var visitLabelColorMap: [String: Color] = [:]
     @State private var editingTarget: VisitAggregate? = nil
     @State private var showVisitDeleteConfirm = false
     @State private var pendingDeleteVisitId: UUID? = nil
@@ -32,6 +34,7 @@ struct LabelDetailView: View {
         self.label = label
         self.onFinish = onFinish
         _name = State(initialValue: label.name)
+        _currentColorId = State(initialValue: label.colorId)
     }
 
     var body: some View {
@@ -41,6 +44,10 @@ struct LabelDetailView: View {
                 nameSection
                     .padding(.horizontal)
                     .padding(.vertical, 16)
+
+                colorSection
+                    .padding(.horizontal)
+                    .padding(.bottom, 16)
 
                 if !relatedVisits.isEmpty {
                     HStack {
@@ -164,7 +171,7 @@ struct LabelDetailView: View {
 
     private func save() {
         if store.update(id: label.id, name: name) {
-            onFinish(LabelTag(id: label.id, name: name), false)
+            onFinish(LabelTag(id: label.id, name: name, colorId: currentColorId), false)
             dismiss()
         }
     }
@@ -185,6 +192,20 @@ struct LabelDetailView: View {
 
     // MARK: - Sections
 
+    /// 色選択セクション
+    private var colorSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(L.LabelColor.sectionTitle)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            LabelColorPicker(selectedColorId: currentColorId) { newColorId in
+                currentColorId = newColorId
+                _ = store.updateColor(id: label.id, colorId: newColorId)
+            }
+        }
+    }
+
     private var nameSection: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(L.LabelManagement.namePlaceholder)
@@ -196,6 +217,7 @@ struct LabelDetailView: View {
                     Image(systemName: "tag")
                         .imageScale(.medium)
                         .font(.title3)
+                        .foregroundStyle(LabelColorId.from(currentColorId)?.color ?? ChipKind.defaultTint)
                     Text(name)
                         .font(.title3.bold())
                 }
@@ -250,7 +272,7 @@ struct LabelDetailView: View {
         Button {
             selectedVisit = VisitSelection(id: visit.id)
         } label: {
-            VisitRow(agg: visit, nameResolver: nameResolver, compact: true)
+            VisitRow(agg: visit, nameResolver: nameResolver, compact: true, labelColorMap: visitLabelColorMap)
         }
     }
 
@@ -271,6 +293,7 @@ struct LabelDetailView: View {
             labelMap = Dictionary(uniqueKeysWithValues: labels.map { ($0.id, $0.name) })
             groupMap = Dictionary(uniqueKeysWithValues: groups.map { ($0.id, $0.name) })
             memberMap = Dictionary(uniqueKeysWithValues: members.map { ($0.id, $0.name) })
+            visitLabelColorMap = labels.colorMap
 
             // このラベルを使用している訪問記録を取得
             let visits = try repo.fetchAll(

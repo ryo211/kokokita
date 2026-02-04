@@ -22,6 +22,7 @@ struct MemberDetailView: View {
     @State private var labelMap: [UUID: String] = [:]
     @State private var groupMap: [UUID: String] = [:]
     @State private var memberMap: [UUID: String] = [:]
+    @State private var labelColorMap: [String: Color] = [:]
     @State private var editingTarget: VisitAggregate? = nil
     @State private var showVisitDeleteConfirm = false
     @State private var pendingDeleteVisitId: UUID? = nil
@@ -250,7 +251,7 @@ struct MemberDetailView: View {
         Button {
             selectedVisit = VisitSelection(id: visit.id)
         } label: {
-            VisitRow(agg: visit, nameResolver: nameResolver, compact: true)
+            VisitRow(agg: visit, nameResolver: nameResolver, compact: true, labelColorMap: labelColorMap)
         }
     }
 
@@ -271,6 +272,7 @@ struct MemberDetailView: View {
             labelMap = Dictionary(uniqueKeysWithValues: labels.map { ($0.id, $0.name) })
             groupMap = Dictionary(uniqueKeysWithValues: groups.map { ($0.id, $0.name) })
             memberMap = Dictionary(uniqueKeysWithValues: members.map { ($0.id, $0.name) })
+            labelColorMap = labels.colorMap
 
             // このメンバーを使用している訪問記録を取得
             let visits = try repo.fetchAll(

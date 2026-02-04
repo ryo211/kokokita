@@ -8,6 +8,7 @@ struct CalendarContentView: View {
     let labelMap: [UUID: String]
     let groupMap: [UUID: String]
     let memberMap: [UUID: String]
+    var labelColorMap: [String: Color] = [:]
     var onTapVisit: ((VisitAggregate) -> Void)? = nil
     var onPanelVisibilityChanged: ((Bool) -> Void)? = nil
 
@@ -268,78 +269,79 @@ struct CalendarContentView: View {
         let isSelected = selectedDate == date
         let isToday = calendar.isDateInToday(date)
 
-        Button {
-            if hasVisits {
-                if selectedDate == date {
-                    dismissPanel()
-                } else if selectedDate != nil {
-                    // 別の日付に切り替え
-                    withAnimation(.easeInOut(duration: 0.25)) {
-                        panelDragOffset = 0
-                        selectedDate = date
-                    }
-                } else {
-                    // 新規選択 → スライドインで表示
-                    showPanel(for: date)
-                }
+        ZStack(alignment: .topLeading) {
+            // 背景（選択時はアクセントカラー）
+            if isSelected {
+                Color.accentColor.opacity(0.15)
+            } else if isToday {
+                Color.gray.opacity(0.12)
+            } else {
+                Color(.systemBackground)
             }
-        } label: {
-            ZStack(alignment: .topLeading) {
-                // 背景（選択時はアクセントカラー）
-                if isSelected {
-                    Color.accentColor.opacity(0.15)
-                } else if isToday {
-                    Color.red.opacity(0.12)
-                } else {
-                    Color(.systemBackground)
-                }
 
-                VStack(alignment: .leading, spacing: 4) {
-                    // 日付
-                    Text("\(calendar.component(.day, from: date))")
-                        .font(.caption)
-                        .fontWeight(isSelected ? .bold : .regular)
-                        .foregroundStyle(isSelected ? Color.accentColor : (isToday ? Color.red : Color.primary))
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.leading, 2)
-                        .padding(.top, 2)
+            VStack(alignment: .leading, spacing: 4) {
+                // 日付
+                Text("\(calendar.component(.day, from: date))")
+                    .font(.caption)
+                    .fontWeight(isSelected ? .bold : .regular)
+                    .foregroundStyle(isSelected ? Color.accentColor : (isToday ? Color.red : Color.primary))
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.leading, 2)
+                    .padding(.top, 2)
 
-                    // 記録タイトル（最大3件）
-                    if hasVisits {
-                        VStack(alignment: .leading, spacing: 2) {
-                            ForEach(titles.prefix(3), id: \.self) { title in
-                                Text(String(title.prefix(5)))
-                                    .font(.system(size: 10))
-                                    .foregroundStyle(Color.accentColor)
-                                    .lineLimit(1)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .padding(.horizontal, 3)
-                                    .padding(.vertical, 1)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 2)
-                                            .fill(Color.accentColor.opacity(isSelected ? 0.15 : 0.08))
-                                    )
-                                    .overlay {
-                                        RoundedRectangle(cornerRadius: 2)
-                                            .strokeBorder(Color.accentColor.opacity(0.2), lineWidth: 0.5)
-                                    }
-                            }
-
-                            if titles.count > 3 {
-                                Text("他\(titles.count - 3)件")
-                                    .font(.system(size: 8))
-                                    .foregroundStyle(Color.secondary.opacity(0.7))
-                            }
+                // 記録タイトル（最大3件）
+                if hasVisits {
+                    let aggs = aggregatesByDate[date] ?? []
+                    VStack(alignment: .leading, spacing: 2) {
+                        ForEach(Array(zip(titles.prefix(3), aggs.prefix(3))), id: \.0) { title, agg in
+                            let entryColor = firstLabelColor(for: agg) ?? ChipKind.defaultTint
+                            Text(String(title.prefix(5)))
+                                .font(.system(size: 9, weight: .semibold))
+                                .foregroundStyle(Color.secondary)
+                                .lineLimit(1)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.horizontal, 3)
+                                .padding(.vertical, 1)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 2)
+                                        .fill(entryColor.opacity(isSelected ? 0.25 : 0.15))
+                                )
+                                .overlay {
+                                    RoundedRectangle(cornerRadius: 2)
+                                        .strokeBorder(entryColor.opacity(0.3), lineWidth: 0.5)
+                                }
                         }
-                        .padding(.horizontal, 2)
-                    }
 
-                    Spacer()
+                        if titles.count > 3 {
+                            Text("他\(titles.count - 3)件")
+                                .font(.system(size: 8))
+                                .foregroundStyle(Color.secondary.opacity(0.7))
+                        }
+                    }
+                    .padding(.horizontal, 2)
                 }
-                .opacity(hasVisits ? 1.0 : 0.3)
+
+                Spacer()
             }
-            .frame(width: nil, height: 80)
-            .frame(maxWidth: .infinity)
+            .opacity(hasVisits ? 1.0 : 0.3)
+        }
+        .frame(width: nil, height: 80)
+        .frame(maxWidth: .infinity)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            guard hasVisits else { return }
+            if selectedDate == date {
+                dismissPanel()
+            } else if selectedDate != nil {
+                // 別の日付に切り替え
+                withAnimation(.easeInOut(duration: 0.25)) {
+                    panelDragOffset = 0
+                    selectedDate = date
+                }
+            } else {
+                // 新規選択 → スライドインで表示
+                showPanel(for: date)
+            }
         }
         .overlay(alignment: .trailing) {
             Rectangle()
@@ -357,8 +359,6 @@ struct CalendarContentView: View {
                     .strokeBorder(Color.accentColor.opacity(0.4), lineWidth: 1.5)
             }
         }
-        .buttonStyle(.plain)
-        .disabled(!hasVisits)
     }
 
     // MARK: - Record List Panel（オーバーレイ）
@@ -407,7 +407,8 @@ struct CalendarContentView: View {
                                         let members = memberIds.compactMap { memberMap[$0] }
                                         return (labels, group, members)
                                     },
-                                    compact: true
+                                    compact: true,
+                                    labelColorMap: labelColorMap
                                 )
                                 .padding(.vertical, 10)
                                 .padding(.horizontal, 16)
@@ -429,6 +430,15 @@ struct CalendarContentView: View {
                 .shadow(color: Color.black.opacity(0.15), radius: 12, x: 0, y: -4)
         )
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+
+    /// 訪問記録の先頭ラベル色を取得（名前順ソートで最初のラベルの色）
+    private func firstLabelColor(for agg: VisitAggregate) -> Color? {
+        let names = agg.details.labelIds
+            .compactMap { labelMap[$0] }
+            .sorted { $0.localizedCompare($1) == .orderedAscending }
+        guard let firstName = names.first else { return nil }
+        return labelColorMap[firstName]
     }
 
     // パネルをドラッグで閉じる

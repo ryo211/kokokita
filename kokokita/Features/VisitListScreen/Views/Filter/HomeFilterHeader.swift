@@ -91,10 +91,11 @@ struct HomeFilterHeader: View {
             // 3) ラベル（複数）
             if !vm.labelFilters.isEmpty {
                 let lmap = Dictionary(uniqueKeysWithValues: vm.labels.map { ($0.id, $0.name) })
+                let lColorMap = vm.labels.colorMap
                 FlowRow(spacing: 6, rowSpacing: 6) {
                     ForEach(vm.labelFilters, id: \.self) { lid in
                         if let name = lmap[lid]?.trimmingCharacters(in: .whitespacesAndNewlines), !name.isEmpty {
-                            Chip(name, kind: .label) {
+                            Chip(name, kind: .label, colorDot: lColorMap[name]) {
                                 vm.labelFilters.removeAll { $0 == lid }
                                 vm.reload()
                             }
@@ -302,7 +303,7 @@ struct HomeFilterHeader: View {
                 .padding(3)
             }
         }
-        .frame(width: 230, height: 36)
+        .frame(width: 200, height: 36)
     }
 
     private func indicatorOffset(buttonWidth: CGFloat) -> CGFloat {

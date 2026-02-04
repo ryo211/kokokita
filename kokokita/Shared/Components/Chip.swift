@@ -9,6 +9,7 @@ struct Chip: View {
 
     var overrideSystemImage: String?
     var overrideTint: Color?
+    var colorDot: Color?
 
     init(
         _ text: String,
@@ -17,6 +18,7 @@ struct Chip: View {
         showRemoveButton: Bool = true,
         overrideSystemImage: String? = nil,
         overrideTint: Color? = nil,
+        colorDot: Color? = nil,
         onRemove: @escaping () -> Void = {}
     ) {
         self.text = text
@@ -25,6 +27,7 @@ struct Chip: View {
         self.showRemoveButton = showRemoveButton
         self.overrideSystemImage = overrideSystemImage
         self.overrideTint = overrideTint
+        self.colorDot = colorDot
         self.onRemove = onRemove
     }
 
@@ -34,9 +37,9 @@ struct Chip: View {
     // サイズに応じたフォントとパディング
     private var font: Font {
         switch size {
-        case .regular: return .caption
-        case .small:   return .caption2
-        case .xsmall:  return .caption2
+        case .regular: return .caption.bold()
+        case .small:   return .caption2.bold()
+        case .xsmall:  return .caption2.bold()
         }
     }
 
@@ -59,9 +62,14 @@ struct Chip: View {
     private var iconScale: Image.Scale {
         switch size {
         case .regular: return .medium
-        case .small:   return .small
+        case .small:   return .medium
         case .xsmall:  return .small
         }
+    }
+
+    /// アイコンの色（ラベル色が設定されていればその色、なければ tint）
+    private var iconColor: Color {
+        colorDot ?? tint
     }
 
     // 表示用のテキスト（10文字制限）
@@ -77,6 +85,7 @@ struct Chip: View {
             if let img = systemImage {
                 Image(systemName: img)
                     .imageScale(iconScale)
+                    .foregroundStyle(iconColor)
             }
             Text(displayText)
                 .lineLimit(1)
@@ -122,18 +131,12 @@ enum ChipKind {
         }
     }
 
+    /// チップの統一カラー
+    static let defaultTint = Color(.systemGray)
+
     /// チップのトーン（前景色／背景色の元色）
     var tint: Color {
-        switch self {
-        case .label:       return .purple
-        case .group:       return .teal
-        case .member:      return .blue
-        case .category:    return .orange
-        case .keyword:     return .red
-        case .period:      return .orange
-        case .poiCategory: return .green
-        case .other:       return .secondary
-        }
+        Self.defaultTint
     }
 }
 

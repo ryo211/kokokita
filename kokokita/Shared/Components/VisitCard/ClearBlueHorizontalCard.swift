@@ -40,6 +40,9 @@ struct ClearBlueHorizontalCard: View {
     /// メンバー名のマップ
     var memberMap: [UUID: String] = [:]
 
+    /// ラベル名→色のマップ
+    var labelColorMap: [String: Color] = [:]
+
     /// 閉じるボタンのアクション（mapSheetバリアント用）
     var onClose: (() -> Void)?
 
@@ -159,7 +162,13 @@ struct ClearBlueHorizontalCard: View {
                         .lineLimit(2)
                 }
 
-                // ラベル/グループ/メンバー
+                // グループ（フォルダ帰属表示）
+                if let gid = aggregate.details.groupId, let gname = groupMap[gid] {
+                    GroupBadge(name: gname, compact: false)
+                        .foregroundStyle(VisitCardStyle.primaryTextColor)
+                }
+
+                // ラベル/メンバー
                 chipRow
             }
 
@@ -220,21 +229,21 @@ struct ClearBlueHorizontalCard: View {
 
     @ViewBuilder
     private var chipRow: some View {
-        FlowRow(spacing: 6, rowSpacing: 6) {
-            // グループ
-            if let gid = aggregate.details.groupId, let gname = groupMap[gid] {
-                Chip(gname, kind: .group, size: .small, showRemoveButton: false)
-            }
-            // ラベル（最大2つ）
-            ForEach(aggregate.details.labelIds.prefix(2), id: \.self) { lid in
-                if let lname = labelMap[lid] {
-                    Chip(lname, kind: .label, size: .small, showRemoveButton: false)
+        let hasLabels = aggregate.details.labelIds.contains(where: { labelMap[$0] != nil })
+        let hasMembers = aggregate.details.memberIds.contains(where: { memberMap[$0] != nil })
+        if hasLabels || hasMembers {
+            FlowRow(spacing: 6, rowSpacing: 6) {
+                // ラベル（最大2つ）
+                ForEach(aggregate.details.labelIds.prefix(2), id: \.self) { lid in
+                    if let lname = labelMap[lid] {
+                        Chip(lname, kind: .label, size: .small, showRemoveButton: false, colorDot: labelColorMap[lname])
+                    }
                 }
-            }
-            // メンバー（最大2つ）
-            ForEach(aggregate.details.memberIds.prefix(2), id: \.self) { mid in
-                if let mname = memberMap[mid] {
-                    Chip(mname, kind: .member, size: .small, showRemoveButton: false)
+                // メンバー（最大2つ）
+                ForEach(aggregate.details.memberIds.prefix(2), id: \.self) { mid in
+                    if let mname = memberMap[mid] {
+                        Chip(mname, kind: .member, size: .small, showRemoveButton: false)
+                    }
                 }
             }
         }

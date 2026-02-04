@@ -327,7 +327,7 @@ final class CoreDataVisitRepository {
                 Logger.warning("Label entity missing required fields (id or name)")
                 return nil
             }
-            return LabelTag(id: id, name: name)
+            return LabelTag(id: id, name: name, colorId: row.colorId)
         }
     }
 
@@ -359,7 +359,7 @@ final class CoreDataVisitRepository {
         let req: NSFetchRequest<LabelEntity> = LabelEntity.fetchRequest()
         req.predicate = NSPredicate(format: "name == %@", name)
         if let hit = try ctx.fetch(req).first, let id = hit.id, let nm = hit.name {
-            return LabelTag(id: id, name: nm)
+            return LabelTag(id: id, name: nm, colorId: hit.colorId)
         }
         let e = LabelEntity(context: ctx)
         let newId = UUID()
