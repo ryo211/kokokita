@@ -252,7 +252,7 @@
 "location.acquiring" = "位置情報を取得中...";
 "location.waiting" = "しばらくお待ちください";
 "location.noLocation" = "位置情報なし";
-"location.kokokitaCompleted" = "ココキタ  ✅";
+"location.kokokitaCompleted" = "ココキタ";
 "location.noLocationData" = "位置情報がありません";
 
 // MARK: - Empty State

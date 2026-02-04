@@ -99,6 +99,9 @@ iOSInjectionProject/
 .vscode/
 .idea/
 
+# Local tooling
+opcode/
+
 # Claude Code
 # .claude/
 # CLAUDE.md
