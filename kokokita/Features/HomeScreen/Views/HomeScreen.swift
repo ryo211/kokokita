@@ -99,14 +99,12 @@ struct HomeScreen: View {
         }
         .onAppear {
             // 画面表示のたびに最新データを読み込む
-            store.reload()
+            loadTaxonomy()
             loadRecentVisits()
         }
         .onReceive(NotificationCenter.default.publisher(for: .visitsChanged)) { _ in
-            Task {
-                store.reload()
-                loadRecentVisits()
-            }
+            loadTaxonomy()
+            loadRecentVisits()
         }
     }
 
@@ -230,26 +228,26 @@ struct HomeScreen: View {
         recentVisits ?? []
     }
 
-    private func loadRecentVisits() {
-        let repo = AppContainer.shared.repo
+    /// タクソノミー（ラベル・グループ・メンバー）のみ軽量に読み込み
+    private func loadTaxonomy() {
         do {
-            // 全記録から最新5件を取得（フィルタなし、日付降順でソート）
-            let allVisits = try repo.fetchAll(
-                filterLabel: nil,
-                filterGroup: nil,
-                filterMember: nil,
-                titleQuery: nil,
-                dateFrom: nil,
-                dateToExclusive: nil
-            )
-            let newRecents = Array(allVisits.sorted(by: { $0.visit.timestampUTC > $1.visit.timestampUTC }).prefix(5))
+            store.labels = try AppContainer.shared.repo.allLabels()
+            store.groups = try AppContainer.shared.repo.allGroups()
+            store.members = try AppContainer.shared.repo.allMembers()
+        } catch {
+            Logger.error("Failed to load taxonomy: \(error.localizedDescription)")
+        }
+    }
 
-            // アニメーション付きで更新
+    /// 最新5件のみを Core Data レベルで取得
+    private func loadRecentVisits() {
+        do {
+            let newRecents = try AppContainer.shared.repo.fetchRecent(limit: 5)
             withAnimation {
                 recentVisits = newRecents
             }
         } catch {
-            Logger.error("Failed to load recent visits", error: error)
+            Logger.error("Failed to load recent visits: \(error.localizedDescription)")
             withAnimation {
                 recentVisits = []
             }

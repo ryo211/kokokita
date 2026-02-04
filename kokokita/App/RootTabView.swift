@@ -74,9 +74,10 @@ struct RootTabView: View {
                     .opacity(tab == .records ? 1 : 0)
                     .zIndex(tab == .records ? 1 : 0)
 
-                CourseScreen()
-                    .opacity(tab == .course ? 1 : 0)
-                    .zIndex(tab == .course ? 1 : 0)
+                // CourseScreen は一時的に非表示（リリース後に復活予定）
+                // CourseScreen()
+                //     .opacity(tab == .course ? 1 : 0)
+                //     .zIndex(tab == .course ? 1 : 0)
 
                 NavigationStack { SettingsHomeScreen() }
                     .opacity(tab == .menu ? 1 : 0)
@@ -506,8 +507,18 @@ fileprivate struct HomeTabBar: View {
                     }
                     .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 3)
 
+                // タブ定義（ここで追加・削除すれば自動的に均等配置される）
+                let tabItems: [(icon: String, title: String, tab: RootTab)] = [
+                    ("house.fill", L.Tab.home, .home),
+                    ("list.bullet", L.Tab.records, .records),
+                    // ("map", L.Tab.course, .course),  // リリース後に復活予定
+                    ("ellipsis.circle.fill", L.Tab.menu, .menu),
+                ]
+                let tabCount = CGFloat(tabItems.count)
+                let tabWidth = (geometry.size.width - 16) / tabCount
+                let currentIndex = tabItems.firstIndex(where: { $0.tab == current }) ?? 0
+
                 // スライディングインジケーター (ヌルッと移動)
-                let tabWidth = (geometry.size.width - 16) / 4
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
                     .fill(.ultraThinMaterial)
                     .overlay {
@@ -552,15 +563,14 @@ fileprivate struct HomeTabBar: View {
                     }
                     .frame(width: tabWidth, height: geometry.size.height - 12)
                     .shadow(color: Color.black.opacity(0.08), radius: 6, x: 0, y: 2)
-                    .offset(x: indicatorOffset(tabWidth: tabWidth))
+                    .offset(x: 6 + CGFloat(currentIndex) * tabWidth)
                     .animation(.interpolatingSpring(stiffness: 150, damping: 18), value: current)
 
-                // 透明なボタンラベル
+                // ボタンラベル
                 HStack(spacing: 0) {
-                    tabButton(icon: "house.fill", title: L.Tab.home, tab: .home, width: tabWidth)
-                    tabButton(icon: "list.bullet", title: L.Tab.records, tab: .records, width: tabWidth)
-                    tabButton(icon: "map", title: L.Tab.course, tab: .course, width: tabWidth)
-                    tabButton(icon: "ellipsis.circle.fill", title: L.Tab.menu, tab: .menu, width: tabWidth)
+                    ForEach(Array(tabItems.enumerated()), id: \.offset) { _, item in
+                        tabButton(icon: item.icon, title: item.title, tab: item.tab, width: tabWidth)
+                    }
                 }
                 .padding(6)
             }
@@ -568,18 +578,6 @@ fileprivate struct HomeTabBar: View {
         .frame(height: 64)
         .padding(.horizontal, UIConstants.Spacing.extraLarge + 8)
         .padding(.bottom, UIConstants.Spacing.medium)
-    }
-
-    private func indicatorOffset(tabWidth: CGFloat) -> CGFloat {
-        let index: Int
-        switch current {
-        case .home: index = 0
-        case .records: index = 1
-        case .course: index = 2
-        case .menu: index = 3
-        case .center: index = 0 // フォールバック
-        }
-        return 6 + CGFloat(index) * tabWidth
     }
 
     private func tabButton(icon: String, title: String, tab: RootTab, width: CGFloat) -> some View {
@@ -806,12 +804,11 @@ fileprivate struct OthersTabBar: View {
                     }
                     .frame(width: tabWidth, height: geometry.size.height - 12)
                     .shadow(color: Color.black.opacity(0.08), radius: 6, x: 0, y: 2)
-                    .offset(x: current == .course ? 6 : tabWidth + 6)
+                    .offset(x: 6)
                     .animation(.interpolatingSpring(stiffness: 150, damping: 18), value: current)
 
                 // ボタンラベル
                 HStack(spacing: 0) {
-                    tabButton(icon: "map", title: L.Tab.course, tab: .course, width: tabWidth)
                     tabButton(icon: "ellipsis.circle.fill", title: L.Tab.menu, tab: .menu, width: tabWidth)
                 }
                 .padding(6)

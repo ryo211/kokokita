@@ -245,6 +245,17 @@ final class CoreDataVisitRepository {
 
 
 
+    /// 最新の訪問記録を指定件数だけ取得（Core Data レベルでソート・件数制限）
+    func fetchRecent(limit: Int) throws -> [VisitAggregate] {
+        let request: NSFetchRequest<VisitEntity> = VisitEntity.fetchRequest()
+        request.sortDescriptors = [NSSortDescriptor(key: "timestampUTC", ascending: false)]
+        request.fetchLimit = limit
+        // リレーションを事前読み込みしてN+1を軽減
+        request.relationshipKeyPathsForPrefetching = ["details", "details.labels", "details.members", "details.photos"]
+        let rows = try ctx.fetch(request)
+        return rows.compactMap { self.toAggregate($0) }
+    }
+
     func get(by id: UUID) throws -> VisitAggregate? {
         guard let v = try fetchVisitEntity(id: id) else {
             Logger.debug("Visit not found: \(id)")
