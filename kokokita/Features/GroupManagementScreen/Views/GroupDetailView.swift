@@ -1,13 +1,20 @@
 import SwiftUI
 import CoreLocation
 
+private struct VisitSelection: Identifiable, Hashable {
+    let id: UUID
+}
+
 struct GroupDetailView: View {
     let group: GroupTag
     var onFinish: (_ updated: GroupTag?, _ deleted: Bool) -> Void
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(AppUIState.self) private var ui
     @State private var store = GroupListStore()
     @State private var name: String
+    @State private var editingName: String = ""
+    @State private var showEditSheet = false
     @State private var showDeleteConfirm = false
 
     // 関連する訪問記録の表示用
@@ -15,9 +22,11 @@ struct GroupDetailView: View {
     @State private var labelMap: [UUID: String] = [:]
     @State private var groupMap: [UUID: String] = [:]
     @State private var memberMap: [UUID: String] = [:]
+    @State private var labelColorMap: [String: Color] = [:]
     @State private var editingTarget: VisitAggregate? = nil
     @State private var showVisitDeleteConfirm = false
     @State private var pendingDeleteVisitId: UUID? = nil
+    @State private var selectedVisit: VisitSelection? = nil
     private let repo = AppContainer.shared.repo
 
     init(group: GroupTag, onFinish: @escaping (_ updated: GroupTag?, _ deleted: Bool) -> Void) {
@@ -27,17 +36,100 @@ struct GroupDetailView: View {
     }
 
     var body: some View {
-        Form {
-            nameSection
-            deleteSection
-            relatedVisitsSection
+        VStack(spacing: 0) {
+            // 固定部分：名前表示と編集ボタン、ヘッダー
+            VStack(spacing: 0) {
+                nameSection
+                    .padding(.horizontal)
+                    .padding(.vertical, 16)
+
+                if !relatedVisits.isEmpty {
+                    HStack {
+                        Text("\(L.GroupManagement.relatedVisitsHeader) (\(relatedVisits.count)\(L.Home.itemsCount))")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                    }
+                    .padding(.horizontal)
+                    .padding(.top, 12)
+                    .padding(.bottom, 16)
+                }
+
+                Divider()
+            }
+            .background(Color(.systemBackground))
+
+            // スクロール可能な部分：関連する記録のリストのみ
+            if !relatedVisits.isEmpty {
+                List {
+                    ForEach(relatedVisits, id: \.id) { visit in
+                        visitRowView(for: visit)
+                    }
+                }
+                .listStyle(.plain)
+                .navigationDestination(item: $selectedVisit) { selection in
+                    if let visit = relatedVisits.first(where: { $0.id == selection.id }) {
+                        VisitDetailScreen(
+                            data: toDetailData(visit),
+                            visitId: selection.id,
+                            onBack: {},
+                            onEdit: { editingTarget = visit },
+                            onShare: {},
+                            onDelete: {
+                                pendingDeleteVisitId = selection.id
+                                showVisitDeleteConfirm = true
+                            },
+                            onUpdate: {
+                                loadRelatedVisits()
+                            },
+                            onMapTap: { ui.mapFocusVisitId = selection.id }
+                        )
+                    }
+                }
+            } else {
+                Spacer()
+            }
         }
-        .navigationTitle(L.GroupManagement.detailTitle)
+        .navigationTitle("")
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button(L.Common.save) { save() }
-                    .disabled(store.loading || !GroupValidator.isNotEmpty(name))
+                Button(role: .destructive) {
+                    showDeleteConfirm = true
+                } label: {
+                    Image(systemName: "trash")
+                }
             }
+        }
+        .sheet(isPresented: $showEditSheet) {
+            NavigationStack {
+                Form {
+                    Section {
+                        TextField(L.GroupManagement.namePlaceholder, text: $editingName)
+                            .submitLabel(.done)
+                            .onSubmit {
+                                if GroupValidator.isNotEmpty(editingName) {
+                                    saveEdit()
+                                }
+                            }
+                    }
+                }
+                .navigationTitle(L.Common.edit)
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button(L.Common.cancel) {
+                            showEditSheet = false
+                        }
+                    }
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button(L.Common.save) {
+                            saveEdit()
+                        }
+                        .disabled(store.loading || !GroupValidator.isNotEmpty(editingName))
+                    }
+                }
+            }
+            .presentationDetents([.height(200)])
         }
         .onAppear {
             loadRelatedVisits()
@@ -78,6 +170,13 @@ struct GroupDetailView: View {
         }
     }
 
+    private func saveEdit() {
+        if store.update(id: group.id, name: editingName) {
+            name = editingName
+            showEditSheet = false
+        }
+    }
+
     private func delete() {
         if store.delete(id: group.id) {
             onFinish(nil, true)
@@ -88,26 +187,37 @@ struct GroupDetailView: View {
     // MARK: - Sections
 
     private var nameSection: some View {
-        Section {
-            TextField(L.GroupManagement.namePlaceholder, text: $name)
-                .submitLabel(.done)
-                .onSubmit {
-                    if GroupValidator.isNotEmpty(name) {
-                        save()
-                    }
-                }
-        }
-    }
+        VStack(alignment: .leading, spacing: 4) {
+            Text(L.GroupManagement.namePlaceholder)
+                .font(.caption)
+                .foregroundStyle(.secondary)
 
-    private var deleteSection: some View {
-        Section {
-            Button(role: .destructive) {
-                showDeleteConfirm = true
-            } label: {
-                Label(L.GroupManagement.deleteConfirm, systemImage: "trash")
+            HStack(alignment: .bottom) {
+                HStack(spacing: 8) {
+                    Image(systemName: "folder")
+                        .imageScale(.medium)
+                        .font(.title3)
+                    Text(name)
+                        .font(.title3.bold())
+                }
+                Spacer()
+                Button {
+                    editingName = name
+                    showEditSheet = true
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "pencil")
+                        Text(L.Common.edit)
+                    }
+                    .font(.subheadline)
+                }
             }
-        } footer: {
-            Text(L.GroupManagement.deleteFooter)
+            .padding(.bottom, 4)
+            .overlay(alignment: .bottom) {
+                Rectangle()
+                    .fill(Color.primary.opacity(0.3))
+                    .frame(height: 1)
+            }
         }
     }
 
@@ -138,24 +248,10 @@ struct GroupDetailView: View {
 
     @ViewBuilder
     private func visitRowView(for visit: VisitAggregate) -> some View {
-        NavigationLink {
-            VisitDetailScreen(
-                data: toDetailData(visit),
-                visitId: visit.id,
-                onBack: {},
-                onEdit: { editingTarget = visit },
-                onShare: {},
-                onDelete: {
-                    pendingDeleteVisitId = visit.id
-                    showVisitDeleteConfirm = true
-                },
-                onUpdate: {
-                    loadRelatedVisits()
-                },
-                onMapTap: nil
-            )
+        Button {
+            selectedVisit = VisitSelection(id: visit.id)
         } label: {
-            VisitRow(agg: visit, nameResolver: nameResolver)
+            VisitRow(agg: visit, nameResolver: nameResolver, compact: true, labelColorMap: labelColorMap)
         }
     }
 
@@ -176,6 +272,7 @@ struct GroupDetailView: View {
             labelMap = Dictionary(uniqueKeysWithValues: labels.map { ($0.id, $0.name) })
             groupMap = Dictionary(uniqueKeysWithValues: groups.map { ($0.id, $0.name) })
             memberMap = Dictionary(uniqueKeysWithValues: members.map { ($0.id, $0.name) })
+            labelColorMap = labels.colorMap
 
             // このグループを使用している訪問記録を取得
             let visits = try repo.fetchAll(

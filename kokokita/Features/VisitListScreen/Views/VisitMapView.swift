@@ -14,6 +14,7 @@ struct VisitMapView: View {
     let labelMap: [UUID: String]
     let groupMap: [UUID: String]
     let memberMap: [UUID: String]
+    var labelColorMap: [String: Color] = [:]
     @Binding var selectedItemId: UUID?
     @Binding var sheetHeight: CGFloat
     let onShowDetail: (UUID) -> Void
@@ -45,11 +46,12 @@ struct VisitMapView: View {
                 ForEach(sortedItems) { agg in
                     if agg.visit.latitude != 0 || agg.visit.longitude != 0 {
                         let isSelected = selectedItemId == agg.id
+                        let pinColor = firstLabelColor(for: agg)
                         Annotation("", coordinate: CLLocationCoordinate2D(
                             latitude: agg.visit.latitude,
                             longitude: agg.visit.longitude
                         )) {
-                            MapPinView(isSelected: isSelected)
+                            MapPinView(isSelected: isSelected, pinColor: pinColor)
                                 .onTapGesture {
                                     selectedItemId = agg.id
                                 }
@@ -90,6 +92,7 @@ struct VisitMapView: View {
                     labelMap: labelMap,
                     groupMap: groupMap,
                     memberMap: memberMap,
+                    labelColorMap: labelColorMap,
                     onClose: {
                         selectedItemId = nil
                     },
@@ -105,10 +108,46 @@ struct VisitMapView: View {
             sheetHeight = height
         }
         .task {
-            updateCameraPosition()
+            // 初期選択がある場合はそのピンにズーム、なければ全体表示
+            if let id = selectedItemId {
+                focusOnItem(id: id, animated: false)
+            } else {
+                updateCameraPosition()
+            }
         }
         .onChange(of: items) {
             updateCameraPosition()
+        }
+        .onChange(of: selectedItemId) { _, newId in
+            guard let newId else { return }
+            focusOnItem(id: newId, animated: true)
+        }
+    }
+
+    /// 訪問記録の先頭ラベル色を取得（名前順でソートして最初のラベルの色）
+    private func firstLabelColor(for agg: VisitAggregate) -> Color? {
+        let names = agg.details.labelIds
+            .compactMap { labelMap[$0] }
+            .sorted { $0.localizedCompare($1) == .orderedAscending }
+        guard let firstName = names.first else { return nil }
+        return labelColorMap[firstName]
+    }
+
+    /// 指定IDのピンを画面中心にしてズームイン
+    private func focusOnItem(id: UUID, animated: Bool) {
+        guard let agg = items.first(where: { $0.id == id }),
+              agg.visit.latitude != 0 || agg.visit.longitude != 0 else { return }
+        let region = MKCoordinateRegion(
+            center: CLLocationCoordinate2D(latitude: agg.visit.latitude, longitude: agg.visit.longitude),
+            latitudinalMeters: 500,
+            longitudinalMeters: 500
+        )
+        if animated {
+            withAnimation(.easeInOut(duration: 0.3)) {
+                cameraPosition = .region(region)
+            }
+        } else {
+            cameraPosition = .region(region)
         }
     }
 
@@ -146,7 +185,7 @@ struct VisitMapView: View {
         }
     }
 
-    // MARK: - Current Location Button
+    // MARK: - Current Location Button (Liquid Glass)
     private var currentLocationButton: some View {
         Button {
             Task {
@@ -154,10 +193,69 @@ struct VisitMapView: View {
             }
         } label: {
             ZStack {
-                Circle()
-                    .fill(showCurrentLocation ? Color.blue : Color.white)
-                    .frame(width: 44, height: 44)
-                    .shadow(radius: 4)
+                if showCurrentLocation {
+                    // アクティブ状態: Liquid Glassプライマリスタイル
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    Color.blue.opacity(0.95),
+                                    Color.blue.opacity(0.75)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .overlay {
+                            Circle()
+                                .fill(
+                                    LinearGradient(
+                                        colors: [
+                                            Color.white.opacity(0.25),
+                                            Color.clear
+                                        ],
+                                        startPoint: .top,
+                                        endPoint: .bottom
+                                    )
+                                )
+                        }
+                        .frame(width: 44, height: 44)
+                        .shadow(color: Color.blue.opacity(0.35), radius: 8, x: 0, y: 2)
+                        .shadow(color: Color.blue.opacity(0.15), radius: 3, x: 0, y: 1)
+                } else {
+                    // 非アクティブ状態: Liquid Glassセカンダリスタイル
+                    Circle()
+                        .fill(.ultraThinMaterial)
+                        .overlay {
+                            Circle()
+                                .fill(
+                                    LinearGradient(
+                                        colors: [
+                                            Color.white.opacity(0.12),
+                                            Color.white.opacity(0.03)
+                                        ],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                        }
+                        .overlay {
+                            Circle()
+                                .strokeBorder(
+                                    LinearGradient(
+                                        colors: [
+                                            Color.white.opacity(0.2),
+                                            Color.white.opacity(0.08)
+                                        ],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    ),
+                                    lineWidth: 0.5
+                                )
+                        }
+                        .frame(width: 44, height: 44)
+                        .shadow(color: Color.black.opacity(0.08), radius: 6, x: 0, y: 2)
+                }
 
                 if isLoadingLocation {
                     ProgressView()
@@ -170,6 +268,7 @@ struct VisitMapView: View {
             }
         }
         .buttonStyle(.plain)
+        .animation(.interpolatingSpring(stiffness: 200, damping: 20), value: showCurrentLocation)
     }
 
     private func toggleCurrentLocation() async {
@@ -225,25 +324,31 @@ struct VisitMapView: View {
 // MARK: - Map Pin View
 struct MapPinView: View {
     let isSelected: Bool
+    var pinColor: Color?
+
+    /// ピンの表示色（ラベル色 > デフォルト赤）
+    private var baseColor: Color {
+        pinColor ?? .red
+    }
 
     var body: some View {
         ZStack {
             // 選択時は外側に目立つハロー効果
             if isSelected {
                 Circle()
-                    .fill(Color.blue.opacity(0.3))
+                    .fill(baseColor.opacity(0.3))
                     .frame(width: 36, height: 36)
             }
 
             Circle()
-                .fill(isSelected ? Color.blue : Color.red)
+                .fill(isSelected ? baseColor : baseColor)
                 .frame(width: isSelected ? 28 : 16, height: isSelected ? 28 : 16)
 
             Circle()
                 .stroke(Color.white, lineWidth: isSelected ? 3 : 2)
                 .frame(width: isSelected ? 28 : 16, height: isSelected ? 28 : 16)
         }
-        .shadow(color: isSelected ? Color.blue.opacity(0.5) : Color.black.opacity(0.3),
+        .shadow(color: isSelected ? baseColor.opacity(0.5) : Color.black.opacity(0.3),
                 radius: isSelected ? 6 : 2)
     }
 }
@@ -277,20 +382,11 @@ struct VisitMapDetailSheet: View {
     let labelMap: [UUID: String]
     let groupMap: [UUID: String]
     let memberMap: [UUID: String]
+    var labelColorMap: [String: Color] = [:]
     let onClose: () -> Void
     let onTap: () -> Void
 
     @State private var dragOffset: CGFloat = 0
-
-    private var title: String {
-        if let t = aggregate.details.title, !t.isEmpty {
-            return t
-        }
-        if let f = aggregate.details.facilityName, !f.isEmpty {
-            return f
-        }
-        return L.Home.noTitle
-    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -299,60 +395,36 @@ struct VisitMapDetailSheet: View {
                 .fill(Color.secondary.opacity(0.3))
                 .frame(width: 36, height: 4)
                 .padding(.top, 8)
-                .padding(.bottom, 12)
+                .padding(.bottom, 6)
 
-            HStack(alignment: .top, spacing: 12) {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(title)
-                        .font(.headline)
-                        .lineLimit(2)
-
-                    Text(aggregate.visit.timestampUTC.kokokitaVisitString)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-
-                    if let address = aggregate.details.resolvedAddress {
-                        Text(address)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .lineLimit(2)
-                    }
-
-                    // ラベル/グループ/メンバー
-                    FlowRow(spacing: 6, rowSpacing: 6) {
-                        if let gid = aggregate.details.groupId, let gname = groupMap[gid] {
-                            Chip(gname, kind: .group, size: .small, showRemoveButton: false)
-                        }
-                        ForEach(aggregate.details.labelIds.prefix(2), id: \.self) { lid in
-                            if let lname = labelMap[lid] {
-                                Chip(lname, kind: .label, size: .small, showRemoveButton: false)
-                            }
-                        }
-                        ForEach(aggregate.details.memberIds.prefix(2), id: \.self) { mid in
-                            if let mname = memberMap[mid] {
-                                Chip(mname, kind: .member, size: .small, showRemoveButton: false)
-                            }
-                        }
-                    }
-                }
-
-                Spacer()
-
-                // 閉じるボタン
-                Button {
-                    onClose()
-                } label: {
-                    Image(systemName: "xmark.circle.fill")
-                        .font(.title3)
-                        .foregroundStyle(.secondary)
-                }
-            }
-            .padding(.horizontal, 16)
-            .padding(.bottom, 16)
+            // ClearBlueHorizontalCardのmapSheet用コンテンツを使用
+            ClearBlueHorizontalCard(
+                aggregate: aggregate,
+                variant: .mapSheet,
+                labelMap: labelMap,
+                groupMap: groupMap,
+                memberMap: memberMap,
+                labelColorMap: labelColorMap,
+                onClose: onClose
+            )
         }
-        .background(.regularMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
-        .shadow(radius: 8)
+        .background(
+            ZStack {
+                // 不透明な背景
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(Color(.systemBackground))
+
+                // 薄青い色のオーバーレイ
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(VisitCardStyle.clearBlueBackground)
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .strokeBorder(VisitCardStyle.clearBlueBorder, lineWidth: VisitCardStyle.clearBlueBorderWidth)
+                    }
+            }
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: 5)
         .padding(.horizontal, 8)
         .padding(.bottom, 8)
         .offset(y: dragOffset)

@@ -17,12 +17,28 @@ final class LabelListStore {
     private let repository: CoreDataTaxonomyRepository
     private let visitRepository: CoreDataVisitRepository
 
+    // MARK: - Notification Observer
+    // iOS 9以降では、オブザーバーはオブジェクト解放時に自動的に登録解除される
+
+    private var notificationObserver: Any?
+
     // MARK: - Initialization
 
     init(repository: CoreDataTaxonomyRepository = AppContainer.shared.taxonomyRepo,
          visitRepository: CoreDataVisitRepository = AppContainer.shared.repo) {
         self.repository = repository
         self.visitRepository = visitRepository
+
+        // 他の画面からのタクソノミー変更通知を監視してリロード
+        notificationObserver = NotificationCenter.default.addObserver(
+            forName: .taxonomyChanged,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in
+                await self?.load()
+            }
+        }
     }
 
     // MARK: - Actions
@@ -56,9 +72,11 @@ final class LabelListStore {
     }
 
     /// 新規作成
-    /// - Parameter name: 作成する名前
+    /// - Parameters:
+    ///   - name: 作成する名前
+    ///   - colorId: 色の識別子（nil で色なし）
     /// - Returns: 成功した場合はtrue
-    func create(name: String) -> Bool {
+    func create(name: String, colorId: String? = nil) -> Bool {
         // バリデーション
         guard let validName = LabelValidator.validateName(name) else {
             return false
@@ -71,10 +89,10 @@ final class LabelListStore {
         }
 
         do {
-            let id = try repository.createLabel(name: validName)
+            let id = try repository.createLabel(name: validName, colorId: colorId)
 
             // リストに追加してソート
-            let newItem = LabelTag(id: id, name: validName)
+            let newItem = LabelTag(id: id, name: validName, colorId: colorId)
             items.append(newItem)
             items = sort(items)
 
@@ -102,9 +120,9 @@ final class LabelListStore {
         do {
             try repository.renameLabel(id: id, newName: validName)
 
-            // ローカルリストを更新
+            // ローカルリストを更新（色設定を保持）
             if let index = items.firstIndex(where: { $0.id == id }) {
-                items[index] = LabelTag(id: id, name: validName)
+                items[index] = LabelTag(id: id, name: validName, colorId: items[index].colorId)
             }
 
             // 通知送信
@@ -126,6 +144,29 @@ final class LabelListStore {
 
             // ローカルリストから削除
             items.removeAll { $0.id == id }
+
+            // 通知送信
+            NotificationCenter.default.post(name: .taxonomyChanged, object: nil)
+
+            return true
+        } catch {
+            alert = error.localizedDescription
+            return false
+        }
+    }
+
+    /// ラベルの色を更新
+    /// - Parameters:
+    ///   - id: 更新対象のID
+    ///   - colorId: 色の識別子（nil で色なし）
+    func updateColor(id: UUID, colorId: String?) -> Bool {
+        do {
+            try repository.updateLabelColor(id: id, colorId: colorId)
+
+            // ローカルリストを更新
+            if let index = items.firstIndex(where: { $0.id == id }) {
+                items[index].colorId = colorId
+            }
 
             // 通知送信
             NotificationCenter.default.post(name: .taxonomyChanged, object: nil)

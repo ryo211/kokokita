@@ -30,6 +30,20 @@ enum UIConstants {
         static let shareMapHeight: CGFloat = 300
         /// 写真サムネイルのサイズ
         static let photoThumbnail: CGFloat = 64
+
+        // MARK: Visit Card Sizes
+        /// 縦型記録カードの幅
+        static let visitCardVerticalWidth: CGFloat = 160
+        /// 縦型記録カードの高さ
+        static let visitCardVerticalHeight: CGFloat = 200
+        /// 縦型記録カードの写真高さ
+        static let visitCardVerticalPhotoHeight: CGFloat = 100
+        /// 横型記録カードの幅
+        static let visitCardHorizontalWidth: CGFloat = 280
+        /// 横型記録カードの高さ
+        static let visitCardHorizontalHeight: CGFloat = 120
+        /// 横型記録カードの写真サイズ
+        static let visitCardHorizontalPhotoSize: CGFloat = 80
     }
 
     // MARK: - Padding

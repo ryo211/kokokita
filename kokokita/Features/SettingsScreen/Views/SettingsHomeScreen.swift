@@ -1,109 +1,189 @@
 import SwiftUI
-import FirebaseCrashlytics
+
+enum TaxonomyTab: String, CaseIterable {
+    case label
+    case group
+    case member
+
+    var title: String {
+        switch self {
+        case .label: return L.Settings.editLabels
+        case .group: return L.Settings.editGroups
+        case .member: return L.Settings.editMembers
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .label: return "tag"
+        case .group: return "folder"
+        case .member: return "person"
+        }
+    }
+}
 
 struct SettingsHomeScreen: View {
-    @State private var showCrashAlert = false
-    #if DEBUG
-    @ObservedObject private var debugSettings = DebugSettings.shared
-    #endif
+    @State private var selectedTab: TaxonomyTab = .label
+    @State private var showLabelCreate = false
+    @State private var showGroupCreate = false
+    @State private var showMemberCreate = false
+    @State private var labelCount: Int = 0
+    @State private var groupCount: Int = 0
+    @State private var memberCount: Int = 0
+
+    private let repo = AppContainer.shared.repo
 
     var body: some View {
-        List {
-            Section {
-                NavigationLink {
-                    LabelListScreen()
-                } label: {
-                    Label(L.Settings.editLabels, systemImage: "tag")
-                        .foregroundStyle(.purple)
-                }
+        GeometryReader { geometry in
+            HStack(spacing: 0) {
+                // 左側：縦型タブバー
+                verticalTabBar
+                    .frame(width: geometry.size.width * 0.18)
 
-                NavigationLink {
-                    GroupListScreen()
-                } label: {
-                    Label(L.Settings.editGroups, systemImage: "folder")
-                        .foregroundStyle(.teal)
-                }
+                Divider()
 
-                NavigationLink {
-                    MemberListScreen()
-                } label: {
-                    Label(L.Settings.editMembers, systemImage: "person")
-                        .foregroundStyle(.blue)
-                }
-            }
-
-            #if DEBUG
-            Section {
-                Toggle(isOn: $debugSettings.isAdDisplayEnabled) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Label(L.Settings.adDisplay, systemImage: "rectangle.inset.filled.and.person.filled")
-                        Text(L.Settings.adDisplayDescription)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                // 右側：選択されたタクソノミーの一覧画面
+                VStack(spacing: 0) {
+                    // ヘッダー部分
+                    HStack {
+                        HStack(spacing: 8) {
+                            Image(systemName: selectedTab.icon)
+                                .font(.title2)
+                            HStack(alignment: .firstTextBaseline, spacing: 4) {
+                                Text(selectedTab.title)
+                                    .font(.title2)
+                                    .fontWeight(.bold)
+                                Text("(\(currentCount))")
+                                    .font(.subheadline)
+                                    .fontWeight(.semibold)
+                            }
+                        }
+                        .foregroundStyle(Color.accentColor)
+                        Spacer()
+                        Button {
+                            switch selectedTab {
+                            case .label:
+                                showLabelCreate = true
+                            case .group:
+                                showGroupCreate = true
+                            case .member:
+                                showMemberCreate = true
+                            }
+                        } label: {
+                            Image(systemName: "plus")
+                                .font(.title3)
+                        }
                     }
-                }
+                    .padding(.horizontal)
+                    .padding(.vertical, 12)
+                    .background(Color(.systemBackground))
 
-                NavigationLink {
-                    DataMigrationScreen()
-                } label: {
-                    Label(L.Settings.dataMigration, systemImage: "arrow.up.arrow.down.circle")
-                        .foregroundStyle(.blue)
+                    // 一覧画面
+                    taxonomyListView
+                        .frame(maxWidth: .infinity)
                 }
-
-                Button {
-                    testErrorLogging()
-                } label: {
-                    Label(L.Settings.testErrorLog, systemImage: "ladybug")
-                        .foregroundStyle(.orange)
-                }
-
-                Button {
-                    showCrashAlert = true
-                } label: {
-                    Label(L.Settings.testCrash, systemImage: "exclamationmark.triangle")
-                        .foregroundStyle(.red)
-                }
-                .alert(L.Settings.testCrashTitle, isPresented: $showCrashAlert) {
-                    Button(L.Common.cancel, role: .cancel) { }
-                    Button(L.DataMigration.execute, role: .destructive) {
-                        testCrash()
-                    }
-                } message: {
-                    Text(L.Settings.testCrashMessage)
-                }
-            } header: {
-                Text(L.Settings.developerTest)
-            }
-            #endif
-
-            Section {
-                NavigationLink {
-                    ResetAllScreen()
-                } label: {
-                    Label(L.Settings.resetAll, systemImage: "trash")
-                        .foregroundStyle(.red)
-                }
-            } footer: {
-                Text(L.Settings.resetAllDescription)
+                .frame(maxWidth: .infinity)
             }
         }
-        .navigationTitle(L.Settings.title)
-        .navigationBarTitleDisplayMode(.inline)
+        .task {
+            loadCounts()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .taxonomyChanged)) { _ in
+            loadCounts()
+        }
+        .onChange(of: showLabelCreate) { _, isShowing in
+            if !isShowing {
+                loadCounts()
+            }
+        }
+        .onChange(of: showGroupCreate) { _, isShowing in
+            if !isShowing {
+                loadCounts()
+            }
+        }
+        .onChange(of: showMemberCreate) { _, isShowing in
+            if !isShowing {
+                loadCounts()
+            }
+        }
     }
 
-    // MARK: - Test Functions
+    // MARK: - Computed Properties
 
-    #if DEBUG
-    private func testErrorLogging() {
-        Logger.error("テストエラー：これはFirebase Crashlyticsのテストです")
-        Logger.warning("テスト警告：非致命的なエラーのテストです")
+    private var currentCount: Int {
+        switch selectedTab {
+        case .label: return labelCount
+        case .group: return groupCount
+        case .member: return memberCount
+        }
     }
 
-    private func testCrash() {
-        // Crashlyticsのテストクラッシュを発生させる
-        Crashlytics.crashlytics().log("テストクラッシュを実行します")
-        fatalError("Test Crash for Firebase Crashlytics")
+    // MARK: - Helper Methods
+
+    private func loadCounts() {
+        do {
+            labelCount = try repo.allLabels().count
+            groupCount = try repo.allGroups().count
+            memberCount = try repo.allMembers().count
+        } catch {
+            Logger.error("Failed to load taxonomy counts", error: error)
+        }
     }
-    #endif
+
+    // MARK: - Vertical Tab Bar
+
+    private var verticalTabBar: some View {
+        VStack(spacing: 0) {
+            // ヘッダーと同じ高さの余白
+            Color.clear
+                .frame(height: 57)
+
+            ForEach(TaxonomyTab.allCases, id: \.self) { tab in
+                Button {
+                    withAnimation(.interpolatingSpring(stiffness: 150, damping: 18)) {
+                        selectedTab = tab
+                    }
+                } label: {
+                    VStack(spacing: 4) {
+                        Image(systemName: tab.icon)
+                            .font(.system(size: 22))
+                        Text(tab.title)
+                            .font(.caption2)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                    .foregroundStyle(selectedTab == tab ? Color.accentColor : Color.secondary)
+                    .background(
+                        RoundedRectangle(cornerRadius: 0)
+                            .fill(selectedTab == tab ? Color.accentColor.opacity(0.08) : Color.clear)
+                    )
+                }
+                .buttonStyle(.plain)
+                .frame(height: 80)
+            }
+
+            Spacer()
+        }
+        .background(Color(.systemGroupedBackground))
+        .animation(.interpolatingSpring(stiffness: 150, damping: 18), value: selectedTab)
+    }
+
+    // MARK: - Taxonomy List View
+
+    private var taxonomyListView: some View {
+        ZStack {
+            LabelListScreen(showCreate: $showLabelCreate)
+                .opacity(selectedTab == .label ? 1 : 0)
+                .zIndex(selectedTab == .label ? 1 : 0)
+
+            GroupListScreen(showCreate: $showGroupCreate)
+                .opacity(selectedTab == .group ? 1 : 0)
+                .zIndex(selectedTab == .group ? 1 : 0)
+
+            MemberListScreen(showCreate: $showMemberCreate)
+                .opacity(selectedTab == .member ? 1 : 0)
+                .zIndex(selectedTab == .member ? 1 : 0)
+        }
+    }
 }
 

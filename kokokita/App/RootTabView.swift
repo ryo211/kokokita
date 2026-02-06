@@ -2,7 +2,11 @@ import SwiftUI
 import CoreLocation
 
 enum RootTab: Hashable {
-    case home, /* map, */ center, /* calendar, */ menu
+    case home      // 新しいHomeScreen
+    case records   // 既存のVisitListScreen
+    case center    // Kokokitaボタン
+    case course    // 新しいCourseScreen
+    case menu      // 既存のSettingsHomeScreen
 }
 
 /// 位置情報取得結果を保持する構造体
@@ -31,6 +35,7 @@ struct RootTabView: View {
     @State private var createScreenData: CreateScreenData?
     @State private var confirmationSheetVisitId: UUID?
     @State private var editVisitId: UUID?
+    @State private var detailVisitId: UUID?
     @State private var locationErrorMessage: String? = nil
     @Environment(AppUIState.self) private var ui
     #if DEBUG
@@ -52,36 +57,40 @@ struct RootTabView: View {
         // ← 重ねずに"占有する"縦積みレイアウトに変更
         VStack(spacing: 0) {
             // ===== コンテンツ領域（フッター分を除いた残り全体） =====
-            ZStack { // （必要なければ Group でもOK）
-                switch tab {
-                case .home:
-                    NavigationStack { VisitListScreen() }
+            ZStack(alignment: .bottomTrailing) {
+                // 全ての画面を重ねて配置
+                HomeScreen(
+                    onKokokitaTap: {
+                        checkLocationPermissionAndCreate()
+                    },
+                    onViewAllTap: {
+                        tab = .records
+                    }
+                )
+                .opacity(tab == .home ? 1 : 0)
+                .zIndex(tab == .home ? 1 : 0)
 
-                // case .map:
-                //     NavigationStack {
-                //         VStack(spacing: 12) {
-                //             Image(systemName: "map").font(.largeTitle)
-                //             Text("地図（後日実装）").foregroundStyle(.secondary)
-                //         }
-                //         .navigationTitle("地図")
-                //         .navigationBarTitleDisplayMode(.inline)
-                //     }
+                NavigationStack { VisitListScreen() }
+                    .opacity(tab == .records ? 1 : 0)
+                    .zIndex(tab == .records ? 1 : 0)
 
-                // case .calendar:
-                //     NavigationStack {
-                //         VStack(spacing: 12) {
-                //             Image(systemName: "calendar").font(.largeTitle)
-                //             Text("カレンダー（後日実装）").foregroundStyle(.secondary)
-                //         }
-                //         .navigationTitle("カレンダー")
-                //         .navigationBarTitleDisplayMode(.inline)
-                //     }
+                // CourseScreen は一時的に非表示（リリース後に復活予定）
+                // CourseScreen()
+                //     .opacity(tab == .course ? 1 : 0)
+                //     .zIndex(tab == .course ? 1 : 0)
 
-                case .menu:
-                    NavigationStack { SettingsHomeScreen() }
+                NavigationStack { SettingsHomeScreen() }
+                    .opacity(tab == .menu ? 1 : 0)
+                    .zIndex(tab == .menu ? 1 : 0)
 
-                case .center:
-                    Color.clear // 中央ボタンは別途 sheet 起動
+                // 記録画面のみ: 右下にココキタボタン（地図シート・カレンダー表示中は非表示）
+                if tab == .records && !ui.isMapSheetVisible && !ui.isCalendarVisible {
+                    FloatingKokokitaButton {
+                        checkLocationPermissionAndCreate()
+                    }
+                    .padding(.trailing, 16)
+                    .padding(.bottom, 16)
+                    .zIndex(999)
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -167,6 +176,10 @@ struct RootTabView: View {
                         confirmationSheetVisitId = nil
                         editVisitId = id
                     },
+                    onViewDetail: { id in
+                        confirmationSheetVisitId = nil
+                        detailVisitId = id
+                    },
                     onDelete: { id in
                         deleteVisit(id: id)
                     }
@@ -198,6 +211,17 @@ struct RootTabView: View {
             }
         }
 
+        // 詳細画面モーダル
+        .sheet(isPresented: Binding(
+            get: { detailVisitId != nil },
+            set: { if !$0 { detailVisitId = nil } }
+        )) {
+            if let visitId = detailVisitId {
+                DetailVisitSheet(visitId: visitId)
+                    .iPadSheetSize()
+            }
+        }
+
         // 位置情報権限アラート
         .alert(L.Location.permissionRequired, isPresented: $showLocationPermissionAlert) {
             Button(L.Location.openSettings) {
@@ -218,6 +242,18 @@ struct RootTabView: View {
             }
         } message: {
             Text(locationErrorMessage ?? "")
+        }
+        // タブ切り替え時にデータを更新（HomeScreenはopacityで切り替えのためonAppearが効かない）
+        .onChange(of: tab) { _, newTab in
+            if newTab == .home {
+                NotificationCenter.default.post(name: .visitsChanged, object: nil)
+            }
+        }
+        // 他タブからの地図フォーカスリクエストを処理
+        .onChange(of: ui.mapFocusVisitId) { _, newId in
+            if newId != nil {
+                tab = .records
+            }
         }
     }
 
@@ -424,58 +460,485 @@ private struct CustomBottomBar: View {
                 .frame(height: UIConstants.Size.tabBarHeight)
                 .overlay(Divider(), alignment: .top)
 
-            HStack {
-                barButton(icon: "house.fill", title: L.Tab.home, tab: .home)
-                // barButton(icon: "map.fill", title: "地図", tab: .map)
-
-                Button(action: onCenterTap) {
-                    ZStack {
-                        Circle()
-                            .fill(Color.accentColor)
-                            .frame(width: UIConstants.Size.centerButtonSize,
-                                   height: UIConstants.Size.centerButtonSize)
-                            .shadow(radius: UIConstants.Shadow.radiusMedium * 3, y: UIConstants.Shadow.radiusMedium)
-
-                        VStack(spacing: 0) {
-                            Image("kokokita_irodori_white")
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 42, height: 42)
-                                .accessibilityHidden(true)
-                            Text(L.App.name)
-                                .font(.caption2.weight(.bold))
-                                .foregroundStyle(.white)
-                                .lineLimit(1)
-                                .minimumScaleFactor(0.7)
-                                .offset(y: -2)
-                        }
-                        .padding(.vertical, 6)
-                        .padding(.horizontal, 8)
-                    }
-                    .padding(.horizontal, UIConstants.Spacing.medium - 2)
-                }
-                .accessibilityLabel(L.Tab.kokokita)
-
-                // barButton(icon: "calendar", title: "カレンダー", tab: .calendar)
-                barButton(icon: "ellipsis.circle.fill", title: L.Tab.menu, tab: .menu)
-            }
-            .padding(.horizontal, UIConstants.Spacing.extraLarge + 8)
-            .padding(.bottom, UIConstants.Spacing.medium)
+            // 全ての画面で4タブのスライディングタブバーに統一
+            HomeTabBar(current: current, onSelect: onSelect)
         }
     }
+}
 
-    private func barButton(icon: String, title: String, tab: RootTab) -> some View {
+// MARK: - Home Tab Bar (4タブ、スライディングインジケーター)
+
+fileprivate struct HomeTabBar: View {
+    let current: RootTab
+    let onSelect: (RootTab) -> Void
+
+    var body: some View {
+        GeometryReader { geometry in
+            ZStack(alignment: .leading) {
+                // 固定背景コンテナ
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .fill(.ultraThinMaterial)
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 20, style: .continuous)
+                            .fill(
+                                LinearGradient(
+                                    colors: [
+                                        Color.white.opacity(0.12),
+                                        Color.white.opacity(0.04)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                    }
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 20, style: .continuous)
+                            .strokeBorder(
+                                LinearGradient(
+                                    colors: [
+                                        Color.white.opacity(0.2),
+                                        Color.white.opacity(0.08)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 0.5
+                            )
+                    }
+                    .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 3)
+
+                // タブ定義（ここで追加・削除すれば自動的に均等配置される）
+                let tabItems: [(icon: String, title: String, tab: RootTab)] = [
+                    ("house.fill", L.Tab.home, .home),
+                    ("list.bullet", L.Tab.records, .records),
+                    // ("map", L.Tab.course, .course),  // リリース後に復活予定
+                    ("ellipsis.circle.fill", L.Tab.menu, .menu),
+                ]
+                let tabCount = CGFloat(tabItems.count)
+                let tabWidth = (geometry.size.width - 16) / tabCount
+                let currentIndex = tabItems.firstIndex(where: { $0.tab == current }) ?? 0
+
+                // スライディングインジケーター (ヌルッと移動)
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(.ultraThinMaterial)
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .fill(
+                                LinearGradient(
+                                    colors: [
+                                        Color.accentColor.opacity(0.15),
+                                        Color.accentColor.opacity(0.08)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                    }
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .fill(
+                                LinearGradient(
+                                    colors: [
+                                        Color.white.opacity(0.2),
+                                        Color.clear
+                                    ],
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                )
+                            )
+                    }
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .strokeBorder(
+                                LinearGradient(
+                                    colors: [
+                                        Color.accentColor.opacity(0.3),
+                                        Color.accentColor.opacity(0.15)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 1
+                            )
+                    }
+                    .frame(width: tabWidth, height: geometry.size.height - 12)
+                    .shadow(color: Color.black.opacity(0.08), radius: 6, x: 0, y: 2)
+                    .offset(x: 6 + CGFloat(currentIndex) * tabWidth)
+                    .animation(.interpolatingSpring(stiffness: 150, damping: 18), value: current)
+
+                // ボタンラベル
+                HStack(spacing: 0) {
+                    ForEach(Array(tabItems.enumerated()), id: \.offset) { _, item in
+                        tabButton(icon: item.icon, title: item.title, tab: item.tab, width: tabWidth)
+                    }
+                }
+                .padding(6)
+            }
+        }
+        .frame(height: 64)
+        .padding(.horizontal, UIConstants.Spacing.extraLarge + 8)
+        .padding(.bottom, UIConstants.Spacing.medium)
+    }
+
+    private func tabButton(icon: String, title: String, tab: RootTab, width: CGFloat) -> some View {
         Button {
             onSelect(tab)
         } label: {
-            VStack(spacing: UIConstants.Spacing.small) {
-                Image(systemName: icon).font(.title3)
-                Text(title).font(.caption2)
+            VStack(spacing: 4) {
+                Image(systemName: icon)
+                    .font(.title3)
+                    .fontWeight(current == tab ? .semibold : .regular)
+                Text(title)
+                    .font(.caption2)
+                    .fontWeight(current == tab ? .semibold : .regular)
             }
-            .frame(maxWidth: .infinity)
-            .foregroundStyle(current == tab ? .primary : .secondary)
+            .foregroundStyle(current == tab ? Color.accentColor : Color.primary.opacity(0.5))
+            .frame(width: width)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+    }
+}
+
+// MARK: - Others Tab Bar (4タブ + 中央ボタン、スライディングインジケーター)
+
+fileprivate struct OthersTabBar: View {
+    let current: RootTab
+    let onSelect: (RootTab) -> Void
+    let onCenterTap: () -> Void
+
+    var body: some View {
+        HStack(spacing: 12) {
+            // 左側の2タブグループ
+            leftTabGroup
+
+            Spacer()
+
+            // 中央: ココキタボタン
+            centerButton
+
+            Spacer()
+
+            // 右側の2タブグループ
+            rightTabGroup
+        }
+        .padding(.horizontal, UIConstants.Spacing.extraLarge + 8)
+        .padding(.bottom, UIConstants.Spacing.medium)
+    }
+
+    // 左側タブグループ (Home, Records)
+    private var leftTabGroup: some View {
+        GeometryReader { geometry in
+            ZStack(alignment: .leading) {
+                // 固定背景コンテナ
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .fill(.ultraThinMaterial)
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 20, style: .continuous)
+                            .fill(
+                                LinearGradient(
+                                    colors: [
+                                        Color.white.opacity(0.12),
+                                        Color.white.opacity(0.04)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                    }
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 20, style: .continuous)
+                            .strokeBorder(
+                                LinearGradient(
+                                    colors: [
+                                        Color.white.opacity(0.2),
+                                        Color.white.opacity(0.08)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 0.5
+                            )
+                    }
+                    .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 3)
+
+                // スライディングインジケーター
+                let tabWidth = (geometry.size.width - 12) / 2
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(.ultraThinMaterial)
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .fill(
+                                LinearGradient(
+                                    colors: [
+                                        Color.accentColor.opacity(0.15),
+                                        Color.accentColor.opacity(0.08)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                    }
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .fill(
+                                LinearGradient(
+                                    colors: [
+                                        Color.white.opacity(0.2),
+                                        Color.clear
+                                    ],
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                )
+                            )
+                    }
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .strokeBorder(
+                                LinearGradient(
+                                    colors: [
+                                        Color.accentColor.opacity(0.3),
+                                        Color.accentColor.opacity(0.15)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 1
+                            )
+                    }
+                    .frame(width: tabWidth, height: geometry.size.height - 12)
+                    .shadow(color: Color.black.opacity(0.08), radius: 6, x: 0, y: 2)
+                    .offset(x: current == .home ? 6 : tabWidth + 6)
+                    .animation(.interpolatingSpring(stiffness: 150, damping: 18), value: current)
+
+                // ボタンラベル
+                HStack(spacing: 0) {
+                    tabButton(icon: "house.fill", title: L.Tab.home, tab: .home, width: tabWidth)
+                    tabButton(icon: "list.bullet", title: L.Tab.records, tab: .records, width: tabWidth)
+                }
+                .padding(6)
+            }
+        }
+        .frame(width: 160, height: 64)
+    }
+
+    // 右側タブグループ (Course, Menu)
+    private var rightTabGroup: some View {
+        GeometryReader { geometry in
+            ZStack(alignment: .leading) {
+                // 固定背景コンテナ
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .fill(.ultraThinMaterial)
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 20, style: .continuous)
+                            .fill(
+                                LinearGradient(
+                                    colors: [
+                                        Color.white.opacity(0.12),
+                                        Color.white.opacity(0.04)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                    }
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 20, style: .continuous)
+                            .strokeBorder(
+                                LinearGradient(
+                                    colors: [
+                                        Color.white.opacity(0.2),
+                                        Color.white.opacity(0.08)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 0.5
+                            )
+                    }
+                    .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 3)
+
+                // スライディングインジケーター
+                let tabWidth = (geometry.size.width - 12) / 2
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(.ultraThinMaterial)
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .fill(
+                                LinearGradient(
+                                    colors: [
+                                        Color.accentColor.opacity(0.15),
+                                        Color.accentColor.opacity(0.08)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                    }
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .fill(
+                                LinearGradient(
+                                    colors: [
+                                        Color.white.opacity(0.2),
+                                        Color.clear
+                                    ],
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                )
+                            )
+                    }
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .strokeBorder(
+                                LinearGradient(
+                                    colors: [
+                                        Color.accentColor.opacity(0.3),
+                                        Color.accentColor.opacity(0.15)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 1
+                            )
+                    }
+                    .frame(width: tabWidth, height: geometry.size.height - 12)
+                    .shadow(color: Color.black.opacity(0.08), radius: 6, x: 0, y: 2)
+                    .offset(x: 6)
+                    .animation(.interpolatingSpring(stiffness: 150, damping: 18), value: current)
+
+                // ボタンラベル
+                HStack(spacing: 0) {
+                    tabButton(icon: "ellipsis.circle.fill", title: L.Tab.menu, tab: .menu, width: tabWidth)
+                }
+                .padding(6)
+            }
+        }
+        .frame(width: 160, height: 64)
+    }
+
+    private var centerButton: some View {
+        Button(action: onCenterTap) {
+            ZStack {
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                Color.accentColor.opacity(0.95),
+                                Color.accentColor.opacity(0.75)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .overlay {
+                        Circle()
+                            .fill(
+                                LinearGradient(
+                                    colors: [
+                                        Color.white.opacity(0.25),
+                                        Color.clear
+                                    ],
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                )
+                            )
+                    }
+                    .frame(width: UIConstants.Size.centerButtonSize,
+                           height: UIConstants.Size.centerButtonSize)
+                    .shadow(color: Color.accentColor.opacity(0.35), radius: 8, x: 0, y: 2)
+                    .shadow(color: Color.accentColor.opacity(0.15), radius: 3, x: 0, y: 1)
+
+                VStack(spacing: 0) {
+                    Image("kokokita_irodori_white")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 42, height: 42)
+                        .accessibilityHidden(true)
+                    Text(L.App.name)
+                        .font(.caption2.weight(.bold))
+                        .foregroundStyle(.white)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                        .offset(y: -2)
+                }
+                .padding(.vertical, 6)
+                .padding(.horizontal, 8)
+            }
+            .padding(.horizontal, UIConstants.Spacing.medium - 2)
+        }
+        .accessibilityLabel(L.Tab.kokokita)
+    }
+
+    private func tabButton(icon: String, title: String, tab: RootTab, width: CGFloat) -> some View {
+        Button {
+            onSelect(tab)
+        } label: {
+            VStack(spacing: 4) {
+                Image(systemName: icon)
+                    .font(.title3)
+                    .fontWeight(current == tab ? .semibold : .regular)
+                Text(title)
+                    .font(.caption2)
+                    .fontWeight(current == tab ? .semibold : .regular)
+            }
+            .foregroundStyle(current == tab ? Color.accentColor : Color.primary.opacity(0.5))
+            .frame(width: width)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+// MARK: - Floating Kokokita Button (右下固定配置)
+
+fileprivate struct FloatingKokokitaButton: View {
+    let onTap: () -> Void
+
+    var body: some View {
+        Button(action: onTap) {
+            ZStack {
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                Color.accentColor.opacity(0.95),
+                                Color.accentColor.opacity(0.75)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .overlay {
+                        Circle()
+                            .fill(
+                                LinearGradient(
+                                    colors: [
+                                        Color.white.opacity(0.25),
+                                        Color.clear
+                                    ],
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                )
+                            )
+                    }
+                    .frame(width: 64, height: 64)
+                    .shadow(color: Color.accentColor.opacity(0.35), radius: 12, x: 0, y: 4)
+                    .shadow(color: Color.accentColor.opacity(0.15), radius: 6, x: 0, y: 2)
+
+                VStack(spacing: 2) {
+                    Image("kokokita_irodori_white")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 32, height: 32)
+                    Text(L.App.name)
+                        .font(.caption2.weight(.bold))
+                        .foregroundStyle(.white)
+                }
+            }
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(L.Tab.kokokita)
     }
 }
 
@@ -509,6 +972,118 @@ private struct EditVisitSheet: View {
             self.visit = try repo.get(by: visitId)
         } catch {
             Logger.error("Failed to load visit for editing", error: error)
+        }
+    }
+}
+
+// MARK: - Detail Visit Sheet
+
+private struct DetailVisitSheet: View {
+    let visitId: UUID
+
+    @Environment(\.dismiss) private var dismiss
+    @Environment(AppUIState.self) private var ui
+    @State private var visit: VisitAggregate?
+    @State private var labelMap: [UUID: String] = [:]
+    @State private var groupMap: [UUID: String] = [:]
+    @State private var memberMap: [UUID: String] = [:]
+
+    var body: some View {
+        Group {
+            if let visit = visit {
+                NavigationStack {
+                    VisitDetailScreen(
+                        data: toDetailData(visit),
+                        visitId: visitId,
+                        onBack: {},
+                        onEdit: {},
+                        onShare: {},
+                        onDelete: {
+                            deleteVisit()
+                            dismiss()
+                        },
+                        onUpdate: {},
+                        onMapTap: {
+                            dismiss()
+                            ui.mapFocusVisitId = visitId
+                        }
+                    )
+                }
+            } else {
+                ProgressView()
+                    .task {
+                        await loadVisit()
+                    }
+            }
+        }
+    }
+
+    @MainActor
+    private func loadVisit() async {
+        let repo = AppContainer.shared.repo
+        do {
+            self.visit = try repo.get(by: visitId)
+
+            // タクソノミーのマップを取得
+            let labels = try repo.allLabels()
+            let groups = try repo.allGroups()
+            let members = try repo.allMembers()
+
+            labelMap = Dictionary(uniqueKeysWithValues: labels.map { ($0.id, $0.name) })
+            groupMap = Dictionary(uniqueKeysWithValues: groups.map { ($0.id, $0.name) })
+            memberMap = Dictionary(uniqueKeysWithValues: members.map { ($0.id, $0.name) })
+        } catch {
+            Logger.error("Failed to load visit for detail", error: error)
+        }
+    }
+
+    private func toDetailData(_ agg: VisitAggregate) -> VisitDetailData {
+        let title: String = {
+            let t = agg.details.title?.trimmingCharacters(in: .whitespacesAndNewlines)
+            if let t, !t.isEmpty { return t }
+            if let f = agg.details.facilityName, !f.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { return f }
+            return L.Home.noTitle
+        }()
+
+        let labels: [String] = agg.details.labelIds.compactMap { labelMap[$0] }
+        let group: String? = agg.details.groupId.flatMap { groupMap[$0] }
+        let members: [String] = agg.details.memberIds.compactMap { memberMap[$0] }
+
+        let coord: CLLocationCoordinate2D? = {
+            let lat = agg.visit.latitude
+            let lon = agg.visit.longitude
+            if lat == 0 && lon == 0 { return nil }
+            return .init(latitude: lat, longitude: lon)
+        }()
+
+        let address = agg.details.resolvedAddress ?? agg.details.facilityAddress
+
+        return VisitDetailData(
+            title: title,
+            labels: labels,
+            group: group,
+            members: members,
+            timestamp: agg.visit.timestampUTC,
+            address: address,
+            coordinate: coord,
+            memo: agg.details.comment,
+            facility: FacilityInfo(
+                name: agg.details.facilityName,
+                address: agg.details.facilityAddress,
+                phone: nil
+            ),
+            facilityCategory: agg.details.facilityCategory,
+            photoPaths: agg.details.photoPaths
+        )
+    }
+
+    private func deleteVisit() {
+        let repo = AppContainer.shared.repo
+        do {
+            try repo.delete(id: visitId)
+            NotificationCenter.default.post(name: .visitsChanged, object: nil)
+        } catch {
+            Logger.error("Failed to delete visit from detail sheet", error: error)
         }
     }
 }

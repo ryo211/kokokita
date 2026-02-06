@@ -60,10 +60,13 @@
 "home.search.placeholder" = "Search";
 "home.deleteConfirmTitle" = "Delete this record?";
 "home.deleteConfirmMessage" = "This action cannot be undone.";
-"home.noTitle" = "(No Title)";
+"home.noTitle" = "";
 "home.itemsCount" = "items";
 "home.switchToMap" = "Switch to Map";
 "home.switchToList" = "Switch to List";
+"home.modeList" = "List";
+"home.modeMap" = "Map";
+"home.modeCalendar" = "Cal";
 
 // MARK: - Detail
 "detail.share" = "Share";
@@ -79,7 +82,7 @@
 "detail.deleteConfirmMessage" = "This action cannot be undone.";
 "detail.deleteVisitTitle" = "Delete Record";
 "detail.deleteVisitMessage" = "Delete this record?";
-"detail.nearbyPastRecords" = "Past Records Nearby";
+"detail.nearbyPastRecords" = "Nearby Records";
 "detail.sameGroupRecords" = "Records in This Group";
 
 // MARK: - Menu
@@ -92,8 +95,10 @@
 
 // MARK: - Tab Bar
 "tab.home" = "Home";
+"tab.records" = "Records";
 "tab.menu" = "Menu";
 "tab.kokokita" = "Kokokita";
+"tab.course" = "Course";
 
 // MARK: - Error Messages
 "error.locationSimulated" = "Location data appears to be simulated or from an external accessory and cannot be recorded.";
@@ -136,7 +141,22 @@
 "label.duplicateName" = "A label with the same name already exists.";
 "label.detailTitle" = "Label Details";
 "label.deleteIrreversible" = "This action cannot be undone.";
-"label.relatedVisitsHeader" = "Records using this label";
+"label.relatedVisitsHeader" = "Records with this label";
+
+// MARK: - Label Color
+"labelColor.sectionTitle" = "Label Color";
+"labelColor.noColor" = "No Color";
+"labelColor.red" = "Red";
+"labelColor.orange" = "Orange";
+"labelColor.amber" = "Amber";
+"labelColor.green" = "Green";
+"labelColor.teal" = "Teal";
+"labelColor.cyan" = "Cyan";
+"labelColor.blue" = "Blue";
+"labelColor.indigo" = "Indigo";
+"labelColor.purple" = "Purple";
+"labelColor.pink" = "Pink";
+"labelColor.brown" = "Brown";
 
 // MARK: - Group Management
 "group.title" = "Groups";
@@ -152,7 +172,7 @@
 "group.duplicateName" = "A group with the same name already exists.";
 "group.detailTitle" = "Group Details";
 "group.deleteIrreversible" = "This action cannot be undone.";
-"group.relatedVisitsHeader" = "Records using this group";
+"group.relatedVisitsHeader" = "Records with this group";
 
 // MARK: - Member Management
 "member.title" = "Members";
@@ -168,7 +188,7 @@
 "member.duplicateName" = "A member with the same name already exists.";
 "member.detailTitle" = "Member Details";
 "member.deleteIrreversible" = "This action cannot be undone.";
-"member.relatedVisitsHeader" = "Records using this member";
+"member.relatedVisitsHeader" = "Records with this member";
 
 // MARK: - Settings
 "settings.title" = "Menu";
@@ -272,7 +292,9 @@
 
 // MARK: - Confirmation Sheet
 "confirmation.enterInfo" = "Enter Info";
+"confirmation.viewDetail" = "View Record";
 "confirmation.deleteRecord" = "Cancel Record";
+"confirmation.recordedLocation" = "Location Recorded";
 "confirmation.loadingPOI" = "Searching nearby places...";
 "confirmation.noInternet" = "Cannot fetch nearby places without an internet connection.";
 "confirmation.noPOIFound" = "No places found nearby";
@@ -281,3 +303,23 @@
 "confirmation.deleteConfirmMessage" = "This action cannot be undone.";
 "confirmation.recentVisitsHeader" = "Past Records Nearby";
 "confirmation.nearbyPlacesHeader" = "Nearby Places";
+
+// MARK: - New Home Screen
+"newhome.title" = "Kokokita";
+"newhome.recordLocation" = "Record Current Location";
+"newhome.recentRecords" = "Recent Records";
+"newhome.viewAllRecords" = "View All";
+"newhome.noRecentRecords" = "No records yet";
+
+// MARK: - Settings Sheet
+"settingssheet.title" = "Settings";
+"settingssheet.resetAll" = "Reset All";
+"settingssheet.followOnX" = "Follow on X";
+"settingssheet.support" = "Support & Contact";
+"settingssheet.developerTools" = "Developer Tools";
+"settingssheet.version" = "Version";
+
+// MARK: - Course Screen
+"course.title" = "Course";
+"course.comingSoon" = "Coming Soon";
+"course.description" = "Course feature will be available soon";

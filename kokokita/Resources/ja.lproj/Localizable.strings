@@ -43,7 +43,7 @@
 "visit.edit.newGroup" = "グループ新規作成";
 "visit.edit.clearSelection" = "未選択にする";
 "visit.edit.recordDateTime" = "記録日時";
-"visit.edit.copyFromOtherVisit" = "別のココキタからコピー";
+"visit.edit.copyFromOtherVisit" = "過去の記録からコピー";
 "visit.edit.selectVisitToCopy" = "コピー元を選択";
 
 // MARK: - Photo
@@ -60,10 +60,13 @@
 "home.search.placeholder" = "検索";
 "home.deleteConfirmTitle" = "この記録を削除しますか？";
 "home.deleteConfirmMessage" = "この操作は取り消せません。";
-"home.noTitle" = "（タイトルなし）";
+"home.noTitle" = "";
 "home.itemsCount" = "件";
 "home.switchToMap" = "地図に切り替え";
 "home.switchToList" = "一覧に切り替え";
+"home.modeList" = "一覧";
+"home.modeMap" = "地図";
+"home.modeCalendar" = "日付";
 
 // MARK: - Detail
 "detail.share" = "共有";
@@ -79,7 +82,7 @@
 "detail.deleteConfirmMessage" = "この操作は取り消せません。";
 "detail.deleteVisitTitle" = "記録を削除";
 "detail.deleteVisitMessage" = "この記録を削除しますか？";
-"detail.nearbyPastRecords" = "この近くで過去に記録した場所";
+"detail.nearbyPastRecords" = "近くの記録";
 "detail.sameGroupRecords" = "同じグループの記録";
 
 // MARK: - Menu
@@ -92,8 +95,10 @@
 
 // MARK: - Tab Bar
 "tab.home" = "ホーム";
+"tab.records" = "記録";
 "tab.menu" = "メニュー";
 "tab.kokokita" = "ココキタ";
+"tab.course" = "コース";
 
 // MARK: - Location
 "location.acquiringLocation" = "位置情報を取得中...";
@@ -144,7 +149,22 @@
 "label.duplicateName" = "同じ名前のラベルが既にあります。";
 "label.detailTitle" = "ラベル詳細";
 "label.deleteIrreversible" = "この操作は取り消せません。";
-"label.relatedVisitsHeader" = "このラベルを使用している記録";
+"label.relatedVisitsHeader" = "このラベルの記録";
+
+// MARK: - Label Color
+"labelColor.sectionTitle" = "ラベルカラー";
+"labelColor.noColor" = "なし";
+"labelColor.red" = "レッド";
+"labelColor.orange" = "オレンジ";
+"labelColor.amber" = "アンバー";
+"labelColor.green" = "グリーン";
+"labelColor.teal" = "ティール";
+"labelColor.cyan" = "シアン";
+"labelColor.blue" = "ブルー";
+"labelColor.indigo" = "インディゴ";
+"labelColor.purple" = "パープル";
+"labelColor.pink" = "ピンク";
+"labelColor.brown" = "ブラウン";
 
 // MARK: - Group Management
 "group.title" = "グループ";
@@ -160,7 +180,7 @@
 "group.duplicateName" = "同じ名前のグループが既にあります。";
 "group.detailTitle" = "グループ詳細";
 "group.deleteIrreversible" = "この操作は取り消せません。";
-"group.relatedVisitsHeader" = "このグループを使用している記録";
+"group.relatedVisitsHeader" = "このグループの記録";
 
 // MARK: - Member Management
 "member.title" = "メンバー";
@@ -176,7 +196,7 @@
 "member.duplicateName" = "同じ名前のメンバーが既にあります。";
 "member.detailTitle" = "メンバー詳細";
 "member.deleteIrreversible" = "この操作は取り消せません。";
-"member.relatedVisitsHeader" = "このメンバーを使用している記録";
+"member.relatedVisitsHeader" = "このメンバーの記録";
 
 // MARK: - Settings
 "settings.title" = "メニュー";
@@ -247,7 +267,7 @@
 "location.acquiring" = "位置情報を取得中...";
 "location.waiting" = "しばらくお待ちください";
 "location.noLocation" = "位置情報なし";
-"location.kokokitaCompleted" = "ココキタ  ✅";
+"location.kokokitaCompleted" = "ココキタ";
 "location.noLocationData" = "位置情報がありません";
 
 // MARK: - Empty State
@@ -274,7 +294,9 @@
 
 // MARK: - Confirmation Sheet
 "confirmation.enterInfo" = "情報を入力";
+"confirmation.viewDetail" = "記録を見る";
 "confirmation.deleteRecord" = "記録を取り消し";
+"confirmation.recordedLocation" = "現在地を記録しました";
 "confirmation.loadingPOI" = "周辺施設を検索中...";
 "confirmation.noInternet" = "インターネットに接続されていないため、周辺施設情報を取得できません。";
 "confirmation.noPOIFound" = "周辺に施設が見つかりませんでした";
@@ -283,3 +305,23 @@
 "confirmation.deleteConfirmMessage" = "この操作は取り消せません。";
 "confirmation.recentVisitsHeader" = "この近くで過去に記録した場所";
 "confirmation.nearbyPlacesHeader" = "周辺の施設";
+
+// MARK: - New Home Screen
+"newhome.title" = "ココキタ";
+"newhome.recordLocation" = "現在地を記録する";
+"newhome.recentRecords" = "最近の記録";
+"newhome.viewAllRecords" = "すべて見る";
+"newhome.noRecentRecords" = "まだ記録がありません";
+
+// MARK: - Settings Sheet
+"settingssheet.title" = "設定";
+"settingssheet.resetAll" = "すべてリセット";
+"settingssheet.followOnX" = "Xでフォロー";
+"settingssheet.support" = "サポート・お問い合わせ";
+"settingssheet.developerTools" = "開発者ツール";
+"settingssheet.version" = "バージョン";
+
+// MARK: - Course Screen
+"course.title" = "コース";
+"course.comingSoon" = "準備中";
+"course.description" = "コース機能は近日公開予定です";

@@ -245,6 +245,17 @@ final class CoreDataVisitRepository {
 
 
 
+    /// 最新の訪問記録を指定件数だけ取得（Core Data レベルでソート・件数制限）
+    func fetchRecent(limit: Int) throws -> [VisitAggregate] {
+        let request: NSFetchRequest<VisitEntity> = VisitEntity.fetchRequest()
+        request.sortDescriptors = [NSSortDescriptor(key: "timestampUTC", ascending: false)]
+        request.fetchLimit = limit
+        // リレーションを事前読み込みしてN+1を軽減
+        request.relationshipKeyPathsForPrefetching = ["details", "details.labels", "details.members", "details.photos"]
+        let rows = try ctx.fetch(request)
+        return rows.compactMap { self.toAggregate($0) }
+    }
+
     func get(by id: UUID) throws -> VisitAggregate? {
         guard let v = try fetchVisitEntity(id: id) else {
             Logger.debug("Visit not found: \(id)")
@@ -327,7 +338,7 @@ final class CoreDataVisitRepository {
                 Logger.warning("Label entity missing required fields (id or name)")
                 return nil
             }
-            return LabelTag(id: id, name: name)
+            return LabelTag(id: id, name: name, colorId: row.colorId)
         }
     }
 
@@ -359,7 +370,7 @@ final class CoreDataVisitRepository {
         let req: NSFetchRequest<LabelEntity> = LabelEntity.fetchRequest()
         req.predicate = NSPredicate(format: "name == %@", name)
         if let hit = try ctx.fetch(req).first, let id = hit.id, let nm = hit.name {
-            return LabelTag(id: id, name: nm)
+            return LabelTag(id: id, name: nm, colorId: hit.colorId)
         }
         let e = LabelEntity(context: ctx)
         let newId = UUID()
@@ -725,7 +736,7 @@ final class CoreDataVisitRepository {
 
     // MARK: - Restore用：既存IDでの作成
 
-    func createLabel(id: UUID, name: String, saveImmediately: Bool = true) throws {
+    func createLabel(id: UUID, name: String, colorId: String? = nil, saveImmediately: Bool = true) throws {
         let trimmed = name.trimmed
         guard !trimmed.isEmpty else {
             Logger.warning("Attempted to create label with empty name")
@@ -736,13 +747,19 @@ final class CoreDataVisitRepository {
         // 既存のラベルをチェック
         if let existing = try fetchLabelEntity(id: id) {
             Logger.info("Label with ID \(id) already exists, skipping creation")
-            // 名前が異なる場合は更新
+            // 名前または色が異なる場合は更新
+            var updated = false
             if existing.name != trimmed {
                 existing.name = trimmed
-                if saveImmediately {
-                    try ctx.save()
-                }
-                Logger.info("Updated label name to: \(trimmed)")
+                updated = true
+            }
+            if existing.colorId != colorId {
+                existing.colorId = colorId
+                updated = true
+            }
+            if updated && saveImmediately {
+                try ctx.save()
+                Logger.info("Updated label: \(trimmed) (colorId: \(colorId ?? "nil"))")
             }
             return
         }
@@ -750,10 +767,11 @@ final class CoreDataVisitRepository {
         let e = LabelEntity(context: ctx)
         e.id = id
         e.name = trimmed
+        e.colorId = colorId
         if saveImmediately {
             try ctx.save()
         }
-        Logger.info("Created label with existing ID: \(trimmed) (\(id))")
+        Logger.info("Created label with existing ID: \(trimmed) (\(id), colorId: \(colorId ?? "nil"))")
     }
 
     func createGroup(id: UUID, name: String, saveImmediately: Bool = true) throws {

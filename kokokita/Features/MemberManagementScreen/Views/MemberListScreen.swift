@@ -1,8 +1,9 @@
 import SwiftUI
 
 struct MemberListScreen: View {
+    @Binding var showCreate: Bool
+
     @State private var store = MemberListStore()
-    @State private var showCreate = false
     @State private var newMemberName = ""
 
     var body: some View {
@@ -20,7 +21,6 @@ struct MemberListScreen: View {
                     }
                 } label: {
                     HStack {
-                        Image(systemName: "person")
                         Text(tag.name)
                         Spacer()
                         if let count = store.visitCounts[tag.id] {
@@ -32,6 +32,7 @@ struct MemberListScreen: View {
                 }
             }
         }
+        .listStyle(.plain)
         .overlay {
             if store.loading {
                 ProgressView().controlSize(.large)
@@ -40,18 +41,10 @@ struct MemberListScreen: View {
                     description: Text(L.MemberManagement.emptyDescription))
             }
         }
-        .navigationTitle(L.MemberManagement.title)
-        .navigationBarTitleDisplayMode(.inline)
         .task { await store.load() }
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    newMemberName = ""
-                    showCreate = true
-                } label: {
-                    Image(systemName: "plus")
-                }
-                .accessibilityLabel(L.MemberManagement.createAccessibility)
+        .onChange(of: showCreate) { _, isShowing in
+            if isShowing {
+                newMemberName = ""
             }
         }
         .sheet(isPresented: $showCreate) {

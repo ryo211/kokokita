@@ -1,43 +1,141 @@
 import SwiftUI
 import CoreLocation
 
+private struct VisitSelection: Identifiable, Hashable {
+    let id: UUID
+}
+
 struct LabelDetailView: View {
     let label: LabelTag
     var onFinish: (_ updated: LabelTag?, _ deleted: Bool) -> Void
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(AppUIState.self) private var ui
     @State private var store = LabelListStore()
     @State private var name: String
+    @State private var editingName: String = ""
+    @State private var showEditSheet = false
     @State private var showDeleteConfirm = false
+    @State private var currentColorId: String?
 
     // 関連する訪問記録の表示用
     @State private var relatedVisits: [VisitAggregate] = []
     @State private var labelMap: [UUID: String] = [:]
     @State private var groupMap: [UUID: String] = [:]
     @State private var memberMap: [UUID: String] = [:]
+    @State private var visitLabelColorMap: [String: Color] = [:]
     @State private var editingTarget: VisitAggregate? = nil
     @State private var showVisitDeleteConfirm = false
     @State private var pendingDeleteVisitId: UUID? = nil
+    @State private var selectedVisit: VisitSelection? = nil
     private let repo = AppContainer.shared.repo
 
     init(label: LabelTag, onFinish: @escaping (_ updated: LabelTag?, _ deleted: Bool) -> Void) {
         self.label = label
         self.onFinish = onFinish
         _name = State(initialValue: label.name)
+        _currentColorId = State(initialValue: label.colorId)
     }
 
     var body: some View {
-        Form {
-            nameSection
-            deleteSection
-            relatedVisitsSection
+        VStack(spacing: 0) {
+            // 固定部分：名前表示と編集ボタン、ヘッダー
+            VStack(spacing: 0) {
+                nameSection
+                    .padding(.horizontal)
+                    .padding(.vertical, 16)
+
+                colorSection
+                    .padding(.horizontal)
+                    .padding(.bottom, 16)
+
+                if !relatedVisits.isEmpty {
+                    HStack {
+                        Text("\(L.LabelManagement.relatedVisitsHeader) (\(relatedVisits.count)\(L.Home.itemsCount))")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                    }
+                    .padding(.horizontal)
+                    .padding(.top, 12)
+                    .padding(.bottom, 16)
+                }
+
+                Divider()
+            }
+            .background(Color(.systemBackground))
+
+            // スクロール可能な部分：関連する記録のリストのみ
+            if !relatedVisits.isEmpty {
+                List {
+                    ForEach(relatedVisits, id: \.id) { visit in
+                        visitRowView(for: visit)
+                    }
+                }
+                .listStyle(.plain)
+                .navigationDestination(item: $selectedVisit) { selection in
+                    if let visit = relatedVisits.first(where: { $0.id == selection.id }) {
+                        VisitDetailScreen(
+                            data: toDetailData(visit),
+                            visitId: selection.id,
+                            onBack: {},
+                            onEdit: { editingTarget = visit },
+                            onShare: {},
+                            onDelete: {
+                                pendingDeleteVisitId = selection.id
+                                showVisitDeleteConfirm = true
+                            },
+                            onUpdate: {
+                                loadRelatedVisits()
+                            },
+                            onMapTap: { ui.mapFocusVisitId = selection.id }
+                        )
+                    }
+                }
+            } else {
+                Spacer()
+            }
         }
-        .navigationTitle(L.LabelManagement.detailTitle)
+        .navigationTitle("")
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button(L.Common.save) { save() }
-                    .disabled(store.loading || !LabelValidator.isNotEmpty(name))
+                Button(role: .destructive) {
+                    showDeleteConfirm = true
+                } label: {
+                    Image(systemName: "trash")
+                }
             }
+        }
+        .sheet(isPresented: $showEditSheet) {
+            NavigationStack {
+                Form {
+                    Section {
+                        TextField(L.LabelManagement.namePlaceholder, text: $editingName)
+                            .submitLabel(.done)
+                            .onSubmit {
+                                if LabelValidator.isNotEmpty(editingName) {
+                                    saveEdit()
+                                }
+                            }
+                    }
+                }
+                .navigationTitle(L.Common.edit)
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button(L.Common.cancel) {
+                            showEditSheet = false
+                        }
+                    }
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button(L.Common.save) {
+                            saveEdit()
+                        }
+                        .disabled(store.loading || !LabelValidator.isNotEmpty(editingName))
+                    }
+                }
+            }
+            .presentationDetents([.height(200)])
         }
         .onAppear {
             loadRelatedVisits()
@@ -73,8 +171,15 @@ struct LabelDetailView: View {
 
     private func save() {
         if store.update(id: label.id, name: name) {
-            onFinish(LabelTag(id: label.id, name: name), false)
+            onFinish(LabelTag(id: label.id, name: name, colorId: currentColorId), false)
             dismiss()
+        }
+    }
+
+    private func saveEdit() {
+        if store.update(id: label.id, name: editingName) {
+            name = editingName
+            showEditSheet = false
         }
     }
 
@@ -87,27 +192,53 @@ struct LabelDetailView: View {
 
     // MARK: - Sections
 
-    private var nameSection: some View {
-        Section {
-            TextField(L.LabelManagement.namePlaceholder, text: $name)
-                .submitLabel(.done)
-                .onSubmit {
-                    if LabelValidator.isNotEmpty(name) {
-                        save()
-                    }
-                }
+    /// 色選択セクション
+    private var colorSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(L.LabelColor.sectionTitle)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            LabelColorPicker(selectedColorId: currentColorId) { newColorId in
+                currentColorId = newColorId
+                _ = store.updateColor(id: label.id, colorId: newColorId)
+            }
         }
     }
 
-    private var deleteSection: some View {
-        Section {
-            Button(role: .destructive) {
-                showDeleteConfirm = true
-            } label: {
-                Label(L.LabelManagement.deleteConfirm, systemImage: "trash")
+    private var nameSection: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(L.LabelManagement.namePlaceholder)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            HStack(alignment: .bottom) {
+                HStack(spacing: 8) {
+                    Image(systemName: "tag")
+                        .imageScale(.medium)
+                        .font(.title3)
+                        .foregroundStyle(LabelColorId.from(currentColorId)?.color ?? ChipKind.defaultTint)
+                    Text(name)
+                        .font(.title3.bold())
+                }
+                Spacer()
+                Button {
+                    editingName = name
+                    showEditSheet = true
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "pencil")
+                        Text(L.Common.edit)
+                    }
+                    .font(.subheadline)
+                }
             }
-        } footer: {
-            Text(L.LabelManagement.deleteFooter)
+            .padding(.bottom, 4)
+            .overlay(alignment: .bottom) {
+                Rectangle()
+                    .fill(Color.primary.opacity(0.3))
+                    .frame(height: 1)
+            }
         }
     }
 
@@ -138,24 +269,10 @@ struct LabelDetailView: View {
 
     @ViewBuilder
     private func visitRowView(for visit: VisitAggregate) -> some View {
-        NavigationLink {
-            VisitDetailScreen(
-                data: toDetailData(visit),
-                visitId: visit.id,
-                onBack: {},
-                onEdit: { editingTarget = visit },
-                onShare: {},
-                onDelete: {
-                    pendingDeleteVisitId = visit.id
-                    showVisitDeleteConfirm = true
-                },
-                onUpdate: {
-                    loadRelatedVisits()
-                },
-                onMapTap: nil
-            )
+        Button {
+            selectedVisit = VisitSelection(id: visit.id)
         } label: {
-            VisitRow(agg: visit, nameResolver: nameResolver)
+            VisitRow(agg: visit, nameResolver: nameResolver, compact: true, labelColorMap: visitLabelColorMap)
         }
     }
 
@@ -176,6 +293,7 @@ struct LabelDetailView: View {
             labelMap = Dictionary(uniqueKeysWithValues: labels.map { ($0.id, $0.name) })
             groupMap = Dictionary(uniqueKeysWithValues: groups.map { ($0.id, $0.name) })
             memberMap = Dictionary(uniqueKeysWithValues: members.map { ($0.id, $0.name) })
+            visitLabelColorMap = labels.colorMap
 
             // このラベルを使用している訪問記録を取得
             let visits = try repo.fetchAll(

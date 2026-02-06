@@ -1,9 +1,11 @@
 import SwiftUI
 
 struct LabelListScreen: View {
+    @Binding var showCreate: Bool
+
     @State private var store = LabelListStore()
-    @State private var showCreate = false
     @State private var newLabelName = ""
+    @State private var newLabelColorId: String? = nil
 
     var body: some View {
         List {
@@ -20,7 +22,9 @@ struct LabelListScreen: View {
                     }
                 } label: {
                     HStack {
-                        Image(systemName: "tag")
+                        Circle()
+                            .fill(LabelColorId.from(tag.colorId)?.color ?? ChipKind.defaultTint)
+                            .frame(width: 10, height: 10)
                         Text(tag.name)
                         Spacer()
                         if let count = store.visitCounts[tag.id] {
@@ -32,6 +36,7 @@ struct LabelListScreen: View {
                 }
             }
         }
+        .listStyle(.plain)
         .overlay {
             if store.loading {
                 ProgressView().controlSize(.large)
@@ -40,18 +45,11 @@ struct LabelListScreen: View {
                     description: Text(L.LabelManagement.emptyDescription))
             }
         }
-        .navigationTitle(L.LabelManagement.title)
-        .navigationBarTitleDisplayMode(.inline)
         .task { await store.load() }
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    newLabelName = ""
-                    showCreate = true
-                } label: {
-                    Image(systemName: "plus")
-                }
-                .accessibilityLabel(L.LabelManagement.createAccessibility)
+        .onChange(of: showCreate) { _, isShowing in
+            if isShowing {
+                newLabelName = ""
+                newLabelColorId = nil
             }
         }
         .sheet(isPresented: $showCreate) {
@@ -68,6 +66,13 @@ struct LabelListScreen: View {
                         }
                     }
                     Section {
+                        LabelColorPicker(selectedColorId: newLabelColorId) { colorId in
+                            newLabelColorId = colorId
+                        }
+                    } header: {
+                        Text(L.LabelColor.sectionTitle)
+                    }
+                    Section {
                         Button(L.Common.create) { createLabel() }
                             .disabled(!LabelValidator.isNotEmpty(newLabelName))
                         Button(L.Common.cancel, role: .cancel) { showCreate = false }
@@ -82,7 +87,7 @@ struct LabelListScreen: View {
     }
 
     private func createLabel() {
-        if store.create(name: newLabelName) {
+        if store.create(name: newLabelName, colorId: newLabelColorId) {
             showCreate = false
         }
     }

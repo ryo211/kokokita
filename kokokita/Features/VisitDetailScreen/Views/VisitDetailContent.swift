@@ -10,10 +10,11 @@ struct VisitDetailContent: View {
     var sameGroupVisits: [VisitAggregate] = []
     var sameGroupVisitsData: [VisitDetailData] = []
     var currentGroupName: String? = nil
-    var onLabelTap: (() -> Void)? = nil
-    var onGroupTap: (() -> Void)? = nil
-    var onMemberTap: (() -> Void)? = nil
+    var onLabelTap: ((String) -> Void)? = nil
+    var onGroupTap: ((String) -> Void)? = nil
+    var onMemberTap: ((String) -> Void)? = nil
     var onMapTap: (() -> Void)? = nil
+    var labelColorMap: [String: Color] = [:]
     @Binding var photoFullScreenIndex: Int?
 
     var body: some View {
@@ -28,7 +29,7 @@ struct VisitDetailContent: View {
                     .padding(.bottom, UIConstants.Spacing.small)
             }
 
-            // タイトル + ラベル/グループ（くっつくイメージ）
+            // タイトル + グループ + ラベル/メンバー
             VStack(alignment: .leading, spacing: UIConstants.Spacing.medium) {
                 HStack(spacing: UIConstants.Spacing.medium) {
                     VStack(alignment: .leading, spacing: 2) {
@@ -52,29 +53,27 @@ struct VisitDetailContent: View {
                     )
                 }
 
-                VStack(alignment: .leading, spacing: 6) {
-                    // グループ（1行）
-                    if let group = data.group?.trimmed, !group.isEmpty {
-                        FlowRow(spacing: 6, rowSpacing: 6) {
-                            Chip(group, kind: .group, showRemoveButton: false)
-                                .onTapGesture {
-                                    if !isSharing {
-                                        onGroupTap?()
-                                    }
-                                }
+                // グループ（フォルダ帰属表示）
+                if let group = data.group?.trimmed, !group.isEmpty {
+                    GroupBadge(name: group)
+                        .onTapGesture {
+                            if !isSharing {
+                                onGroupTap?(group)
+                            }
                         }
-                    }
+                }
 
+                VStack(alignment: .leading, spacing: 6) {
                     // ラベル（複数あり得る）
                     if !data.labels.isEmpty {
                         FlowRow(spacing: 6, rowSpacing: 6) {
                             ForEach(data.labels, id: \.self) { name in
                                 let t = name.trimmed
                                 if !t.isEmpty {
-                                    Chip(t, kind: .label, showRemoveButton: false)
+                                    Chip(t, kind: .label, showRemoveButton: false, colorDot: labelColorMap[t])
                                         .onTapGesture {
                                             if !isSharing {
-                                                onLabelTap?()
+                                                onLabelTap?(t)
                                             }
                                         }
                                 }
@@ -91,7 +90,7 @@ struct VisitDetailContent: View {
                                     Chip(t, kind: .member, showRemoveButton: false)
                                         .onTapGesture {
                                             if !isSharing {
-                                                onMemberTap?()
+                                                onMemberTap?(t)
                                             }
                                         }
                                 }
@@ -105,25 +104,21 @@ struct VisitDetailContent: View {
             
             // 時刻・住所カード
             InfoCard {
-                HStack(alignment: .top, spacing: 12) {
+                HStack(alignment: .center, spacing: 12) {
                     Image(systemName: "clock")
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(data.timestamp.kokokitaVisitString)
-                            .font(.footnote)
-                            .foregroundStyle(.secondary)
-                    }
+                    Text(data.timestamp.kokokitaVisitString)
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
                     Spacer(minLength: 0)
                 }
 
                 if let addr = data.address?.trimmed, !addr.isEmpty {
                     Divider().padding(.vertical, 6)
-                    HStack(alignment: .top, spacing: 12) {
+                    HStack(alignment: .center, spacing: 12) {
                         Image(systemName: "mappin.and.ellipse")
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(addr)
-                                .font(.footnote)
-                                .foregroundStyle(.secondary)
-                        }
+                        Text(addr)
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
                         Spacer(minLength: 0)
                     }
                 }
@@ -209,76 +204,12 @@ struct VisitDetailContent: View {
                 .font(.headline)
                 .padding(.horizontal)
 
-            VStack(spacing: 0) {
-                ForEach(Array(nearbyVisits.enumerated()), id: \.element.visit.id) { index, visit in
-                    if index < nearbyVisitsData.count {
-                        NavigationLink {
-                            VisitDetailScreen(
-                                data: nearbyVisitsData[index],
-                                visitId: visit.visit.id
-                            )
-                        } label: {
-                            nearbyVisitRow(visit)
-                        }
-                        .buttonStyle(.plain)
-
-                        // 最後以外に区切り線を追加
-                        if index < nearbyVisits.count - 1 {
-                            Divider()
-                                .padding(.horizontal)
-                                .padding(.vertical, 8)
-                        }
-                    }
-                }
-            }
-            .padding(.horizontal)
+            // 縦型クリアブルーカードを横スクロールで表示
+            NearbyVisitsCarousel(
+                visits: nearbyVisits,
+                visitsData: nearbyVisitsData
+            )
         }
-    }
-
-    private func nearbyVisitRow(_ visit: VisitAggregate) -> some View {
-        HStack(alignment: .top, spacing: 12) {
-            VStack(alignment: .leading, spacing: 4) {
-                // タイトルまたは施設名
-                Text(displayName(for: visit))
-                    .font(.subheadline.bold())
-                    .foregroundStyle(.primary)
-
-                // 日付
-                Text(visit.visit.timestampUTC.kokokitaVisitString)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-
-                // 住所
-                if let addr = visit.details.resolvedAddress?.trimmed, !addr.isEmpty {
-                    Text(addr)
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(2)
-                }
-            }
-            Spacer()
-            Image(systemName: "chevron.right")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-        }
-        .padding(12)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(.systemBackground))
-        .cornerRadius(8)
-        .overlay(
-            RoundedRectangle(cornerRadius: 8)
-                .stroke(Color(.systemGray4), lineWidth: 1)
-        )
-    }
-
-    private func displayName(for visit: VisitAggregate) -> String {
-        if let title = visit.details.title?.trimmed, !title.isEmpty {
-            return title
-        }
-        if let facility = visit.details.facilityName?.trimmed, !facility.isEmpty {
-            return facility
-        }
-        return L.Home.noTitle
     }
 
     // MARK: - Same Group Visits Section
@@ -298,29 +229,11 @@ struct VisitDetailContent: View {
             }
             .padding(.horizontal)
 
-            VStack(spacing: 0) {
-                ForEach(Array(sameGroupVisits.enumerated()), id: \.element.visit.id) { index, visit in
-                    if index < sameGroupVisitsData.count {
-                        NavigationLink {
-                            VisitDetailScreen(
-                                data: sameGroupVisitsData[index],
-                                visitId: visit.visit.id
-                            )
-                        } label: {
-                            nearbyVisitRow(visit)
-                        }
-                        .buttonStyle(.plain)
-
-                        // 最後以外に区切り線を追加
-                        if index < sameGroupVisits.count - 1 {
-                            Divider()
-                                .padding(.horizontal)
-                                .padding(.vertical, 8)
-                        }
-                    }
-                }
-            }
-            .padding(.horizontal)
+            // 縦型クリアブルーカードを横スクロールで表示
+            NearbyVisitsCarousel(
+                visits: sameGroupVisits,
+                visitsData: sameGroupVisitsData
+            )
         }
     }
 }
