@@ -95,66 +95,69 @@ actor DataBackupService {
 
     // MARK: - Data Collection
 
-    private func collectAllData() throws -> BackupData {
-        // Visits - fetch all with no filters
-        let visitAggregates = try repo.fetchAll(
-            filterLabel: nil,
-            filterGroup: nil,
-            filterMember: nil,
-            titleQuery: nil,
-            dateFrom: nil,
-            dateToExclusive: nil
-        )
-        let visits = visitAggregates.map { agg -> BackupVisit in
-            let visit = agg.visit
-            let details = agg.details
-            return BackupVisit(
-                id: visit.id,
-                timestampUTC: visit.timestampUTC,
-                latitude: visit.latitude,
-                longitude: visit.longitude,
-                horizontalAccuracy: visit.horizontalAccuracy,
-                isSimulatedBySoftware: visit.isSimulatedBySoftware,
-                isProducedByAccessory: visit.isProducedByAccessory,
-                integrityAlgo: visit.integrity.algo,
-                integritySigDER: visit.integrity.signatureDERBase64,
-                integrityPubRaw: visit.integrity.publicKeyRawBase64,
-                integrityPayloadHash: visit.integrity.payloadHashHex,
-                integrityCreatedAtUTC: visit.integrity.createdAtUTC,
-                title: details.title,
-                facilityName: details.facilityName,
-                facilityAddress: details.facilityAddress,
-                facilityCategory: details.facilityCategory,
-                comment: details.comment,
-                labelIds: details.labelIds,
-                groupId: details.groupId,
-                memberIds: details.memberIds,
-                resolvedAddress: details.resolvedAddress,
-                photoPaths: details.photoPaths
+    private func collectAllData() async throws -> BackupData {
+        // Core Dataの viewContext はメインスレッド専用なので、MainActor で実行する
+        try await MainActor.run {
+            // Visits - fetch all with no filters
+            let visitAggregates = try repo.fetchAll(
+                filterLabel: nil,
+                filterGroup: nil,
+                filterMember: nil,
+                titleQuery: nil,
+                dateFrom: nil,
+                dateToExclusive: nil
+            )
+            let visits = visitAggregates.map { agg -> BackupVisit in
+                let visit = agg.visit
+                let details = agg.details
+                return BackupVisit(
+                    id: visit.id,
+                    timestampUTC: visit.timestampUTC,
+                    latitude: visit.latitude,
+                    longitude: visit.longitude,
+                    horizontalAccuracy: visit.horizontalAccuracy,
+                    isSimulatedBySoftware: visit.isSimulatedBySoftware,
+                    isProducedByAccessory: visit.isProducedByAccessory,
+                    integrityAlgo: visit.integrity.algo,
+                    integritySigDER: visit.integrity.signatureDERBase64,
+                    integrityPubRaw: visit.integrity.publicKeyRawBase64,
+                    integrityPayloadHash: visit.integrity.payloadHashHex,
+                    integrityCreatedAtUTC: visit.integrity.createdAtUTC,
+                    title: details.title,
+                    facilityName: details.facilityName,
+                    facilityAddress: details.facilityAddress,
+                    facilityCategory: details.facilityCategory,
+                    comment: details.comment,
+                    labelIds: details.labelIds,
+                    groupId: details.groupId,
+                    memberIds: details.memberIds,
+                    resolvedAddress: details.resolvedAddress,
+                    photoPaths: details.photoPaths
+                )
+            }
+
+            // Labels
+            let labels = try repo.allLabels().map { label in
+                BackupLabel(id: label.id, name: label.name, colorId: label.colorId)
+            }
+
+            // Groups
+            let groups = try repo.allGroups().map { group in
+                BackupGroup(id: group.id, name: group.name)
+            }
+
+            // Members
+            let members = try repo.allMembers().map { member in
+                BackupMember(id: member.id, name: member.name)
+            }
+
+            return BackupData(
+                visits: visits,
+                labels: labels,
+                groups: groups,
+                members: members
             )
         }
-
-        // Labels
-        let labels = try repo.allLabels().map { label in
-            BackupLabel(id: label.id, name: label.name)
-        }
-
-        // Groups
-        let groups = try repo.allGroups().map { group in
-            BackupGroup(id: group.id, name: group.name)
-        }
-
-        // Members
-        let members = try repo.allMembers().map { member in
-            BackupMember(id: member.id, name: member.name)
-        }
-
-        return BackupData(
-            visits: visits,
-            labels: labels,
-            groups: groups,
-            members: members
-        )
     }
 
     private func encodeToJSON(_ data: BackupData) throws -> Data {
@@ -283,6 +286,25 @@ struct BackupVisit: Codable {
 struct BackupLabel: Codable {
     let id: UUID
     let name: String
+    let colorId: String?
+
+    // 古いバックアップファイル（colorIdがない）との互換性のためのカスタムデコード
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        name = try container.decode(String.self, forKey: .name)
+        colorId = try container.decodeIfPresent(String.self, forKey: .colorId)
+    }
+
+    init(id: UUID, name: String, colorId: String?) {
+        self.id = id
+        self.name = name
+        self.colorId = colorId
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id, name, colorId
+    }
 }
 
 struct BackupGroup: Codable {

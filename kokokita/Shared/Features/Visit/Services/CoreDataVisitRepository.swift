@@ -736,7 +736,7 @@ final class CoreDataVisitRepository {
 
     // MARK: - Restore用：既存IDでの作成
 
-    func createLabel(id: UUID, name: String, saveImmediately: Bool = true) throws {
+    func createLabel(id: UUID, name: String, colorId: String? = nil, saveImmediately: Bool = true) throws {
         let trimmed = name.trimmed
         guard !trimmed.isEmpty else {
             Logger.warning("Attempted to create label with empty name")
@@ -747,13 +747,19 @@ final class CoreDataVisitRepository {
         // 既存のラベルをチェック
         if let existing = try fetchLabelEntity(id: id) {
             Logger.info("Label with ID \(id) already exists, skipping creation")
-            // 名前が異なる場合は更新
+            // 名前または色が異なる場合は更新
+            var updated = false
             if existing.name != trimmed {
                 existing.name = trimmed
-                if saveImmediately {
-                    try ctx.save()
-                }
-                Logger.info("Updated label name to: \(trimmed)")
+                updated = true
+            }
+            if existing.colorId != colorId {
+                existing.colorId = colorId
+                updated = true
+            }
+            if updated && saveImmediately {
+                try ctx.save()
+                Logger.info("Updated label: \(trimmed) (colorId: \(colorId ?? "nil"))")
             }
             return
         }
@@ -761,10 +767,11 @@ final class CoreDataVisitRepository {
         let e = LabelEntity(context: ctx)
         e.id = id
         e.name = trimmed
+        e.colorId = colorId
         if saveImmediately {
             try ctx.save()
         }
-        Logger.info("Created label with existing ID: \(trimmed) (\(id))")
+        Logger.info("Created label with existing ID: \(trimmed) (\(id), colorId: \(colorId ?? "nil"))")
     }
 
     func createGroup(id: UUID, name: String, saveImmediately: Bool = true) throws {
