@@ -6,24 +6,14 @@ struct SettingsSheet: View {
     var body: some View {
         NavigationStack {
             List {
-                // リセット
-                Section {
-                    NavigationLink {
-                        ResetAllScreen()
-                    } label: {
-                        Label(L.SettingsSheet.resetAll, systemImage: "trash.circle.fill")
-                            .foregroundStyle(.red)
-                    }
-                }
-
                 // 外部リンク
                 Section {
-                    Link(destination: URL(string: "https://x.com/kokokita_app")!) {
+                    Link(destination: URL(string: "https://x.com/irodoriq")!) {
                         Label(L.SettingsSheet.followOnX, systemImage: "link")
                     }
 
-                    Link(destination: URL(string: "https://kokokita.app/help")!) {
-                        Label(L.SettingsSheet.help, systemImage: "questionmark.circle")
+                    Link(destination: URL(string: "https://kokokita.irodoriq.com/support/")!) {
+                        Label(L.SettingsSheet.support, systemImage: "headphones.circle")
                     }
                 }
 
@@ -45,6 +35,16 @@ struct SettingsSheet: View {
                         Spacer()
                         Text(appVersion)
                             .foregroundStyle(.secondary)
+                    }
+                }
+
+                // リセット
+                Section {
+                    NavigationLink {
+                        ResetAllScreen()
+                    } label: {
+                        Label(L.SettingsSheet.resetAll, systemImage: "trash.circle.fill")
+                            .foregroundStyle(.red)
                     }
                 }
             }

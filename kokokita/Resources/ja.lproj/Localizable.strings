@@ -151,6 +151,21 @@
 "label.deleteIrreversible" = "この操作は取り消せません。";
 "label.relatedVisitsHeader" = "このラベルの記録";
 
+// MARK: - Label Color
+"labelColor.sectionTitle" = "ラベルカラー";
+"labelColor.noColor" = "なし";
+"labelColor.red" = "レッド";
+"labelColor.orange" = "オレンジ";
+"labelColor.amber" = "アンバー";
+"labelColor.green" = "グリーン";
+"labelColor.teal" = "ティール";
+"labelColor.cyan" = "シアン";
+"labelColor.blue" = "ブルー";
+"labelColor.indigo" = "インディゴ";
+"labelColor.purple" = "パープル";
+"labelColor.pink" = "ピンク";
+"labelColor.brown" = "ブラウン";
+
 // MARK: - Group Management
 "group.title" = "グループ";
 "group.namePlaceholder" = "グループ名";
@@ -302,7 +317,7 @@
 "settingssheet.title" = "設定";
 "settingssheet.resetAll" = "すべてリセット";
 "settingssheet.followOnX" = "Xでフォロー";
-"settingssheet.help" = "ヘルプ";
+"settingssheet.support" = "サポート・お問い合わせ";
 "settingssheet.developerTools" = "開発者ツール";
 "settingssheet.version" = "バージョン";
 

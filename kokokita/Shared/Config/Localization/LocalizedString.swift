@@ -370,7 +370,7 @@ enum L {
         static let title = localized("settingssheet.title")
         static let resetAll = localized("settingssheet.resetAll")
         static let followOnX = localized("settingssheet.followOnX")
-        static let help = localized("settingssheet.help")
+        static let support = localized("settingssheet.support")
         static let developerTools = localized("settingssheet.developerTools")
         static let version = localized("settingssheet.version")
     }

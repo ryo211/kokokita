@@ -144,7 +144,7 @@
 "label.relatedVisitsHeader" = "Records with this label";
 
 // MARK: - Label Color
-"labelColor.sectionTitle" = "Color";
+"labelColor.sectionTitle" = "Label Color";
 "labelColor.noColor" = "No Color";
 "labelColor.red" = "Red";
 "labelColor.orange" = "Orange";
@@ -315,7 +315,7 @@
 "settingssheet.title" = "Settings";
 "settingssheet.resetAll" = "Reset All";
 "settingssheet.followOnX" = "Follow on X";
-"settingssheet.help" = "Help";
+"settingssheet.support" = "Support & Contact";
 "settingssheet.developerTools" = "Developer Tools";
 "settingssheet.version" = "Version";
 
