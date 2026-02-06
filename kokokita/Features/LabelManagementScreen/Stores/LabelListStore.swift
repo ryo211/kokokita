@@ -17,12 +17,28 @@ final class LabelListStore {
     private let repository: CoreDataTaxonomyRepository
     private let visitRepository: CoreDataVisitRepository
 
+    // MARK: - Notification Observer
+    // iOS 9以降では、オブザーバーはオブジェクト解放時に自動的に登録解除される
+
+    private var notificationObserver: Any?
+
     // MARK: - Initialization
 
     init(repository: CoreDataTaxonomyRepository = AppContainer.shared.taxonomyRepo,
          visitRepository: CoreDataVisitRepository = AppContainer.shared.repo) {
         self.repository = repository
         self.visitRepository = visitRepository
+
+        // 他の画面からのタクソノミー変更通知を監視してリロード
+        notificationObserver = NotificationCenter.default.addObserver(
+            forName: .taxonomyChanged,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in
+                await self?.load()
+            }
+        }
     }
 
     // MARK: - Actions
