@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 
 // MARK: - Taxonomy Collection Extensions
 
@@ -12,6 +13,15 @@ extension Collection where Element == LabelTag {
     var sortedByName: [LabelTag] {
         filter { !$0.name.isBlankOrEmpty }
             .sorted { $0.name.localizedCompare($1.name) == .orderedAscending }
+    }
+
+    /// ラベル名 → Color のマップ（色設定ありのみ）
+    var colorMap: [String: Color] {
+        reduce(into: [:]) { map, label in
+            if let color = LabelColorId.from(label.colorId)?.color {
+                map[label.name] = color
+            }
+        }
     }
 }
 

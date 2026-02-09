@@ -1,183 +1,6 @@
 import SwiftUI
 import CoreLocation
 
-struct PostKokokitaPromptSheet: View {
-    @Binding var locationData: LocationData  // ← `let`から`@Binding`に変更
-    let onQuickSave: () -> Void
-    let onOpenEditor: () -> Void
-    let onOpenPOI: () -> Void
-    let onCancel: () -> Void
-
-    private var timestamp: Date? { locationData.timestamp }
-    private var addressText: String? { locationData.address }
-    private var latitude: Double { locationData.latitude }
-    private var longitude: Double { locationData.longitude }
-    private var canSave: Bool { latitude != 0 || longitude != 0 }
-    
-    // 1%の確率でレア画像を表示
-    private var logoImageName: String {
-        Double.random(in: 0..<1) < 0.01 ? "kokokita_irodori" : "kokokita_irodori_blue"
-    }
-
-    var body: some View {
-        GeometryReader { geometry in
-            VStack(spacing: 16) {
-                // 見出し
-                HStack(spacing: 10) {
-                    Image(logoImageName)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 42, height: 42)
-                    Text(L.Location.kokokitaCompleted)
-                        .font(.system(size: 24, weight: .semibold, design: .rounded))
-                        .tracking(1.2)  // 文字間隔を広げる
-                        .foregroundColor(.accentColor)
-                }
-                .padding(.top, 20)
-
-                // 最低限の情報（小さく）
-                VStack(spacing: 4) {
-                    Text(formattedTimestamp)
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                    if let addr = addressText, !addr.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                        Text(addr)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .multilineTextAlignment(.center)
-                            .lineLimit(2)
-                            .padding(.horizontal, 16)
-                    }
-                }
-             
-                // マップ（相対サイズ: 画面の55% = iPhone 12 miniと同じサイズ感）
-                if latitude != 0 || longitude != 0 {
-                    MapPreview(
-                        lat: latitude,
-                        lon: longitude,
-                        showCoordinateOverlay: true,
-                        decimals: 5
-                    )
-                    .frame(height: max(200, min(500, geometry.size.height * 0.55)))
-                } else {
-                    Text(L.Location.noLocationData)
-                        .foregroundStyle(.secondary)
-                }
-                
-                // 3つの選択肢（同列）
-                HStack(spacing: 12) {
-                    actionButton(
-                        primary: true,
-                        systemImage: "checkmark.circle.fill",
-                        title: L.Prompt.saveAsIsTitle,
-                        subtitle: L.Prompt.saveAsIsSubtitle,
-                        isDisabled: !canSave,
-                        action: onQuickSave
-                    )
-
-                    actionButton(
-                        primary: false,
-                        systemImage: "square.and.pencil",
-                        title: L.Prompt.enterInfoTitle,
-                        subtitle: L.Prompt.enterInfoSubtitle,
-                        action: onOpenEditor
-                    )
-
-                    actionButton(
-                        primary: false,
-                        systemImage: "building.2.crop.circle",
-                        title: L.Prompt.kokokamoTitle,
-                        subtitle: L.Prompt.kokokamoSubtitle,
-                        action: onOpenPOI
-                    )
-                }
-                .frame(height: 120)  // ボタン(80) + 説明(32) + spacing(4) + 余裕(4)
-                .padding(.horizontal, 8)
-
-
-                Spacer(minLength: 8)
-            }
-            .padding()
-        }
-        .background(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(.regularMaterial)
-        )
-        .presentationDragIndicator(.visible)
-    }
-    
-    private var formattedTimestamp: String {
-        guard let ts = timestamp else { return "-" }
-        return ts.kokokitaVisitString
-    }
-    
-    @ViewBuilder
-    private func actionButton(
-        primary: Bool,
-        systemImage: String,
-        title: String,
-        subtitle: String,
-        isDisabled: Bool = false,
-        action: @escaping () -> Void
-    ) -> some View {
-        VStack(spacing: 4) {
-            // ボタン本体を固定高さにして位置を揃える（アイコンを上に配置、タイトルは改行可能）
-            let content = VStack(spacing: 6) {
-                Image(systemName: systemImage)
-                    .font(.title2)
-                    .frame(height: 28)  // アイコンの高さを固定
-                Text(title)
-                    .font(.subheadline.bold())
-                    .lineLimit(2)  // 2行まで改行可能にして「そのまま保存」を2行表示
-                    .multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            .frame(maxWidth: .infinity)
-            .frame(height: 56)  // タイトル改行対応のため高さを拡大
-
-            // ★ Button は"必ず1つだけ"作る
-            if #available(iOS 15.0, *) {
-                if primary {
-                    Button(action: action) { content }
-                        .buttonStyle(BorderedProminentButtonStyle())
-                        .controlSize(.large)
-                        .buttonBorderShape(.roundedRectangle(radius: 14))
-                        .disabled(isDisabled)
-                } else {
-                    Button(action: action) { content }
-                        .buttonStyle(BorderedButtonStyle())
-                        .controlSize(.large)
-                        .buttonBorderShape(.roundedRectangle(radius: 14))
-                        .disabled(isDisabled)
-                }
-            } else {
-                // フォールバック（旧OS向け）
-                Button(action: action) { content }
-                    .buttonStyle(PlainButtonStyle())
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
-                    .background(primary ? Color.accentColor : Color.clear)
-                    .foregroundColor(primary ? .white : .accentColor)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 14)
-                            .stroke(Color.accentColor, lineWidth: primary ? 0 : 1)
-                    )
-                    .clipShape(RoundedRectangle(cornerRadius: 14))
-                    .disabled(isDisabled)
-            }
-
-            // 説明文を固定高さの領域に配置（改行されてもボタンの位置に影響しない）
-            Text(subtitle)
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-                .lineLimit(2)
-                .frame(height: 32, alignment: .top)  // 固定高さで説明文用の領域を確保
-        }
-        .frame(maxWidth: .infinity)
-    }
-}
-
 // MARK: - PostKokokitaConfirmationSheet
 
 /// ココキタ保存後の確認シート
@@ -185,6 +8,7 @@ struct PostKokokitaPromptSheet: View {
 struct PostKokokitaConfirmationSheet: View {
     let visitId: UUID
     let onEnterInfo: (UUID) -> Void
+    let onViewDetail: (UUID) -> Void
     let onDelete: (UUID) -> Void
     @Environment(\.dismiss) private var dismiss
 
@@ -211,7 +35,7 @@ struct PostKokokitaConfirmationSheet: View {
                         basicInfo(visit: visit)
                     }
 
-                    // 地図（高さを抑える）
+                    // 地図
                     if let visit = visit {
                         mapSection(visit: visit, maxHeight: geometry.size.height * 0.3)
                     }
@@ -264,15 +88,37 @@ struct PostKokokitaConfirmationSheet: View {
     // MARK: - Header
 
     private var header: some View {
-        HStack(spacing: 10) {
-            Image(logoImageName)
-                .resizable()
-                .scaledToFit()
-                .frame(width: 42, height: 42)
-            Text(L.Location.kokokitaCompleted)
-                .font(.system(size: 24, weight: .semibold, design: .rounded))
-                .tracking(1.2)
-                .foregroundColor(.accentColor)
+        VStack(spacing: 12) {
+            // ココキタ完了ヘッダー
+            HStack(spacing: 10) {
+                Image(logoImageName)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 42, height: 42)
+                Text(L.Location.kokokitaCompleted)
+                    .font(.system(size: 24, weight: .semibold, design: .rounded))
+                    .tracking(1.2)
+                    .foregroundColor(.accentColor)
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundColor(.accentColor)
+            }
+
+            // 現在地を記録しました + 記録を見るリンク
+            VStack(spacing: 4) {
+                Text(L.Confirmation.recordedLocation)
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+
+                Button {
+                    onViewDetail(visitId)
+                } label: {
+                    Text(L.Confirmation.viewDetail)
+                        .font(.caption)
+                        .foregroundStyle(Color.accentColor)
+                }
+                .buttonStyle(.plain)
+            }
         }
     }
 
@@ -504,40 +350,124 @@ struct PostKokokitaConfirmationSheet: View {
         }
     }
 
-    // MARK: - Bottom Buttons
+    // MARK: - Bottom Buttons (Liquid Glass)
 
     private var bottomButtons: some View {
         VStack(spacing: 0) {
             Divider()
 
             HStack(spacing: 12) {
-                // 情報を入力ボタン
+                // 情報を入力ボタン（Liquid Glassプライマリ）
                 Button {
                     onEnterInfo(visitId)
                 } label: {
                     Text(L.Confirmation.enterInfo)
                         .font(.headline)
+                        .foregroundStyle(Color.white)
                         .frame(maxWidth: .infinity)
+                        .frame(height: 50)
+                        .background(
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [
+                                                Color.accentColor.opacity(0.95),
+                                                Color.accentColor.opacity(0.75)
+                                            ],
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        )
+                                    )
+                                    .overlay {
+                                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                            .fill(
+                                                LinearGradient(
+                                                    colors: [
+                                                        Color.white.opacity(0.25),
+                                                        Color.clear
+                                                    ],
+                                                    startPoint: .top,
+                                                    endPoint: .bottom
+                                                )
+                                            )
+                                    }
+                                    .shadow(color: Color.accentColor.opacity(0.35), radius: 8, x: 0, y: 2)
+                                    .shadow(color: Color.accentColor.opacity(0.15), radius: 3, x: 0, y: 1)
+                            }
+                        )
                 }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
+                .buttonStyle(.plain)
 
-                // 削除ボタン
+                // 削除ボタン（Liquid Glassセカンダリ、赤色強調）
                 Button {
                     onDelete(visitId)
                     dismiss()
                 } label: {
                     Text(L.Confirmation.deleteRecord)
                         .font(.headline)
+                        .foregroundStyle(Color.red)
                         .frame(maxWidth: .infinity)
+                        .frame(height: 50)
+                        .background(
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                    .fill(.ultraThinMaterial)
+                                    .overlay {
+                                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                            .fill(
+                                                LinearGradient(
+                                                    colors: [
+                                                        Color.white.opacity(0.12),
+                                                        Color.white.opacity(0.03)
+                                                    ],
+                                                    startPoint: .topLeading,
+                                                    endPoint: .bottomTrailing
+                                                )
+                                            )
+                                    }
+                                    .overlay {
+                                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                            .strokeBorder(
+                                                LinearGradient(
+                                                    colors: [
+                                                        Color.red.opacity(0.3),
+                                                        Color.red.opacity(0.1)
+                                                    ],
+                                                    startPoint: .topLeading,
+                                                    endPoint: .bottomTrailing
+                                                ),
+                                                lineWidth: 1
+                                            )
+                                    }
+                                    .shadow(color: Color.black.opacity(0.08), radius: 6, x: 0, y: 2)
+                            }
+                        )
                 }
-                .buttonStyle(.bordered)
-                .controlSize(.large)
-                .tint(.red)
+                .buttonStyle(.plain)
             }
             .padding()
         }
-        .background(.ultraThinMaterial)
+        .background(
+            // Liquid Glass背景
+            ZStack {
+                Rectangle()
+                    .fill(.ultraThinMaterial)
+                    .overlay {
+                        Rectangle()
+                            .fill(
+                                LinearGradient(
+                                    colors: [
+                                        Color.white.opacity(0.05),
+                                        Color.clear
+                                    ],
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                )
+                            )
+                    }
+            }
+        )
     }
 
     // MARK: - Data Loading & POI Search

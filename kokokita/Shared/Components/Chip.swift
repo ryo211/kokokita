@@ -9,6 +9,7 @@ struct Chip: View {
 
     var overrideSystemImage: String?
     var overrideTint: Color?
+    var colorDot: Color?
 
     init(
         _ text: String,
@@ -17,6 +18,7 @@ struct Chip: View {
         showRemoveButton: Bool = true,
         overrideSystemImage: String? = nil,
         overrideTint: Color? = nil,
+        colorDot: Color? = nil,
         onRemove: @escaping () -> Void = {}
     ) {
         self.text = text
@@ -25,6 +27,7 @@ struct Chip: View {
         self.showRemoveButton = showRemoveButton
         self.overrideSystemImage = overrideSystemImage
         self.overrideTint = overrideTint
+        self.colorDot = colorDot
         self.onRemove = onRemove
     }
 
@@ -34,8 +37,9 @@ struct Chip: View {
     // サイズに応じたフォントとパディング
     private var font: Font {
         switch size {
-        case .regular: return .caption
-        case .small:   return .caption2
+        case .regular: return .caption.bold()
+        case .small:   return .caption2.bold()
+        case .xsmall:  return .caption2.bold()
         }
     }
 
@@ -43,6 +47,7 @@ struct Chip: View {
         switch size {
         case .regular: return UIConstants.Padding.chipVertical
         case .small:   return UIConstants.Padding.chipSmallVertical
+        case .xsmall:  return 2
         }
     }
 
@@ -50,7 +55,21 @@ struct Chip: View {
         switch size {
         case .regular: return UIConstants.Padding.chipHorizontal
         case .small:   return UIConstants.Padding.chipSmallHorizontal
+        case .xsmall:  return 6
         }
+    }
+
+    private var iconScale: Image.Scale {
+        switch size {
+        case .regular: return .medium
+        case .small:   return .medium
+        case .xsmall:  return .small
+        }
+    }
+
+    /// アイコンの色（ラベル色が設定されていればその色、なければ tint）
+    private var iconColor: Color {
+        colorDot ?? tint
     }
 
     // 表示用のテキスト（10文字制限）
@@ -62,10 +81,11 @@ struct Chip: View {
     }
 
     var body: some View {
-        HStack(spacing: UIConstants.Spacing.small) {
+        HStack(spacing: size == .xsmall ? 2 : UIConstants.Spacing.small) {
             if let img = systemImage {
                 Image(systemName: img)
-                    .imageScale(size == .small ? .small : .medium)
+                    .imageScale(iconScale)
+                    .foregroundStyle(iconColor)
             }
             Text(displayText)
                 .lineLimit(1)
@@ -73,7 +93,7 @@ struct Chip: View {
             if showRemoveButton {
                 Button(action: onRemove) {
                     Image(systemName: "xmark.circle.fill")
-                        .imageScale(size == .small ? .small : .medium)
+                        .imageScale(iconScale)
                 }
                 .buttonStyle(.plain)
             }
@@ -111,22 +131,17 @@ enum ChipKind {
         }
     }
 
+    /// チップの統一カラー
+    static let defaultTint = Color(.systemGray)
+
     /// チップのトーン（前景色／背景色の元色）
     var tint: Color {
-        switch self {
-        case .label:       return .purple
-        case .group:       return .teal
-        case .member:      return .blue
-        case .category:    return .green
-        case .keyword:     return .red
-        case .period:      return .orange
-        case .poiCategory: return .green
-        case .other:       return .secondary
-        }
+        Self.defaultTint
     }
 }
 
 enum ChipSize {
     case regular   // 通常サイズ（デフォルト）
     case small     // 記録一覧などの小型
+    case xsmall    // より小型（タクソノミー詳細画面など）
 }

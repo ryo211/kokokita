@@ -73,6 +73,9 @@ enum L {
         static let itemsCount = localized("home.itemsCount")
         static let switchToMap = localized("home.switchToMap")
         static let switchToList = localized("home.switchToList")
+        static let modeList = localized("home.modeList")
+        static let modeMap = localized("home.modeMap")
+        static let modeCalendar = localized("home.modeCalendar")
     }
 
     // MARK: - Detail
@@ -140,8 +143,10 @@ enum L {
     // MARK: - Tab Bar
     enum Tab {
         static let home = localized("tab.home")
+        static let records = localized("tab.records")
         static let menu = localized("tab.menu")
         static let kokokita = localized("tab.kokokita")
+        static let course = localized("tab.course")
     }
 
     // MARK: - Label Management
@@ -160,6 +165,23 @@ enum L {
         static let detailTitle = localized("label.detailTitle")
         static let deleteIrreversible = localized("label.deleteIrreversible")
         static let relatedVisitsHeader = localized("label.relatedVisitsHeader")
+    }
+
+    // MARK: - Label Color
+    enum LabelColor {
+        static let sectionTitle = localized("labelColor.sectionTitle")
+        static let noColor = localized("labelColor.noColor")
+        static let red = localized("labelColor.red")
+        static let orange = localized("labelColor.orange")
+        static let amber = localized("labelColor.amber")
+        static let green = localized("labelColor.green")
+        static let teal = localized("labelColor.teal")
+        static let cyan = localized("labelColor.cyan")
+        static let blue = localized("labelColor.blue")
+        static let indigo = localized("labelColor.indigo")
+        static let purple = localized("labelColor.purple")
+        static let pink = localized("labelColor.pink")
+        static let brown = localized("labelColor.brown")
     }
 
     // MARK: - Group Management
@@ -321,7 +343,9 @@ enum L {
     // MARK: - Confirmation Sheet
     enum Confirmation {
         static let enterInfo = localized("confirmation.enterInfo")
+        static let viewDetail = localized("confirmation.viewDetail")
         static let deleteRecord = localized("confirmation.deleteRecord")
+        static let recordedLocation = localized("confirmation.recordedLocation")
         static let loadingPOI = localized("confirmation.loadingPOI")
         static let noInternet = localized("confirmation.noInternet")
         static let noPOIFound = localized("confirmation.noPOIFound")
@@ -330,6 +354,32 @@ enum L {
         static let deleteConfirmMessage = localized("confirmation.deleteConfirmMessage")
         static let recentVisitsHeader = localized("confirmation.recentVisitsHeader")
         static let nearbyPlacesHeader = localized("confirmation.nearbyPlacesHeader")
+    }
+
+    // MARK: - New Home Screen
+    enum NewHome {
+        static let title = localized("newhome.title")
+        static let recordLocation = localized("newhome.recordLocation")
+        static let recentRecords = localized("newhome.recentRecords")
+        static let viewAllRecords = localized("newhome.viewAllRecords")
+        static let noRecentRecords = localized("newhome.noRecentRecords")
+    }
+
+    // MARK: - Settings Sheet
+    enum SettingsSheet {
+        static let title = localized("settingssheet.title")
+        static let resetAll = localized("settingssheet.resetAll")
+        static let followOnX = localized("settingssheet.followOnX")
+        static let support = localized("settingssheet.support")
+        static let developerTools = localized("settingssheet.developerTools")
+        static let version = localized("settingssheet.version")
+    }
+
+    // MARK: - Course Screen
+    enum Course {
+        static let title = localized("course.title")
+        static let comingSoon = localized("course.comingSoon")
+        static let description = localized("course.description")
     }
 
     // MARK: - Helper

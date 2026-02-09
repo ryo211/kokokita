@@ -218,107 +218,108 @@ actor DataRestoreService {
     // MARK: - Import Data
 
     private func importData(_ backupData: BackupData) async throws {
-        // Labels（空の名前はスキップ）バッチ処理で作成
-        var importedLabels = 0
-        for label in backupData.labels {
-            guard !label.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-                Logger.warning("Skipping label with empty name: \(label.id)")
-                continue
+        // Core Dataの viewContext はメインスレッド専用なので、MainActor で実行する
+        try await MainActor.run {
+            // Labels（空の名前はスキップ）バッチ処理で作成
+            var importedLabels = 0
+            for label in backupData.labels {
+                guard !label.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                    Logger.warning("Skipping label with empty name: \(label.id)")
+                    continue
+                }
+                try repo.createLabel(id: label.id, name: label.name, colorId: label.colorId, saveImmediately: false)
+                importedLabels += 1
             }
-            try repo.createLabel(id: label.id, name: label.name, saveImmediately: false)
-            importedLabels += 1
-        }
-        Logger.info("Created \(importedLabels) labels (skipped \(backupData.labels.count - importedLabels))")
+            Logger.info("Created \(importedLabels) labels (skipped \(backupData.labels.count - importedLabels))")
 
-        // Groups（空の名前はスキップ）バッチ処理で作成
-        var importedGroups = 0
-        for group in backupData.groups {
-            guard !group.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-                Logger.warning("Skipping group with empty name: \(group.id)")
-                continue
+            // Groups（空の名前はスキップ）バッチ処理で作成
+            var importedGroups = 0
+            for group in backupData.groups {
+                guard !group.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                    Logger.warning("Skipping group with empty name: \(group.id)")
+                    continue
+                }
+                try repo.createGroup(id: group.id, name: group.name, saveImmediately: false)
+                importedGroups += 1
             }
-            try repo.createGroup(id: group.id, name: group.name, saveImmediately: false)
-            importedGroups += 1
-        }
-        Logger.info("Created \(importedGroups) groups (skipped \(backupData.groups.count - importedGroups))")
+            Logger.info("Created \(importedGroups) groups (skipped \(backupData.groups.count - importedGroups))")
 
-        // Members（空の名前はスキップ）バッチ処理で作成
-        var importedMembers = 0
-        for member in backupData.members {
-            guard !member.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-                Logger.warning("Skipping member with empty name: \(member.id)")
-                continue
+            // Members（空の名前はスキップ）バッチ処理で作成
+            var importedMembers = 0
+            for member in backupData.members {
+                guard !member.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                    Logger.warning("Skipping member with empty name: \(member.id)")
+                    continue
+                }
+                try repo.createMember(id: member.id, name: member.name, saveImmediately: false)
+                importedMembers += 1
             }
-            try repo.createMember(id: member.id, name: member.name, saveImmediately: false)
-            importedMembers += 1
-        }
-        Logger.info("Created \(importedMembers) members (skipped \(backupData.members.count - importedMembers))")
+            Logger.info("Created \(importedMembers) members (skipped \(backupData.members.count - importedMembers))")
 
-        // 一括保存してコンテキストをリフレッシュ（一時ObjectIDを永続IDに変換）
-        try repo.refreshContext()
-        Logger.info("Saved and refreshed all taxonomy entities")
+            // 一括保存してコンテキストをリフレッシュ（一時ObjectIDを永続IDに変換）
+            try repo.refreshContext()
+            Logger.info("Saved and refreshed all taxonomy entities")
 
-        // Visits（エラーが発生しても続行、バッチ処理で保存）
-        var successCount = 0
-        var failureCount = 0
-        let batchSize = 50 // 50件ごとに保存
+            // Visits（エラーが発生しても続行、バッチ処理で保存）
+            var successCount = 0
+            var failureCount = 0
+            let batchSize = 50 // 50件ごとに保存
 
-        for (index, backupVisit) in backupData.visits.enumerated() {
-            do {
-                let visit = Visit(
-                    id: backupVisit.id,
-                    timestampUTC: backupVisit.timestampUTC,
-                    latitude: backupVisit.latitude,
-                    longitude: backupVisit.longitude,
-                    horizontalAccuracy: backupVisit.horizontalAccuracy,
-                    isSimulatedBySoftware: backupVisit.isSimulatedBySoftware,
-                    isProducedByAccessory: backupVisit.isProducedByAccessory,
-                    integrity: Visit.Integrity(
-                        algo: backupVisit.integrityAlgo,
-                        signatureDERBase64: backupVisit.integritySigDER,
-                        publicKeyRawBase64: backupVisit.integrityPubRaw,
-                        payloadHashHex: backupVisit.integrityPayloadHash,
-                        createdAtUTC: backupVisit.integrityCreatedAtUTC
+            for (index, backupVisit) in backupData.visits.enumerated() {
+                do {
+                    let visit = Visit(
+                        id: backupVisit.id,
+                        timestampUTC: backupVisit.timestampUTC,
+                        latitude: backupVisit.latitude,
+                        longitude: backupVisit.longitude,
+                        horizontalAccuracy: backupVisit.horizontalAccuracy,
+                        isSimulatedBySoftware: backupVisit.isSimulatedBySoftware,
+                        isProducedByAccessory: backupVisit.isProducedByAccessory,
+                        integrity: Visit.Integrity(
+                            algo: backupVisit.integrityAlgo,
+                            signatureDERBase64: backupVisit.integritySigDER,
+                            publicKeyRawBase64: backupVisit.integrityPubRaw,
+                            payloadHashHex: backupVisit.integrityPayloadHash,
+                            createdAtUTC: backupVisit.integrityCreatedAtUTC
+                        )
                     )
-                )
 
-                let details = VisitDetails(
-                    title: backupVisit.title,
-                    facilityName: backupVisit.facilityName,
-                    facilityAddress: backupVisit.facilityAddress,
-                    facilityCategory: backupVisit.facilityCategory,
-                    comment: backupVisit.comment,
-                    labelIds: backupVisit.labelIds,
-                    groupId: backupVisit.groupId,
-                    memberIds: backupVisit.memberIds,
-                    resolvedAddress: backupVisit.resolvedAddress,
-                    photoPaths: backupVisit.photoPaths
-                )
+                    let details = VisitDetails(
+                        title: backupVisit.title,
+                        facilityName: backupVisit.facilityName,
+                        facilityAddress: backupVisit.facilityAddress,
+                        facilityCategory: backupVisit.facilityCategory,
+                        comment: backupVisit.comment,
+                        labelIds: backupVisit.labelIds,
+                        groupId: backupVisit.groupId,
+                        memberIds: backupVisit.memberIds,
+                        resolvedAddress: backupVisit.resolvedAddress,
+                        photoPaths: backupVisit.photoPaths
+                    )
 
-                // バッチ処理：最後以外は保存しない
-                let isLastInBatch = (index + 1) % batchSize == 0 || (index + 1) == backupData.visits.count
-                try repo.create(visit: visit, details: details, saveImmediately: isLastInBatch)
-                successCount += 1
+                    // バッチ処理：最後以外は保存しない
+                    let isLastInBatch = (index + 1) % batchSize == 0 || (index + 1) == backupData.visits.count
+                    try repo.create(visit: visit, details: details, saveImmediately: isLastInBatch)
+                    successCount += 1
 
-                // バッチごとにログ出力
-                if isLastInBatch {
-                    Logger.info("Imported \(index + 1)/\(backupData.visits.count) visits...")
-                }
-            } catch {
-                failureCount += 1
-                Logger.error("Failed to import visit \(backupVisit.id): \(error.localizedDescription)")
-                Logger.error("Visit details - title: \(backupVisit.title ?? "nil"), labelIds: \(backupVisit.labelIds), groupId: \(backupVisit.groupId?.uuidString ?? "nil")")
-                // エラーが発生した場合は、現在のバッチを保存して続行
-                if failureCount % 5 == 0 {
-                    try? repo.refreshContext()
+                    // バッチごとにログ出力
+                    if isLastInBatch {
+                        Logger.info("Imported \(index + 1)/\(backupData.visits.count) visits...")
+                    }
+                } catch {
+                    failureCount += 1
+                    Logger.error("Failed to import visit \(backupVisit.id): \(error.localizedDescription)")
+                    Logger.error("Visit details - title: \(backupVisit.title ?? "nil"), labelIds: \(backupVisit.labelIds), groupId: \(backupVisit.groupId?.uuidString ?? "nil")")
+                    // エラーが発生した場合は、現在のバッチを保存して続行
+                    if failureCount % 5 == 0 {
+                        try? repo.refreshContext()
+                    }
                 }
             }
-        }
 
-        Logger.info("Imported \(successCount)/\(backupData.visits.count) visits (failed: \(failureCount))")
+            Logger.info("Imported \(successCount)/\(backupData.visits.count) visits (failed: \(failureCount))")
 
-        // 通知を送信
-        await MainActor.run {
+            // 通知を送信
             NotificationCenter.default.post(name: .visitsChanged, object: nil)
             NotificationCenter.default.post(name: .taxonomyChanged, object: nil)
         }

@@ -39,6 +39,7 @@ struct VisitEditScreen: View {
 
     // 作成入力
     @State private var newLabelName = ""
+    @State private var newLabelColorId: String? = nil
     @State private var newGroupName = ""
     @State private var newMemberName = ""
     
@@ -203,6 +204,7 @@ struct VisitEditScreen: View {
         .sheet(isPresented: $labelCreateShown) {
             LabelCreateSheet(
                 newLabelName: $newLabelName,
+                newLabelColorId: $newLabelColorId,
                 isPresented: $labelCreateShown,
                 onCreate: createLabelAndSelect
             )
@@ -301,15 +303,55 @@ struct VisitEditScreen: View {
                     }
             }
 
-            // ラベル・グループ・メンバーセクション
+            // グループ・ラベル・メンバーセクション
             Section {
+                // グループ
+                if vm.groupId == nil {
+                    // 未選択時：選択ボタン + 追加ボタンを表示
+                    HStack(spacing: UIConstants.Spacing.medium) {
+                        Button { groupPickerShown = true } label: {
+                            Label(L.VisitEdit.selectGroup, systemImage: "folder")
+                                .foregroundStyle(ChipKind.defaultTint)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+
+                        Button {
+                            groupPickerShown = true
+                        } label: {
+                            Image(systemName: "plus.circle.fill")
+                                .foregroundStyle(ChipKind.defaultTint)
+                                .imageScale(.large)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                } else if let groupId = vm.groupId, let name = groupOptions.first(where: { $0.id == groupId })?.name {
+                    // 選択済み時：フォルダ帰属表示 + 変更/削除ボタン
+                    HStack(alignment: .center, spacing: UIConstants.Spacing.medium) {
+                        Button { groupPickerShown = true } label: {
+                            GroupBadge(name: name)
+                                .foregroundStyle(.primary)
+                        }
+                        .buttonStyle(.plain)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+
+                        Button {
+                            vm.groupId = nil
+                        } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundStyle(.secondary)
+                                .imageScale(.medium)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+
                 // ラベル
                 if vm.labelIds.isEmpty {
                     // 未選択時：選択ボタン + 追加ボタンを表示
                     HStack(spacing: UIConstants.Spacing.medium) {
                         Button { labelPickerShown = true } label: {
                             Label(L.VisitEdit.selectLabel, systemImage: "tag")
-                                .foregroundStyle(.purple)
+                                .foregroundStyle(ChipKind.defaultTint)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                         }
 
@@ -317,7 +359,7 @@ struct VisitEditScreen: View {
                             labelPickerShown = true
                         } label: {
                             Image(systemName: "plus.circle.fill")
-                                .foregroundStyle(.purple)
+                                .foregroundStyle(ChipKind.defaultTint)
                                 .imageScale(.large)
                         }
                         .buttonStyle(.plain)
@@ -329,14 +371,14 @@ struct VisitEditScreen: View {
                     } label: {
                         HStack(alignment: .center, spacing: UIConstants.Spacing.extraLarge) {
                             Image(systemName: "tag")
-                                .foregroundStyle(.purple)
+                                .foregroundStyle(ChipKind.defaultTint)
                                 .imageScale(.medium)
                                 .frame(height: 28, alignment: .center)
 
                             FlowRow(spacing: 12, rowSpacing: 6) {
                                 ForEach(Array(vm.labelIds), id: \.self) { labelId in
-                                    if let name = labelOptions.first(where: { $0.id == labelId })?.name {
-                                        Chip(name, kind: .label, size: .small, showRemoveButton: true) {
+                                    if let label = labelOptions.first(where: { $0.id == labelId }) {
+                                        Chip(label.name, kind: .label, size: .small, showRemoveButton: true, colorDot: LabelColorId.from(label.colorId)?.color) {
                                             vm.labelIds.remove(labelId)
                                         }
                                     }
@@ -349,60 +391,7 @@ struct VisitEditScreen: View {
                                 labelPickerShown = true
                             } label: {
                                 Image(systemName: "plus.circle.fill")
-                                    .foregroundStyle(.purple)
-                                    .imageScale(.large)
-                            }
-                            .buttonStyle(.plain)
-                            .frame(height: 28, alignment: .center)
-                        }
-                        .padding(.vertical, UIConstants.Spacing.extraSmall)
-                    }
-                    .buttonStyle(.plain)
-                }
-
-                // グループ
-                if vm.groupId == nil {
-                    // 未選択時：選択ボタン + 追加ボタンを表示
-                    HStack(spacing: UIConstants.Spacing.medium) {
-                        Button { groupPickerShown = true } label: {
-                            Label(L.VisitEdit.selectGroup, systemImage: "folder")
-                                .foregroundStyle(.teal)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                        }
-
-                        Button {
-                            groupPickerShown = true
-                        } label: {
-                            Image(systemName: "plus.circle.fill")
-                                .foregroundStyle(.teal)
-                                .imageScale(.large)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                } else if let groupId = vm.groupId, let name = groupOptions.first(where: { $0.id == groupId })?.name {
-                    // 選択済み時：アイコン + チップ + 追加ボタンを表示
-                    Button {
-                        groupPickerShown = true
-                    } label: {
-                        HStack(alignment: .center, spacing: UIConstants.Spacing.extraLarge) {
-                            Image(systemName: "folder")
-                                .foregroundStyle(.teal)
-                                .imageScale(.medium)
-                                .frame(height: 28, alignment: .center)
-
-                            FlowRow(spacing: 12, rowSpacing: 6) {
-                                Chip(name, kind: .group, size: .small, showRemoveButton: true) {
-                                    vm.groupId = nil
-                                }
-                            }
-                            .frame(maxWidth: .infinity, alignment: .leading)
-
-                            // 追加ボタン（右端に固定）
-                            Button {
-                                groupPickerShown = true
-                            } label: {
-                                Image(systemName: "plus.circle.fill")
-                                    .foregroundStyle(.teal)
+                                    .foregroundStyle(ChipKind.defaultTint)
                                     .imageScale(.large)
                             }
                             .buttonStyle(.plain)
@@ -419,7 +408,7 @@ struct VisitEditScreen: View {
                     HStack(spacing: UIConstants.Spacing.medium) {
                         Button { memberPickerShown = true } label: {
                             Label(L.VisitEdit.selectMember, systemImage: "person")
-                                .foregroundStyle(.blue)
+                                .foregroundStyle(ChipKind.defaultTint)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                         }
 
@@ -427,7 +416,7 @@ struct VisitEditScreen: View {
                             memberPickerShown = true
                         } label: {
                             Image(systemName: "plus.circle.fill")
-                                .foregroundStyle(.blue)
+                                .foregroundStyle(ChipKind.defaultTint)
                                 .imageScale(.large)
                         }
                         .buttonStyle(.plain)
@@ -439,7 +428,7 @@ struct VisitEditScreen: View {
                     } label: {
                         HStack(alignment: .center, spacing: UIConstants.Spacing.extraLarge) {
                             Image(systemName: "person")
-                                .foregroundStyle(.blue)
+                                .foregroundStyle(ChipKind.defaultTint)
                                 .imageScale(.medium)
                                 .frame(height: 28, alignment: .center)
 
@@ -459,7 +448,7 @@ struct VisitEditScreen: View {
                                 memberPickerShown = true
                             } label: {
                                 Image(systemName: "plus.circle.fill")
-                                    .foregroundStyle(.blue)
+                                    .foregroundStyle(ChipKind.defaultTint)
                                     .imageScale(.large)
                             }
                             .buttonStyle(.plain)
@@ -526,11 +515,16 @@ struct VisitEditScreen: View {
         if let exist = labelOptions.first(where: { $0.name == name }) {
             vm.labelIds.insert(exist.id)
         } else if let id = vm.createLabel(name) {
-            let tag = LabelTag(id: id, name: name)
+            let tag = LabelTag(id: id, name: name, colorId: newLabelColorId)
             labelOptions.append(tag)
             vm.labelIds.insert(id)
+            // 色が設定されている場合は保存
+            if let colorId = newLabelColorId {
+                _ = try? AppContainer.shared.taxonomyRepo.updateLabelColor(id: id, colorId: colorId)
+            }
         }
         newLabelName = ""
+        newLabelColorId = nil
         labelCreateShown = false
     }
 
