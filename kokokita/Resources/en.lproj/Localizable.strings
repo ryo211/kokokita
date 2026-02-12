@@ -323,3 +323,23 @@
 "course.title" = "Course";
 "course.comingSoon" = "Coming Soon";
 "course.description" = "Course feature will be available soon";
+
+// MARK: - Manual Entry
+"manualEntry.title" = "Add Record";
+"manualEntry.badge" = "Manual";
+"manualEntry.importFromPhoto" = "Import from Photo";
+"manualEntry.searchLocation" = "Search Location";
+"manualEntry.tapOnMap" = "Select on Map";
+"manualEntry.dateTime" = "Date & Time";
+"manualEntry.noExifData" = "No location data in photo";
+"manualEntry.futureDateNotAllowed" = "Future dates are not allowed";
+"manualEntry.locationRequired" = "Please specify a location";
+"manualEntry.selectLocationMethod" = "How to specify location";
+"manualEntry.locationFromPhoto" = "Use photo location";
+"manualEntry.setDateTime" = "Set Date & Time";
+"manualEntry.setLocation" = "Set Location";
+"manualEntry.noLocationInPhoto" = "Photo does not contain location data";
+"manualEntry.noDateInPhoto" = "Photo does not contain date information";
+"manualEntry.photoImported" = "Information imported from photo";
+"manualEntry.addManualEntry" = "Add Manual Entry";
+"manualEntry.useThisLocation" = "Use this location";

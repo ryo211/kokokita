@@ -32,11 +32,12 @@
     <entity name="VisitEntity" representedClassName="VisitEntity" syncable="YES" codeGenerationType="class">
         <attribute name="horizontalAccuracy" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="NO"/>
         <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
-        <attribute name="integrityAlgo" attributeType="String"/>
-        <attribute name="integrityCreatedAtUTC" attributeType="Date" usesScalarValueType="NO"/>
-        <attribute name="integrityPayloadHash" attributeType="String"/>
-        <attribute name="integrityPubRaw" attributeType="String"/>
-        <attribute name="integritySigDER" attributeType="String"/>
+        <attribute name="integrityAlgo" optional="YES" attributeType="String"/>
+        <attribute name="integrityCreatedAtUTC" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="integrityPayloadHash" optional="YES" attributeType="String"/>
+        <attribute name="integrityPubRaw" optional="YES" attributeType="String"/>
+        <attribute name="integritySigDER" optional="YES" attributeType="String"/>
+        <attribute name="isManualEntry" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="NO"/>
         <attribute name="isProducedByAccessory" optional="YES" attributeType="Boolean" usesScalarValueType="NO"/>
         <attribute name="isSimulatedBySoftware" optional="YES" attributeType="Boolean" usesScalarValueType="NO"/>
         <attribute name="latitude" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>

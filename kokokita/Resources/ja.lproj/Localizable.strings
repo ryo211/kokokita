@@ -325,3 +325,23 @@
 "course.title" = "コース";
 "course.comingSoon" = "準備中";
 "course.description" = "コース機能は近日公開予定です";
+
+// MARK: - Manual Entry (後付け記録)
+"manualEntry.title" = "記録を追加";
+"manualEntry.badge" = "後付け";
+"manualEntry.importFromPhoto" = "写真から取り込み";
+"manualEntry.searchLocation" = "場所を検索";
+"manualEntry.tapOnMap" = "地図から選択";
+"manualEntry.dateTime" = "日時";
+"manualEntry.noExifData" = "写真に位置情報がありません";
+"manualEntry.futureDateNotAllowed" = "未来の日付は指定できません";
+"manualEntry.locationRequired" = "場所を指定してください";
+"manualEntry.selectLocationMethod" = "場所の指定方法";
+"manualEntry.locationFromPhoto" = "写真の位置情報を使用";
+"manualEntry.setDateTime" = "日時を設定";
+"manualEntry.setLocation" = "場所を設定";
+"manualEntry.noLocationInPhoto" = "写真に位置情報が含まれていません";
+"manualEntry.noDateInPhoto" = "写真に撮影日時が含まれていません";
+"manualEntry.photoImported" = "写真から情報を取り込みました";
+"manualEntry.addManualEntry" = "後付け記録を追加";
+"manualEntry.useThisLocation" = "この場所を使用";

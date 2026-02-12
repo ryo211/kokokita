@@ -46,6 +46,11 @@ struct DefaultIntegrityService {
     }
 
     func verify(visit: Visit) -> Bool {
+        // 後付け記録は署名がないので検証不可（常にfalse）
+        guard let integrity = visit.integrity else {
+            return false
+        }
+
         do {
             let payload = ImmutablePayload(
                 id: visit.id,
@@ -60,8 +65,8 @@ struct DefaultIntegrityService {
             let digest = Data(SHA256.hash(data: data))
 
             guard
-                let sigDER = Data(base64Encoded: visit.integrity.signatureDERBase64),
-                let pubRaw = Data(base64Encoded: visit.integrity.publicKeyRawBase64)
+                let sigDER = Data(base64Encoded: integrity.signatureDERBase64),
+                let pubRaw = Data(base64Encoded: integrity.publicKeyRawBase64)
             else { return false }
 
             let pub = try P256.Signing.PublicKey(rawRepresentation: pubRaw)

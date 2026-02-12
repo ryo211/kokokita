@@ -28,11 +28,14 @@ struct VisitRow: View {
         let names = nameResolver(agg.details.labelIds, agg.details.groupId, agg.details.memberIds)
 
         VStack(alignment: .leading, spacing: compact ? 2 : 4) {
-            // 日時
+            // 日時 + 後付けバッジ
             HStack {
                 Text(agg.visit.timestampUTC.kokokitaVisitString)
                     .font(compact ? .caption : .footnote)
                     .foregroundStyle(.secondary)
+                if agg.visit.isManualEntry {
+                    ManualEntryBadge(compact: compact)
+                }
                 Spacer()
             }
 

@@ -118,11 +118,12 @@ actor DataBackupService {
                     horizontalAccuracy: visit.horizontalAccuracy,
                     isSimulatedBySoftware: visit.isSimulatedBySoftware,
                     isProducedByAccessory: visit.isProducedByAccessory,
-                    integrityAlgo: visit.integrity.algo,
-                    integritySigDER: visit.integrity.signatureDERBase64,
-                    integrityPubRaw: visit.integrity.publicKeyRawBase64,
-                    integrityPayloadHash: visit.integrity.payloadHashHex,
-                    integrityCreatedAtUTC: visit.integrity.createdAtUTC,
+                    integrityAlgo: visit.integrity?.algo,
+                    integritySigDER: visit.integrity?.signatureDERBase64,
+                    integrityPubRaw: visit.integrity?.publicKeyRawBase64,
+                    integrityPayloadHash: visit.integrity?.payloadHashHex,
+                    integrityCreatedAtUTC: visit.integrity?.createdAtUTC,
+                    isManualEntry: visit.isManualEntry,
                     title: details.title,
                     facilityName: details.facilityName,
                     facilityAddress: details.facilityAddress,
@@ -263,12 +264,15 @@ struct BackupVisit: Codable {
     let isSimulatedBySoftware: Bool?
     let isProducedByAccessory: Bool?
 
-    // Integrity
-    let integrityAlgo: String
-    let integritySigDER: String
-    let integrityPubRaw: String
-    let integrityPayloadHash: String
-    let integrityCreatedAtUTC: Date
+    // Integrity（後付け記録の場合はnil）
+    let integrityAlgo: String?
+    let integritySigDER: String?
+    let integrityPubRaw: String?
+    let integrityPayloadHash: String?
+    let integrityCreatedAtUTC: Date?
+
+    // 後付け記録フラグ
+    let isManualEntry: Bool?
 
     // Details
     let title: String?

@@ -16,6 +16,7 @@ struct VisitListScreen: View {
     @State private var showDeleteConfirm = false
 
     @State private var showSearchSheet = false
+    @State private var showManualEntrySheet = false
 
     @State private var editingTarget: VisitAggregate? = nil
 
@@ -77,7 +78,7 @@ struct VisitListScreen: View {
     // MARK: - List（分離して軽く）
     @ViewBuilder
     private func listContent() -> some View {
-        ZStack(alignment: .topTrailing) {
+        ZStack(alignment: .top) {
             Group {
                 if store.items.isEmpty {
                     // 空の状態UI
@@ -87,12 +88,21 @@ struct VisitListScreen: View {
                 }
             }
 
-            // ソートボタン（リスト右上に固定表示）
-            if !store.items.isEmpty {
-                sortButton
-                    .padding(.trailing, 16)
-                    .padding(.top, 8)
+            // 上部のボタン行（左: 追加ボタン、右: ソートボタン）
+            HStack {
+                // 後付け記録追加ボタン（左上）
+                addManualEntryButton
+                    .padding(.leading, 16)
+
+                Spacer()
+
+                // ソートボタン（リスト右上に固定表示）
+                if !store.items.isEmpty {
+                    sortButton
+                        .padding(.trailing, 16)
+                }
             }
+            .padding(.top, 8)
         }
         .task { store.reload() }
         .onReceive(NotificationCenter.default.publisher(for: .visitsChanged)) { _ in
@@ -149,6 +159,58 @@ struct VisitListScreen: View {
                                 )
                         }
                         .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 1)
+                }
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
+    // 後付け記録追加ボタン（Liquid Glass風カプセル）
+    private var addManualEntryButton: some View {
+        Button {
+            showManualEntrySheet = true
+        } label: {
+            HStack(spacing: 4) {
+                Image(systemName: "plus")
+                    .font(.system(size: 10, weight: .bold))
+                Text(L.ManualEntry.title)
+                    .font(.system(size: 11, weight: .medium))
+            }
+            .foregroundStyle(Color.orange)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(
+                ZStack {
+                    Capsule(style: .continuous)
+                        .fill(.ultraThinMaterial)
+                        .overlay {
+                            Capsule(style: .continuous)
+                                .fill(
+                                    LinearGradient(
+                                        colors: [
+                                            Color.orange.opacity(0.12),
+                                            Color.orange.opacity(0.04)
+                                        ],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                        }
+                        .overlay {
+                            Capsule(style: .continuous)
+                                .strokeBorder(
+                                    LinearGradient(
+                                        colors: [
+                                            Color.orange.opacity(0.3),
+                                            Color.orange.opacity(0.1)
+                                        ],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    ),
+                                    lineWidth: 0.5
+                                )
+                        }
+                        .shadow(color: Color.orange.opacity(0.15), radius: 4, x: 0, y: 1)
                 }
             )
         }
@@ -327,6 +389,10 @@ struct VisitListScreen: View {
             .sheet(isPresented: $showSearchSheet) {
                 NavigationStack { SearchFilterSheet(store: store) { showSearchSheet = false } }
                 .iPadSheetSize()
+            }
+            .sheet(isPresented: $showManualEntrySheet) {
+                ManualEntryScreen()
+                    .iPadSheetSize()
             }
 
             // 表示モードで切り替え

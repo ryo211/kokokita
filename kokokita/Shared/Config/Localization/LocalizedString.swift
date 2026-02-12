@@ -382,6 +382,28 @@ enum L {
         static let description = localized("course.description")
     }
 
+    // MARK: - Manual Entry (後付け記録)
+    enum ManualEntry {
+        static let title = localized("manualEntry.title")
+        static let badge = localized("manualEntry.badge")
+        static let importFromPhoto = localized("manualEntry.importFromPhoto")
+        static let searchLocation = localized("manualEntry.searchLocation")
+        static let tapOnMap = localized("manualEntry.tapOnMap")
+        static let dateTime = localized("manualEntry.dateTime")
+        static let noExifData = localized("manualEntry.noExifData")
+        static let futureDateNotAllowed = localized("manualEntry.futureDateNotAllowed")
+        static let locationRequired = localized("manualEntry.locationRequired")
+        static let selectLocationMethod = localized("manualEntry.selectLocationMethod")
+        static let locationFromPhoto = localized("manualEntry.locationFromPhoto")
+        static let setDateTime = localized("manualEntry.setDateTime")
+        static let setLocation = localized("manualEntry.setLocation")
+        static let noLocationInPhoto = localized("manualEntry.noLocationInPhoto")
+        static let noDateInPhoto = localized("manualEntry.noDateInPhoto")
+        static let photoImported = localized("manualEntry.photoImported")
+        static let addManualEntry = localized("manualEntry.addManualEntry")
+        static let useThisLocation = localized("manualEntry.useThisLocation")
+    }
+
     // MARK: - Helper
     private static func localized(_ key: String, comment: String = "") -> String {
         NSLocalizedString(key, comment: comment)
