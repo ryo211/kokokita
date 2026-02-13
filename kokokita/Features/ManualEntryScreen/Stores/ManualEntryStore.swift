@@ -27,9 +27,6 @@ final class ManualEntryStore {
 
     // MARK: - UI State
     var alert: String?
-    var showLocationSearchSheet = false
-    var showMapPickerSheet = false
-    var showDatePicker = false
     var isPhotoImported = false
 
     // MARK: - Dependencies (Services)

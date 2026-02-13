@@ -345,3 +345,12 @@
 "manualEntry.photoImported" = "写真から情報を取り込みました";
 "manualEntry.addManualEntry" = "後付け記録を追加";
 "manualEntry.useThisLocation" = "この場所を使用";
+
+// MARK: - Location Picker
+"locationPicker.currentLocation" = "現在の設定";
+"locationPicker.placeNamePlaceholder" = "場所名";
+"locationPicker.findNearbySpots" = "候補を探す";
+"locationPicker.nearbySpots" = "周辺のスポット";
+"locationPicker.searchPlaceholder" = "場所名や住所を入力（例：東京スカイツリー）";
+"locationPicker.noResults" = "該当する場所が見つかりませんでした";
+"locationPicker.photoImportDescription" = "写真のEXIF情報から位置情報を取り込みます";

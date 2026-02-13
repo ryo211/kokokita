@@ -404,6 +404,17 @@ enum L {
         static let useThisLocation = localized("manualEntry.useThisLocation")
     }
 
+    // MARK: - Location Picker
+    enum LocationPicker {
+        static let currentLocation = localized("locationPicker.currentLocation")
+        static let placeNamePlaceholder = localized("locationPicker.placeNamePlaceholder")
+        static let findNearbySpots = localized("locationPicker.findNearbySpots")
+        static let nearbySpots = localized("locationPicker.nearbySpots")
+        static let searchPlaceholder = localized("locationPicker.searchPlaceholder")
+        static let noResults = localized("locationPicker.noResults")
+        static let photoImportDescription = localized("locationPicker.photoImportDescription")
+    }
+
     // MARK: - Helper
     private static func localized(_ key: String, comment: String = "") -> String {
         NSLocalizedString(key, comment: comment)

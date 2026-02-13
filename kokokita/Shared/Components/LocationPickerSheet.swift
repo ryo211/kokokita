@@ -1,0 +1,479 @@
+import SwiftUI
+import MapKit
+import PhotosUI
+
+/// 場所設定シート
+/// コース機能や後付け記録など、複数の画面で再利用可能な汎用コンポーネント
+struct LocationPickerSheet: View {
+    @Environment(\.dismiss) private var dismiss
+
+    // 位置情報のバインディング
+    @Binding var latitude: Double?
+    @Binding var longitude: Double?
+    @Binding var addressLine: String?
+    @Binding var placeName: String
+
+    // 写真から取り込み時のコールバック（日時も返す）
+    // nilの場合は写真取り込みボタンを表示しない
+    var onPhotoImport: ((_ coordinate: CLLocationCoordinate2D?, _ timestamp: Date?) -> Void)?
+
+    // 検索状態
+    @State private var searchText = ""
+    @State private var searchResults: [MKMapItem] = []
+    @State private var isSearching = false
+    @State private var searchTask: Task<Void, Never>?
+
+    // 地図選択シート
+    @State private var showMapPicker = false
+
+    // 周辺施設検索
+    @State private var showNearbyPOI = false
+    @State private var nearbyPOIs: [MKMapItem] = []
+    @State private var isLoadingNearbyPOI = false
+
+    // 写真選択
+    @State private var photoSelection: PhotosPickerItem?
+
+    // 現在位置が設定されているか
+    private var hasLocation: Bool {
+        latitude != nil && longitude != nil
+    }
+
+    // 現在の座標
+    private var currentCoordinate: CLLocationCoordinate2D? {
+        guard let lat = latitude, let lon = longitude else { return nil }
+        return CLLocationCoordinate2D(latitude: lat, longitude: lon)
+    }
+
+    var body: some View {
+        NavigationStack {
+            List {
+                // 現在設定されている場所
+                currentLocationSection
+
+                // 場所を検索
+                searchSection
+
+                // 地図から選択
+                mapPickerSection
+
+                // 写真から取り込み（オプション）
+                if onPhotoImport != nil {
+                    photoImportSection
+                }
+            }
+            .navigationTitle(L.ManualEntry.setLocation)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button(L.Common.cancel) { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button(L.Common.done) { dismiss() }
+                        .fontWeight(.bold)
+                }
+            }
+            .sheet(isPresented: $showMapPicker) { mapPickerSheet }
+            .sheet(isPresented: $showNearbyPOI) { nearbyPOISheet }
+            .onChange(of: photoSelection) { handlePhotoSelection($1) }
+        }
+    }
+
+    // MARK: - Current Location Section
+
+    private var currentLocationSection: some View {
+        Section {
+            // 場所名入力欄
+            HStack {
+                Image(systemName: "building.2")
+                    .foregroundStyle(.secondary)
+                TextField(L.LocationPicker.placeNamePlaceholder, text: $placeName)
+            }
+
+            // 住所表示
+            if let address = addressLine, !address.isEmpty {
+                HStack {
+                    Image(systemName: "mappin.and.ellipse")
+                        .foregroundStyle(.secondary)
+                    Text(address)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            // 緯度経度表示
+            if let lat = latitude, let lon = longitude {
+                HStack {
+                    Image(systemName: "location")
+                        .foregroundStyle(.secondary)
+                    Text(String(format: "%.5f, %.5f", lat, lon))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Spacer()
+
+                    // 周辺施設検索ボタン
+                    Button {
+                        Task { await searchNearbyPOI() }
+                        showNearbyPOI = true
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "sparkle.magnifyingglass")
+                            Text(L.LocationPicker.findNearbySpots)
+                        }
+                        .font(.caption)
+                        .foregroundStyle(.orange)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        } header: {
+            Text(L.LocationPicker.currentLocation)
+        } footer: {
+            if !hasLocation {
+                Text(L.ManualEntry.locationRequired)
+                    .foregroundStyle(.orange)
+            }
+        }
+    }
+
+    // MARK: - Search Section
+
+    private var searchSection: some View {
+        Section {
+            // 検索入力欄
+            HStack {
+                Image(systemName: "magnifyingglass")
+                    .foregroundStyle(.secondary)
+                TextField(L.LocationPicker.searchPlaceholder, text: $searchText)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .onChange(of: searchText) { performSearch($1) }
+
+                if isSearching {
+                    ProgressView()
+                        .scaleEffect(0.8)
+                } else if !searchText.isEmpty {
+                    Button {
+                        searchText = ""
+                        searchResults = []
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+
+            // 検索結果
+            if !searchResults.isEmpty {
+                ForEach(searchResults.prefix(10), id: \.self) { item in
+                    Button {
+                        selectSearchResult(item)
+                    } label: {
+                        searchResultRow(for: item)
+                    }
+                    .buttonStyle(.plain)
+                }
+            } else if !searchText.isEmpty && !isSearching {
+                Text(L.LocationPicker.noResults)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+        } header: {
+            Text(L.ManualEntry.searchLocation)
+        }
+    }
+
+    private func searchResultRow(for item: MKMapItem) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(item.name ?? "")
+                .font(.subheadline)
+                .foregroundStyle(.primary)
+
+            if let address = formatAddress(item.placemark) {
+                Text(address)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
+        }
+        .padding(.vertical, 2)
+    }
+
+    // MARK: - Map Picker Section
+
+    private var mapPickerSection: some View {
+        Section {
+            Button {
+                showMapPicker = true
+            } label: {
+                Label(L.ManualEntry.tapOnMap, systemImage: "map")
+            }
+        }
+    }
+
+    // MARK: - Photo Import Section
+
+    private var photoImportSection: some View {
+        Section {
+            PhotosPicker(
+                selection: $photoSelection,
+                matching: .images,
+                photoLibrary: .shared()
+            ) {
+                Label(L.ManualEntry.importFromPhoto, systemImage: "photo.on.rectangle")
+            }
+        } footer: {
+            Text(L.LocationPicker.photoImportDescription)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    // MARK: - Map Picker Sheet
+
+    private var mapPickerSheet: some View {
+        ManualEntryMapPickerSheet(initialCoordinate: currentCoordinate) { coord, name, address in
+            setLocation(coordinate: coord, name: name, address: address)
+        }
+    }
+
+    // MARK: - Nearby POI Sheet
+
+    private var nearbyPOISheet: some View {
+        NavigationStack {
+            List {
+                if isLoadingNearbyPOI {
+                    HStack {
+                        ProgressView()
+                            .scaleEffect(0.8)
+                        Text(L.Confirmation.loadingPOI)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                } else if nearbyPOIs.isEmpty {
+                    Text(L.Confirmation.noPOIFound)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                } else {
+                    ForEach(nearbyPOIs, id: \.self) { item in
+                        Button {
+                            selectNearbyPOI(item)
+                        } label: {
+                            nearbyPOIRow(for: item)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+            .navigationTitle(L.LocationPicker.nearbySpots)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button(L.Common.close) { showNearbyPOI = false }
+                }
+            }
+        }
+        .presentationDetents([.medium, .large])
+    }
+
+    private func nearbyPOIRow(for item: MKMapItem) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Text(item.name ?? "")
+                    .font(.subheadline.bold())
+                    .foregroundStyle(.primary)
+
+                if let category = item.pointOfInterestCategory?.localizedName {
+                    Text(category)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Color(.systemGray6))
+                        .clipShape(Capsule())
+                }
+            }
+
+            if let address = formatAddress(item.placemark) {
+                Text(address)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
+        }
+        .padding(.vertical, 4)
+    }
+
+    // MARK: - Actions
+
+    private func performSearch(_ query: String) {
+        searchTask?.cancel()
+
+        guard !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            searchResults = []
+            return
+        }
+
+        searchTask = Task {
+            isSearching = true
+            defer { isSearching = false }
+
+            // デバウンス
+            try? await Task.sleep(nanoseconds: 300_000_000)
+            guard !Task.isCancelled else { return }
+
+            let request = MKLocalSearch.Request()
+            request.naturalLanguageQuery = query
+            request.resultTypes = [.pointOfInterest, .address]
+
+            do {
+                let search = MKLocalSearch(request: request)
+                let response = try await search.start()
+                guard !Task.isCancelled else { return }
+                searchResults = response.mapItems
+            } catch {
+                guard !Task.isCancelled else { return }
+                searchResults = []
+            }
+        }
+    }
+
+    private func selectSearchResult(_ item: MKMapItem) {
+        let coord = item.placemark.coordinate
+        let name = item.name
+        let address = formatAddress(item.placemark)
+
+        setLocation(coordinate: coord, name: name, address: address)
+
+        // 検索をクリア
+        searchText = ""
+        searchResults = []
+    }
+
+    private func setLocation(coordinate: CLLocationCoordinate2D, name: String?, address: String?) {
+        latitude = coordinate.latitude
+        longitude = coordinate.longitude
+
+        if let name = name {
+            placeName = name
+        }
+
+        if let address = address {
+            addressLine = address
+        } else {
+            // 住所がない場合は逆ジオコーディング
+            Task { await reverseGeocode(coordinate: coordinate) }
+        }
+    }
+
+    private func reverseGeocode(coordinate: CLLocationCoordinate2D) async {
+        let geocoder = CLGeocoder()
+        let location = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
+
+        do {
+            let placemarks = try await geocoder.reverseGeocodeLocation(location)
+            if let pm = placemarks.first {
+                addressLine = formatPlacemark(pm)
+            }
+        } catch {
+            // エラーは無視
+        }
+    }
+
+    private func searchNearbyPOI() async {
+        guard let coord = currentCoordinate else { return }
+
+        isLoadingNearbyPOI = true
+        defer { isLoadingNearbyPOI = false }
+
+        let request = MKLocalPointsOfInterestRequest(center: coord, radius: AppConfig.poiSearchRadius)
+        request.pointOfInterestFilter = MKPointOfInterestFilter(including: [
+            .restaurant, .cafe, .bakery,
+            .museum, .park, .nationalPark, .beach,
+            .store, .hotel, .gasStation
+        ])
+
+        do {
+            let search = MKLocalSearch(request: request)
+            let response = try await search.start()
+            nearbyPOIs = response.mapItems
+        } catch {
+            nearbyPOIs = []
+        }
+    }
+
+    private func selectNearbyPOI(_ item: MKMapItem) {
+        let name = item.name
+        let address = formatAddress(item.placemark)
+
+        // 座標は変更せず、名前と住所のみ更新
+        if let name = name {
+            placeName = name
+        }
+        if let address = address {
+            addressLine = address
+        }
+
+        showNearbyPOI = false
+    }
+
+    private func handlePhotoSelection(_ item: PhotosPickerItem?) {
+        guard let item = item, let onPhotoImport = onPhotoImport else { return }
+
+        Task {
+            let exifData = await ExifEffects.extractExifDataFromPhotosPickerItem(item)
+
+            if let coord = exifData.coordinate {
+                latitude = coord.latitude
+                longitude = coord.longitude
+                await reverseGeocode(coordinate: coord)
+            }
+
+            // コールバックで座標と日時を返す
+            onPhotoImport(exifData.coordinate, exifData.timestamp)
+
+            photoSelection = nil
+        }
+    }
+
+    // MARK: - Helpers
+
+    private func formatAddress(_ placemark: MKPlacemark) -> String? {
+        var components: [String] = []
+        if let admin = placemark.administrativeArea { components.append(admin) }
+        if let locality = placemark.locality { components.append(locality) }
+        if let subLocality = placemark.subLocality { components.append(subLocality) }
+        if let thoroughfare = placemark.thoroughfare { components.append(thoroughfare) }
+        if let subThoroughfare = placemark.subThoroughfare { components.append(subThoroughfare) }
+        return components.isEmpty ? nil : components.joined()
+    }
+
+    private func formatPlacemark(_ placemark: CLPlacemark) -> String? {
+        var components: [String] = []
+        if let admin = placemark.administrativeArea { components.append(admin) }
+        if let locality = placemark.locality { components.append(locality) }
+        if let subLocality = placemark.subLocality { components.append(subLocality) }
+        if let thoroughfare = placemark.thoroughfare { components.append(thoroughfare) }
+        if let subThoroughfare = placemark.subThoroughfare { components.append(subThoroughfare) }
+        return components.isEmpty ? nil : components.joined()
+    }
+}
+
+// MARK: - Preview
+
+#Preview {
+    @Previewable @State var lat: Double? = 35.6812
+    @Previewable @State var lon: Double? = 139.7671
+    @Previewable @State var address: String? = "東京都千代田区"
+    @Previewable @State var name: String = ""
+
+    LocationPickerSheet(
+        latitude: $lat,
+        longitude: $lon,
+        addressLine: $address,
+        placeName: $name
+    ) { coord, timestamp in
+        print("Photo imported: \(String(describing: coord)), \(String(describing: timestamp))")
+    }
+}

@@ -10,8 +10,8 @@ struct ManualEntryScreen: View {
     // PhotosPicker用
     @State private var showCamera = false
 
-    // EXIF取り込み用PhotosPicker
-    @State private var exifPhotoSelection: PhotosPickerItem?
+    // 場所設定シート
+    @State private var showLocationPicker = false
 
     // フルスクリーン写真表示
     @State private var fullScreenIndex: Int? = nil
@@ -43,11 +43,9 @@ struct ManualEntryScreen: View {
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar { toolbarContent }
                 .alert(item: alertBinding) { alertView(for: $0) }
-                .sheet(isPresented: $store.showLocationSearchSheet) { locationSearchSheet }
-                .sheet(isPresented: $store.showMapPickerSheet) { mapPickerSheet }
+                .sheet(isPresented: $showLocationPicker) { locationPickerSheet }
                 .sheet(isPresented: $showCamera) { cameraSheet }
                 .fullScreenCover(item: fullScreenBinding) { photoFullScreen(for: $0) }
-                .onChange(of: exifPhotoSelection) { handleExifPhotoSelection($1) }
                 .task { await loadTaxonomyOptions() }
         }
         .sheet(isPresented: $labelPickerShown) { labelPickerSheetContent }
@@ -110,36 +108,36 @@ struct ManualEntryScreen: View {
 
     // MARK: - Sheets
 
-    private var locationSearchSheet: some View {
-        LocationSearchSheet { coord, address, name in
-            store.setLocation(latitude: coord.latitude, longitude: coord.longitude)
-            store.addressLine = address
-            // 場所名をタイトルに設定
-            if let name = name {
-                store.title = name
-            }
-            if address == nil {
-                Task { await store.reverseGeocode(latitude: coord.latitude, longitude: coord.longitude) }
-            }
+    private var locationPickerSheet: some View {
+        LocationPickerSheet(
+            latitude: $store.latitude,
+            longitude: $store.longitude,
+            addressLine: $store.addressLine,
+            placeName: $store.title
+        ) { coordinate, timestamp in
+            // 写真から取り込み時のコールバック
+            handlePhotoImport(coordinate: coordinate, timestamp: timestamp)
         }
     }
 
-    private var mapPickerSheet: some View {
-        let initialCoord: CLLocationCoordinate2D? = store.hasValidLocation
-            ? CLLocationCoordinate2D(latitude: store.latitude ?? 0, longitude: store.longitude ?? 0)
-            : nil
-        return ManualEntryMapPickerSheet(initialCoordinate: initialCoord) { coord, name, address in
-            store.setLocation(latitude: coord.latitude, longitude: coord.longitude)
-            // POI名をタイトルに設定
-            if let name = name {
-                store.title = name
-            }
-            // 住所を設定
-            if let address = address {
-                store.addressLine = address
-            } else {
-                Task { await store.reverseGeocode(latitude: coord.latitude, longitude: coord.longitude) }
-            }
+    private func handlePhotoImport(coordinate: CLLocationCoordinate2D?, timestamp: Date?) {
+        let hasLocation = coordinate != nil
+        let hasTimestamp = timestamp != nil && timestamp! <= Date()
+
+        // 日時を設定
+        if let timestamp = timestamp, timestamp <= Date() {
+            store.timestampDisplay = timestamp
+        }
+
+        store.isPhotoImported = true
+
+        // 位置情報または日時情報がない場合はエラーメッセージを表示
+        if !hasLocation && !hasTimestamp {
+            store.alert = L.ManualEntry.noLocationInPhoto + "\n" + L.ManualEntry.noDateInPhoto
+        } else if !hasLocation {
+            store.alert = L.ManualEntry.noLocationInPhoto
+        } else if !hasTimestamp {
+            store.alert = L.ManualEntry.noDateInPhoto
         }
     }
 
@@ -167,112 +165,69 @@ struct ManualEntryScreen: View {
         )
     }
 
-    // MARK: - EXIF Import
-
-    private func handleExifPhotoSelection(_ newValue: PhotosPickerItem?) {
-        guard let item = newValue else { return }
-        importFromPhoto(item)
-        exifPhotoSelection = nil
-    }
-
-    private func importFromPhoto(_ item: PhotosPickerItem) {
-        Task {
-            // PHAsset経由でEXIFデータ（特にGPS）を取得（loadTransferableではGPSが削除される）
-            let exifData = await ExifEffects.extractExifDataFromPhotosPickerItem(item)
-
-            let hasLocation = exifData.coordinate != nil
-            let hasTimestamp = exifData.timestamp != nil && exifData.timestamp! <= Date()
-
-            if let coord = exifData.coordinate {
-                store.setLocation(latitude: coord.latitude, longitude: coord.longitude)
-                await store.reverseGeocode(latitude: coord.latitude, longitude: coord.longitude)
-            }
-
-            if let timestamp = exifData.timestamp, timestamp <= Date() {
-                store.timestampDisplay = timestamp
-            }
-
-            // 画像データはloadTransferableで取得
-            if let data = try? await item.loadTransferable(type: Data.self),
-               let image = UIImage(data: data) {
-                store.addPhotos([image])
-            }
-
-            store.isPhotoImported = true
-
-            // 位置情報または日時情報がない場合はエラーメッセージを表示
-            if !hasLocation && !hasTimestamp {
-                store.alert = L.ManualEntry.noLocationInPhoto + "\n" + L.ManualEntry.noDateInPhoto
-            } else if !hasLocation {
-                store.alert = L.ManualEntry.noLocationInPhoto
-            } else if !hasTimestamp {
-                store.alert = L.ManualEntry.noDateInPhoto
-            }
-        }
-    }
-
     // MARK: - Sections
 
     private var locationSection: some View {
         Section {
-            locationSummaryRow
-            locationButtons
+            // 場所名と設定ボタン
+            HStack {
+                Image(systemName: "mappin.circle.fill")
+                    .foregroundStyle(store.hasValidLocation ? .orange : .secondary)
+
+                if store.hasValidLocation {
+                    // 場所が設定されている場合は場所名を表示
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(store.title.isEmpty ? store.addressLine ?? "" : store.title)
+                            .font(.subheadline)
+                        if !store.title.isEmpty, let address = store.addressLine {
+                            Text(address)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
+                        }
+                    }
+                } else {
+                    // 場所が未設定の場合
+                    Text(L.ManualEntry.locationRequired)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+
+                Button {
+                    showLocationPicker = true
+                } label: {
+                    Text(L.ManualEntry.setLocation)
+                        .font(.subheadline)
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(Color.orange)
+                        .clipShape(Capsule())
+                }
+                .buttonStyle(.plain)
+            }
+
+            // 緯度経度表示（設定済みの場合のみ）
+            if let lat = store.latitude, let lon = store.longitude {
+                HStack {
+                    Image(systemName: "location")
+                        .foregroundStyle(.secondary)
+                    Text(String(format: "%.5f, %.5f", lat, lon))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundStyle(.green)
+                }
+            }
         } header: {
             Text(L.ManualEntry.setLocation)
         } footer: {
             if !store.hasValidLocation {
                 Text(L.ManualEntry.locationRequired)
                     .foregroundStyle(.orange)
-            }
-        }
-    }
-
-    @ViewBuilder
-    private var locationSummaryRow: some View {
-        if let summary = store.locationSummary {
-            HStack {
-                Image(systemName: "mappin.circle.fill")
-                    .foregroundStyle(.orange)
-                Text(summary)
-                    .font(.subheadline)
-                Spacer()
-                Image(systemName: "checkmark.circle.fill")
-                    .foregroundStyle(.green)
-            }
-        }
-    }
-
-    private var locationButtons: some View {
-        VStack(spacing: 12) {
-            PhotosPicker(
-                selection: $exifPhotoSelection,
-                matching: .images,
-                photoLibrary: .shared()
-            ) {
-                Label(L.ManualEntry.importFromPhoto, systemImage: "photo.on.rectangle")
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.bordered)
-            .controlSize(.regular)
-
-            HStack(spacing: 12) {
-                Button {
-                    store.showLocationSearchSheet = true
-                } label: {
-                    Label(L.ManualEntry.searchLocation, systemImage: "magnifyingglass")
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.regular)
-
-                Button {
-                    store.showMapPickerSheet = true
-                } label: {
-                    Label(L.ManualEntry.tapOnMap, systemImage: "map")
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.regular)
             }
         }
     }
