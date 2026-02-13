@@ -48,9 +48,6 @@ struct LocationPickerSheet: View {
     var body: some View {
         NavigationStack {
             List {
-                // 現在設定されている場所
-                currentLocationSection
-
                 // 場所を検索
                 searchSection
 
@@ -62,6 +59,9 @@ struct LocationPickerSheet: View {
                     photoImportSection
                 }
             }
+            .safeAreaInset(edge: .bottom) {
+                currentLocationBottomPanel
+            }
             .navigationTitle(L.ManualEntry.setLocation)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -71,6 +71,7 @@ struct LocationPickerSheet: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button(L.Common.done) { dismiss() }
                         .fontWeight(.bold)
+                        .disabled(!hasLocation)
                 }
             }
             .sheet(isPresented: $showMapPicker) { mapPickerSheet }
@@ -79,72 +80,89 @@ struct LocationPickerSheet: View {
         }
     }
 
-    // MARK: - Current Location Section
+    // MARK: - Current Location Bottom Panel
 
-    private var currentLocationSection: some View {
-        Section {
-            // 場所名入力欄
-            HStack {
-                Image(systemName: "building.2")
+    private var currentLocationBottomPanel: some View {
+        VStack(spacing: 0) {
+            Divider()
+
+            VStack(alignment: .leading, spacing: 12) {
+                // ヘッダー
+                Text(L.LocationPicker.currentLocation)
+                    .font(.caption)
                     .foregroundStyle(.secondary)
-                TextField(L.LocationPicker.placeNamePlaceholder, text: $placeName)
-            }
+                    .textCase(.uppercase)
 
-            // 住所・緯度経度表示（同一行）+ クリアボタン
-            if hasLocation {
-                HStack {
-                    Image(systemName: "mappin.and.ellipse")
-                        .foregroundStyle(.secondary)
-
-                    VStack(alignment: .leading, spacing: 2) {
-                        if let address = addressLine, !address.isEmpty {
-                            Text(address)
+                if hasLocation {
+                    // 設定済みの場合
+                    VStack(alignment: .leading, spacing: 8) {
+                        // 場所名入力欄
+                        HStack {
+                            Image(systemName: "building.2")
+                                .foregroundStyle(.orange)
+                            TextField(L.LocationPicker.placeNamePlaceholder, text: $placeName)
                                 .font(.subheadline)
+                        }
+
+                        // 住所・緯度経度 + クリアボタン
+                        HStack {
+                            Image(systemName: "mappin.and.ellipse")
                                 .foregroundStyle(.secondary)
-                                .lineLimit(1)
+
+                            VStack(alignment: .leading, spacing: 2) {
+                                if let address = addressLine, !address.isEmpty {
+                                    Text(address)
+                                        .font(.subheadline)
+                                        .foregroundStyle(.primary)
+                                        .lineLimit(1)
+                                }
+                                if let lat = latitude, let lon = longitude {
+                                    Text(String(format: "%.5f, %.5f", lat, lon))
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+
+                            Spacer()
+
+                            // クリアボタン
+                            Button {
+                                clearLocation()
+                            } label: {
+                                Image(systemName: "xmark.circle.fill")
+                                    .foregroundStyle(.secondary)
+                                    .imageScale(.medium)
+                            }
+                            .buttonStyle(.plain)
                         }
-                        if let lat = latitude, let lon = longitude {
-                            Text(String(format: "%.5f, %.5f", lat, lon))
-                                .font(.caption)
-                                .foregroundStyle(.tertiary)
+
+                        // 周辺施設検索ボタン
+                        Button {
+                            Task { await searchNearbyPOI() }
+                            showNearbyPOI = true
+                        } label: {
+                            HStack(spacing: 4) {
+                                Image(systemName: "sparkle.magnifyingglass")
+                                Text(L.LocationPicker.findNearbySpots)
+                            }
+                            .font(.subheadline)
+                            .foregroundStyle(.orange)
                         }
+                        .buttonStyle(.plain)
                     }
-
-                    Spacer()
-
-                    // クリアボタン
-                    Button {
-                        clearLocation()
-                    } label: {
-                        Image(systemName: "xmark.circle.fill")
+                } else {
+                    // 未設定の場合
+                    HStack {
+                        Image(systemName: "mappin.slash")
                             .foregroundStyle(.secondary)
-                            .imageScale(.medium)
+                        Text(L.Common.notSelected)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
                     }
-                    .buttonStyle(.plain)
                 }
-
-                // 周辺施設検索ボタン（下に配置）
-                Button {
-                    Task { await searchNearbyPOI() }
-                    showNearbyPOI = true
-                } label: {
-                    HStack(spacing: 4) {
-                        Image(systemName: "sparkle.magnifyingglass")
-                        Text(L.LocationPicker.findNearbySpots)
-                    }
-                    .font(.subheadline)
-                    .foregroundStyle(.orange)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                }
-                .buttonStyle(.plain)
             }
-        } header: {
-            Text(L.LocationPicker.currentLocation)
-        } footer: {
-            if !hasLocation {
-                Text(L.ManualEntry.locationRequired)
-                    .foregroundStyle(.orange)
-            }
+            .padding()
+            .background(.regularMaterial)
         }
     }
 
