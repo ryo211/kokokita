@@ -90,41 +90,53 @@ struct LocationPickerSheet: View {
                 TextField(L.LocationPicker.placeNamePlaceholder, text: $placeName)
             }
 
-            // 住所表示
-            if let address = addressLine, !address.isEmpty {
+            // 住所・緯度経度表示（同一行）+ クリアボタン
+            if hasLocation {
                 HStack {
                     Image(systemName: "mappin.and.ellipse")
                         .foregroundStyle(.secondary)
-                    Text(address)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-            }
 
-            // 緯度経度表示
-            if let lat = latitude, let lon = longitude {
-                HStack {
-                    Image(systemName: "location")
-                        .foregroundStyle(.secondary)
-                    Text(String(format: "%.5f, %.5f", lat, lon))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                    VStack(alignment: .leading, spacing: 2) {
+                        if let address = addressLine, !address.isEmpty {
+                            Text(address)
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
+                        }
+                        if let lat = latitude, let lon = longitude {
+                            Text(String(format: "%.5f, %.5f", lat, lon))
+                                .font(.caption)
+                                .foregroundStyle(.tertiary)
+                        }
+                    }
+
                     Spacer()
 
-                    // 周辺施設検索ボタン
+                    // クリアボタン
                     Button {
-                        Task { await searchNearbyPOI() }
-                        showNearbyPOI = true
+                        clearLocation()
                     } label: {
-                        HStack(spacing: 4) {
-                            Image(systemName: "sparkle.magnifyingglass")
-                            Text(L.LocationPicker.findNearbySpots)
-                        }
-                        .font(.caption)
-                        .foregroundStyle(.orange)
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundStyle(.secondary)
+                            .imageScale(.medium)
                     }
                     .buttonStyle(.plain)
                 }
+
+                // 周辺施設検索ボタン（下に配置）
+                Button {
+                    Task { await searchNearbyPOI() }
+                    showNearbyPOI = true
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "sparkle.magnifyingglass")
+                        Text(L.LocationPicker.findNearbySpots)
+                    }
+                    .font(.subheadline)
+                    .foregroundStyle(.orange)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .buttonStyle(.plain)
             }
         } header: {
             Text(L.LocationPicker.currentLocation)
@@ -134,6 +146,13 @@ struct LocationPickerSheet: View {
                     .foregroundStyle(.orange)
             }
         }
+    }
+
+    private func clearLocation() {
+        latitude = nil
+        longitude = nil
+        addressLine = nil
+        placeName = ""
     }
 
     // MARK: - Search Section
