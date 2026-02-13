@@ -17,6 +17,16 @@ struct VisitDetailContent: View {
     var labelColorMap: [String: Color] = [:]
     @Binding var photoFullScreenIndex: Int?
 
+    /// タイトルの末尾にインラインで記録タイプアイコンを表示
+    private var titleWithIcon: Text {
+        let title = data.title.ifBlank(L.Home.noTitle)
+        let iconName = data.isManualEntry ? "wrench.adjustable.fill" : "checkmark.seal.fill"
+        let iconColor: Color = data.isManualEntry ? .orange : .blue
+        return Text(title)
+            + Text(" ")
+            + Text(Image(systemName: iconName)).foregroundColor(iconColor)
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: UIConstants.Spacing.large) {
             // 共有画像の場合、最上部にロゴを表示
@@ -33,12 +43,9 @@ struct VisitDetailContent: View {
             VStack(alignment: .leading, spacing: UIConstants.Spacing.medium) {
                 HStack(spacing: UIConstants.Spacing.medium) {
                     VStack(alignment: .leading, spacing: 2) {
-                        HStack(spacing: 6) {
-                            Text(data.title.ifBlank(L.Home.noTitle))
-                                .font(.title2.bold())
-                                .lineLimit(3)
-                            RecordTypeIcon(isManualEntry: data.isManualEntry)
-                        }
+                        titleWithIcon
+                            .font(.title2.bold())
+                            .lineLimit(3)
                         if let catRaw = data.facilityCategory {
                             let category = MKPointOfInterestCategory(rawValue: catRaw)
                             Text(category.localizedName)

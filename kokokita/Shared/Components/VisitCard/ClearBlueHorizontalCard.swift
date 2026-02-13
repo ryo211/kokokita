@@ -116,6 +116,15 @@ struct ClearBlueHorizontalCard: View {
         return ""
     }
 
+    /// タイトルの末尾にインラインで記録タイプアイコンを表示
+    private var titleWithIcon: Text {
+        let iconName = aggregate.visit.isManualEntry ? "wrench.adjustable.fill" : "checkmark.seal.fill"
+        let iconColor: Color = aggregate.visit.isManualEntry ? .orange : .blue
+        return Text(displayTitle)
+            + Text(" ")
+            + Text(Image(systemName: iconName)).foregroundColor(iconColor)
+    }
+
     // MARK: - Body
 
     var body: some View {
@@ -143,14 +152,11 @@ struct ClearBlueHorizontalCard: View {
 
             // テキストエリア
             VStack(alignment: .leading, spacing: 6) {
-                // タイトル + 記録タイプアイコン
-                HStack(spacing: 4) {
-                    Text(displayTitle)
-                        .font(.headline)
-                        .foregroundStyle(VisitCardStyle.primaryTextColor)
-                        .lineLimit(2)
-                    RecordTypeIcon(isManualEntry: aggregate.visit.isManualEntry, compact: true)
-                }
+                // タイトル + 記録タイプアイコン（インライン）
+                titleWithIcon
+                    .font(.headline)
+                    .foregroundStyle(VisitCardStyle.primaryTextColor)
+                    .lineLimit(2)
 
                 // 日付
                 Text(formattedDate)
@@ -208,14 +214,11 @@ struct ClearBlueHorizontalCard: View {
                     .font(VisitCardStyle.horizontalDateFont)
                     .foregroundStyle(VisitCardStyle.secondaryTextColor)
 
-                // タイトル + 記録タイプアイコン
-                HStack(spacing: 4) {
-                    Text(displayTitle)
-                        .font(VisitCardStyle.horizontalTitleFont)
-                        .foregroundStyle(VisitCardStyle.primaryTextColor)
-                        .lineLimit(2)
-                    RecordTypeIcon(isManualEntry: aggregate.visit.isManualEntry, compact: true)
-                }
+                // タイトル + 記録タイプアイコン（インライン）
+                titleWithIcon
+                    .font(VisitCardStyle.horizontalTitleFont)
+                    .foregroundStyle(VisitCardStyle.primaryTextColor)
+                    .lineLimit(2)
 
                 // 住所（常に2行分のスペースを確保）
                 Text(address ?? " ")
