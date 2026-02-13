@@ -76,12 +76,15 @@ struct ClearBlueVerticalCard: View {
 
             // テキストエリア（固定位置・固定高さ）
             VStack(alignment: .leading, spacing: 2) {
-                // タイトル（固定位置、1行）
-                Text(displayTitle)
-                    .font(VisitCardStyle.verticalTitleFont)
-                    .foregroundStyle(VisitCardStyle.primaryTextColor)
-                    .lineLimit(1)
-                    .frame(height: 20, alignment: .leading)
+                // タイトル + 記録タイプアイコン（固定位置、1行）
+                HStack(spacing: 4) {
+                    Text(displayTitle)
+                        .font(VisitCardStyle.verticalTitleFont)
+                        .foregroundStyle(VisitCardStyle.primaryTextColor)
+                        .lineLimit(1)
+                    RecordTypeIcon(isManualEntry: aggregate.visit.isManualEntry, compact: true)
+                }
+                .frame(height: 20, alignment: .leading)
 
                 // 日付（固定位置、1行）
                 Text(formattedDate)

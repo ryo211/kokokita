@@ -33,9 +33,12 @@ struct VisitDetailContent: View {
             VStack(alignment: .leading, spacing: UIConstants.Spacing.medium) {
                 HStack(spacing: UIConstants.Spacing.medium) {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(data.title.ifBlank(L.Home.noTitle))
-                            .font(.title2.bold())
-                            .lineLimit(3)
+                        HStack(spacing: 6) {
+                            Text(data.title.ifBlank(L.Home.noTitle))
+                                .font(.title2.bold())
+                                .lineLimit(3)
+                            RecordTypeIcon(isManualEntry: data.isManualEntry)
+                        }
                         if let catRaw = data.facilityCategory {
                             let category = MKPointOfInterestCategory(rawValue: catRaw)
                             Text(category.localizedName)

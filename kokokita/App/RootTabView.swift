@@ -1073,7 +1073,8 @@ private struct DetailVisitSheet: View {
                 phone: nil
             ),
             facilityCategory: agg.details.facilityCategory,
-            photoPaths: agg.details.photoPaths
+            photoPaths: agg.details.photoPaths,
+            isManualEntry: agg.visit.isManualEntry
         )
     }
 

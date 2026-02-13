@@ -354,7 +354,8 @@ struct VisitDetailScreen: View {
             memo: agg.details.comment,
             facility: facility,
             facilityCategory: agg.details.facilityCategory,
-            photoPaths: agg.details.photoPaths
+            photoPaths: agg.details.photoPaths,
+            isManualEntry: agg.visit.isManualEntry
         )
     }
 
@@ -433,6 +434,7 @@ struct VisitDetailData {
     var facility: FacilityInfo?
     var facilityCategory: String?
     var photoPaths: [String]
+    var isManualEntry: Bool = false  // 後付け記録かどうか
 }
 
 

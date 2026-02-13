@@ -13,15 +13,16 @@ struct LocationPickerSheet: View {
     @Binding var addressLine: String?
     @Binding var placeName: String
 
-    // 写真から取り込み時のコールバック（日時も返す）
+    // 写真から取り込み時のコールバック（日時と写真も返す）
     // nilの場合は写真取り込みボタンを表示しない
-    var onPhotoImport: ((_ coordinate: CLLocationCoordinate2D?, _ timestamp: Date?) -> Void)?
+    var onPhotoImport: ((_ coordinate: CLLocationCoordinate2D?, _ timestamp: Date?, _ image: UIImage?) -> Void)?
 
     // 検索状態
     @State private var searchText = ""
     @State private var searchResults: [MKMapItem] = []
     @State private var isSearching = false
     @State private var searchTask: Task<Void, Never>?
+    @FocusState private var isSearchFieldFocused: Bool
 
     // 地図選択シート
     @State private var showMapPicker = false
@@ -33,6 +34,7 @@ struct LocationPickerSheet: View {
 
     // 写真選択
     @State private var photoSelection: PhotosPickerItem?
+    @State private var importedPhotoImage: UIImage?
 
     // 現在位置が設定されているか
     private var hasLocation: Bool {
@@ -95,64 +97,76 @@ struct LocationPickerSheet: View {
 
                 if hasLocation {
                     // 設定済みの場合
-                    VStack(alignment: .leading, spacing: 8) {
-                        // 場所名 + 候補を探すボタン（常に表示）
-                        HStack {
-                            Image(systemName: "building.2")
-                                .foregroundStyle(.orange)
-
-                            if !placeName.isEmpty {
-                                Text(placeName)
-                                    .font(.subheadline.bold())
-                            }
-
-                            Spacer()
-
-                            // 周辺施設検索ボタン
-                            Button {
-                                Task { await searchNearbyPOI() }
-                                showNearbyPOI = true
-                            } label: {
-                                HStack(spacing: 4) {
-                                    Image(systemName: "sparkle.magnifyingglass")
-                                    Text(L.LocationPicker.findNearbySpots)
-                                }
-                                .font(.subheadline)
-                                .foregroundStyle(.orange)
-                            }
-                            .buttonStyle(.plain)
+                    HStack(alignment: .top, spacing: 12) {
+                        // 写真サムネイル（写真から取り込み時のみ表示）
+                        if let image = importedPhotoImage {
+                            Image(uiImage: image)
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: 60, height: 60)
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
                         }
 
-                        // 住所・緯度経度 + クリアボタン
-                        HStack {
-                            Image(systemName: "mappin.and.ellipse")
-                                .foregroundStyle(.secondary)
+                        // 場所情報
+                        VStack(alignment: .leading, spacing: 8) {
+                            // 場所名 + 候補を探すボタン（常に表示）
+                            HStack {
+                                Image(systemName: "building.2")
+                                    .foregroundStyle(.orange)
 
-                            VStack(alignment: .leading, spacing: 2) {
-                                if let address = addressLine, !address.isEmpty {
-                                    Text(address)
-                                        .font(.subheadline)
-                                        .foregroundStyle(.primary)
-                                        .lineLimit(1)
+                                if !placeName.isEmpty {
+                                    Text(placeName)
+                                        .font(.subheadline.bold())
                                 }
-                                if let lat = latitude, let lon = longitude {
-                                    Text(String(format: "%.5f, %.5f", lat, lon))
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
+
+                                Spacer()
+
+                                // 周辺施設検索ボタン
+                                Button {
+                                    Task { await searchNearbyPOI() }
+                                    showNearbyPOI = true
+                                } label: {
+                                    HStack(spacing: 4) {
+                                        Image(systemName: "sparkle.magnifyingglass")
+                                        Text(L.LocationPicker.findNearbySpots)
+                                    }
+                                    .font(.subheadline)
+                                    .foregroundStyle(.orange)
                                 }
+                                .buttonStyle(.plain)
                             }
 
-                            Spacer()
-
-                            // クリアボタン
-                            Button {
-                                clearLocation()
-                            } label: {
-                                Image(systemName: "xmark.circle.fill")
+                            // 住所・緯度経度 + クリアボタン
+                            HStack {
+                                Image(systemName: "mappin.and.ellipse")
                                     .foregroundStyle(.secondary)
-                                    .imageScale(.medium)
+
+                                VStack(alignment: .leading, spacing: 2) {
+                                    if let address = addressLine, !address.isEmpty {
+                                        Text(address)
+                                            .font(.subheadline)
+                                            .foregroundStyle(.primary)
+                                            .lineLimit(1)
+                                    }
+                                    if let lat = latitude, let lon = longitude {
+                                        Text(String(format: "%.5f, %.5f", lat, lon))
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                }
+
+                                Spacer()
+
+                                // クリアボタン
+                                Button {
+                                    clearLocation()
+                                } label: {
+                                    Image(systemName: "xmark.circle.fill")
+                                        .foregroundStyle(.secondary)
+                                        .imageScale(.medium)
+                                }
+                                .buttonStyle(.plain)
                             }
-                            .buttonStyle(.plain)
                         }
                     }
                 } else {
@@ -176,6 +190,7 @@ struct LocationPickerSheet: View {
         longitude = nil
         addressLine = nil
         placeName = ""
+        importedPhotoImage = nil
     }
 
     // MARK: - Search Section
@@ -189,7 +204,14 @@ struct LocationPickerSheet: View {
                 TextField(L.LocationPicker.searchPlaceholder, text: $searchText)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
+                    .focused($isSearchFieldFocused)
                     .onChange(of: searchText) { performSearch($1) }
+                    .onChange(of: isSearchFieldFocused) { _, focused in
+                        // フォーカス時に検索を再実行
+                        if focused && !searchText.isEmpty {
+                            performSearch(searchText)
+                        }
+                    }
 
                 if isSearching {
                     ProgressView()
@@ -206,20 +228,22 @@ struct LocationPickerSheet: View {
                 }
             }
 
-            // 検索結果
-            if !searchResults.isEmpty {
-                ForEach(searchResults.prefix(10), id: \.self) { item in
-                    Button {
-                        selectSearchResult(item)
-                    } label: {
-                        searchResultRow(for: item)
+            // 検索結果（フォーカス中のみ表示）
+            if isSearchFieldFocused {
+                if !searchResults.isEmpty {
+                    ForEach(searchResults.prefix(10), id: \.self) { item in
+                        Button {
+                            selectSearchResult(item)
+                        } label: {
+                            searchResultRow(for: item)
+                        }
+                        .buttonStyle(.plain)
                     }
-                    .buttonStyle(.plain)
+                } else if !searchText.isEmpty && !isSearching {
+                    Text(L.LocationPicker.noResults)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
                 }
-            } else if !searchText.isEmpty && !isSearching {
-                Text(L.LocationPicker.noResults)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
             }
         } header: {
             Text(L.ManualEntry.searchLocation)
@@ -388,9 +412,8 @@ struct LocationPickerSheet: View {
 
         setLocation(coordinate: coord, name: name, address: address)
 
-        // 検索をクリア
-        searchText = ""
-        searchResults = []
+        // フォーカスを外す（検索キーワードは残す）
+        isSearchFieldFocused = false
     }
 
     private func setLocation(coordinate: CLLocationCoordinate2D, name: String?, address: String?) {
@@ -399,6 +422,9 @@ struct LocationPickerSheet: View {
 
         // 場所名は常に上書き（nilの場合は空文字）
         placeName = name ?? ""
+
+        // 検索や地図から選択した場合は写真をクリア
+        importedPhotoImage = nil
 
         if let address = address {
             addressLine = address
@@ -464,6 +490,12 @@ struct LocationPickerSheet: View {
             // 現在の設定をリセット
             clearLocation()
 
+            // 写真を読み込んでサムネイル用に保持
+            if let data = try? await item.loadTransferable(type: Data.self),
+               let image = UIImage(data: data) {
+                importedPhotoImage = image
+            }
+
             let exifData = await ExifEffects.extractExifDataFromPhotosPickerItem(item)
 
             // 位置情報がある場合は設定
@@ -474,8 +506,8 @@ struct LocationPickerSheet: View {
                 await reverseGeocode(coordinate: coord)
             }
 
-            // コールバックで座標と日時を返す（エラーメッセージは親側で表示）
-            onPhotoImport(exifData.coordinate, exifData.timestamp)
+            // コールバックで座標、日時、写真を返す（エラーメッセージは親側で表示）
+            onPhotoImport(exifData.coordinate, exifData.timestamp, importedPhotoImage)
 
             photoSelection = nil
         }
@@ -517,7 +549,7 @@ struct LocationPickerSheet: View {
         longitude: $lon,
         addressLine: $address,
         placeName: $name
-    ) { coord, timestamp in
-        print("Photo imported: \(String(describing: coord)), \(String(describing: timestamp))")
+    ) { coord, timestamp, image in
+        print("Photo imported: \(String(describing: coord)), \(String(describing: timestamp)), image: \(image != nil)")
     }
 }

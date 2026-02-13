@@ -99,9 +99,9 @@ struct PostKokokitaConfirmationSheet: View {
                     .font(.system(size: 24, weight: .semibold, design: .rounded))
                     .tracking(1.2)
                     .foregroundColor(.accentColor)
-                Image(systemName: "checkmark.circle.fill")
+                Image(systemName: "checkmark.seal.fill")
                     .font(.system(size: 20, weight: .semibold))
-                    .foregroundColor(.accentColor)
+                    .foregroundColor(.blue)
             }
 
             // 現在地を記録しました + 記録を見るリンク

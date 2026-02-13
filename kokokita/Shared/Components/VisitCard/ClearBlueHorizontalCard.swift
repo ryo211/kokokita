@@ -143,11 +143,14 @@ struct ClearBlueHorizontalCard: View {
 
             // テキストエリア
             VStack(alignment: .leading, spacing: 6) {
-                // タイトル
-                Text(displayTitle)
-                    .font(.headline)
-                    .foregroundStyle(VisitCardStyle.primaryTextColor)
-                    .lineLimit(2)
+                // タイトル + 記録タイプアイコン
+                HStack(spacing: 4) {
+                    Text(displayTitle)
+                        .font(.headline)
+                        .foregroundStyle(VisitCardStyle.primaryTextColor)
+                        .lineLimit(2)
+                    RecordTypeIcon(isManualEntry: aggregate.visit.isManualEntry, compact: true)
+                }
 
                 // 日付
                 Text(formattedDate)
@@ -205,11 +208,14 @@ struct ClearBlueHorizontalCard: View {
                     .font(VisitCardStyle.horizontalDateFont)
                     .foregroundStyle(VisitCardStyle.secondaryTextColor)
 
-                // タイトル
-                Text(displayTitle)
-                    .font(VisitCardStyle.horizontalTitleFont)
-                    .foregroundStyle(VisitCardStyle.primaryTextColor)
-                    .lineLimit(2)
+                // タイトル + 記録タイプアイコン
+                HStack(spacing: 4) {
+                    Text(displayTitle)
+                        .font(VisitCardStyle.horizontalTitleFont)
+                        .foregroundStyle(VisitCardStyle.primaryTextColor)
+                        .lineLimit(2)
+                    RecordTypeIcon(isManualEntry: aggregate.visit.isManualEntry, compact: true)
+                }
 
                 // 住所（常に2行分のスペースを確保）
                 Text(address ?? " ")

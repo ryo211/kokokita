@@ -114,19 +114,24 @@ struct ManualEntryScreen: View {
             longitude: $store.longitude,
             addressLine: $store.addressLine,
             placeName: $store.title
-        ) { coordinate, timestamp in
+        ) { coordinate, timestamp, image in
             // 写真から取り込み時のコールバック
-            handlePhotoImport(coordinate: coordinate, timestamp: timestamp)
+            handlePhotoImport(coordinate: coordinate, timestamp: timestamp, image: image)
         }
     }
 
-    private func handlePhotoImport(coordinate: CLLocationCoordinate2D?, timestamp: Date?) {
+    private func handlePhotoImport(coordinate: CLLocationCoordinate2D?, timestamp: Date?, image: UIImage?) {
         let hasLocation = coordinate != nil
         let hasTimestamp = timestamp != nil && timestamp! <= Date()
 
         // 日時を設定
         if let timestamp = timestamp, timestamp <= Date() {
             store.timestampDisplay = timestamp
+        }
+
+        // 写真を追加
+        if let image = image {
+            store.addPhotos([image])
         }
 
         store.isPhotoImported = true

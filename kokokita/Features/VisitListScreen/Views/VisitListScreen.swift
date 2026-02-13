@@ -175,6 +175,8 @@ struct VisitListScreen: View {
                     .font(.system(size: 10, weight: .bold))
                 Text(L.ManualEntry.title)
                     .font(.system(size: 11, weight: .medium))
+                Image(systemName: "wrench.adjustable.fill")
+                    .font(.system(size: 10))
             }
             .foregroundStyle(Color.orange)
             .padding(.horizontal, 10)
@@ -616,7 +618,8 @@ struct VisitListScreen: View {
                 phone: nil
             ),
             facilityCategory: agg.details.facilityCategory,
-            photoPaths: agg.details.photoPaths
+            photoPaths: agg.details.photoPaths,
+            isManualEntry: agg.visit.isManualEntry
         )
     }
 
