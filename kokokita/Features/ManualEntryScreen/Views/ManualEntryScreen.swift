@@ -180,6 +180,9 @@ struct ManualEntryScreen: View {
             // PHAsset経由でEXIFデータ（特にGPS）を取得（loadTransferableではGPSが削除される）
             let exifData = await ExifEffects.extractExifDataFromPhotosPickerItem(item)
 
+            let hasLocation = exifData.coordinate != nil
+            let hasTimestamp = exifData.timestamp != nil && exifData.timestamp! <= Date()
+
             if let coord = exifData.coordinate {
                 store.setLocation(latitude: coord.latitude, longitude: coord.longitude)
                 await store.reverseGeocode(latitude: coord.latitude, longitude: coord.longitude)
@@ -196,6 +199,15 @@ struct ManualEntryScreen: View {
             }
 
             store.isPhotoImported = true
+
+            // 位置情報または日時情報がない場合はエラーメッセージを表示
+            if !hasLocation && !hasTimestamp {
+                store.alert = L.ManualEntry.noLocationInPhoto + "\n" + L.ManualEntry.noDateInPhoto
+            } else if !hasLocation {
+                store.alert = L.ManualEntry.noLocationInPhoto
+            } else if !hasTimestamp {
+                store.alert = L.ManualEntry.noDateInPhoto
+            }
         }
     }
 
