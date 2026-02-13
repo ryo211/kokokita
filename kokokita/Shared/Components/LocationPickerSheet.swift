@@ -96,12 +96,31 @@ struct LocationPickerSheet: View {
                 if hasLocation {
                     // 設定済みの場合
                     VStack(alignment: .leading, spacing: 8) {
-                        // 場所名入力欄
+                        // 場所名 + 候補を探すボタン（常に表示）
                         HStack {
                             Image(systemName: "building.2")
                                 .foregroundStyle(.orange)
-                            TextField(L.LocationPicker.placeNamePlaceholder, text: $placeName)
+
+                            if !placeName.isEmpty {
+                                Text(placeName)
+                                    .font(.subheadline.bold())
+                            }
+
+                            Spacer()
+
+                            // 周辺施設検索ボタン
+                            Button {
+                                Task { await searchNearbyPOI() }
+                                showNearbyPOI = true
+                            } label: {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "sparkle.magnifyingglass")
+                                    Text(L.LocationPicker.findNearbySpots)
+                                }
                                 .font(.subheadline)
+                                .foregroundStyle(.orange)
+                            }
+                            .buttonStyle(.plain)
                         }
 
                         // 住所・緯度経度 + クリアボタン
@@ -135,20 +154,6 @@ struct LocationPickerSheet: View {
                             }
                             .buttonStyle(.plain)
                         }
-
-                        // 周辺施設検索ボタン
-                        Button {
-                            Task { await searchNearbyPOI() }
-                            showNearbyPOI = true
-                        } label: {
-                            HStack(spacing: 4) {
-                                Image(systemName: "sparkle.magnifyingglass")
-                                Text(L.LocationPicker.findNearbySpots)
-                            }
-                            .font(.subheadline)
-                            .foregroundStyle(.orange)
-                        }
-                        .buttonStyle(.plain)
                     }
                 } else {
                     // 未設定の場合
@@ -392,9 +397,8 @@ struct LocationPickerSheet: View {
         latitude = coordinate.latitude
         longitude = coordinate.longitude
 
-        if let name = name {
-            placeName = name
-        }
+        // 場所名は常に上書き（nilの場合は空文字）
+        placeName = name ?? ""
 
         if let address = address {
             addressLine = address
@@ -444,10 +448,8 @@ struct LocationPickerSheet: View {
         let name = item.name
         let address = formatAddress(item.placemark)
 
-        // 座標は変更せず、名前と住所のみ更新
-        if let name = name {
-            placeName = name
-        }
+        // 座標は変更せず、名前と住所を上書き
+        placeName = name ?? ""
         if let address = address {
             addressLine = address
         }
@@ -459,15 +461,20 @@ struct LocationPickerSheet: View {
         guard let item = item, let onPhotoImport = onPhotoImport else { return }
 
         Task {
+            // 現在の設定をリセット
+            clearLocation()
+
             let exifData = await ExifEffects.extractExifDataFromPhotosPickerItem(item)
 
+            // 位置情報がある場合は設定
             if let coord = exifData.coordinate {
                 latitude = coord.latitude
                 longitude = coord.longitude
+                // 写真には場所名がないのでplaceNameは空のまま
                 await reverseGeocode(coordinate: coord)
             }
 
-            // コールバックで座標と日時を返す
+            // コールバックで座標と日時を返す（エラーメッセージは親側で表示）
             onPhotoImport(exifData.coordinate, exifData.timestamp)
 
             photoSelection = nil
