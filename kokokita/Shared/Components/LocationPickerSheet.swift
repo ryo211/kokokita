@@ -53,13 +53,8 @@ struct LocationPickerSheet: View {
                 // 場所を検索
                 searchSection
 
-                // 地図から選択
-                mapPickerSection
-
-                // 写真から取り込み（オプション）
-                if onPhotoImport != nil {
-                    photoImportSection
-                }
+                // 地図から選択 / 写真から取り込み（横並びボタン）
+                quickActionsSection
             }
             .safeAreaInset(edge: .bottom) {
                 currentLocationBottomPanel
@@ -266,34 +261,91 @@ struct LocationPickerSheet: View {
         .padding(.vertical, 2)
     }
 
-    // MARK: - Map Picker Section
+    // MARK: - Quick Actions Section
 
-    private var mapPickerSection: some View {
+    private var quickActionsSection: some View {
         Section {
-            Button {
-                showMapPicker = true
-            } label: {
-                Label(L.ManualEntry.tapOnMap, systemImage: "map")
+            HStack(spacing: 12) {
+                // 地図から選択ボタン
+                Button {
+                    showMapPicker = true
+                } label: {
+                    liquidGlassButton(
+                        icon: "map",
+                        title: L.ManualEntry.tapOnMap,
+                        color: .orange
+                    )
+                }
+                .buttonStyle(.plain)
+
+                // 写真から取り込みボタン（オプション）
+                if onPhotoImport != nil {
+                    PhotosPicker(
+                        selection: $photoSelection,
+                        matching: .images,
+                        photoLibrary: .shared()
+                    ) {
+                        liquidGlassButton(
+                            icon: "photo.on.rectangle",
+                            title: L.ManualEntry.importFromPhoto,
+                            color: .orange
+                        )
+                    }
+                    .buttonStyle(.plain)
+                }
             }
+            .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+            .listRowBackground(Color.clear)
         }
     }
 
-    // MARK: - Photo Import Section
-
-    private var photoImportSection: some View {
-        Section {
-            PhotosPicker(
-                selection: $photoSelection,
-                matching: .images,
-                photoLibrary: .shared()
-            ) {
-                Label(L.ManualEntry.importFromPhoto, systemImage: "photo.on.rectangle")
-            }
-        } footer: {
-            Text(L.LocationPicker.photoImportDescription)
+    /// Liquid Glass風ボタン
+    @ViewBuilder
+    private func liquidGlassButton(icon: String, title: String, color: Color) -> some View {
+        VStack(spacing: 8) {
+            Image(systemName: icon)
+                .font(.title2)
+            Text(title)
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
         }
+        .foregroundStyle(color)
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 16)
+        .background(
+            ZStack {
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(.ultraThinMaterial)
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .fill(
+                                LinearGradient(
+                                    colors: [
+                                        color.opacity(0.12),
+                                        color.opacity(0.04)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                    }
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .strokeBorder(
+                                LinearGradient(
+                                    colors: [
+                                        color.opacity(0.3),
+                                        color.opacity(0.1)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 0.5
+                            )
+                    }
+                    .shadow(color: color.opacity(0.15), radius: 4, x: 0, y: 1)
+            }
+        )
     }
 
     // MARK: - Map Picker Sheet
