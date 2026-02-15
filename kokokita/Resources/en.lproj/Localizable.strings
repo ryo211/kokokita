@@ -352,3 +352,10 @@
 "locationPicker.searchPlaceholder" = "Enter place name or address (e.g. Tokyo Skytree)";
 "locationPicker.noResults" = "No matching places found";
 "locationPicker.photoImportDescription" = "Import location from photo EXIF data";
+
+// MARK: - Record Badge
+"recordBadge.explanationTitle" = "About Record Types";
+"recordBadge.verifiedTitle" = "Verified Record";
+"recordBadge.verifiedDescription" = "This record proves you were there at that time. It was created by the app capturing your location on the spot.";
+"recordBadge.manualTitle" = "Manual Entry";
+"recordBadge.manualDescription" = "This record was added manually later. There is no proof that you actually visited the location.";

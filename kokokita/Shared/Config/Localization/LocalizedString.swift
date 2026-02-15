@@ -415,6 +415,15 @@ enum L {
         static let photoImportDescription = localized("locationPicker.photoImportDescription")
     }
 
+    // MARK: - Record Badge
+    enum RecordBadge {
+        static let explanationTitle = localized("recordBadge.explanationTitle")
+        static let verifiedTitle = localized("recordBadge.verifiedTitle")
+        static let verifiedDescription = localized("recordBadge.verifiedDescription")
+        static let manualTitle = localized("recordBadge.manualTitle")
+        static let manualDescription = localized("recordBadge.manualDescription")
+    }
+
     // MARK: - Helper
     private static func localized(_ key: String, comment: String = "") -> String {
         NSLocalizedString(key, comment: comment)

@@ -17,14 +17,50 @@ struct VisitDetailContent: View {
     var labelColorMap: [String: Color] = [:]
     @Binding var photoFullScreenIndex: Int?
 
-    /// タイトルの末尾にインラインで記録タイプアイコンを表示
+    /// バッジ説明アラートの表示状態
+    @State private var showBadgeExplanation = false
+
+    /// 表示用タイトル
+    private var displayTitle: String {
+        data.title.ifBlank(L.Home.noTitle)
+    }
+
+    /// バッジアイコン名
+    private var badgeIconName: String {
+        data.isManualEntry ? "wrench.adjustable.fill" : "checkmark.seal.fill"
+    }
+
+    /// バッジアイコン色
+    private var badgeIconColor: Color {
+        data.isManualEntry ? .orange : .blue
+    }
+
+    /// タイトルの末尾にインラインで記録タイプアイコンを表示（共有用）
     private var titleWithIcon: Text {
-        let title = data.title.ifBlank(L.Home.noTitle)
-        let iconName = data.isManualEntry ? "wrench.adjustable.fill" : "checkmark.seal.fill"
-        let iconColor: Color = data.isManualEntry ? .orange : .blue
+        let title = displayTitle
         return Text(title)
             + Text(" ")
-            + Text(Image(systemName: iconName)).foregroundColor(iconColor)
+            + Text(Image(systemName: badgeIconName)).foregroundColor(badgeIconColor)
+    }
+
+    /// タップ可能なタイトル + バッジ（通常表示用）
+    @ViewBuilder
+    private var tappableTitleView: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 4) {
+            Text(displayTitle)
+                .font(.title2.bold())
+                .lineLimit(3)
+
+            // タップ可能なバッジアイコン
+            Button {
+                showBadgeExplanation = true
+            } label: {
+                Image(systemName: badgeIconName)
+                    .font(.subheadline)
+                    .foregroundStyle(badgeIconColor)
+            }
+            .buttonStyle(.plain)
+        }
     }
 
     var body: some View {
@@ -43,9 +79,14 @@ struct VisitDetailContent: View {
             VStack(alignment: .leading, spacing: UIConstants.Spacing.medium) {
                 HStack(spacing: UIConstants.Spacing.medium) {
                     VStack(alignment: .leading, spacing: 2) {
-                        titleWithIcon
-                            .font(.title2.bold())
-                            .lineLimit(3)
+                        // 共有時はインライン、通常表示時はタップ可能なバッジ
+                        if isSharing {
+                            titleWithIcon
+                                .font(.title2.bold())
+                                .lineLimit(3)
+                        } else {
+                            tappableTitleView
+                        }
                         if let catRaw = data.facilityCategory {
                             let category = MKPointOfInterestCategory(rawValue: catRaw)
                             Text(category.localizedName)
@@ -203,6 +244,11 @@ struct VisitDetailContent: View {
             LinearGradient(colors: [Color(.systemBackground), Color(.secondarySystemBackground)],
                            startPoint: .top, endPoint: .bottom)
         )
+        .sheet(isPresented: $showBadgeExplanation) {
+            RecordBadgeExplanationSheet()
+                .presentationDetents([.medium])
+                .presentationDragIndicator(.visible)
+        }
     }
 
     // MARK: - Nearby Visits Section

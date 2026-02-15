@@ -354,3 +354,10 @@
 "locationPicker.searchPlaceholder" = "場所名や住所を入力（例：東京スカイツリー）";
 "locationPicker.noResults" = "該当する場所が見つかりませんでした";
 "locationPicker.photoImportDescription" = "写真のEXIF情報から位置情報を取り込みます";
+
+// MARK: - Record Type Badge
+"recordBadge.explanationTitle" = "記録の種類について";
+"recordBadge.verifiedTitle" = "証明付き記録";
+"recordBadge.verifiedDescription" = "その時、その場所にいたことが証明されている記録です。アプリがその場で位置情報を取得して作成されました。";
+"recordBadge.manualTitle" = "後付け記録";
+"recordBadge.manualDescription" = "後から手動で追加した記録です。実際に訪れたかどうかの証明はありません。";
