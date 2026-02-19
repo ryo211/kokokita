@@ -168,7 +168,10 @@ struct RootTabView: View {
         .sheet(isPresented: Binding(
             get: { confirmationSheetVisitId != nil },
             set: { if !$0 { confirmationSheetVisitId = nil } }
-        )) {
+        ), onDismiss: {
+            // シートが閉じた時にレビュー誘導をチェック
+            AppReviewService.shared.onRecordSheetDismissed()
+        }) {
             if let visitId = confirmationSheetVisitId {
                 PostKokokitaConfirmationSheet(
                     visitId: visitId,
@@ -255,6 +258,23 @@ struct RootTabView: View {
                 tab = .records
             }
         }
+        // アプリ起動時にレビュー誘導の記録数を初期化（既存ユーザー対応）
+        .task {
+            await initializeAppReviewService()
+        }
+    }
+
+    @MainActor
+    private func initializeAppReviewService() async {
+        let existingCount = (try? AppContainer.shared.repo.fetchAll(
+            filterLabel: nil,
+            filterGroup: nil,
+            filterMember: nil,
+            titleQuery: nil,
+            dateFrom: nil,
+            dateToExclusive: nil
+        ).count) ?? 0
+        AppReviewService.shared.initializeIfNeeded(existingRecordCount: existingCount)
     }
 
     // MARK: - Helper Methods
@@ -423,6 +443,10 @@ struct RootTabView: View {
 
             try repo.create(visit: visit, details: details)
             NotificationCenter.default.post(name: .visitsChanged, object: nil)
+
+            // レビュー誘導用：記録数をカウント
+            AppReviewService.shared.recordCreated()
+
             return id
         } catch {
             Logger.error("Quick save failed", error: error)

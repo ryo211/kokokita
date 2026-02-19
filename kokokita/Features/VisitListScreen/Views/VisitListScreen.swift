@@ -392,7 +392,10 @@ struct VisitListScreen: View {
                 NavigationStack { SearchFilterSheet(store: store) { showSearchSheet = false } }
                 .iPadSheetSize()
             }
-            .sheet(isPresented: $showManualEntrySheet) {
+            .sheet(isPresented: $showManualEntrySheet, onDismiss: {
+                // シートが閉じた時にレビュー誘導をチェック
+                AppReviewService.shared.onRecordSheetDismissed()
+            }) {
                 ManualEntryScreen()
                     .iPadSheetSize()
             }

@@ -287,6 +287,9 @@ final class ManualEntryStore {
             // 記録変更を通知
             NotificationCenter.default.post(name: .visitsChanged, object: nil)
 
+            // レビュー誘導用：記録数をカウント
+            AppReviewService.shared.recordCreated()
+
             return true
         } catch {
             alert = error.localizedDescription
