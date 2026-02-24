@@ -402,6 +402,13 @@ enum L {
         static let photoImported = localized("manualEntry.photoImported")
         static let addManualEntry = localized("manualEntry.addManualEntry")
         static let useThisLocation = localized("manualEntry.useThisLocation")
+        // ステップ関連
+        static let step1Title = localized("manualEntry.step1Title")
+        static let step2Title = localized("manualEntry.step2Title")
+        static let next = localized("manualEntry.next")
+        static let back = localized("manualEntry.back")
+        static let saveAndSkipDetails = localized("manualEntry.saveAndSkipDetails")
+        static let photoImportHint = localized("manualEntry.photoImportHint")
     }
 
     // MARK: - Location Picker

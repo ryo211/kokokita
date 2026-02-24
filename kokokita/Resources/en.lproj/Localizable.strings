@@ -343,6 +343,12 @@
 "manualEntry.photoImported" = "Information imported from photo";
 "manualEntry.addManualEntry" = "Add Manual Entry";
 "manualEntry.useThisLocation" = "Use this location";
+"manualEntry.step1Title" = "Date & Location";
+"manualEntry.step2Title" = "Additional Details";
+"manualEntry.next" = "Next";
+"manualEntry.back" = "Back";
+"manualEntry.saveAndSkipDetails" = "Save without details";
+"manualEntry.photoImportHint" = "Auto-fill date & location from photo";
 
 // MARK: - Location Picker
 "locationPicker.currentLocation" = "Current Setting";
@@ -351,7 +357,7 @@
 "locationPicker.nearbySpots" = "Nearby Spots";
 "locationPicker.searchPlaceholder" = "Enter place name or address (e.g. Tokyo Skytree)";
 "locationPicker.noResults" = "No matching places found";
-"locationPicker.photoImportDescription" = "Import location from photo EXIF data";
+"locationPicker.photoImportDescription" = "Import date and location from photo";
 
 // MARK: - Record Badge
 "recordBadge.explanationTitle" = "About Record Types";

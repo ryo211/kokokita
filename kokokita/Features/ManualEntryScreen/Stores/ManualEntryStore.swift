@@ -4,6 +4,21 @@ import UIKit
 import Observation
 import PhotosUI
 
+/// 後付け記録の入力ステップ
+enum ManualEntryStep: Int, CaseIterable {
+    case essentials = 1     // ステップ1: 必須項目（日時+場所）
+    case additionalInfo = 2 // ステップ2: 付加情報
+
+    var title: String {
+        switch self {
+        case .essentials:
+            return L.ManualEntry.step1Title
+        case .additionalInfo:
+            return L.ManualEntry.step2Title
+        }
+    }
+}
+
 /// 後付け記録画面のStore
 @MainActor
 @Observable
@@ -28,6 +43,9 @@ final class ManualEntryStore {
     // MARK: - UI State
     var alert: String?
     var isPhotoImported = false
+
+    // MARK: - Step Management
+    var currentStep: ManualEntryStep = .essentials
 
     // MARK: - Dependencies (Services)
     private let repo: CoreDataVisitRepository
@@ -78,6 +96,28 @@ final class ManualEntryStore {
         }
         guard let lat = latitude, let lon = longitude else { return nil }
         return String(format: "%.5f, %.5f", lat, lon)
+    }
+
+    /// ステップ1の入力が完了しているか（次へ進める条件）
+    var canProceedToNextStep: Bool {
+        hasValidLocation && hasValidTimestamp
+    }
+
+    // MARK: - Step Navigation
+
+    /// 次のステップへ進む
+    func goToNextStep() {
+        guard canProceedToNextStep else { return }
+        if currentStep == .essentials {
+            currentStep = .additionalInfo
+        }
+    }
+
+    /// 前のステップへ戻る
+    func goToPreviousStep() {
+        if currentStep == .additionalInfo {
+            currentStep = .essentials
+        }
     }
 
     // MARK: - EXIF Import

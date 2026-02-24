@@ -345,6 +345,12 @@
 "manualEntry.photoImported" = "写真から情報を取り込みました";
 "manualEntry.addManualEntry" = "後付け記録を追加";
 "manualEntry.useThisLocation" = "この場所を使用";
+"manualEntry.step1Title" = "日時と場所";
+"manualEntry.step2Title" = "詳細情報";
+"manualEntry.next" = "次へ";
+"manualEntry.back" = "戻る";
+"manualEntry.saveAndSkipDetails" = "このまま保存";
+"manualEntry.photoImportHint" = "写真から日時と場所を自動取得";
 
 // MARK: - Location Picker
 "locationPicker.currentLocation" = "現在の設定";
@@ -353,7 +359,7 @@
 "locationPicker.nearbySpots" = "周辺のスポット";
 "locationPicker.searchPlaceholder" = "場所名や住所を入力（例：東京スカイツリー）";
 "locationPicker.noResults" = "該当する場所が見つかりませんでした";
-"locationPicker.photoImportDescription" = "写真のEXIF情報から位置情報を取り込みます";
+"locationPicker.photoImportDescription" = "写真から日時と位置情報を取り込みます";
 
 // MARK: - Record Type Badge
 "recordBadge.explanationTitle" = "記録の種類について";
