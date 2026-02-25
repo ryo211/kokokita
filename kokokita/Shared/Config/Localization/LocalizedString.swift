@@ -409,6 +409,8 @@ enum L {
         static let back = localized("manualEntry.back")
         static let saveAndSkipDetails = localized("manualEntry.saveAndSkipDetails")
         static let photoImportHint = localized("manualEntry.photoImportHint")
+        static let closeSearch = localized("manualEntry.closeSearch")
+        static let searchFieldPlaceholder = localized("manualEntry.searchFieldPlaceholder")
     }
 
     // MARK: - Location Picker

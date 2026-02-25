@@ -25,39 +25,28 @@ struct VisitDetailContent: View {
         data.title.ifBlank(L.Home.noTitle)
     }
 
-    /// バッジアイコン名
-    private var badgeIconName: String {
-        data.isManualEntry ? "wrench.adjustable.fill" : "checkmark.seal.fill"
-    }
-
-    /// バッジアイコン色
-    private var badgeIconColor: Color {
-        data.isManualEntry ? .orange : .blue
-    }
-
-    /// タイトルの末尾にインラインで記録タイプアイコンを表示（共有用）
-    private var titleWithIcon: Text {
-        let title = displayTitle
-        return Text(title)
-            + Text(" ")
-            + Text(Image(systemName: badgeIconName)).foregroundColor(badgeIconColor)
+    /// タイトル + 記録タイプアイコン（共有用）
+    @ViewBuilder
+    private var titleWithIconView: some View {
+        HStack(alignment: .lastTextBaseline, spacing: 4) {
+            Text(displayTitle)
+            RecordTypeIcon(isManualEntry: data.isManualEntry, compact: false)
+        }
     }
 
     /// タップ可能なタイトル + バッジ（通常表示用）
     @ViewBuilder
     private var tappableTitleView: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 4) {
+        HStack(alignment: .lastTextBaseline, spacing: 4) {
             Text(displayTitle)
                 .font(.title2.bold())
                 .lineLimit(3)
 
-            // タップ可能なバッジアイコン
+            // タップ可能なバッジ
             Button {
                 showBadgeExplanation = true
             } label: {
-                Image(systemName: badgeIconName)
-                    .font(.subheadline)
-                    .foregroundStyle(badgeIconColor)
+                RecordTypeIcon(isManualEntry: data.isManualEntry, compact: false)
             }
             .buttonStyle(.plain)
         }
@@ -79,9 +68,9 @@ struct VisitDetailContent: View {
             VStack(alignment: .leading, spacing: UIConstants.Spacing.medium) {
                 HStack(spacing: UIConstants.Spacing.medium) {
                     VStack(alignment: .leading, spacing: 2) {
-                        // 共有時はインライン、通常表示時はタップ可能なバッジ
+                        // 共有時は通常表示、通常表示時はタップ可能なバッジ
                         if isSharing {
-                            titleWithIcon
+                            titleWithIconView
                                 .font(.title2.bold())
                                 .lineLimit(3)
                         } else {

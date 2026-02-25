@@ -60,13 +60,13 @@ struct ClearBlueVerticalCard: View {
         aggregate.details.photoPaths
     }
 
-    /// タイトルの末尾にインラインで記録タイプアイコンを表示
-    private var titleWithIcon: Text {
-        let iconName = aggregate.visit.isManualEntry ? "wrench.adjustable.fill" : "checkmark.seal.fill"
-        let iconColor: Color = aggregate.visit.isManualEntry ? .orange : .blue
-        return Text(displayTitle)
-            + Text(" ")
-            + Text(Image(systemName: iconName)).foregroundColor(iconColor)
+    /// タイトル + 記録タイプアイコン
+    @ViewBuilder
+    private var titleWithIconView: some View {
+        HStack(alignment: .lastTextBaseline, spacing: 4) {
+            Text(displayTitle)
+            RecordTypeIcon(isManualEntry: aggregate.visit.isManualEntry, compact: true)
+        }
     }
 
     // MARK: - Body
@@ -85,8 +85,8 @@ struct ClearBlueVerticalCard: View {
 
             // テキストエリア（固定位置・固定高さ）
             VStack(alignment: .leading, spacing: 2) {
-                // タイトル + 記録タイプアイコン（インライン、固定位置、1行）
-                titleWithIcon
+                // タイトル + 記録タイプアイコン（固定位置、1行）
+                titleWithIconView
                     .font(VisitCardStyle.verticalTitleFont)
                     .foregroundStyle(VisitCardStyle.primaryTextColor)
                     .lineLimit(1)

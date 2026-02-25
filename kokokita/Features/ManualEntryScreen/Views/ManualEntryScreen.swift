@@ -16,6 +16,9 @@ struct ManualEntryScreen: View {
     // フルスクリーン写真表示
     @State private var fullScreenIndex: Int? = nil
     @State private var photoDragOffset: CGFloat = 0
+    @State private var step1ScrollToBottomTrigger = 0
+
+    private let step1BottomAnchorId = "manualEntryStep1BottomAnchor"
 
     // ラベル/グループ/メンバー候補
     @State private var labelOptions: [LabelTag] = []
@@ -39,7 +42,6 @@ struct ManualEntryScreen: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                // ステップインジケーター
                 StepIndicator(currentStep: store.currentStep)
                     .padding(.top, 8)
 
@@ -57,9 +59,6 @@ struct ManualEntryScreen: View {
                     removal: .move(edge: store.currentStep == .essentials ? .trailing : .leading)
                 ))
                 .animation(.easeInOut(duration: 0.3), value: store.currentStep)
-
-                // フッターボタン
-                footerButtons
             }
             .navigationTitle(L.ManualEntry.title)
             .navigationBarTitleDisplayMode(.inline)
@@ -69,6 +68,9 @@ struct ManualEntryScreen: View {
             .sheet(isPresented: $showCamera) { cameraSheet }
             .fullScreenCover(item: fullScreenBinding) { photoFullScreen(for: $0) }
             .task { await loadTaxonomyOptions() }
+            .safeAreaInset(edge: .bottom) {
+                footerButtons
+            }
         }
         .sheet(isPresented: $labelPickerShown) { labelPickerSheetContent }
         .sheet(isPresented: $groupPickerShown) { groupPickerSheetContent }
@@ -95,19 +97,116 @@ struct ManualEntryScreen: View {
     // MARK: - Step 1: 日時と場所（必須項目）
 
     private var step1Content: some View {
-        ScrollView {
-            VStack(spacing: 16) {
-                // 写真から取り込みバナー（ステップ1全体に関連）
-                photoImportBanner
+        ScrollViewReader { proxy in
+            ScrollView {
+                VStack(spacing: 16) {
+                    photoImportBanner
+                    dateTimeSection
+                    locationSectionHeader
+                    selectedLocationInfoView
 
-                // 日時セクション
-                dateTimeSection
+                    IntegratedLocationView(
+                        latitude: $store.latitude,
+                        longitude: $store.longitude,
+                        addressLine: $store.addressLine,
+                        placeName: $store.title,
+                        showSelectedLocationInfo: false, // 選択した場所の情報はScrollView内で表示
+                        onMapTapLocationSelected: {
+                            withAnimation(.easeInOut(duration: 0.25)) {
+                                step1ScrollToBottomTrigger += 1
+                            }
+                        }
+                    )
+                    .background(Color(.systemBackground))
 
-                // 場所セクション（統合ビュー）
-                locationSection
+                    Color.clear
+                        .frame(height: 1)
+                        .id(step1BottomAnchorId)
+                }
+                .padding(16)
             }
-            .padding()
+            .onChange(of: step1ScrollToBottomTrigger) { _, _ in
+                withAnimation(.easeInOut(duration: 0.25)) {
+                    proxy.scrollTo(step1BottomAnchorId, anchor: .bottom)
+                }
+            }
         }
+    }
+
+    /// 場所セクションのヘッダー（ラベルと警告メッセージ）
+    private var locationSectionHeader: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text(L.ManualEntry.setLocation)
+                .font(.headline)
+                .foregroundStyle(.primary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    /// 選択した場所の情報（ScrollView内に配置）
+    private var selectedLocationInfoView: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Image(systemName: "mappin.and.ellipse")
+                    .foregroundStyle(.orange)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    if store.hasValidLocation {
+                        if !store.title.isEmpty {
+                            Text(store.title)
+                                .font(.subheadline.bold())
+                        }
+
+                        if let address = store.addressLine, !address.isEmpty {
+                            Text(address)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .lineLimit(2)
+                        }
+
+                        if let lat = store.latitude, let lon = store.longitude {
+                            Text(String(format: "%.5f, %.5f", lat, lon))
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                    } else {
+                        VStack(alignment: .leading, spacing: 0) {
+                            Spacer(minLength: 0)
+                            Text(L.ManualEntry.locationRequired)
+                                .font(.caption)
+                                .foregroundStyle(.orange)
+                            Spacer(minLength: 0)
+                        }
+                        .frame(height: 29, alignment: .center)
+                    }
+                }
+
+                Spacer()
+
+                // クリアボタン
+                if store.hasValidLocation {
+                    Button {
+                        clearLocation()
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundStyle(.secondary)
+                            .imageScale(.medium)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+        .padding()
+        .background(Color(.systemGray6))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+
+    /// 場所をクリア
+    private func clearLocation() {
+        store.latitude = nil
+        store.longitude = nil
+        store.addressLine = nil
+        store.title = ""
     }
 
     private var dateTimeSection: some View {
@@ -135,27 +234,6 @@ struct ManualEntryScreen: View {
                 Text(L.ManualEntry.futureDateNotAllowed)
                     .font(.caption)
                     .foregroundStyle(.red)
-            }
-        }
-    }
-
-    private var locationSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(L.ManualEntry.setLocation)
-                .font(.headline)
-                .foregroundStyle(.primary)
-
-            IntegratedLocationView(
-                latitude: $store.latitude,
-                longitude: $store.longitude,
-                addressLine: $store.addressLine,
-                placeName: $store.title
-            )
-
-            if !store.hasValidLocation {
-                Text(L.ManualEntry.locationRequired)
-                    .font(.caption)
-                    .foregroundStyle(.orange)
             }
         }
     }
@@ -414,99 +492,103 @@ struct ManualEntryScreen: View {
     private var footerButtons: some View {
         VStack(spacing: 12) {
             Divider()
+            normalModeFooter
+        }
+        .background(.regularMaterial)
+    }
 
-            switch store.currentStep {
-            case .essentials:
-                // ステップ1: 「次へ」と「このまま保存」
-                HStack(spacing: 12) {
-                    // このまま保存
-                    Button {
-                        if store.save() { dismiss() }
-                    } label: {
-                        Text(L.ManualEntry.saveAndSkipDetails)
-                            .font(.subheadline)
-                            .foregroundStyle(store.canSave ? .orange : .secondary)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 14)
-                            .background(
-                                RoundedRectangle(cornerRadius: 10)
-                                    .stroke(store.canSave ? Color.orange : Color.secondary, lineWidth: 1)
-                            )
+    @ViewBuilder
+    private var normalModeFooter: some View {
+        switch store.currentStep {
+        case .essentials:
+            // ステップ1: 「次へ」と「このまま保存」
+            HStack(spacing: 12) {
+                // このまま保存
+                Button {
+                    if store.save() { dismiss() }
+                } label: {
+                    Text(L.ManualEntry.saveAndSkipDetails)
+                        .font(.subheadline)
+                        .foregroundStyle(store.canSave ? .orange : .secondary)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .background(
+                            RoundedRectangle(cornerRadius: 10)
+                                .stroke(store.canSave ? Color.orange : Color.secondary, lineWidth: 1)
+                        )
+                }
+                .disabled(!store.canSave)
+                .buttonStyle(.plain)
+
+                // 次へ
+                Button {
+                    withAnimation {
+                        store.goToNextStep()
                     }
-                    .disabled(!store.canSave)
-                    .buttonStyle(.plain)
+                } label: {
+                    HStack {
+                        Text(L.ManualEntry.next)
+                            .font(.headline)
+                        Image(systemName: "chevron.right")
+                    }
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .background(
+                        RoundedRectangle(cornerRadius: 10)
+                            .fill(store.canProceedToNextStep ? Color.orange : Color.secondary)
+                    )
+                }
+                .disabled(!store.canProceedToNextStep)
+                .buttonStyle(.plain)
+            }
+            .padding(.horizontal)
+            .padding(.bottom, 8)
 
-                    // 次へ
-                    Button {
-                        withAnimation {
-                            store.goToNextStep()
-                        }
-                    } label: {
-                        HStack {
-                            Text(L.ManualEntry.next)
-                                .font(.headline)
-                            Image(systemName: "chevron.right")
-                        }
+        case .additionalInfo:
+            // ステップ2: 「戻る」と「保存」
+            HStack(spacing: 12) {
+                // 戻る
+                Button {
+                    withAnimation {
+                        store.goToPreviousStep()
+                    }
+                } label: {
+                    HStack {
+                        Image(systemName: "chevron.left")
+                        Text(L.ManualEntry.back)
+                            .font(.subheadline)
+                    }
+                    .foregroundStyle(.orange)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .background(
+                        RoundedRectangle(cornerRadius: 10)
+                            .stroke(Color.orange, lineWidth: 1)
+                    )
+                }
+                .buttonStyle(.plain)
+
+                // 保存
+                Button {
+                    if store.save() { dismiss() }
+                } label: {
+                    Text(L.Common.save)
+                        .font(.headline)
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 14)
                         .background(
                             RoundedRectangle(cornerRadius: 10)
-                                .fill(store.canProceedToNextStep ? Color.orange : Color.secondary)
+                                .fill(store.canSave ? Color.orange : Color.secondary)
                         )
-                    }
-                    .disabled(!store.canProceedToNextStep)
-                    .buttonStyle(.plain)
                 }
-                .padding(.horizontal)
-                .padding(.bottom, 8)
-
-            case .additionalInfo:
-                // ステップ2: 「戻る」と「保存」
-                HStack(spacing: 12) {
-                    // 戻る
-                    Button {
-                        withAnimation {
-                            store.goToPreviousStep()
-                        }
-                    } label: {
-                        HStack {
-                            Image(systemName: "chevron.left")
-                            Text(L.ManualEntry.back)
-                                .font(.subheadline)
-                        }
-                        .foregroundStyle(.orange)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 14)
-                        .background(
-                            RoundedRectangle(cornerRadius: 10)
-                                .stroke(Color.orange, lineWidth: 1)
-                        )
-                    }
-                    .buttonStyle(.plain)
-
-                    // 保存
-                    Button {
-                        if store.save() { dismiss() }
-                    } label: {
-                        Text(L.Common.save)
-                            .font(.headline)
-                            .foregroundStyle(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 14)
-                            .background(
-                                RoundedRectangle(cornerRadius: 10)
-                                    .fill(store.canSave ? Color.orange : Color.secondary)
-                            )
-                    }
-                    .disabled(!store.canSave)
-                    .buttonStyle(.plain)
-                }
-                .padding(.horizontal)
-                .padding(.bottom, 8)
+                .disabled(!store.canSave)
+                .buttonStyle(.plain)
             }
+            .padding(.horizontal)
+            .padding(.bottom, 8)
         }
-        .background(.regularMaterial)
     }
 
     // MARK: - Alert

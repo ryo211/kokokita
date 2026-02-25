@@ -9,13 +9,12 @@ struct IntegratedLocationView: View {
     @Binding var addressLine: String?
     @Binding var placeName: String
 
-    // 検索状態
-    @State private var searchText = ""
-    @State private var searchResults: [MKMapItem] = []
-    @State private var isSearching = false
-    @State private var searchTask: Task<Void, Never>?
-    @State private var showSearchResults = false
-    @FocusState private var isSearchFieldFocused: Bool
+    // 選択した場所の情報を表示するかどうか（デフォルトtrue）
+    var showSelectedLocationInfo: Bool = true
+    var onMapTapLocationSelected: (() -> Void)? = nil
+
+    // 検索シート表示
+    @State private var showLocationSearchSheet = false
 
     // 地図状態
     @State private var cameraPosition: MapCameraPosition = .automatic
@@ -37,26 +36,8 @@ struct IntegratedLocationView: View {
         VStack(spacing: 0) {
             // 検索バー
             searchBar
-
-            // 地図エリア
-            ZStack(alignment: .top) {
-                mapView
-
-                // 検索結果オーバーレイ
-                if showSearchResults && !searchResults.isEmpty {
-                    searchResultsOverlay
-                }
-            }
-
-            // 近くの候補（POI）
-            if hasLocation {
-                nearbyPOICarousel
-            }
-
-            // 選択した場所の情報
-            if hasLocation {
-                selectedLocationInfo
-            }
+            // 通常モード: 地図と場所情報を表示
+            normalModeContent
         }
         .onAppear {
             setupInitialPosition()
@@ -67,11 +48,40 @@ struct IntegratedLocationView: View {
         .onChange(of: longitude) { _, newLon in
             handleExternalLocationChange(newLat: latitude, newLon: newLon)
         }
+        .sheet(isPresented: $showLocationSearchSheet) {
+            LocationSearchSheet { coord, address, name in
+                setLocation(coordinate: coord, name: name, address: address)
+            }
+        }
+    }
+
+    // MARK: - Normal Mode Content
+
+    private var normalModeContent: some View {
+        VStack(spacing: 0) {
+            // 地図エリア
+            mapView
+
+            // 近くの候補（POI）
+            if hasLocation {
+                nearbyPOICarousel
+            }
+
+            // 選択した場所の情報（showSelectedLocationInfoがtrueの時のみ表示）
+            if hasLocation && showSelectedLocationInfo {
+                selectedLocationInfo
+            }
+        }
     }
 
     /// 外部から位置情報が変更された場合の処理（写真取り込みなど）
     private func handleExternalLocationChange(newLat: Double?, newLon: Double?) {
-        guard let lat = newLat, let lon = newLon else { return }
+        guard let lat = newLat, let lon = newLon else {
+            // 外部で場所がクリアされた場合、地図のピンも解除
+            selectedCoordinate = nil
+            nearbyPOIs = []
+            return
+        }
 
         let newCoord = CLLocationCoordinate2D(latitude: lat, longitude: lon)
 
@@ -98,101 +108,32 @@ struct IntegratedLocationView: View {
     // MARK: - Search Bar
 
     private var searchBar: some View {
-        HStack {
-            Image(systemName: "magnifyingglass")
-                .foregroundStyle(.secondary)
+        Button {
+            showLocationSearchSheet = true
+        } label: {
+            HStack {
+                Image(systemName: "magnifyingglass")
+                    .foregroundStyle(.secondary)
 
-            TextField(L.LocationPicker.searchPlaceholder, text: $searchText)
-                .textInputAutocapitalization(.never)
-                .autocorrectionDisabled()
-                .focused($isSearchFieldFocused)
-                .submitLabel(.search)
-                .onChange(of: searchText) { performSearch($1) }
-                .onSubmit {
-                    isSearchFieldFocused = false
-                }
+                Text(L.ManualEntry.searchFieldPlaceholder)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
 
-            if isSearching {
-                ProgressView()
-                    .scaleEffect(0.8)
-            } else if !searchText.isEmpty {
-                Button {
-                    clearSearch()
-                } label: {
-                    Image(systemName: "xmark.circle.fill")
-                        .foregroundStyle(.secondary)
-                }
-                .buttonStyle(.plain)
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(Rectangle())
         }
+        .buttonStyle(.plain)
         .padding(12)
         .background(Color(.systemGray6))
         .clipShape(RoundedRectangle(cornerRadius: 10))
         .padding(.horizontal)
         .padding(.vertical, 8)
-        .onChange(of: isSearchFieldFocused) { _, focused in
-            withAnimation(.easeInOut(duration: 0.2)) {
-                showSearchResults = focused && !searchResults.isEmpty
-            }
-        }
-    }
-
-    // MARK: - Search Results Overlay
-
-    private var searchResultsOverlay: some View {
-        VStack(spacing: 0) {
-            ScrollView {
-                LazyVStack(spacing: 0) {
-                    ForEach(searchResults.prefix(8), id: \.self) { item in
-                        Button {
-                            selectSearchResult(item)
-                        } label: {
-                            searchResultRow(for: item)
-                        }
-                        .buttonStyle(.plain)
-
-                        if item != searchResults.prefix(8).last {
-                            Divider()
-                                .padding(.leading, 40)
-                        }
-                    }
-                }
-                .padding(.vertical, 4)
-            }
-            .frame(maxHeight: 280)
-        }
-        .background(.regularMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: 12))
-        .shadow(color: .black.opacity(0.15), radius: 8, x: 0, y: 4)
-        .padding(.horizontal)
-        .transition(.opacity.combined(with: .move(edge: .top)))
-    }
-
-    private func searchResultRow(for item: MKMapItem) -> some View {
-        HStack(spacing: 12) {
-            Image(systemName: "mappin.circle.fill")
-                .foregroundStyle(.orange)
-                .font(.title3)
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(item.name ?? "")
-                    .font(.subheadline)
-                    .foregroundStyle(.primary)
-                    .lineLimit(1)
-
-                if let address = formatAddress(item.placemark) {
-                    Text(address)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                }
-            }
-
-            Spacer()
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 10)
-        .contentShape(Rectangle())
     }
 
     // MARK: - Map View
@@ -207,10 +148,6 @@ struct IntegratedLocationView: View {
             }
             .mapStyle(.standard(elevation: .realistic))
             .onTapGesture { screenCoord in
-                // 検索フォーカスを外す
-                isSearchFieldFocused = false
-                showSearchResults = false
-
                 if let coordinate = proxy.convert(screenCoord, from: .local) {
                     selectCoordinate(coordinate)
                 }
@@ -292,10 +229,22 @@ struct IntegratedLocationView: View {
     }
 
     private func selectNearbyPOI(_ item: MKMapItem) {
-        // 座標は変更せず、場所名と住所のみ更新
+        // 座標、場所名、住所を候補場所に更新
+        let coord = item.placemark.coordinate
+        selectedCoordinate = coord
+        latitude = coord.latitude
+        longitude = coord.longitude
         placeName = item.name ?? ""
         if let address = formatAddress(item.placemark) {
             addressLine = address
+        }
+
+        // 地図を移動
+        withAnimation {
+            cameraPosition = .region(MKCoordinateRegion(
+                center: coord,
+                span: MKCoordinateSpan(latitudeDelta: 0.005, longitudeDelta: 0.005)
+            ))
         }
     }
 
@@ -349,59 +298,6 @@ struct IntegratedLocationView: View {
 
     // MARK: - Actions
 
-    private func performSearch(_ query: String) {
-        searchTask?.cancel()
-
-        guard !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            searchResults = []
-            withAnimation {
-                showSearchResults = false
-            }
-            return
-        }
-
-        searchTask = Task {
-            isSearching = true
-            defer { isSearching = false }
-
-            // デバウンス
-            try? await Task.sleep(nanoseconds: 300_000_000)
-            guard !Task.isCancelled else { return }
-
-            let request = MKLocalSearch.Request()
-            request.naturalLanguageQuery = query
-            request.resultTypes = [.pointOfInterest, .address]
-
-            do {
-                let search = MKLocalSearch(request: request)
-                let response = try await search.start()
-                guard !Task.isCancelled else { return }
-                searchResults = response.mapItems
-                withAnimation {
-                    showSearchResults = isSearchFieldFocused && !searchResults.isEmpty
-                }
-            } catch {
-                guard !Task.isCancelled else { return }
-                searchResults = []
-            }
-        }
-    }
-
-    private func selectSearchResult(_ item: MKMapItem) {
-        let coord = item.placemark.coordinate
-        let name = item.name
-        let address = formatAddress(item.placemark)
-
-        setLocation(coordinate: coord, name: name, address: address)
-
-        // フォーカスを外して検索結果を非表示
-        isSearchFieldFocused = false
-        withAnimation {
-            showSearchResults = false
-        }
-        searchText = ""
-    }
-
     private func selectCoordinate(_ coordinate: CLLocationCoordinate2D) {
         selectedCoordinate = coordinate
         latitude = coordinate.latitude
@@ -421,6 +317,8 @@ struct IntegratedLocationView: View {
             await reverseGeocode(coordinate: coordinate)
             await searchNearbyPOI(at: coordinate)
         }
+
+        onMapTapLocationSelected?()
     }
 
     private func setLocation(coordinate: CLLocationCoordinate2D, name: String?, address: String?) {
@@ -458,12 +356,6 @@ struct IntegratedLocationView: View {
         } catch {
             // エラーは無視
         }
-    }
-
-    private func clearSearch() {
-        searchText = ""
-        searchResults = []
-        showSearchResults = false
     }
 
     private func clearLocation() {

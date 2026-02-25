@@ -333,7 +333,7 @@
 "manualEntry.dateTime" = "Date & Time";
 "manualEntry.noExifData" = "No location data in photo";
 "manualEntry.futureDateNotAllowed" = "Future dates are not allowed";
-"manualEntry.locationRequired" = "Please specify a location";
+"manualEntry.locationRequired" = "Specify by search or map";
 "manualEntry.selectLocationMethod" = "How to specify location";
 "manualEntry.locationFromPhoto" = "Use photo location";
 "manualEntry.setDateTime" = "Set Date & Time";
@@ -349,6 +349,8 @@
 "manualEntry.back" = "Back";
 "manualEntry.saveAndSkipDetails" = "Save without details";
 "manualEntry.photoImportHint" = "Auto-fill date & location from photo";
+"manualEntry.closeSearch" = "Close Search";
+"manualEntry.searchFieldPlaceholder" = "Enter place name or address";
 
 // MARK: - Location Picker
 "locationPicker.currentLocation" = "Current Setting";

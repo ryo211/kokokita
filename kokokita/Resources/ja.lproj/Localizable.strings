@@ -335,7 +335,7 @@
 "manualEntry.dateTime" = "日時";
 "manualEntry.noExifData" = "写真に位置情報がありません";
 "manualEntry.futureDateNotAllowed" = "未来の日付は指定できません";
-"manualEntry.locationRequired" = "場所を指定してください";
+"manualEntry.locationRequired" = "検索または地図から指定してください";
 "manualEntry.selectLocationMethod" = "場所の指定方法";
 "manualEntry.locationFromPhoto" = "写真の位置情報を使用";
 "manualEntry.setDateTime" = "日時を設定";
@@ -351,6 +351,8 @@
 "manualEntry.back" = "戻る";
 "manualEntry.saveAndSkipDetails" = "このまま保存";
 "manualEntry.photoImportHint" = "写真から日時と場所を自動取得";
+"manualEntry.closeSearch" = "検索を閉じる";
+"manualEntry.searchFieldPlaceholder" = "場所名や住所を入力";
 
 // MARK: - Location Picker
 "locationPicker.currentLocation" = "現在の設定";

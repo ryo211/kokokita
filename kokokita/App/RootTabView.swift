@@ -37,6 +37,7 @@ struct RootTabView: View {
     @State private var editVisitId: UUID?
     @State private var detailVisitId: UUID?
     @State private var locationErrorMessage: String? = nil
+    @State private var showManualEntrySheet = false
     @Environment(AppUIState.self) private var ui
     #if DEBUG
     @ObservedObject private var debugSettings = DebugSettings.shared
@@ -83,10 +84,18 @@ struct RootTabView: View {
                     .opacity(tab == .menu ? 1 : 0)
                     .zIndex(tab == .menu ? 1 : 0)
 
-                // 記録画面のみ: 右下にココキタボタン（地図シート・カレンダー表示中は非表示）
+                // 記録画面のみ: 右下にココキタボタン＋追加ボタン（地図シート・カレンダー表示中は非表示）
                 if tab == .records && !ui.isMapSheetVisible && !ui.isCalendarVisible {
-                    FloatingKokokitaButton {
-                        checkLocationPermissionAndCreate()
+                    HStack(spacing: 12) {
+                        // ココキタボタン
+                        FloatingKokokitaButton {
+                            checkLocationPermissionAndCreate()
+                        }
+
+                        // 追加ボタン
+                        FloatingAtozukeButton {
+                            showManualEntrySheet = true
+                        }
                     }
                     .padding(.trailing, 16)
                     .padding(.bottom, 16)
@@ -223,6 +232,15 @@ struct RootTabView: View {
                 DetailVisitSheet(visitId: visitId)
                     .iPadSheetSize()
             }
+        }
+
+        // 後付け記録モーダル
+        .sheet(isPresented: $showManualEntrySheet, onDismiss: {
+            NotificationCenter.default.post(name: .visitsChanged, object: nil)
+            AppReviewService.shared.onRecordSheetDismissed()
+        }) {
+            ManualEntryScreen()
+                .iPadSheetSize()
         }
 
         // 位置情報権限アラート
@@ -963,6 +981,58 @@ fileprivate struct FloatingKokokitaButton: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel(L.Tab.kokokita)
+    }
+}
+
+// MARK: - Floating Atozuke Button (アトヅケボタン)
+
+fileprivate struct FloatingAtozukeButton: View {
+    let onTap: () -> Void
+
+    var body: some View {
+        Button(action: onTap) {
+            ZStack {
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                Color.orange.opacity(0.95),
+                                Color.orange.opacity(0.75)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .overlay {
+                        Circle()
+                            .fill(
+                                LinearGradient(
+                                    colors: [
+                                        Color.white.opacity(0.25),
+                                        Color.clear
+                                    ],
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                )
+                            )
+                    }
+                    .frame(width: 64, height: 64)
+                    .shadow(color: Color.orange.opacity(0.35), radius: 12, x: 0, y: 4)
+                    .shadow(color: Color.orange.opacity(0.15), radius: 6, x: 0, y: 2)
+
+                VStack(spacing: 2) {
+                    Image("kokokita_irodori_white")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 32, height: 32)
+                    Text("＋追加")
+                        .font(.caption2.weight(.bold))
+                        .foregroundStyle(.white)
+                }
+            }
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(L.ManualEntry.addManualEntry)
     }
 }
 
