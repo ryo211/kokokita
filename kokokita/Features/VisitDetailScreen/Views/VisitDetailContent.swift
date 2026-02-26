@@ -183,7 +183,9 @@ struct VisitDetailContent: View {
                         MapPreview(
                             lat: c.latitude,
                             lon: c.longitude,
-                            showCoordinateOverlay: true
+                            showCoordinateOverlay: true,
+                            markerImageName: data.isManualEntry ? "kokokita_irodori_orange" : "kokokita_irodori_blue_for_map",
+                            markerLabelColor: data.isManualEntry ? .orange : .accentColor
                         )
                         .frame(height: UIConstants.Size.mapPreviewHeight)
                         .clipShape(RoundedRectangle(cornerRadius: UIConstants.CornerRadius.large))
