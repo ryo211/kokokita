@@ -1,6 +1,5 @@
 import SwiftUI
 import MapKit
-import UIKit
 
 /// 記録一覧のセル
 struct VisitRow: View {
@@ -47,7 +46,10 @@ struct VisitRow: View {
                         title: title,
                         isManualEntry: agg.visit.isManualEntry,
                         compact: compact,
-                        maxLines: compact ? 1 : 2
+                        maxLines: compact ? 1 : 2,
+                        textStyle: compact ? .subheadline : .headline,
+                        fontWeight: .bold,
+                        textColor: .label
                     )
                     .frame(maxWidth: .infinity, alignment: .leading)
                     if let catRaw = agg.details.facilityCategory {
@@ -94,88 +96,5 @@ struct VisitRow: View {
                 .padding(.top, compact ? 2 : 4)
             }
         }
-    }
-}
-
-@MainActor
-private struct InlineRecordTypeTitle: UIViewRepresentable {
-    let title: String
-    let isManualEntry: Bool
-    let compact: Bool
-    let maxLines: Int
-
-    func makeUIView(context: Context) -> UILabel {
-        let label = InlineBadgeLabel()
-        label.numberOfLines = maxLines
-        label.lineBreakMode = .byTruncatingTail
-        label.adjustsFontForContentSizeCategory = true
-        label.setContentHuggingPriority(.defaultLow, for: .horizontal)
-        label.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-        return label
-    }
-
-    func updateUIView(_ label: UILabel, context: Context) {
-        let textStyle: UIFont.TextStyle = compact ? .subheadline : .headline
-        let font = UIFont.preferredFont(forTextStyle: textStyle)
-        label.font = font
-        label.textColor = UIColor.label
-        label.numberOfLines = maxLines
-
-        let attrs: [NSAttributedString.Key: Any] = [
-            .font: font,
-            .foregroundColor: UIColor.label
-        ]
-        let result = NSMutableAttributedString(string: title, attributes: attrs)
-        result.append(NSAttributedString(string: " ", attributes: attrs))
-
-        let attachment = NSTextAttachment()
-        attachment.image = RecordTypeIconImageCache.image(isManualEntry: isManualEntry, compact: compact)
-        let badgeSize: CGFloat = compact ? 16 : 20
-        attachment.bounds = CGRect(
-            x: 0,
-            y: compact ? -2 : -3,
-            width: badgeSize,
-            height: badgeSize
-        )
-        result.append(NSAttributedString(attachment: attachment))
-
-        label.attributedText = result
-    }
-}
-
-@MainActor
-private enum RecordTypeIconImageCache {
-    static func image(isManualEntry: Bool, compact: Bool) -> UIImage? {
-        let key = "\(isManualEntry)-\(compact)" as NSString
-        if let cached = cache.object(forKey: key) {
-            return cached
-        }
-
-        let badgeSize: CGFloat = compact ? 16 : 20
-        let renderer = ImageRenderer(
-            content: RecordTypeIcon(isManualEntry: isManualEntry, compact: compact)
-                .frame(width: badgeSize, height: badgeSize)
-        )
-        renderer.scale = UIScreen.main.scale
-        guard let uiImage = renderer.uiImage else { return nil }
-        cache.setObject(uiImage, forKey: key)
-        return uiImage
-    }
-
-    private static let cache = NSCache<NSString, UIImage>()
-}
-
-private final class InlineBadgeLabel: UILabel {
-    override func layoutSubviews() {
-        super.layoutSubviews()
-        let width = bounds.width
-        if width > 0, preferredMaxLayoutWidth != width {
-            preferredMaxLayoutWidth = width
-        }
-    }
-
-    override var intrinsicContentSize: CGSize {
-        let size = super.intrinsicContentSize
-        return CGSize(width: UIView.noIntrinsicMetric, height: size.height)
     }
 }

@@ -411,6 +411,10 @@ enum L {
         static let photoImportHint = localized("manualEntry.photoImportHint")
         static let closeSearch = localized("manualEntry.closeSearch")
         static let searchFieldPlaceholder = localized("manualEntry.searchFieldPlaceholder")
+        static let infoSheetTitle = localized("manualEntry.infoSheetTitle")
+        static let infoSheetPoint1 = localized("manualEntry.infoSheetPoint1")
+        static let infoSheetPoint2 = localized("manualEntry.infoSheetPoint2")
+        static let infoSheetPoint3 = localized("manualEntry.infoSheetPoint3")
     }
 
     // MARK: - Location Picker

@@ -1,5 +1,6 @@
 import SwiftUI
 import MapKit
+import UIKit
 
 /// 横型クリアブルーカードのバリアント
 enum ClearBlueHorizontalVariant {
@@ -116,13 +117,23 @@ struct ClearBlueHorizontalCard: View {
         return ""
     }
 
-    /// タイトル + 記録タイプアイコン
-    @ViewBuilder
-    private var titleWithIconView: some View {
-        HStack(alignment: .lastTextBaseline, spacing: 4) {
-            Text(displayTitle)
-            RecordTypeIcon(isManualEntry: aggregate.visit.isManualEntry, compact: false)
-        }
+    /// タイトル + 記録タイプアイコン（インライン）
+    private func inlineTitle(maxLines: Int, textStyle: UIFont.TextStyle, compactBadge: Bool) -> some View {
+        InlineRecordTypeTitle(
+            title: displayTitle,
+            isManualEntry: aggregate.visit.isManualEntry,
+            compact: compactBadge,
+            maxLines: maxLines,
+            textStyle: textStyle,
+            fontWeight: .bold,
+            textColor: UIColor(Color.accentColor)
+        )
+    }
+
+    /// インラインタイトルの高さ（行数分で固定）
+    private func inlineTitleHeight(maxLines: Int, textStyle: UIFont.TextStyle) -> CGFloat {
+        let lineHeight = UIFont.preferredFont(forTextStyle: textStyle).lineHeight
+        return ceil(lineHeight * CGFloat(maxLines))
     }
 
     // MARK: - Body
@@ -153,10 +164,7 @@ struct ClearBlueHorizontalCard: View {
             // テキストエリア
             VStack(alignment: .leading, spacing: 6) {
                 // タイトル + 記録タイプアイコン
-                titleWithIconView
-                    .font(.headline)
-                    .foregroundStyle(VisitCardStyle.primaryTextColor)
-                    .lineLimit(2)
+                inlineTitle(maxLines: 0, textStyle: .headline, compactBadge: false)
 
                 // 日付
                 Text(formattedDate)
@@ -168,7 +176,6 @@ struct ClearBlueHorizontalCard: View {
                     Text(addr)
                         .font(VisitCardStyle.horizontalAddressFont)
                         .foregroundStyle(VisitCardStyle.secondaryTextColor)
-                        .lineLimit(2)
                 }
 
                 // グループ（フォルダ帰属表示）
@@ -180,8 +187,7 @@ struct ClearBlueHorizontalCard: View {
                 // ラベル/メンバー
                 chipRow
             }
-
-            Spacer()
+            .frame(maxWidth: .infinity, alignment: .leading)
 
             // 閉じるボタン
             if let onClose = onClose {
@@ -215,16 +221,13 @@ struct ClearBlueHorizontalCard: View {
                     .foregroundStyle(VisitCardStyle.secondaryTextColor)
 
                 // タイトル + 記録タイプアイコン
-                titleWithIconView
-                    .font(VisitCardStyle.horizontalTitleFont)
-                    .foregroundStyle(VisitCardStyle.primaryTextColor)
-                    .lineLimit(2)
+                inlineTitle(maxLines: 1, textStyle: .subheadline, compactBadge: true)
 
                 // 住所（常に2行分のスペースを確保）
                 Text(address ?? " ")
                     .font(VisitCardStyle.horizontalAddressFont)
                     .foregroundStyle(VisitCardStyle.tertiaryTextColor)
-                    .lineLimit(2)
+                    .lineLimit(1)
                     .opacity(address?.isEmpty == false ? 1 : 0)
             }
             .frame(maxWidth: .infinity, alignment: .leading)

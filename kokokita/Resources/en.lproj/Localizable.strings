@@ -351,6 +351,10 @@
 "manualEntry.photoImportHint" = "Auto-fill date & location from photo";
 "manualEntry.closeSearch" = "Close Search";
 "manualEntry.searchFieldPlaceholder" = "Enter place name or address";
+"manualEntry.infoSheetTitle" = "About Manual Entry";
+"manualEntry.infoSheetPoint1" = "Use this feature when you forgot to record on-site and need to add a record later.";
+"manualEntry.infoSheetPoint2" = "Unlike regular records, manual entries are created by specifying the date/time and location.";
+"manualEntry.infoSheetPoint3" = "Unlike regular records, this does not prove you actually visited that place at that time.";
 
 // MARK: - Location Picker
 "locationPicker.currentLocation" = "Current Setting";

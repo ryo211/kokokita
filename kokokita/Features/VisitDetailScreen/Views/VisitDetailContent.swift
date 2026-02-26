@@ -1,5 +1,6 @@
 import SwiftUI
 import MapKit
+import UIKit
 
 struct VisitDetailContent: View {
     let data: VisitDetailData
@@ -26,30 +27,25 @@ struct VisitDetailContent: View {
     }
 
     /// タイトル + 記録タイプアイコン（共有用）
-    @ViewBuilder
     private var titleWithIconView: some View {
-        HStack(alignment: .lastTextBaseline, spacing: 4) {
-            Text(displayTitle)
-            RecordTypeIcon(isManualEntry: data.isManualEntry, compact: false)
-        }
+        InlineRecordTypeTitle(
+            title: displayTitle,
+            isManualEntry: data.isManualEntry,
+            compact: false,
+            maxLines: 3,
+            textStyle: .title2,
+            fontWeight: .bold,
+            textColor: .label
+        )
     }
 
     /// タップ可能なタイトル + バッジ（通常表示用）
-    @ViewBuilder
     private var tappableTitleView: some View {
-        HStack(alignment: .lastTextBaseline, spacing: 4) {
-            Text(displayTitle)
-                .font(.title2.bold())
-                .lineLimit(3)
-
-            // タップ可能なバッジ
-            Button {
-                showBadgeExplanation = true
-            } label: {
-                RecordTypeIcon(isManualEntry: data.isManualEntry, compact: false)
+        titleWithIconView
+            .contentShape(Rectangle())
+            .onTapGesture {
+            showBadgeExplanation = true
             }
-            .buttonStyle(.plain)
-        }
     }
 
     var body: some View {
@@ -71,8 +67,6 @@ struct VisitDetailContent: View {
                         // 共有時は通常表示、通常表示時はタップ可能なバッジ
                         if isSharing {
                             titleWithIconView
-                                .font(.title2.bold())
-                                .lineLimit(3)
                         } else {
                             tappableTitleView
                         }

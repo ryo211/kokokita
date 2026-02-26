@@ -353,6 +353,10 @@
 "manualEntry.photoImportHint" = "写真から日時と場所を自動取得";
 "manualEntry.closeSearch" = "検索を閉じる";
 "manualEntry.searchFieldPlaceholder" = "場所名や住所を入力";
+"manualEntry.infoSheetTitle" = "後付け記録について";
+"manualEntry.infoSheetPoint1" = "現地で記録し忘れた場合などに、後から記録を追加できます。";
+"manualEntry.infoSheetPoint2" = "通常の記録とは異なり、日時と場所を指定して記録を作成します。";
+"manualEntry.infoSheetPoint3" = "通常の記録とは異なり、その日時・場所に実際に訪れた証明にはなりません。";
 
 // MARK: - Location Picker
 "locationPicker.currentLocation" = "現在の設定";

@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 /// 縦型クリアブルー記録カード
 ///
@@ -60,13 +61,17 @@ struct ClearBlueVerticalCard: View {
         aggregate.details.photoPaths
     }
 
-    /// タイトル + 記録タイプアイコン
-    @ViewBuilder
-    private var titleWithIconView: some View {
-        HStack(alignment: .lastTextBaseline, spacing: 4) {
-            Text(displayTitle)
-            RecordTypeIcon(isManualEntry: aggregate.visit.isManualEntry, compact: true)
-        }
+    /// タイトル + 記録タイプアイコン（インライン）
+    private var inlineTitleView: some View {
+        InlineRecordTypeTitle(
+            title: displayTitle,
+            isManualEntry: aggregate.visit.isManualEntry,
+            compact: true,
+            maxLines: 1,
+            textStyle: .subheadline,
+            fontWeight: .bold,
+            textColor: UIColor(Color.accentColor)
+        )
     }
 
     // MARK: - Body
@@ -86,9 +91,7 @@ struct ClearBlueVerticalCard: View {
             // テキストエリア（固定位置・固定高さ）
             VStack(alignment: .leading, spacing: 2) {
                 // タイトル + 記録タイプアイコン（固定位置、1行）
-                titleWithIconView
-                    .font(VisitCardStyle.verticalTitleFont)
-                    .foregroundStyle(VisitCardStyle.primaryTextColor)
+                inlineTitleView
                     .lineLimit(1)
                     .frame(height: 20, alignment: .leading)
 

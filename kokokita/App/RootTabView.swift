@@ -86,15 +86,15 @@ struct RootTabView: View {
 
                 // 記録画面のみ: 右下にココキタボタン＋追加ボタン（地図シート・カレンダー表示中は非表示）
                 if tab == .records && !ui.isMapSheetVisible && !ui.isCalendarVisible {
-                    HStack(spacing: 12) {
-                        // ココキタボタン
-                        FloatingKokokitaButton {
-                            checkLocationPermissionAndCreate()
-                        }
-
-                        // 追加ボタン
+                    HStack(alignment: .bottom, spacing: 8) {
+                        // 後付け記録ボタン
                         FloatingAtozukeButton {
                             showManualEntrySheet = true
+                        }
+
+                        // ココキタキタボタン
+                        FloatingKokokitaButton {
+                            checkLocationPermissionAndCreate()
                         }
                     }
                     .padding(.trailing, 16)
@@ -1016,17 +1016,16 @@ fileprivate struct FloatingAtozukeButton: View {
                                 )
                             )
                     }
-                    .frame(width: 64, height: 64)
-                    .shadow(color: Color.orange.opacity(0.35), radius: 12, x: 0, y: 4)
-                    .shadow(color: Color.orange.opacity(0.15), radius: 6, x: 0, y: 2)
+                    .frame(width: 44, height: 44)
+                    .shadow(color: Color.orange.opacity(0.32), radius: 8, x: 0, y: 3)
+                    .shadow(color: Color.orange.opacity(0.12), radius: 4, x: 0, y: 2)
 
                 VStack(spacing: 2) {
-                    Image("kokokita_irodori_white")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 32, height: 32)
+                    Image(systemName: "clock.fill")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundStyle(.white)
                     Text("＋追加")
-                        .font(.caption2.weight(.bold))
+                        .font(.system(size: 9, weight: .bold))
                         .foregroundStyle(.white)
                 }
             }

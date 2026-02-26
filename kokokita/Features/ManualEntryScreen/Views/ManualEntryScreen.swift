@@ -17,6 +17,7 @@ struct ManualEntryScreen: View {
     @State private var fullScreenIndex: Int? = nil
     @State private var photoDragOffset: CGFloat = 0
     @State private var step1ScrollToBottomTrigger = 0
+    @State private var showManualEntryInfoSheet = false
 
     private let step1BottomAnchorId = "manualEntryStep1BottomAnchor"
 
@@ -66,6 +67,11 @@ struct ManualEntryScreen: View {
             .alert(item: alertBinding) { alertView(for: $0) }
             .sheet(isPresented: $showPhotoImport) { photoImportSheet }
             .sheet(isPresented: $showCamera) { cameraSheet }
+            .sheet(isPresented: $showManualEntryInfoSheet) {
+                ManualEntryInfoSheet()
+                    .presentationDetents([.medium, .large])
+                    .presentationDragIndicator(.visible)
+            }
             .fullScreenCover(item: fullScreenBinding) { photoFullScreen(for: $0) }
             .task { await loadTaxonomyOptions() }
             .safeAreaInset(edge: .bottom) {
@@ -91,6 +97,23 @@ struct ManualEntryScreen: View {
     private var toolbarContent: some ToolbarContent {
         ToolbarItem(placement: .cancellationAction) {
             Button(L.Common.cancel) { dismiss() }
+        }
+        ToolbarItem(placement: .principal) {
+            HStack(spacing: 4) {
+                RecordTypeIcon(isManualEntry: true, compact: true)
+                Text(L.ManualEntry.title)
+                    .font(.headline)
+                Button {
+                    showManualEntryInfoSheet = true
+                } label: {
+                    Image(systemName: "info.circle")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+                .padding(.leading, 2)
+                .accessibilityLabel(L.ManualEntry.infoSheetTitle)
+            }
         }
     }
 
