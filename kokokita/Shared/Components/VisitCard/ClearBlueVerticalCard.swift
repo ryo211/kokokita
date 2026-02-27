@@ -21,6 +21,7 @@ import UIKit
 ///      160pt
 /// ```
 struct ClearBlueVerticalCard: View {
+    private let visitCardTitleUIColor = UIColor(named: "AccentColor") ?? .systemBlue
     /// 表示する訪問記録
     let aggregate: VisitAggregate
 
@@ -70,7 +71,7 @@ struct ClearBlueVerticalCard: View {
             maxLines: 1,
             textStyle: .subheadline,
             fontWeight: .bold,
-            textColor: UIColor(Color.accentColor)
+            textColor: visitCardTitleUIColor
         )
     }
 

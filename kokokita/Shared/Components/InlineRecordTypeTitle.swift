@@ -105,6 +105,13 @@ private final class InlineBadgeLabel: UILabel {
         self.font = font
         self.textColor = textColor
         numberOfLines = maxLines == 0 ? 0 : maxLines
+
+        // SwiftUIの再利用時に幅0でconfigureが先に呼ばれる場合がある。
+        // そのままだと前回のattributedText（別コンテキストの色）が残るため、
+        // 次のlayoutで必ず再計算されるようにリセットする。
+        lastAppliedWidth = -1
+        preferredMaxLayoutWidth = 0
+        attributedText = nil
         rebuildAttributedText(force: true)
     }
 

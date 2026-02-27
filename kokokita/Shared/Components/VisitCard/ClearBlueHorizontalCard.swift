@@ -26,6 +26,7 @@ enum ClearBlueHorizontalVariant {
 /// └──────────────────────────────────┘
 /// ```
 struct ClearBlueHorizontalCard: View {
+    private let visitCardTitleUIColor = UIColor(named: "AccentColor") ?? .systemBlue
     /// 表示する訪問記録
     let aggregate: VisitAggregate
 
@@ -126,7 +127,7 @@ struct ClearBlueHorizontalCard: View {
             maxLines: maxLines,
             textStyle: textStyle,
             fontWeight: .bold,
-            textColor: UIColor(Color.accentColor)
+            textColor: visitCardTitleUIColor
         )
     }
 
