@@ -2,8 +2,14 @@ import SwiftUI
 import PhotosUI
 import MapKit
 
-/// 後付け記録画面（2ステップ構成）
+/// 後付け記録画面（2ステップ構成）。editingAggregate を渡すと編集モードで起動する。
 struct ManualEntryScreen: View {
+    private let editingAggregate: VisitAggregate?
+
+    init(editingAggregate: VisitAggregate? = nil) {
+        self.editingAggregate = editingAggregate
+    }
+
     @Environment(\.dismiss) private var dismiss
     @State private var store = ManualEntryStore()
 
@@ -61,7 +67,7 @@ struct ManualEntryScreen: View {
                 ))
                 .animation(.easeInOut(duration: 0.3), value: store.currentStep)
             }
-            .navigationTitle(L.ManualEntry.title)
+            .navigationTitle(editingAggregate != nil ? L.ManualEntry.editTitle : L.ManualEntry.title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { toolbarContent }
             .alert(item: alertBinding) { alertView(for: $0) }
@@ -73,7 +79,12 @@ struct ManualEntryScreen: View {
                     .presentationDragIndicator(.visible)
             }
             .fullScreenCover(item: fullScreenBinding) { photoFullScreen(for: $0) }
-            .task { await loadTaxonomyOptions() }
+            .task {
+                if let agg = editingAggregate {
+                    store.loadExisting(agg)
+                }
+                await loadTaxonomyOptions()
+            }
             .safeAreaInset(edge: .bottom) {
                 footerButtons
             }
@@ -101,7 +112,7 @@ struct ManualEntryScreen: View {
         ToolbarItem(placement: .principal) {
             HStack(spacing: 4) {
                 RecordTypeIcon(isManualEntry: true, compact: true)
-                Text(L.ManualEntry.title)
+                Text(editingAggregate != nil ? L.ManualEntry.editTitle : L.ManualEntry.title)
                     .font(.headline)
                 Button {
                     showManualEntryInfoSheet = true

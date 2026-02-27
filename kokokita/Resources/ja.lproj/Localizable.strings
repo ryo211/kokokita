@@ -328,6 +328,7 @@
 
 // MARK: - Manual Entry (後付け記録)
 "manualEntry.title" = "記録を追加";
+"manualEntry.editTitle" = "後付け記録を編集";
 "manualEntry.badge" = "後付け";
 "manualEntry.importFromPhoto" = "写真から取り込み";
 "manualEntry.searchLocation" = "場所を検索";

@@ -385,6 +385,7 @@ enum L {
     // MARK: - Manual Entry (後付け記録)
     enum ManualEntry {
         static let title = localized("manualEntry.title")
+        static let editTitle = localized("manualEntry.editTitle")
         static let badge = localized("manualEntry.badge")
         static let importFromPhoto = localized("manualEntry.importFromPhoto")
         static let searchLocation = localized("manualEntry.searchLocation")

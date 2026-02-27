@@ -326,6 +326,7 @@
 
 // MARK: - Manual Entry
 "manualEntry.title" = "Add Record";
+"manualEntry.editTitle" = "Edit Manual Entry";
 "manualEntry.badge" = "Manual";
 "manualEntry.importFromPhoto" = "Import from Photo";
 "manualEntry.searchLocation" = "Search Location";
