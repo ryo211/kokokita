@@ -2,8 +2,9 @@ import SwiftUI
 
 // コース一覧画面（有効化トグル付き）
 // 記録モードの RootTabView のコースタブ、および巡礼モードのホームから遷移する
+// navigationDestination は呼び出し元の NavigationStack ルートに配置すること
 struct CourseListView: View {
-    @State private var store = CourseListStore()
+    @Bindable var store: CourseListStore
 
     var body: some View {
         List {
@@ -35,11 +36,6 @@ struct CourseListView: View {
             }
         }
         .navigationTitle(L.Course.title)
-        .navigationDestination(for: UUID.self) { courseId in
-            if let course = store.courses.first(where: { $0.id == courseId }) {
-                CourseDetailView(course: course, store: store)
-            }
-        }
         .alert(L.Common.error, isPresented: $store.showError) {
             Button(L.Common.ok) {}
         } message: {
