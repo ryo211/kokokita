@@ -380,6 +380,20 @@ enum L {
         static let title = localized("course.title")
         static let comingSoon = localized("course.comingSoon")
         static let description = localized("course.description")
+        static let emptyTitle = localized("course.emptyTitle")
+        static let emptyDescription = localized("course.emptyDescription")
+        static let enable = localized("course.enable")
+        static let disable = localized("course.disable")
+        static let enableToggle = localized("course.enableToggle")
+        static let settingsSection = localized("course.settingsSection")
+        static let spotsCount = localized("course.spotsCount")
+        static let spotsSection = localized("course.spotsSection")
+        static let progress = localized("course.progress")
+        static let completed = localized("course.completed")
+        static let typeWorldHeritage = localized("course.type.worldHeritage")
+        static let typeNationalTreasure = localized("course.type.nationalTreasure")
+        static let typeAnimeSacredPlace = localized("course.type.animeSacredPlace")
+        static let typeCustom = localized("course.type.custom")
     }
 
     // MARK: - Manual Entry (後付け記録)
@@ -436,6 +450,37 @@ enum L {
         static let verifiedDescription = localized("recordBadge.verifiedDescription")
         static let manualTitle = localized("recordBadge.manualTitle")
         static let manualDescription = localized("recordBadge.manualDescription")
+    }
+
+    // MARK: - Mode Selection
+    enum ModeSelection {
+        static let title = localized("modeSelection.title")
+        static let subtitle = localized("modeSelection.subtitle")
+        static let pilgrimageTitle = localized("modeSelection.pilgrimageTitle")
+        static let pilgrimageDescription = localized("modeSelection.pilgrimageDescription")
+        static let recordTitle = localized("modeSelection.recordTitle")
+        static let recordDescription = localized("modeSelection.recordDescription")
+        static let canChangeInSettings = localized("modeSelection.canChangeInSettings")
+        static let appModeSection = localized("modeSelection.appModeSection")
+        static let switchToRecord = localized("modeSelection.switchToRecord")
+        static let switchToPilgrimage = localized("modeSelection.switchToPilgrimage")
+    }
+
+    // MARK: - Pilgrimage Home
+    enum PilgrimageHome {
+        static let heroTitle = localized("pilgrimageHome.heroTitle")
+        static let heroDescription = localized("pilgrimageHome.heroDescription")
+        static let viewCourses = localized("pilgrimageHome.viewCourses")
+    }
+
+    // MARK: - CheckIn Result
+    enum CheckIn {
+        static let resultTitle = localized("checkIn.resultTitle")
+        static let resultSubtitle = localized("checkIn.resultSubtitle")
+        static let distanceFormat = localized("checkIn.distanceFormat")
+        static let retroactiveTitle = localized("checkIn.retroactiveTitle")
+        static let retroactiveSubtitle = localized("checkIn.retroactiveSubtitle")
+        static let retroactiveDateSuffix = localized("checkIn.retroactiveDateSuffix")
     }
 
     // MARK: - Helper

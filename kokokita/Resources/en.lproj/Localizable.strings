@@ -323,6 +323,45 @@
 "course.title" = "Course";
 "course.comingSoon" = "Coming Soon";
 "course.description" = "Course feature will be available soon";
+"course.emptyTitle" = "No Courses";
+"course.emptyDescription" = "Courses coming soon";
+"course.enable" = "Enable";
+"course.disable" = "Disable";
+"course.enableToggle" = "Enable this course";
+"course.settingsSection" = "Settings";
+"course.spotsCount" = " spots";
+"course.spotsSection" = "Spots";
+"course.progress" = "Progress";
+"course.completed" = "Completed!";
+"course.type.worldHeritage" = "World Heritage";
+"course.type.nationalTreasure" = "National Treasure";
+"course.type.animeSacredPlace" = "Anime Sacred Place";
+"course.type.custom" = "Custom";
+
+// MARK: - Mode Selection
+"modeSelection.title" = "Choose Your Mode";
+"modeSelection.subtitle" = "You can change this later in Settings";
+"modeSelection.pilgrimageTitle" = "Pilgrimage Mode";
+"modeSelection.pilgrimageDescription" = "Check in at sacred places and World Heritage sites along courses";
+"modeSelection.recordTitle" = "Record Mode";
+"modeSelection.recordDescription" = "Freely record the places you visit";
+"modeSelection.canChangeInSettings" = "You can change this later in Settings";
+"modeSelection.appModeSection" = "App Mode";
+"modeSelection.switchToRecord" = "Switch to Record Mode";
+"modeSelection.switchToPilgrimage" = "Switch to Pilgrimage Mode";
+
+// MARK: - Pilgrimage Home
+"pilgrimageHome.heroTitle" = "Start Your Pilgrimage";
+"pilgrimageHome.heroDescription" = "Choose a course and check in each time you visit a spot";
+"pilgrimageHome.viewCourses" = "View Courses";
+
+// MARK: - CheckIn Result
+"checkIn.resultTitle" = "Checked In!";
+"checkIn.resultSubtitle" = "You reached a course spot";
+"checkIn.distanceFormat" = "~%dm away";
+"checkIn.retroactiveTitle" = "Check-in Recognized from Past Records!";
+"checkIn.retroactiveSubtitle" = "Your past visits matched spots in this course";
+"checkIn.retroactiveDateSuffix" = " (from past record)";
 
 // MARK: - Manual Entry
 "manualEntry.title" = "Add Record";

@@ -325,6 +325,45 @@
 "course.title" = "コース";
 "course.comingSoon" = "準備中";
 "course.description" = "コース機能は近日公開予定です";
+"course.emptyTitle" = "コースがありません";
+"course.emptyDescription" = "コースは準備中です";
+"course.enable" = "有効にする";
+"course.disable" = "無効にする";
+"course.enableToggle" = "このコースを有効にする";
+"course.settingsSection" = "設定";
+"course.spotsCount" = "件";
+"course.spotsSection" = "スポット一覧";
+"course.progress" = "達成状況";
+"course.completed" = "達成！";
+"course.type.worldHeritage" = "世界遺産";
+"course.type.nationalTreasure" = "国宝・重要文化財";
+"course.type.animeSacredPlace" = "アニメ聖地";
+"course.type.custom" = "カスタム";
+
+// MARK: - Mode Selection
+"modeSelection.title" = "モードを選んでください";
+"modeSelection.subtitle" = "あとで設定から変更できます";
+"modeSelection.pilgrimageTitle" = "巡礼モード";
+"modeSelection.pilgrimageDescription" = "コースに沿って聖地・世界遺産などをチェックインしながら巡礼";
+"modeSelection.recordTitle" = "記録モード";
+"modeSelection.recordDescription" = "今いる場所を自由に記録する";
+"modeSelection.canChangeInSettings" = "あとで設定から変更できます";
+"modeSelection.appModeSection" = "アプリモード";
+"modeSelection.switchToRecord" = "記録モードに切り替え";
+"modeSelection.switchToPilgrimage" = "巡礼モードに切り替え";
+
+// MARK: - Pilgrimage Home
+"pilgrimageHome.heroTitle" = "聖地巡礼をはじめよう";
+"pilgrimageHome.heroDescription" = "コースを選んで、スポットを訪れるたびにチェックインが記録されます";
+"pilgrimageHome.viewCourses" = "コース一覧を見る";
+
+// MARK: - CheckIn Result
+"checkIn.resultTitle" = "チェックイン！";
+"checkIn.resultSubtitle" = "コーススポットに到達しました";
+"checkIn.distanceFormat" = "約%dm";
+"checkIn.retroactiveTitle" = "過去の記録からチェックイン認定！";
+"checkIn.retroactiveSubtitle" = "以前に訪れた記録がこのコースのスポットと一致しました";
+"checkIn.retroactiveDateSuffix" = "の記録より";
 
 // MARK: - Manual Entry (後付け記録)
 "manualEntry.title" = "記録を追加";
