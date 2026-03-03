@@ -1,10 +1,10 @@
 import SwiftUI
 
 // 巡礼モードのホーム画面（コース一覧 + CTA）
-// ストアを所有し、navigationDestination をルートに配置（CourseListView が非ルートのため）
+// isPresented と値ベースナビゲーションの混在を避けるため、
+// NavigationLink(value:) で統一する
 struct PilgrimageHomeView: View {
     @State private var store = CourseListStore()
-    @State private var showCourseList = false
 
     var body: some View {
         NavigationStack {
@@ -28,10 +28,8 @@ struct PilgrimageHomeView: View {
                     }
                     .padding(.top, 24)
 
-                    // コース一覧へのCTA
-                    Button {
-                        showCourseList = true
-                    } label: {
+                    // コース一覧へのCTA（値ベースナビゲーション）
+                    NavigationLink(value: PilgrimageHomeRoute.courseList) {
                         Label(L.PilgrimageHome.viewCourses, systemImage: "list.bullet")
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 14)
@@ -42,11 +40,11 @@ struct PilgrimageHomeView: View {
                 }
             }
             .navigationTitle(L.Tab.home)
-            .navigationDestination(isPresented: $showCourseList) {
+            // コース一覧ルート
+            .navigationDestination(for: PilgrimageHomeRoute.self) { _ in
                 CourseListView(store: store)
             }
-            // UUID（コースID）ナビゲーションをルートで処理
-            // CourseListView は非ルートのため、ここで定義する必要がある
+            // コース詳細ルート（CourseListView が非ルートのためここで処理）
             .navigationDestination(for: UUID.self) { courseId in
                 if let course = store.courses.first(where: { $0.id == courseId }) {
                     CourseDetailView(course: course, store: store)
@@ -54,4 +52,8 @@ struct PilgrimageHomeView: View {
             }
         }
     }
+}
+
+private enum PilgrimageHomeRoute: Hashable {
+    case courseList
 }
