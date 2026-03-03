@@ -382,6 +382,62 @@ enum L {
         static let description = localized("course.description")
     }
 
+    // MARK: - Manual Entry (後付け記録)
+    enum ManualEntry {
+        static let title = localized("manualEntry.title")
+        static let editTitle = localized("manualEntry.editTitle")
+        static let badge = localized("manualEntry.badge")
+        static let importFromPhoto = localized("manualEntry.importFromPhoto")
+        static let searchLocation = localized("manualEntry.searchLocation")
+        static let tapOnMap = localized("manualEntry.tapOnMap")
+        static let dateTime = localized("manualEntry.dateTime")
+        static let noExifData = localized("manualEntry.noExifData")
+        static let futureDateNotAllowed = localized("manualEntry.futureDateNotAllowed")
+        static let locationRequired = localized("manualEntry.locationRequired")
+        static let selectLocationMethod = localized("manualEntry.selectLocationMethod")
+        static let locationFromPhoto = localized("manualEntry.locationFromPhoto")
+        static let setDateTime = localized("manualEntry.setDateTime")
+        static let setLocation = localized("manualEntry.setLocation")
+        static let noLocationInPhoto = localized("manualEntry.noLocationInPhoto")
+        static let noDateInPhoto = localized("manualEntry.noDateInPhoto")
+        static let photoImported = localized("manualEntry.photoImported")
+        static let addManualEntry = localized("manualEntry.addManualEntry")
+        static let useThisLocation = localized("manualEntry.useThisLocation")
+        // ステップ関連
+        static let step1Title = localized("manualEntry.step1Title")
+        static let step2Title = localized("manualEntry.step2Title")
+        static let next = localized("manualEntry.next")
+        static let back = localized("manualEntry.back")
+        static let saveAndSkipDetails = localized("manualEntry.saveAndSkipDetails")
+        static let photoImportHint = localized("manualEntry.photoImportHint")
+        static let closeSearch = localized("manualEntry.closeSearch")
+        static let searchFieldPlaceholder = localized("manualEntry.searchFieldPlaceholder")
+        static let infoSheetTitle = localized("manualEntry.infoSheetTitle")
+        static let infoSheetPoint1 = localized("manualEntry.infoSheetPoint1")
+        static let infoSheetPoint2 = localized("manualEntry.infoSheetPoint2")
+        static let infoSheetPoint3 = localized("manualEntry.infoSheetPoint3")
+    }
+
+    // MARK: - Location Picker
+    enum LocationPicker {
+        static let currentLocation = localized("locationPicker.currentLocation")
+        static let placeNamePlaceholder = localized("locationPicker.placeNamePlaceholder")
+        static let findNearbySpots = localized("locationPicker.findNearbySpots")
+        static let nearbySpots = localized("locationPicker.nearbySpots")
+        static let searchPlaceholder = localized("locationPicker.searchPlaceholder")
+        static let noResults = localized("locationPicker.noResults")
+        static let photoImportDescription = localized("locationPicker.photoImportDescription")
+    }
+
+    // MARK: - Record Badge
+    enum RecordBadge {
+        static let explanationTitle = localized("recordBadge.explanationTitle")
+        static let verifiedTitle = localized("recordBadge.verifiedTitle")
+        static let verifiedDescription = localized("recordBadge.verifiedDescription")
+        static let manualTitle = localized("recordBadge.manualTitle")
+        static let manualDescription = localized("recordBadge.manualDescription")
+    }
+
     // MARK: - Helper
     private static func localized(_ key: String, comment: String = "") -> String {
         NSLocalizedString(key, comment: comment)

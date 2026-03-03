@@ -29,12 +29,9 @@ struct VisitRow: View {
 
         VStack(alignment: .leading, spacing: compact ? 2 : 4) {
             // 日時
-            HStack {
-                Text(agg.visit.timestampUTC.kokokitaVisitString)
-                    .font(compact ? .caption : .footnote)
-                    .foregroundStyle(.secondary)
-                Spacer()
-            }
+            Text(agg.visit.timestampUTC.kokokitaVisitString)
+                .font(compact ? .caption : .footnote)
+                .foregroundStyle(.secondary)
 
             // 住所
             Text(agg.details.resolvedAddress ?? "")
@@ -42,12 +39,19 @@ struct VisitRow: View {
                 .foregroundStyle(.secondary)
                 .lineLimit(compact ? 1 : 2)
 
-            // タイトル・カテゴリ
+            // タイトル・カテゴリ + 記録タイプアイコン
             if let title = agg.details.title, !title.isEmpty {
                 VStack(alignment: .leading, spacing: compact ? 1 : 2) {
-                    Text(title)
-                        .font(compact ? .subheadline : .headline)
-                        .lineLimit(compact ? 1 : 2)
+                    InlineRecordTypeTitle(
+                        title: title,
+                        isManualEntry: agg.visit.isManualEntry,
+                        compact: compact,
+                        maxLines: compact ? 1 : 2,
+                        textStyle: compact ? .subheadline : .headline,
+                        fontWeight: .bold,
+                        textColor: .label
+                    )
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     if let catRaw = agg.details.facilityCategory {
                         let category = MKPointOfInterestCategory(rawValue: catRaw)
                         Text(category.localizedName)
@@ -55,6 +59,9 @@ struct VisitRow: View {
                             .foregroundStyle(.secondary)
                     }
                 }
+            } else {
+                // タイトルがない場合は住所の後にアイコンを表示
+                RecordTypeIcon(isManualEntry: agg.visit.isManualEntry, compact: compact)
             }
 
             // グループ（フォルダ帰属表示）

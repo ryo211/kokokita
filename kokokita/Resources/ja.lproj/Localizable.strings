@@ -325,3 +325,52 @@
 "course.title" = "コース";
 "course.comingSoon" = "準備中";
 "course.description" = "コース機能は近日公開予定です";
+
+// MARK: - Manual Entry (後付け記録)
+"manualEntry.title" = "記録を追加";
+"manualEntry.editTitle" = "後付け記録を編集";
+"manualEntry.badge" = "後付け";
+"manualEntry.importFromPhoto" = "写真から取り込み";
+"manualEntry.searchLocation" = "場所を検索";
+"manualEntry.tapOnMap" = "地図から選択";
+"manualEntry.dateTime" = "日時";
+"manualEntry.noExifData" = "写真に位置情報がありません";
+"manualEntry.futureDateNotAllowed" = "未来の日付は指定できません";
+"manualEntry.locationRequired" = "検索または地図から指定してください";
+"manualEntry.selectLocationMethod" = "場所の指定方法";
+"manualEntry.locationFromPhoto" = "写真の位置情報を使用";
+"manualEntry.setDateTime" = "日時を設定";
+"manualEntry.setLocation" = "場所を設定";
+"manualEntry.noLocationInPhoto" = "写真に位置情報が含まれていません";
+"manualEntry.noDateInPhoto" = "写真に撮影日時が含まれていません";
+"manualEntry.photoImported" = "写真から情報を取り込みました";
+"manualEntry.addManualEntry" = "後付け記録を追加";
+"manualEntry.useThisLocation" = "この場所を使用";
+"manualEntry.step1Title" = "日時と場所";
+"manualEntry.step2Title" = "詳細情報";
+"manualEntry.next" = "次へ";
+"manualEntry.back" = "戻る";
+"manualEntry.saveAndSkipDetails" = "このまま保存";
+"manualEntry.photoImportHint" = "写真から日時と場所を自動取得";
+"manualEntry.closeSearch" = "検索を閉じる";
+"manualEntry.searchFieldPlaceholder" = "場所名や住所を入力";
+"manualEntry.infoSheetTitle" = "後付け記録について";
+"manualEntry.infoSheetPoint1" = "現地で記録し忘れた場合などに、後から記録を追加できます。";
+"manualEntry.infoSheetPoint2" = "通常の記録とは異なり、日時と場所を指定して記録を作成します。";
+"manualEntry.infoSheetPoint3" = "通常の記録とは異なり、その日時・場所に実際に訪れた証明にはなりません。";
+
+// MARK: - Location Picker
+"locationPicker.currentLocation" = "現在の設定";
+"locationPicker.placeNamePlaceholder" = "場所名";
+"locationPicker.findNearbySpots" = "候補を探す";
+"locationPicker.nearbySpots" = "周辺のスポット";
+"locationPicker.searchPlaceholder" = "場所名や住所を入力（例：東京スカイツリー）";
+"locationPicker.noResults" = "該当する場所が見つかりませんでした";
+"locationPicker.photoImportDescription" = "写真から日時と位置情報を取り込みます";
+
+// MARK: - Record Type Badge
+"recordBadge.explanationTitle" = "記録の種類について";
+"recordBadge.verifiedTitle" = "証明付き記録";
+"recordBadge.verifiedDescription" = "その時、その場所にいたことが証明されている記録です。アプリがその場で位置情報を取得して作成されました。";
+"recordBadge.manualTitle" = "後付け記録";
+"recordBadge.manualDescription" = "後から手動で追加した記録です。実際に訪れたかどうかの証明はありません。";

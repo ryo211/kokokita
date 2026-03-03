@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 /// 縦型クリアブルー記録カード
 ///
@@ -20,6 +21,7 @@ import SwiftUI
 ///      160pt
 /// ```
 struct ClearBlueVerticalCard: View {
+    private let visitCardTitleUIColor = UIColor(named: "AccentColor") ?? .systemBlue
     /// 表示する訪問記録
     let aggregate: VisitAggregate
 
@@ -60,6 +62,19 @@ struct ClearBlueVerticalCard: View {
         aggregate.details.photoPaths
     }
 
+    /// タイトル + 記録タイプアイコン（インライン）
+    private var inlineTitleView: some View {
+        InlineRecordTypeTitle(
+            title: displayTitle,
+            isManualEntry: aggregate.visit.isManualEntry,
+            compact: true,
+            maxLines: 1,
+            textStyle: .subheadline,
+            fontWeight: .bold,
+            textColor: visitCardTitleUIColor
+        )
+    }
+
     // MARK: - Body
 
     var body: some View {
@@ -76,10 +91,8 @@ struct ClearBlueVerticalCard: View {
 
             // テキストエリア（固定位置・固定高さ）
             VStack(alignment: .leading, spacing: 2) {
-                // タイトル（固定位置、1行）
-                Text(displayTitle)
-                    .font(VisitCardStyle.verticalTitleFont)
-                    .foregroundStyle(VisitCardStyle.primaryTextColor)
+                // タイトル + 記録タイプアイコン（固定位置、1行）
+                inlineTitleView
                     .lineLimit(1)
                     .frame(height: 20, alignment: .leading)
 

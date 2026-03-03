@@ -267,6 +267,28 @@ actor DataRestoreService {
 
             for (index, backupVisit) in backupData.visits.enumerated() {
                 do {
+                    // 後付け記録かどうかを判定
+                    let isManualEntry = backupVisit.isManualEntry ?? false
+
+                    // Integrityを構築（後付け記録でない場合のみ）
+                    let integrity: Visit.Integrity?
+                    if !isManualEntry,
+                       let algo = backupVisit.integrityAlgo,
+                       let sig = backupVisit.integritySigDER,
+                       let pub = backupVisit.integrityPubRaw,
+                       let hash = backupVisit.integrityPayloadHash,
+                       let createdAt = backupVisit.integrityCreatedAtUTC {
+                        integrity = Visit.Integrity(
+                            algo: algo,
+                            signatureDERBase64: sig,
+                            publicKeyRawBase64: pub,
+                            payloadHashHex: hash,
+                            createdAtUTC: createdAt
+                        )
+                    } else {
+                        integrity = nil
+                    }
+
                     let visit = Visit(
                         id: backupVisit.id,
                         timestampUTC: backupVisit.timestampUTC,
@@ -275,13 +297,8 @@ actor DataRestoreService {
                         horizontalAccuracy: backupVisit.horizontalAccuracy,
                         isSimulatedBySoftware: backupVisit.isSimulatedBySoftware,
                         isProducedByAccessory: backupVisit.isProducedByAccessory,
-                        integrity: Visit.Integrity(
-                            algo: backupVisit.integrityAlgo,
-                            signatureDERBase64: backupVisit.integritySigDER,
-                            publicKeyRawBase64: backupVisit.integrityPubRaw,
-                            payloadHashHex: backupVisit.integrityPayloadHash,
-                            createdAtUTC: backupVisit.integrityCreatedAtUTC
-                        )
+                        integrity: integrity,
+                        isManualEntry: isManualEntry
                     )
 
                     let details = VisitDetails(

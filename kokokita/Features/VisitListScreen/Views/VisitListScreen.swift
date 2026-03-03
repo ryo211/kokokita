@@ -77,7 +77,7 @@ struct VisitListScreen: View {
     // MARK: - List（分離して軽く）
     @ViewBuilder
     private func listContent() -> some View {
-        ZStack(alignment: .topTrailing) {
+        ZStack(alignment: .top) {
             Group {
                 if store.items.isEmpty {
                     // 空の状態UI
@@ -89,9 +89,12 @@ struct VisitListScreen: View {
 
             // ソートボタン（リスト右上に固定表示）
             if !store.items.isEmpty {
-                sortButton
-                    .padding(.trailing, 16)
-                    .padding(.top, 8)
+                HStack {
+                    Spacer()
+                    sortButton
+                        .padding(.trailing, 16)
+                }
+                .padding(.top, 8)
             }
         }
         .task { store.reload() }
@@ -550,7 +553,8 @@ struct VisitListScreen: View {
                 phone: nil
             ),
             facilityCategory: agg.details.facilityCategory,
-            photoPaths: agg.details.photoPaths
+            photoPaths: agg.details.photoPaths,
+            isManualEntry: agg.visit.isManualEntry
         )
     }
 

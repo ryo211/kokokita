@@ -1,5 +1,6 @@
 import SwiftUI
 import MapKit
+import UIKit
 
 struct VisitDetailContent: View {
     let data: VisitDetailData
@@ -17,6 +18,36 @@ struct VisitDetailContent: View {
     var labelColorMap: [String: Color] = [:]
     @Binding var photoFullScreenIndex: Int?
 
+    /// バッジ説明アラートの表示状態
+    @State private var showBadgeExplanation = false
+
+    /// 表示用タイトル
+    private var displayTitle: String {
+        data.title.ifBlank(L.Home.noTitle)
+    }
+
+    /// タイトル + 記録タイプアイコン（共有用）
+    private var titleWithIconView: some View {
+        InlineRecordTypeTitle(
+            title: displayTitle,
+            isManualEntry: data.isManualEntry,
+            compact: false,
+            maxLines: 3,
+            textStyle: .title2,
+            fontWeight: .bold,
+            textColor: .label
+        )
+    }
+
+    /// タップ可能なタイトル + バッジ（通常表示用）
+    private var tappableTitleView: some View {
+        titleWithIconView
+            .contentShape(Rectangle())
+            .onTapGesture {
+            showBadgeExplanation = true
+            }
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: UIConstants.Spacing.large) {
             // 共有画像の場合、最上部にロゴを表示
@@ -33,9 +64,12 @@ struct VisitDetailContent: View {
             VStack(alignment: .leading, spacing: UIConstants.Spacing.medium) {
                 HStack(spacing: UIConstants.Spacing.medium) {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(data.title.ifBlank(L.Home.noTitle))
-                            .font(.title2.bold())
-                            .lineLimit(3)
+                        // 共有時は通常表示、通常表示時はタップ可能なバッジ
+                        if isSharing {
+                            titleWithIconView
+                        } else {
+                            tappableTitleView
+                        }
                         if let catRaw = data.facilityCategory {
                             let category = MKPointOfInterestCategory(rawValue: catRaw)
                             Text(category.localizedName)
@@ -149,7 +183,9 @@ struct VisitDetailContent: View {
                         MapPreview(
                             lat: c.latitude,
                             lon: c.longitude,
-                            showCoordinateOverlay: true
+                            showCoordinateOverlay: true,
+                            markerImageName: data.isManualEntry ? "kokokita_irodori_orange" : "kokokita_irodori_blue_for_map",
+                            markerLabelColor: data.isManualEntry ? .orange : .accentColor
                         )
                         .frame(height: UIConstants.Size.mapPreviewHeight)
                         .clipShape(RoundedRectangle(cornerRadius: UIConstants.CornerRadius.large))
@@ -193,6 +229,11 @@ struct VisitDetailContent: View {
             LinearGradient(colors: [Color(.systemBackground), Color(.secondarySystemBackground)],
                            startPoint: .top, endPoint: .bottom)
         )
+        .sheet(isPresented: $showBadgeExplanation) {
+            RecordBadgeExplanationSheet()
+                .presentationDetents([.medium])
+                .presentationDragIndicator(.visible)
+        }
     }
 
     // MARK: - Nearby Visits Section

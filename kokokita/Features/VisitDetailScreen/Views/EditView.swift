@@ -16,6 +16,15 @@ struct EditView: View {
     @State private var initialized = false
 
     var body: some View {
+        if aggregate.visit.isManualEntry {
+            // 後付け記録は ManualEntryScreen の編集版を表示
+            ManualEntryScreen(editingAggregate: aggregate)
+        } else {
+            normalEditView
+        }
+    }
+
+    private var normalEditView: some View {
         VisitEditScreen(
             vm: vm,
             mode: .edit(id: aggregate.id, onSaved: onSaved),
@@ -26,8 +35,8 @@ struct EditView: View {
         .task {
             guard !initialized else { return }
             initialized = true
-            vm.loadExisting(aggregate)        // 既存データをVMに読み込み
-            vm.labelIds = Set(aggregate.details.labelIds) // 念のため正規化
+            vm.loadExisting(aggregate)
+            vm.labelIds = Set(aggregate.details.labelIds)
         }
         .ignoresSafeArea(.keyboard, edges: .bottom)
     }

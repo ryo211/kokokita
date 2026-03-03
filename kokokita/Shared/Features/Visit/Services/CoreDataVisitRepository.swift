@@ -31,12 +31,17 @@ final class CoreDataVisitRepository {
         v.isSimulatedBySoftware = visit.isSimulatedBySoftware.map { NSNumber(value: $0) }
         v.isProducedByAccessory = visit.isProducedByAccessory.map { NSNumber(value: $0) }
 
-        // 改ざん検出メタ（Integrity）
-        v.integrityAlgo         = visit.integrity.algo
-        v.integritySigDER       = visit.integrity.signatureDERBase64
-        v.integrityPubRaw       = visit.integrity.publicKeyRawBase64
-        v.integrityPayloadHash  = visit.integrity.payloadHashHex
-        v.integrityCreatedAtUTC = visit.integrity.createdAtUTC
+        // 後付け記録フラグ
+        v.isManualEntry = NSNumber(value: visit.isManualEntry)
+
+        // 改ざん検出メタ（Integrity）- 後付け記録の場合はnil
+        if let integrity = visit.integrity {
+            v.integrityAlgo         = integrity.algo
+            v.integritySigDER       = integrity.signatureDERBase64
+            v.integrityPubRaw       = integrity.publicKeyRawBase64
+            v.integrityPayloadHash  = integrity.payloadHashHex
+            v.integrityCreatedAtUTC = integrity.createdAtUTC
+        }
 
         // ---- VisitDetails（可変部） ----
         let d = VisitDetailsEntity(context: ctx)
@@ -75,6 +80,100 @@ final class CoreDataVisitRepository {
         if saveImmediately {
             try ctx.save()
         }
+    }
+
+    /// 後付け記録を作成（署名なし）
+    func createManualEntry(visit: Visit, details: VisitDetails, saveImmediately: Bool = true) throws {
+        guard visit.isManualEntry else {
+            Logger.error("createManualEntry called with non-manual entry visit")
+            throw NSError(domain: "Visit", code: 3,
+                          userInfo: [NSLocalizedDescriptionKey: "後付け記録ではありません"])
+        }
+
+        // 既存のVisitをチェック（重複防止）
+        if try fetchVisitEntity(id: visit.id) != nil {
+            Logger.warning("Visit with ID \(visit.id) already exists, skipping creation")
+            throw NSError(domain: "Visit", code: 2,
+                          userInfo: [NSLocalizedDescriptionKey: "Visit with ID \(visit.id) already exists"])
+        }
+
+        let v = VisitEntity(context: ctx)
+
+        // ---- Visit（不変部）----
+        v.id = visit.id
+        v.timestampUTC = visit.timestampUTC
+        v.latitude = visit.latitude
+        v.longitude = visit.longitude
+
+        // Optional
+        v.horizontalAccuracy = visit.horizontalAccuracy.map { NSNumber(value: $0) }
+        v.isSimulatedBySoftware = nil
+        v.isProducedByAccessory = nil
+
+        // 後付け記録フラグ
+        v.isManualEntry = NSNumber(value: true)
+
+        // 署名なし（後付け記録なので）
+        v.integrityAlgo = nil
+        v.integritySigDER = nil
+        v.integrityPubRaw = nil
+        v.integrityPayloadHash = nil
+        v.integrityCreatedAtUTC = nil
+
+        // ---- VisitDetails（可変部） ----
+        let d = VisitDetailsEntity(context: ctx)
+        d.title = details.title
+        d.facilityName = details.facilityName
+        d.facilityAddress = details.facilityAddress
+        d.facilityCategory = details.facilityCategory
+        d.comment = details.comment
+        d.groupId = details.groupId
+        d.resolvedAddress = details.resolvedAddress
+        d.labels = NSSet(array: try fetchLabelEntities(for: details.labelIds))
+        d.members = NSSet(array: try fetchMemberEntities(for: details.memberIds))
+
+        if !details.photoPaths.isEmpty {
+            let ordered = NSMutableOrderedSet()
+            for (idx, path) in details.photoPaths.enumerated() {
+                let p = VisitPhotoEntity(context: ctx)
+                p.id = UUID()
+                p.filePath = path
+                p.orderIndex = Int16(idx)
+                p.createdAt = Date()
+                p.details = d
+                ordered.add(p)
+            }
+            d.photos = ordered
+        }
+
+        // リレーション接続
+        v.details = d
+
+        preflightValidate([v, d])
+
+        if saveImmediately {
+            try ctx.save()
+        }
+
+        Logger.info("Created manual entry: \(visit.id)")
+    }
+
+    /// 後付け記録のVisit本体（日時・座標）を更新
+    func updateManualEntryCore(id: UUID, timestamp: Date, latitude: Double, longitude: Double, accuracy: Double?) throws {
+        guard let v = try fetchVisitEntity(id: id) else {
+            Logger.warning("Visit not found for manual entry update: \(id)")
+            return
+        }
+        guard v.isManualEntry?.boolValue == true else {
+            Logger.error("updateManualEntryCore called on non-manual entry")
+            return
+        }
+        v.timestampUTC = timestamp
+        v.latitude = latitude
+        v.longitude = longitude
+        v.horizontalAccuracy = accuracy.map { NSNumber(value: $0) }
+        preflightValidate([v])
+        try ctx.save()
     }
 
     func updateDetails(id: UUID, transform: (inout VisitDetails) -> Void) throws {
@@ -450,16 +549,36 @@ final class CoreDataVisitRepository {
     private func toAggregate(_ v: VisitEntity) -> VisitAggregate? {
         // 必須フィールド
         guard
-            let id   = v.id,
-            let ts   = v.timestampUTC,
-            let algo = v.integrityAlgo,
-            let sig  = v.integritySigDER,
-            let pub  = v.integrityPubRaw,
-            let hash = v.integrityPayloadHash,
-            let ic   = v.integrityCreatedAtUTC
+            let id = v.id,
+            let ts = v.timestampUTC
         else {
-            Logger.error("Visit entity has missing required fields")
+            Logger.error("Visit entity has missing required fields (id or timestampUTC)")
             return nil
+        }
+
+        // 後付け記録かどうか
+        let isManualEntry = v.isManualEntry?.boolValue ?? false
+
+        // Integrity（後付け記録の場合はnilを許容）
+        let integrity: Visit.Integrity?
+        if let algo = v.integrityAlgo,
+           let sig  = v.integritySigDER,
+           let pub  = v.integrityPubRaw,
+           let hash = v.integrityPayloadHash,
+           let ic   = v.integrityCreatedAtUTC {
+            integrity = Visit.Integrity(
+                algo: algo,
+                signatureDERBase64: sig,
+                publicKeyRawBase64: pub,
+                payloadHashHex: hash,
+                createdAtUTC: ic
+            )
+        } else if !isManualEntry {
+            // 通常記録なのに署名がない場合はエラー
+            Logger.error("Normal visit entity has missing integrity fields")
+            return nil
+        } else {
+            integrity = nil
         }
 
         // Visit（不変部）
@@ -471,14 +590,8 @@ final class CoreDataVisitRepository {
             horizontalAccuracy: v.horizontalAccuracy?.doubleValue,
             isSimulatedBySoftware: v.isSimulatedBySoftware?.boolValue,
             isProducedByAccessory: v.isProducedByAccessory?.boolValue,
-            // ↓ Integrity
-            integrity: .init(
-                algo: algo,
-                signatureDERBase64: sig,
-                publicKeyRawBase64: pub,
-                payloadHashHex: hash,
-                createdAtUTC: ic
-            )
+            integrity: integrity,
+            isManualEntry: isManualEntry
         )
         
         

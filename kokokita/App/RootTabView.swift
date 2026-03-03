@@ -37,6 +37,7 @@ struct RootTabView: View {
     @State private var editVisitId: UUID?
     @State private var detailVisitId: UUID?
     @State private var locationErrorMessage: String? = nil
+    @State private var showManualEntrySheet = false
     @Environment(AppUIState.self) private var ui
     #if DEBUG
     @ObservedObject private var debugSettings = DebugSettings.shared
@@ -83,10 +84,18 @@ struct RootTabView: View {
                     .opacity(tab == .menu ? 1 : 0)
                     .zIndex(tab == .menu ? 1 : 0)
 
-                // 記録画面のみ: 右下にココキタボタン（地図シート・カレンダー表示中は非表示）
+                // 記録画面のみ: 右下にココキタボタン＋追加ボタン（地図シート・カレンダー表示中は非表示）
                 if tab == .records && !ui.isMapSheetVisible && !ui.isCalendarVisible {
-                    FloatingKokokitaButton {
-                        checkLocationPermissionAndCreate()
+                    HStack(alignment: .bottom, spacing: 8) {
+                        // 後付け記録ボタン
+                        FloatingAtozukeButton {
+                            showManualEntrySheet = true
+                        }
+
+                        // ココキタキタボタン
+                        FloatingKokokitaButton {
+                            checkLocationPermissionAndCreate()
+                        }
                     }
                     .padding(.trailing, 16)
                     .padding(.bottom, 16)
@@ -168,7 +177,10 @@ struct RootTabView: View {
         .sheet(isPresented: Binding(
             get: { confirmationSheetVisitId != nil },
             set: { if !$0 { confirmationSheetVisitId = nil } }
-        )) {
+        ), onDismiss: {
+            // シートが閉じた時にレビュー誘導をチェック
+            AppReviewService.shared.onRecordSheetDismissed()
+        }) {
             if let visitId = confirmationSheetVisitId {
                 PostKokokitaConfirmationSheet(
                     visitId: visitId,
@@ -222,6 +234,15 @@ struct RootTabView: View {
             }
         }
 
+        // 後付け記録モーダル
+        .sheet(isPresented: $showManualEntrySheet, onDismiss: {
+            NotificationCenter.default.post(name: .visitsChanged, object: nil)
+            AppReviewService.shared.onRecordSheetDismissed()
+        }) {
+            ManualEntryScreen()
+                .iPadSheetSize()
+        }
+
         // 位置情報権限アラート
         .alert(L.Location.permissionRequired, isPresented: $showLocationPermissionAlert) {
             Button(L.Location.openSettings) {
@@ -255,6 +276,23 @@ struct RootTabView: View {
                 tab = .records
             }
         }
+        // アプリ起動時にレビュー誘導の記録数を初期化（既存ユーザー対応）
+        .task {
+            await initializeAppReviewService()
+        }
+    }
+
+    @MainActor
+    private func initializeAppReviewService() async {
+        let existingCount = (try? AppContainer.shared.repo.fetchAll(
+            filterLabel: nil,
+            filterGroup: nil,
+            filterMember: nil,
+            titleQuery: nil,
+            dateFrom: nil,
+            dateToExclusive: nil
+        ).count) ?? 0
+        AppReviewService.shared.initializeIfNeeded(existingRecordCount: existingCount)
     }
 
     // MARK: - Helper Methods
@@ -423,6 +461,10 @@ struct RootTabView: View {
 
             try repo.create(visit: visit, details: details)
             NotificationCenter.default.post(name: .visitsChanged, object: nil)
+
+            // レビュー誘導用：記録数をカウント
+            AppReviewService.shared.recordCreated()
+
             return id
         } catch {
             Logger.error("Quick save failed", error: error)
@@ -942,6 +984,57 @@ fileprivate struct FloatingKokokitaButton: View {
     }
 }
 
+// MARK: - Floating Atozuke Button (アトヅケボタン)
+
+fileprivate struct FloatingAtozukeButton: View {
+    let onTap: () -> Void
+
+    var body: some View {
+        Button(action: onTap) {
+            ZStack {
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                Color.orange.opacity(0.95),
+                                Color.orange.opacity(0.75)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .overlay {
+                        Circle()
+                            .fill(
+                                LinearGradient(
+                                    colors: [
+                                        Color.white.opacity(0.25),
+                                        Color.clear
+                                    ],
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                )
+                            )
+                    }
+                    .frame(width: 44, height: 44)
+                    .shadow(color: Color.orange.opacity(0.32), radius: 8, x: 0, y: 3)
+                    .shadow(color: Color.orange.opacity(0.12), radius: 4, x: 0, y: 2)
+
+                VStack(spacing: 2) {
+                    Image(systemName: "clock.fill")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundStyle(.white)
+                    Text("＋追加")
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundStyle(.white)
+                }
+            }
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(L.ManualEntry.addManualEntry)
+    }
+}
+
 // MARK: - Edit Visit Sheet
 
 private struct EditVisitSheet: View {
@@ -1073,7 +1166,8 @@ private struct DetailVisitSheet: View {
                 phone: nil
             ),
             facilityCategory: agg.details.facilityCategory,
-            photoPaths: agg.details.photoPaths
+            photoPaths: agg.details.photoPaths,
+            isManualEntry: agg.visit.isManualEntry
         )
     }
 

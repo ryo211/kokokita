@@ -323,3 +323,52 @@
 "course.title" = "Course";
 "course.comingSoon" = "Coming Soon";
 "course.description" = "Course feature will be available soon";
+
+// MARK: - Manual Entry
+"manualEntry.title" = "Add Record";
+"manualEntry.editTitle" = "Edit Manual Entry";
+"manualEntry.badge" = "Manual";
+"manualEntry.importFromPhoto" = "Import from Photo";
+"manualEntry.searchLocation" = "Search Location";
+"manualEntry.tapOnMap" = "Select on Map";
+"manualEntry.dateTime" = "Date & Time";
+"manualEntry.noExifData" = "No location data in photo";
+"manualEntry.futureDateNotAllowed" = "Future dates are not allowed";
+"manualEntry.locationRequired" = "Specify by search or map";
+"manualEntry.selectLocationMethod" = "How to specify location";
+"manualEntry.locationFromPhoto" = "Use photo location";
+"manualEntry.setDateTime" = "Set Date & Time";
+"manualEntry.setLocation" = "Set Location";
+"manualEntry.noLocationInPhoto" = "Photo does not contain location data";
+"manualEntry.noDateInPhoto" = "Photo does not contain date information";
+"manualEntry.photoImported" = "Information imported from photo";
+"manualEntry.addManualEntry" = "Add Manual Entry";
+"manualEntry.useThisLocation" = "Use this location";
+"manualEntry.step1Title" = "Date & Location";
+"manualEntry.step2Title" = "Additional Details";
+"manualEntry.next" = "Next";
+"manualEntry.back" = "Back";
+"manualEntry.saveAndSkipDetails" = "Save without details";
+"manualEntry.photoImportHint" = "Auto-fill date & location from photo";
+"manualEntry.closeSearch" = "Close Search";
+"manualEntry.searchFieldPlaceholder" = "Enter place name or address";
+"manualEntry.infoSheetTitle" = "About Manual Entry";
+"manualEntry.infoSheetPoint1" = "Use this feature when you forgot to record on-site and need to add a record later.";
+"manualEntry.infoSheetPoint2" = "Unlike regular records, manual entries are created by specifying the date/time and location.";
+"manualEntry.infoSheetPoint3" = "Unlike regular records, this does not prove you actually visited that place at that time.";
+
+// MARK: - Location Picker
+"locationPicker.currentLocation" = "Current Setting";
+"locationPicker.placeNamePlaceholder" = "Place Name";
+"locationPicker.findNearbySpots" = "Find Nearby";
+"locationPicker.nearbySpots" = "Nearby Spots";
+"locationPicker.searchPlaceholder" = "Enter place name or address (e.g. Tokyo Skytree)";
+"locationPicker.noResults" = "No matching places found";
+"locationPicker.photoImportDescription" = "Import date and location from photo";
+
+// MARK: - Record Badge
+"recordBadge.explanationTitle" = "About Record Types";
+"recordBadge.verifiedTitle" = "Verified Record";
+"recordBadge.verifiedDescription" = "This record proves you were there at that time. It was created by the app capturing your location on the spot.";
+"recordBadge.manualTitle" = "Manual Entry";
+"recordBadge.manualDescription" = "This record was added manually later. There is no proof that you actually visited the location.";

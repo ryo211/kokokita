@@ -14,6 +14,7 @@ struct LabelDetailView: View {
     @State private var store = LabelListStore()
     @State private var name: String
     @State private var editingName: String = ""
+    @State private var editingColorId: String?
     @State private var showEditSheet = false
     @State private var showDeleteConfirm = false
     @State private var currentColorId: String?
@@ -44,10 +45,6 @@ struct LabelDetailView: View {
                 nameSection
                     .padding(.horizontal)
                     .padding(.vertical, 16)
-
-                colorSection
-                    .padding(.horizontal)
-                    .padding(.bottom, 16)
 
                 if !relatedVisits.isEmpty {
                     HStack {
@@ -117,6 +114,15 @@ struct LabelDetailView: View {
                                     saveEdit()
                                 }
                             }
+                    } header: {
+                        Text(L.LabelManagement.namePlaceholder)
+                    }
+                    Section {
+                        LabelColorPicker(selectedColorId: editingColorId) { newColorId in
+                            editingColorId = newColorId
+                        }
+                    } header: {
+                        Text(L.LabelColor.sectionTitle)
                     }
                 }
                 .navigationTitle(L.Common.edit)
@@ -135,7 +141,13 @@ struct LabelDetailView: View {
                     }
                 }
             }
-            .presentationDetents([.height(200)])
+            .presentationDetents([.height(320)])
+        }
+        .onChange(of: showEditSheet) { _, isShowing in
+            if isShowing {
+                editingName = name
+                editingColorId = currentColorId
+            }
         }
         .onAppear {
             loadRelatedVisits()
@@ -177,32 +189,17 @@ struct LabelDetailView: View {
     }
 
     private func saveEdit() {
-        if store.update(id: label.id, name: editingName) {
-            name = editingName
-            showEditSheet = false
-        }
+        guard store.update(id: label.id, name: editingName) else { return }
+        guard store.updateColor(id: label.id, colorId: editingColorId) else { return }
+        name = editingName
+        currentColorId = editingColorId
+        showEditSheet = false
     }
 
     private func delete() {
         if store.delete(id: label.id) {
             onFinish(nil, true)
             dismiss()
-        }
-    }
-
-    // MARK: - Sections
-
-    /// 色選択セクション
-    private var colorSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(L.LabelColor.sectionTitle)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-
-            LabelColorPicker(selectedColorId: currentColorId) { newColorId in
-                currentColorId = newColorId
-                _ = store.updateColor(id: label.id, colorId: newColorId)
-            }
         }
     }
 
@@ -223,7 +220,6 @@ struct LabelDetailView: View {
                 }
                 Spacer()
                 Button {
-                    editingName = name
                     showEditSheet = true
                 } label: {
                     HStack(spacing: 4) {
@@ -351,7 +347,8 @@ struct LabelDetailView: View {
             memo: agg.details.comment,
             facility: facility,
             facilityCategory: agg.details.facilityCategory,
-            photoPaths: agg.details.photoPaths
+            photoPaths: agg.details.photoPaths,
+            isManualEntry: agg.visit.isManualEntry
         )
     }
 }
