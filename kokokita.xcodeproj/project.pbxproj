@@ -17,6 +17,7 @@
 /* Begin PBXFileReference section */
 		45B214B72E7EDB560004B944 /* kokokita.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = kokokita.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		45B215832E7EF0B70004B944 /* Kokokita.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = Kokokita.xcdatamodel; sourceTree = "<group>"; };
+		839241C028E14D72997A5066 /* Kokokita v2.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = "Kokokita v2.xcdatamodel"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -465,8 +466,9 @@
 			isa = XCVersionGroup;
 			children = (
 				45B215832E7EF0B70004B944 /* Kokokita.xcdatamodel */,
+				839241C028E14D72997A5066 /* Kokokita v2.xcdatamodel */,
 			);
-			currentVersion = 45B215832E7EF0B70004B944 /* Kokokita.xcdatamodel */;
+			currentVersion = 839241C028E14D72997A5066 /* Kokokita v2.xcdatamodel */;
 			path = Kokokita.xcdatamodeld;
 			sourceTree = "<group>";
 			versionGroupType = wrapper.xcdatamodel;
