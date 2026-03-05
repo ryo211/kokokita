@@ -2,22 +2,19 @@ import Foundation
 
 // コースの種別
 enum CourseType: String, CaseIterable {
-    /// 世界遺産
-    case worldHeritage = "world_heritage"
-    /// 国宝・重要文化財
-    case nationalTreasure = "national_treasure"
-    /// アニメ聖地
-    case animeSacredPlace = "anime_sacred_place"
-    /// カスタム（ユーザー作成）
-    case custom = "custom"
+    /// 巡礼（聖地巡礼・世界遺産など）
+    case pilgrimage = "pilgrimage"
+    /// スタンプラリー
+    case stampRally = "stamp_rally"
+    /// マイリスト（ユーザー作成）
+    case myList = "my_list"
 
-    /// 表示名（ローカライズキーはE4タスクで追加）
+    /// 表示名
     var displayName: String {
         switch self {
-        case .worldHeritage: return "世界遺産"
-        case .nationalTreasure: return "国宝・重要文化財"
-        case .animeSacredPlace: return "アニメ聖地"
-        case .custom: return "カスタム"
+        case .pilgrimage: return L.Course.typePilgrimage
+        case .stampRally: return L.Course.typeStampRally
+        case .myList: return L.Course.typeMyList
         }
     }
 }

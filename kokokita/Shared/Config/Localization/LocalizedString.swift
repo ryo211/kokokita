@@ -147,6 +147,8 @@ enum L {
         static let menu = localized("tab.menu")
         static let kokokita = localized("tab.kokokita")
         static let course = localized("tab.course")
+        static let modePilgrimage = localized("tab.modePilgrimage")
+        static let modeRecord = localized("tab.modeRecord")
     }
 
     // MARK: - Label Management
@@ -390,10 +392,12 @@ enum L {
         static let spotsSection = localized("course.spotsSection")
         static let progress = localized("course.progress")
         static let completed = localized("course.completed")
-        static let typeWorldHeritage = localized("course.type.worldHeritage")
-        static let typeNationalTreasure = localized("course.type.nationalTreasure")
-        static let typeAnimeSacredPlace = localized("course.type.animeSacredPlace")
-        static let typeCustom = localized("course.type.custom")
+        static let typePilgrimage = localized("course.type.pilgrimage")
+        static let typeStampRally = localized("course.type.stampRally")
+        static let typeMyList = localized("course.type.myList")
+        static let notVisited = localized("course.notVisited")
+        static let noAddress = localized("course.noAddress")
+        static func visitedOn(_ dateString: String) -> String { String(format: localized("course.visitedOn"), dateString) }
     }
 
     // MARK: - Manual Entry (後付け記録)
@@ -471,6 +475,15 @@ enum L {
         static let heroTitle = localized("pilgrimageHome.heroTitle")
         static let heroDescription = localized("pilgrimageHome.heroDescription")
         static let viewCourses = localized("pilgrimageHome.viewCourses")
+        static let coursesTitle = localized("pilgrimageHome.coursesTitle")
+        static let seeAll = localized("pilgrimageHome.seeAll")
+        static let nearbyTitle = localized("pilgrimageHome.nearbyTitle")
+        static let noNearbySpots = localized("pilgrimageHome.noNearbySpots")
+        static let locationUnavailable = localized("pilgrimageHome.locationUnavailable")
+        static let recentTitle = localized("pilgrimageHome.recentTitle")
+        static let noRecentAchievements = localized("pilgrimageHome.noRecentAchievements")
+        static func progressFormat(_ checked: Int, _ total: Int) -> String { String(format: localized("pilgrimageHome.progressFormat"), checked, total) }
+        static func distanceMeter(_ meters: Int) -> String { String(format: localized("pilgrimageHome.distanceMeter"), meters) }
     }
 
     // MARK: - CheckIn Result

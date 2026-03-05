@@ -15,7 +15,7 @@ struct RetroactiveCheckInResultSheet: View {
                     VStack(spacing: 12) {
                         Image(systemName: "clock.badge.checkmark.fill")
                             .font(.system(size: 64))
-                            .foregroundStyle(.orange)
+                            .foregroundStyle(.indigo)
 
                         Text(L.CheckIn.retroactiveTitle)
                             .font(.title2.bold())
@@ -80,7 +80,7 @@ private struct RetroactiveSpotRow: View {
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: "clock.arrow.circlepath")
-                .foregroundStyle(.orange)
+                .foregroundStyle(.indigo)
                 .font(.system(size: 22))
 
             VStack(alignment: .leading, spacing: 2) {

@@ -99,6 +99,8 @@
 "tab.menu" = "メニュー";
 "tab.kokokita" = "ココキタ";
 "tab.course" = "コース";
+"tab.modePilgrimage" = "巡礼";
+"tab.modeRecord" = "記録";
 
 // MARK: - Location
 "location.acquiringLocation" = "位置情報を取得中...";
@@ -335,10 +337,12 @@
 "course.spotsSection" = "スポット一覧";
 "course.progress" = "達成状況";
 "course.completed" = "達成！";
-"course.type.worldHeritage" = "世界遺産";
-"course.type.nationalTreasure" = "国宝・重要文化財";
-"course.type.animeSacredPlace" = "アニメ聖地";
-"course.type.custom" = "カスタム";
+"course.type.pilgrimage" = "巡礼";
+"course.type.stampRally" = "スタンプラリー";
+"course.type.myList" = "マイリスト";
+"course.notVisited" = "未訪問";
+"course.noAddress" = "住所未登録";
+"course.visitedOn" = "%@に訪問済み";
 
 // MARK: - Mode Selection
 "modeSelection.title" = "モードを選んでください";
@@ -356,6 +360,15 @@
 "pilgrimageHome.heroTitle" = "聖地巡礼をはじめよう";
 "pilgrimageHome.heroDescription" = "コースを選んで、スポットを訪れるたびにチェックインが記録されます";
 "pilgrimageHome.viewCourses" = "コース一覧を見る";
+"pilgrimageHome.coursesTitle" = "コース一覧";
+"pilgrimageHome.seeAll" = "すべて見る";
+"pilgrimageHome.progressFormat" = "%d/%d スポット";
+"pilgrimageHome.nearbyTitle" = "近くのスポット";
+"pilgrimageHome.noNearbySpots" = "近くにスポットはありません";
+"pilgrimageHome.locationUnavailable" = "現在地を取得できませんでした";
+"pilgrimageHome.recentTitle" = "最近の達成";
+"pilgrimageHome.noRecentAchievements" = "まだ達成がありません";
+"pilgrimageHome.distanceMeter" = "%dm";
 
 // MARK: - CheckIn Result
 "checkIn.resultTitle" = "チェックイン！";

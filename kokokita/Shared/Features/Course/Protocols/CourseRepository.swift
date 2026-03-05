@@ -7,9 +7,6 @@ protocol CourseRepository {
     /// 全コースを取得（スポット含む）
     func fetchAll() throws -> [Course]
 
-    /// 有効なコースのみ取得（スポット含む）
-    func fetchEnabled() throws -> [Course]
-
     /// ID でコースを取得
     func fetch(id: UUID) throws -> Course?
 
@@ -21,11 +18,11 @@ protocol CourseRepository {
     /// 複数コースを一括保存（バンドルJSON取り込み用）
     func saveAll(_ courses: [Course]) throws
 
-    /// コースの有効/無効を切り替える
-    func setEnabled(_ courseId: UUID, enabled: Bool) throws
+    /// 遡り判定実施済みフラグをセットする
+    func setEverEnabled(_ courseId: UUID) throws
 
-    /// 指定スポットのチェックイン状態を更新
-    func checkIn(spotId: UUID, at date: Date) throws
+    /// 指定スポットに訪問記録を紐づける（isCheckedIn は visitIds から自動導出）
+    func checkIn(spotId: UUID, visitId: UUID?) throws
 
     /// コースを削除
     func delete(_ courseId: UUID) throws

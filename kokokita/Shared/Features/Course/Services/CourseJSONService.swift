@@ -26,6 +26,7 @@ final class CourseJSONService {
     private struct SpotJSON: Decodable {
         let spotId: String
         let name: String
+        let address: String?
         let latitude: Double
         let longitude: Double
         let spotDescription: String?
@@ -55,26 +56,26 @@ final class CourseJSONService {
                     id: existingSpot?.id ?? uuidFromString(s.spotId),
                     spotId: s.spotId,
                     name: s.name,
+                    address: s.address,
                     latitude: s.latitude,
                     longitude: s.longitude,
                     spotDescription: s.spotDescription,
                     orderIndex: s.orderIndex,
                     recognitionRadiusMeters: s.recognitionRadiusMeters,
-                    isCheckedIn: existingSpot?.isCheckedIn ?? false,
-                    firstCheckedInAt: existingSpot?.firstCheckedInAt
+                    firstCheckedInAt: existingSpot?.firstCheckedInAt,
+                    visitIds: existingSpot?.visitIds ?? []
                 )
             }
 
             return Course(
                 id: uuidFromString(json.id),
-                courseType: CourseType(rawValue: json.courseType) ?? .custom,
+                courseType: CourseType(rawValue: json.courseType) ?? .myList,
                 title: json.title,
                 summary: json.summary,
                 source: CourseSource(rawValue: json.source) ?? .bundled,
                 isUserCreated: json.isUserCreated,
                 version: json.version,
                 recognitionRadiusMeters: json.recognitionRadiusMeters,
-                isEnabled: existing?.isEnabled ?? false,
                 everEnabled: existing?.everEnabled ?? false,
                 detailUrl: json.detailUrl,
                 coverImageUrl: json.coverImageUrl,

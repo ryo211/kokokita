@@ -12,9 +12,7 @@ struct Course: Identifiable, Equatable {
     let version: Int
     /// コースレベルのデフォルト認識半径（メートル）
     let recognitionRadiusMeters: Double
-    /// 現在有効かどうか
-    let isEnabled: Bool
-    /// 一度でも有効化したことがあるか（遡り判定トリガー）
+    /// 遡り判定実施済みかどうか（初回インポート後に自動実行）
     let everEnabled: Bool
     let detailUrl: String?
     let coverImageUrl: String?

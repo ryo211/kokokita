@@ -99,6 +99,8 @@
 "tab.menu" = "Menu";
 "tab.kokokita" = "Kokokita";
 "tab.course" = "Course";
+"tab.modePilgrimage" = "Pilgrimage";
+"tab.modeRecord" = "Record";
 
 // MARK: - Error Messages
 "error.locationSimulated" = "Location data appears to be simulated or from an external accessory and cannot be recorded.";
@@ -333,10 +335,12 @@
 "course.spotsSection" = "Spots";
 "course.progress" = "Progress";
 "course.completed" = "Completed!";
-"course.type.worldHeritage" = "World Heritage";
-"course.type.nationalTreasure" = "National Treasure";
-"course.type.animeSacredPlace" = "Anime Sacred Place";
-"course.type.custom" = "Custom";
+"course.type.pilgrimage" = "Pilgrimage";
+"course.type.stampRally" = "Stamp Rally";
+"course.type.myList" = "My List";
+"course.notVisited" = "Not Visited";
+"course.noAddress" = "No Address";
+"course.visitedOn" = "Visited on %@";
 
 // MARK: - Mode Selection
 "modeSelection.title" = "Choose Your Mode";
@@ -354,6 +358,15 @@
 "pilgrimageHome.heroTitle" = "Start Your Pilgrimage";
 "pilgrimageHome.heroDescription" = "Choose a course and check in each time you visit a spot";
 "pilgrimageHome.viewCourses" = "View Courses";
+"pilgrimageHome.coursesTitle" = "Courses";
+"pilgrimageHome.seeAll" = "See All";
+"pilgrimageHome.progressFormat" = "%d/%d Spots";
+"pilgrimageHome.nearbyTitle" = "Nearby Spots";
+"pilgrimageHome.noNearbySpots" = "No spots nearby";
+"pilgrimageHome.locationUnavailable" = "Location unavailable";
+"pilgrimageHome.recentTitle" = "Recent Achievements";
+"pilgrimageHome.noRecentAchievements" = "No achievements yet";
+"pilgrimageHome.distanceMeter" = "%dm";
 
 // MARK: - CheckIn Result
 "checkIn.resultTitle" = "Checked In!";

@@ -6,6 +6,8 @@ struct CourseSpot: Identifiable, Equatable {
     /// コース内でのスポット識別子（課金保護用、変更禁止）
     let spotId: String
     let name: String
+    /// 住所（JSON から提供、任意）
+    let address: String?
     let latitude: Double
     let longitude: Double
     let spotDescription: String?
@@ -13,8 +15,10 @@ struct CourseSpot: Identifiable, Equatable {
     let orderIndex: Int
     /// スポット固有の認識半径（nil の場合はコースのデフォルト値を使用）
     let recognitionRadiusMeters: Double?
-    /// チェックイン済みかどうか
-    let isCheckedIn: Bool
+    /// チェックイン済みかどうか（visitIds が空でなければ true）
+    var isCheckedIn: Bool { !visitIds.isEmpty }
     /// 初回チェックイン日時（遡り判定の場合は過去の訪問日時）
     let firstCheckedInAt: Date?
+    /// このスポットにリンクされた訪問記録の ID 一覧（VisitEntity.id）
+    let visitIds: [UUID]
 }

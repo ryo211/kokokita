@@ -10,7 +10,7 @@ struct CourseScreen: View {
             CourseListView(store: store)
                 .navigationDestination(for: UUID.self) { courseId in
                     if let course = store.courses.first(where: { $0.id == courseId }) {
-                        CourseDetailView(course: course, store: store)
+                        CourseDetailView(course: course)
                     }
                 }
         }

@@ -18,14 +18,6 @@ final class CoreDataCourseRepository: CourseRepository {
         return entities.map { mapToCourse($0) }
     }
 
-    func fetchEnabled() throws -> [Course] {
-        let req = CourseEntity.fetchRequest()
-        req.predicate = NSPredicate(format: "isEnabled == YES")
-        req.sortDescriptors = [NSSortDescriptor(key: "createdAt", ascending: true)]
-        let entities = try ctx.fetch(req)
-        return entities.map { mapToCourse($0) }
-    }
-
     func fetch(id: UUID) throws -> Course? {
         guard let entity = try fetchEntity(id: id) else { return nil }
         return mapToCourse(entity)
@@ -47,25 +39,44 @@ final class CoreDataCourseRepository: CourseRepository {
         try ctx.save()
     }
 
-    func setEnabled(_ courseId: UUID, enabled: Bool) throws {
+    func setEverEnabled(_ courseId: UUID) throws {
         guard let entity = try fetchEntity(id: courseId) else { return }
-        entity.isEnabled = NSNumber(value: enabled)
-        // 初めて有効化する場合は everEnabled を true にする
-        if enabled, entity.everEnabled?.boolValue == false {
-            entity.everEnabled = NSNumber(value: true)
-        }
+        entity.everEnabled = NSNumber(value: true)
         entity.updatedAt = Date()
         try ctx.save()
     }
 
-    func checkIn(spotId: UUID, at date: Date) throws {
+    func checkIn(spotId: UUID, visitId: UUID?) throws {
+        // fetchLimit を設けず同UUID の全エンティティを更新する
+        // （syncSpots の不具合で重複エンティティが生成された場合も確実にリンクを反映するため）
         let req = CourseSpotEntity.fetchRequest()
         req.predicate = NSPredicate(format: "id == %@", spotId as CVarArg)
-        req.fetchLimit = 1
-        guard let spot = try ctx.fetch(req).first else { return }
-        spot.isCheckedIn = NSNumber(value: true)
-        spot.firstCheckedInAt = date
+        let found = try ctx.fetch(req)
+
+        guard !found.isEmpty else {
+            Logger.warning("checkIn: スポットが見つかりません spotId=\(spotId)")
+            return
+        }
+
+        // visitId → VisitDetailsEntity を解決
+        var visitDetails: VisitDetailsEntity? = nil
+        if let visitId = visitId {
+            let vReq = VisitEntity.fetchRequest()
+            vReq.predicate = NSPredicate(format: "id == %@", visitId as CVarArg)
+            vReq.fetchLimit = 1
+            visitDetails = try ctx.fetch(vReq).first?.details
+        }
+
+        for spot in found {
+            // isCheckedIn / firstCheckedInAt はフラグとして書き込まず visits リレーションから導出
+            if let details = visitDetails,
+               !(spot.visits?.contains(details) ?? false) {
+                spot.addToVisits(details)
+            }
+        }
         try ctx.save()
+        // 関係キャッシュを無効化して次回フェッチ時に必ず永続化ストアから取得させる
+        ctx.refreshAllObjects()
     }
 
     func delete(_ courseId: UUID) throws {
@@ -98,7 +109,6 @@ final class CoreDataCourseRepository: CourseRepository {
         entity.isUserCreated = NSNumber(value: course.isUserCreated)
         entity.version = Int32(course.version)
         entity.recognitionRadiusMeters = course.recognitionRadiusMeters
-        entity.isEnabled = NSNumber(value: course.isEnabled)
         entity.everEnabled = NSNumber(value: course.everEnabled)
         entity.detailUrl = course.detailUrl
         entity.coverImageUrl = course.coverImageUrl
@@ -112,7 +122,8 @@ final class CoreDataCourseRepository: CourseRepository {
     /// スポット一覧を同期（チェックイン済みフラグは上書きしない）
     private func syncSpots(_ spots: [CourseSpot], to courseEntity: CourseEntity) {
         // 既存スポットを id でマッピング
-        let existing: [UUID: CourseSpotEntity] = (courseEntity.spots as? Set<CourseSpotEntity>)?
+        // NSOrderedSet は Set<T> に直接キャストできないため .array 経由で取得する
+        let existing: [UUID: CourseSpotEntity] = (courseEntity.spots?.array as? [CourseSpotEntity])?
             .reduce(into: [:]) { dict, e in
                 if let id = e.id { dict[id] = e }
             } ?? [:]
@@ -123,6 +134,7 @@ final class CoreDataCourseRepository: CourseRepository {
             e.id = spot.id
             e.spotId = spot.spotId
             e.name = spot.name
+            e.address = spot.address
             e.latitude = spot.latitude
             e.longitude = spot.longitude
             e.spotDescription = spot.spotDescription
@@ -145,14 +157,13 @@ final class CoreDataCourseRepository: CourseRepository {
     private func mapToCourse(_ entity: CourseEntity) -> Course {
         Course(
             id: entity.id ?? UUID(),
-            courseType: CourseType(rawValue: entity.courseType ?? "") ?? .custom,
+            courseType: CourseType(rawValue: entity.courseType ?? "") ?? .myList,
             title: entity.title ?? "",
             summary: entity.summary,
             source: CourseSource(rawValue: entity.source ?? "") ?? .bundled,
             isUserCreated: entity.isUserCreated?.boolValue ?? false,
             version: Int(entity.version),
             recognitionRadiusMeters: entity.recognitionRadiusMeters,
-            isEnabled: entity.isEnabled?.boolValue ?? false,
             everEnabled: entity.everEnabled?.boolValue ?? false,
             detailUrl: entity.detailUrl,
             coverImageUrl: entity.coverImageUrl,
@@ -165,17 +176,24 @@ final class CoreDataCourseRepository: CourseRepository {
     private func mapToSpots(_ entity: CourseEntity) -> [CourseSpot] {
         guard let ordered = entity.spots?.array as? [CourseSpotEntity] else { return [] }
         return ordered.map { s in
-            CourseSpot(
+            // visits リレーションから VisitEntity.id を日時昇順で取得
+            let sortedVisitDetails = ((s.visits as? Set<VisitDetailsEntity>) ?? [])
+                .sorted { ($0.visit?.timestampUTC ?? .distantPast) < ($1.visit?.timestampUTC ?? .distantPast) }
+            let visitIds: [UUID] = sortedVisitDetails.compactMap { $0.visit?.id }
+            // firstCheckedInAt は visits の最古の訪問日時から導出（CoreData フラグは参照しない）
+            let firstCheckedInAt: Date? = sortedVisitDetails.first?.visit?.timestampUTC
+            return CourseSpot(
                 id: s.id ?? UUID(),
                 spotId: s.spotId ?? "",
                 name: s.name ?? "",
+                address: s.address,
                 latitude: s.latitude,
                 longitude: s.longitude,
                 spotDescription: s.spotDescription,
                 orderIndex: Int(s.orderIndex),
                 recognitionRadiusMeters: s.recognitionRadiusMeters?.doubleValue,
-                isCheckedIn: s.isCheckedIn?.boolValue ?? false,
-                firstCheckedInAt: s.firstCheckedInAt
+                firstCheckedInAt: firstCheckedInAt,
+                visitIds: visitIds
             )
         }
     }

@@ -20,12 +20,27 @@ final class CourseListStore {
     ) {
         self.repo = repo
         self.retroactiveService = retroactiveService
+
+        // チェックイン変更を監視して一覧を再ロード
+        NotificationCenter.default.addObserver(forName: .courseChanged, object: nil, queue: .main) { [weak self] _ in
+            guard let self else { return }
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                await self.load()
+            }
+        }
     }
 
-    /// コース一覧を読み込む
+    /// コース一覧を読み込む（遡り判定未実施コースを自動実行）
     func load() async {
         do {
             courses = try repo.fetchAll()
+            // everEnabled == false のコースは初回インポート扱い → 遡り判定を自動実行
+            for course in courses where !course.everEnabled {
+                Task {
+                    await runRetroactiveRecognition(courseId: course.id)
+                }
+            }
         } catch {
             Logger.error("コース一覧読み込みエラー", error: error)
             errorMessage = error.localizedDescription
@@ -33,51 +48,14 @@ final class CourseListStore {
         }
     }
 
-    /// コースの有効/無効を切り替える
-    func toggleEnabled(_ course: Course) {
-        let wasEverEnabled = course.everEnabled
-        let newEnabled = !course.isEnabled
-
-        do {
-            try repo.setEnabled(course.id, enabled: newEnabled)
-            // UI 即時更新
-            if let idx = courses.firstIndex(where: { $0.id == course.id }) {
-                courses[idx] = Course(
-                    id: course.id,
-                    courseType: course.courseType,
-                    title: course.title,
-                    summary: course.summary,
-                    source: course.source,
-                    isUserCreated: course.isUserCreated,
-                    version: course.version,
-                    recognitionRadiusMeters: course.recognitionRadiusMeters,
-                    isEnabled: newEnabled,
-                    everEnabled: newEnabled ? true : course.everEnabled,
-                    detailUrl: course.detailUrl,
-                    coverImageUrl: course.coverImageUrl,
-                    createdAt: course.createdAt,
-                    updatedAt: Date(),
-                    spots: course.spots
-                )
-            }
-
-            // 初めて有効化した場合のみ遡り判定を実行
-            if newEnabled && !wasEverEnabled {
-                Task {
-                    await runRetroactiveRecognition(courseId: course.id)
-                }
-            }
-        } catch {
-            Logger.error("コース有効化エラー", error: error)
-            errorMessage = error.localizedDescription
-            showError = true
-        }
-    }
-
     /// 遡り判定を実行
     private func runRetroactiveRecognition(courseId: UUID) async {
-        guard let svc = retroactiveService else { return }
         do {
+            // 二重実行防止のため先にフラグをセット
+            try repo.setEverEnabled(courseId)
+
+            guard let svc = retroactiveService else { return }
+
             let result = try await Task.detached(priority: .background) {
                 try svc.recognize(for: courseId)
             }.value

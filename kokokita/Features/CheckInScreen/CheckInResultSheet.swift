@@ -16,7 +16,7 @@ struct CheckInResultSheet: View {
                     VStack(spacing: 12) {
                         Image(systemName: "checkmark.seal.fill")
                             .font(.system(size: 64))
-                            .foregroundStyle(.orange)
+                            .foregroundStyle(.indigo)
                             .symbolEffect(.bounce, value: true)
 
                         Text(L.CheckIn.resultTitle)
@@ -65,7 +65,7 @@ private struct CheckInResultRow: View {
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: "checkmark.circle.fill")
-                .foregroundStyle(.orange)
+                .foregroundStyle(.indigo)
                 .font(.system(size: 24))
 
             VStack(alignment: .leading, spacing: 2) {
@@ -76,7 +76,7 @@ private struct CheckInResultRow: View {
                     .foregroundStyle(.secondary)
                 Text(String(format: L.CheckIn.distanceFormat, Int(result.distanceMeters)))
                     .font(.caption2)
-                    .foregroundStyle(.orange)
+                    .foregroundStyle(.indigo)
             }
 
             Spacer()
@@ -88,7 +88,7 @@ private struct CheckInResultRow: View {
                 ProgressView(value: result.course.completionRate)
                     .progressViewStyle(.linear)
                     .frame(width: 60)
-                    .tint(.orange)
+                    .tint(.indigo)
             }
         }
         .padding(16)

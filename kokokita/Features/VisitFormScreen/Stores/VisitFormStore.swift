@@ -275,16 +275,11 @@ final class VisitFormStore {
 
             try repo.create(visit: visit, details: details)
 
-            // コース認識を非同期で実行（UIスレッドをブロックしない）
+            // コース認識を同期実行（保存完了後、画面遷移前に結果を確定）
             let lat = latitude
             let lon = longitude
             if let svc = courseRecognitionService, let cRepo = courseRepo {
-                Task {
-                    await recognizeCourses(
-                        latitude: lat, longitude: lon,
-                        service: svc, courseRepo: cRepo
-                    )
-                }
+                recognizeCourses(latitude: lat, longitude: lon, visitId: id, service: svc, courseRepo: cRepo)
             }
 
             return true
@@ -294,29 +289,25 @@ final class VisitFormStore {
         }
     }
 
-    /// コース認識をバックグラウンドで実行
+    /// コース認識を実行（同期、MainActor 上で CoreData viewContext に安全にアクセス）
+    @MainActor
     private func recognizeCourses(
         latitude: Double,
         longitude: Double,
+        visitId: UUID,
         service: CourseRecognitionService,
         courseRepo: CourseRepository
-    ) async {
+    ) {
         do {
-            let results = try await Task.detached(priority: .background) {
-                try service.recognize(latitude: latitude, longitude: longitude, isManualEntry: false)
-            }.value
+            let results = try service.recognize(latitude: latitude, longitude: longitude, isManualEntry: false)
 
             guard !results.isEmpty else { return }
 
-            // チェックイン処理
             for result in results {
-                try courseRepo.checkIn(spotId: result.spot.id, at: Date())
+                try courseRepo.checkIn(spotId: result.spot.id, visitId: visitId)
             }
 
-            // UI 更新（MainActor）
-            await MainActor.run {
-                self.pendingCheckInResults = results
-            }
+            pendingCheckInResults = results
         } catch {
             Logger.error("コース認識エラー", error: error)
         }

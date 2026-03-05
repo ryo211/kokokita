@@ -28,10 +28,6 @@ final class CourseRetroactiveRecognitionService {
     /// - ヒットしたスポットの firstCheckedInAt を過去の訪問日時に設定
     func recognize(for courseId: UUID) throws -> RetroactiveResult? {
         guard var course = try courseRepo.fetch(id: courseId) else { return nil }
-        guard course.everEnabled else {
-            Logger.warning("遡り判定: everEnabled == false のコースは対象外")
-            return nil
-        }
 
         // 証明付き訪問記録（isManualEntry == false）を全件取得
         let proofVisits = try fetchProofVisits()
@@ -56,10 +52,12 @@ final class CourseRetroactiveRecognitionService {
             }
 
             if let earliest = candidates.min(by: { $0.timestampUTC < $1.timestampUTC }) {
-                // チェックイン済みにする（firstCheckedInAt は過去の訪問日時）
-                try courseRepo.checkIn(spotId: spot.id, at: earliest.timestampUTC)
+                // 全候補の訪問記録を紐づける（firstCheckedInAt は最古の訪問日時で固定）
+                for candidate in candidates {
+                    try courseRepo.checkIn(spotId: spot.id, visitId: candidate.id)
+                }
                 checkedInSpots.append(spot)
-                Logger.info("遡りチェックイン: \(spot.name) - \(earliest.timestampUTC)")
+                Logger.info("遡りチェックイン: \(spot.name) - \(earliest.timestampUTC)（紐づけ訪問数: \(candidates.count)）")
             }
         }
 

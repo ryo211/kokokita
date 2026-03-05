@@ -41,7 +41,10 @@ struct VisitFormScreen: View {
     .sheet(isPresented: Binding(
       get: { !vm.pendingCheckInResults.isEmpty },
       set: { if !$0 { vm.pendingCheckInResults = [] } }
-    )) {
+    ), onDismiss: {
+      // チェックイン結果シートを閉じたらフォームも閉じる
+      dismiss()
+    }) {
       CheckInResultSheet(results: vm.pendingCheckInResults) {
         vm.pendingCheckInResults = []
       }

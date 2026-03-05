@@ -22,23 +22,22 @@ final class CourseRecognitionService {
 
     /// 指定座標に対して有効コース全件を判定し、ヒットしたコース×スポットを返す
     /// - 条件A: isManualEntry == false（後付け記録は対象外）
-    /// - 条件B: spot.isCheckedIn == false
+    /// - チェックイン済みスポットも再認識対象（再訪問を正しく記録するため）
     /// - 同一コース内複数該当 → 最短距離のみ採用
     /// - 複数コース該当 → 全件返す
     func recognize(latitude: Double, longitude: Double, isManualEntry: Bool) throws -> [RecognitionResult] {
         guard !isManualEntry else { return [] }
 
-        let courses = try repo.fetchEnabled()
+        let courses = try repo.fetchAll()
         let location = CLLocation(latitude: latitude, longitude: longitude)
         var results: [RecognitionResult] = []
 
         for course in courses {
-            // 未チェックインスポットのみ対象
-            let uncheckedSpots = course.spots.filter { !$0.isCheckedIn }
-            guard !uncheckedSpots.isEmpty else { continue }
+            // 全スポット対象（チェックイン済みでも再認識する）
+            guard !course.spots.isEmpty else { continue }
 
             // BBox プレフィルタ（±0.003度 ≒ 約330m）
-            let filtered = uncheckedSpots.filter { spot in
+            let filtered = course.spots.filter { spot in
                 abs(spot.latitude - latitude) <= 0.003 &&
                 abs(spot.longitude - longitude) <= 0.003
             }
