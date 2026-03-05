@@ -78,13 +78,8 @@ struct RootTabView: View {
 
                 // 記録画面のみ: 右下にフローティングボタン（地図シート・カレンダー表示中は非表示）
                 if tab == .records && !ui.isMapSheetVisible && !ui.isCalendarVisible {
-                    HStack(alignment: .bottom, spacing: 8) {
-                        FloatingAtozukeButton {
-                            recording.showManualEntrySheet = true
-                        }
-                        FloatingKokokitaButton {
-                            recording.checkLocationPermissionAndCreate()
-                        }
+                    FloatingAtozukeButton {
+                        recording.showManualEntrySheet = true
                     }
                     .padding(.trailing, 16)
                     .padding(.bottom, 16)
@@ -622,16 +617,16 @@ fileprivate struct FloatingAtozukeButton: View {
                                 )
                             )
                     }
-                    .frame(width: 44, height: 44)
-                    .shadow(color: Color.orange.opacity(0.32), radius: 8, x: 0, y: 3)
-                    .shadow(color: Color.orange.opacity(0.12), radius: 4, x: 0, y: 2)
+                    .frame(width: 64, height: 64)
+                    .shadow(color: Color.orange.opacity(0.35), radius: 12, x: 0, y: 4)
+                    .shadow(color: Color.orange.opacity(0.15), radius: 6, x: 0, y: 2)
 
                 VStack(spacing: 2) {
                     Image(systemName: "clock.fill")
-                        .font(.system(size: 17, weight: .semibold))
+                        .font(.system(size: 24, weight: .semibold))
                         .foregroundStyle(.white)
                     Text("＋追加")
-                        .font(.system(size: 9, weight: .bold))
+                        .font(.caption2.weight(.bold))
                         .foregroundStyle(.white)
                 }
             }

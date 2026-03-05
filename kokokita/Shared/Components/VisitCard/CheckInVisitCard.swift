@@ -36,6 +36,13 @@ struct CheckInVisitCard: View {
         return L.Home.noTitle
     }
 
+    /// タイトル・施設名が実際に入力されているか
+    private var hasRealTitle: Bool {
+        let title = aggregate.details.title?.trimmed ?? ""
+        let facility = aggregate.details.facilityName?.trimmed ?? ""
+        return !title.isEmpty || !facility.isEmpty
+    }
+
     /// フォーマットされた日付文字列
     private var formattedDate: String {
         aggregate.visit.timestampUTC.kokokitaVisitString
@@ -85,7 +92,7 @@ struct CheckInVisitCard: View {
                     maxLines: 1,
                     textStyle: .subheadline,
                     fontWeight: .bold,
-                    textColor: visitCardTitleUIColor
+                    textColor: hasRealTitle ? visitCardTitleUIColor : visitCardTitleUIColor.withAlphaComponent(0.4)
                 )
             }
             .frame(maxWidth: .infinity, alignment: .leading)

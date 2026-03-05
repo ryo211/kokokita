@@ -67,6 +67,18 @@ struct StandardVisitCard: View {
                             .foregroundStyle(.secondary)
                     }
                 }
+            } else {
+                // タイトルがない場合はグレーで "タイトルなし" + バッジを表示
+                InlineRecordTypeTitle(
+                    title: L.Home.noTitle,
+                    isManualEntry: aggregate.visit.isManualEntry,
+                    compact: compact,
+                    maxLines: 1,
+                    textStyle: compact ? .subheadline : .headline,
+                    fontWeight: .bold,
+                    textColor: .tertiaryLabel
+                )
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
 
             // グループ（フォルダ帰属表示）

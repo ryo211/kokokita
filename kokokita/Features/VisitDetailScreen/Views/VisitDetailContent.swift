@@ -26,6 +26,11 @@ struct VisitDetailContent: View {
         data.title.ifBlank(L.Home.noTitle)
     }
 
+    /// タイトルが実際に入力されているか（"タイトルなし" フォールバックでないか）
+    private var hasRealTitle: Bool {
+        displayTitle != L.Home.noTitle
+    }
+
     /// タイトル + 記録タイプアイコン（共有用）
     private var titleWithIconView: some View {
         InlineRecordTypeTitle(
@@ -35,7 +40,7 @@ struct VisitDetailContent: View {
             maxLines: 3,
             textStyle: .title2,
             fontWeight: .bold,
-            textColor: .label
+            textColor: hasRealTitle ? .label : .tertiaryLabel
         )
     }
 

@@ -60,7 +60,7 @@
 "home.search.placeholder" = "検索";
 "home.deleteConfirmTitle" = "この記録を削除しますか？";
 "home.deleteConfirmMessage" = "この操作は取り消せません。";
-"home.noTitle" = "";
+"home.noTitle" = "No Title";
 "home.itemsCount" = "件";
 "home.switchToMap" = "地図に切り替え";
 "home.switchToList" = "一覧に切り替え";
@@ -363,7 +363,7 @@
 "pilgrimageHome.coursesTitle" = "コース一覧";
 "pilgrimageHome.seeAll" = "すべて見る";
 "pilgrimageHome.progressFormat" = "%d/%d スポット";
-"pilgrimageHome.nearbyTitle" = "近くのスポット";
+"pilgrimageHome.nearbyTitle" = "近くの巡礼スポット";
 "pilgrimageHome.noNearbySpots" = "近くにスポットはありません";
 "pilgrimageHome.locationUnavailable" = "現在地を取得できませんでした";
 "pilgrimageHome.recentTitle" = "最近の達成";
