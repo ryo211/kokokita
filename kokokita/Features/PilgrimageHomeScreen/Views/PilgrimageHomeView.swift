@@ -7,6 +7,7 @@ import CoreLocation
 struct PilgrimageHomeView: View {
     @State private var store = CourseListStore()
     @State private var userLocation: CLLocation? = CLLocationManager().location
+    @State private var isRefreshingNearbySpots = false
 
     // MARK: - Derived Data
 
@@ -54,8 +55,17 @@ struct PilgrimageHomeView: View {
                     mainContent
                 }
             }
-            .navigationTitle(L.PilgrimageHome.heroTitle)
-            .navigationBarTitleDisplayMode(.large)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "figure.walk")
+                            .foregroundStyle(.indigo)
+                        Text(L.PilgrimageHome.navTitle)
+                            .font(.headline)
+                    }
+                }
+            }
             .task {
                 await store.load()
                 userLocation = CLLocationManager().location
@@ -68,17 +78,17 @@ struct PilgrimageHomeView: View {
             .navigationDestination(for: PilgrimageHomeRoute.self) { route in
                 switch route {
                 case .courseList:
-                    CourseListView(store: store, showTitle: false)
+                    CourseListView(store: store)
                 case .courseDetail(let courseId, let spotId):
                     if let course = store.courses.first(where: { $0.id == courseId }) {
-                        CourseDetailView(course: course, showTitle: false, initialSelectedSpotId: spotId)
+                        CourseDetailView(course: course, initialSelectedSpotId: spotId)
                     }
                 }
             }
             // コース詳細への遷移（CourseListView が非ルートのためここで処理）
             .navigationDestination(for: UUID.self) { courseId in
                 if let course = store.courses.first(where: { $0.id == courseId }) {
-                    CourseDetailView(course: course, showTitle: false)
+                    CourseDetailView(course: course)
                 }
             }
         }
@@ -118,10 +128,13 @@ struct PilgrimageHomeView: View {
             VStack(spacing: 0) {
                 // ① ヒーローカード
                 if let top = topCourse {
-                    HeroCard(course: top)
-                        .padding(.horizontal, 16)
-                        .padding(.top, 16)
-                        .padding(.bottom, 28)
+                    NavigationLink(value: top.id) {
+                        HeroCard(course: top)
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.horizontal, 16)
+                    .padding(.top, 16)
+                    .padding(.bottom, 28)
                 }
 
                 // ② コース一覧（横スクロール）
@@ -174,9 +187,35 @@ struct PilgrimageHomeView: View {
 
     private var nearbySection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text(L.PilgrimageHome.nearbyTitle)
-                .font(.headline)
-                .padding(.leading, 16)
+            HStack(spacing: 12) {
+                Text(L.PilgrimageHome.nearbyTitle)
+                    .font(.headline)
+
+                Button {
+                    Task { await refreshNearbySpots() }
+                } label: {
+                    ZStack {
+                        Circle()
+                            .fill(.regularMaterial)
+                            .frame(width: 32, height: 32)
+
+                        if isRefreshingNearbySpots {
+                            ProgressView()
+                                .controlSize(.small)
+                        } else {
+                            Image(systemName: "arrow.clockwise")
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundStyle(.indigo)
+                        }
+                    }
+                }
+                .buttonStyle(.plain)
+                .disabled(isRefreshingNearbySpots)
+                .accessibilityLabel("近くの巡礼スポットを更新")
+
+                Spacer()
+            }
+            .padding(.horizontal, 16)
 
             if nearbySpots.isEmpty {
                 Text(userLocation == nil ? L.PilgrimageHome.locationUnavailable : L.PilgrimageHome.noNearbySpots)
@@ -233,6 +272,26 @@ struct PilgrimageHomeView: View {
             }
         }
     }
+
+    // MARK: - Actions
+
+    @MainActor
+    private func refreshNearbySpots() async {
+        guard !isRefreshingNearbySpots else { return }
+        isRefreshingNearbySpots = true
+        defer { isRefreshingNearbySpots = false }
+
+        do {
+            let locationService = DefaultLocationService()
+            let (location, _) = try await locationService.requestOneShotLocation(
+                accuracy: kCLLocationAccuracyHundredMeters,
+                timeout: 8.0
+            )
+            userLocation = location
+        } catch {
+            Logger.warning("Failed to refresh nearby pilgrimage spots location: \(error.localizedDescription)")
+        }
+    }
 }
 
 // MARK: - ① ヒーローカード
@@ -241,44 +300,73 @@ private struct HeroCard: View {
     let course: Course
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            // 種別バッジ
-            Text(course.courseType.displayName)
-                .font(.caption.bold())
-                .foregroundStyle(.white)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 4)
-                .background(Color.indigo, in: Capsule())
-
-            // コース名
-            Text(course.title)
-                .font(.title3.bold())
-                .lineLimit(2)
-
-            // 進捗テキスト
-            HStack {
-                Text(L.PilgrimageHome.progressFormat(course.checkedInCount, course.totalSpotCount))
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                Spacer()
-                Text("\(Int(course.completionRate * 100))%")
-                    .font(.subheadline.bold())
-                    .foregroundStyle(course.isCompleted ? .green : .indigo)
+        VStack(alignment: .leading, spacing: 0) {
+            // カバー画像（フル幅でどんと表示）
+            if let urlStr = course.coverImageUrl, let url = URL(string: urlStr) {
+                AsyncImage(url: url) { phase in
+                    switch phase {
+                    case .success(let image):
+                        image
+                            .resizable()
+                            .scaledToFill()
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 180)
+                            .clipped()
+                    case .empty:
+                        Color.indigo.opacity(0.08).frame(height: 180)
+                    default:
+                        EmptyView()
+                    }
+                }
             }
 
-            // プログレスバー（大）
-            ProgressView(value: course.completionRate)
-                .progressViewStyle(.linear)
-                .tint(course.isCompleted ? .green : .indigo)
-                .scaleEffect(y: 1.8, anchor: .center)
+            // テキストコンテンツ
+            VStack(alignment: .leading, spacing: 12) {
+                // コース名
+                Text(course.title)
+                    .font(.title3.bold())
+                    .lineLimit(2)
+
+                // カテゴリタグ（コース一覧と同デザイン）
+                if !course.categories.isEmpty {
+                    HStack(spacing: 6) {
+                        ForEach(course.categories, id: \.rawValue) { cat in
+                            HStack(spacing: 3) {
+                                Image(systemName: cat.iconName)
+                                Text(cat.displayName)
+                            }
+                            .font(.caption2.weight(.medium))
+                            .foregroundStyle(.indigo)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 3)
+                            .background(Color.indigo.opacity(0.1), in: Capsule())
+                        }
+                    }
+                }
+
+                // 進捗テキスト
+                HStack {
+                    Text(L.PilgrimageHome.progressFormat(course.checkedInCount, course.totalSpotCount))
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    Text("\(Int(course.completionRate * 100))%")
+                        .font(.subheadline.bold())
+                        .foregroundStyle(course.isCompleted ? .green : .indigo)
+                }
+
+                // プログレスバー（大）
+                ProgressView(value: course.completionRate)
+                    .progressViewStyle(.linear)
+                    .tint(course.isCompleted ? .green : .indigo)
+                    .scaleEffect(y: 1.8, anchor: .center)
+            }
+            .padding(20)
         }
-        .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(.regularMaterial)
-                .shadow(color: .black.opacity(0.08), radius: 12, x: 0, y: 4)
-        )
+        .background(.regularMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .shadow(color: .black.opacity(0.08), radius: 12, x: 0, y: 4)
     }
 }
 
@@ -289,22 +377,29 @@ private struct CourseCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            // カバー画像エリア（coverImageUrl 未実装のためプレースホルダー）
-            ZStack {
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(Color.indigo.opacity(0.12))
-                    .frame(height: 80)
-                Image(systemName: course.isCompleted ? "checkmark.seal.fill" : "figure.walk.circle")
-                    .font(.title)
-                    .foregroundStyle(.indigo.opacity(0.5))
+            // カバー画像エリア（リモート画像 or カテゴリアイコンフォールバック）
+            Group {
+                if let urlStr = course.coverImageUrl, let url = URL(string: urlStr) {
+                    AsyncImage(url: url) { phase in
+                        switch phase {
+                        case .success(let image):
+                            image
+                                .resizable()
+                                .scaledToFill()
+                                .frame(height: 80)
+                                .clipped()
+                                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        default:
+                            courseIconPlaceholder
+                        }
+                    }
+                } else {
+                    courseIconPlaceholder
+                }
             }
+            .frame(height: 80)
 
             VStack(alignment: .leading, spacing: 4) {
-                // 種別バッジ
-                Text(course.courseType.displayName)
-                    .font(.caption2.bold())
-                    .foregroundStyle(.indigo)
-
                 // コース名
                 Text(course.title)
                     .font(.subheadline.bold())
@@ -325,6 +420,24 @@ private struct CourseCard: View {
                 .fill(.regularMaterial)
                 .shadow(color: .black.opacity(0.06), radius: 6, x: 0, y: 2)
         )
+    }
+
+    // カテゴリアイコンのプレースホルダー
+    private var courseIconPlaceholder: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(Color.indigo.opacity(0.12))
+            VStack(spacing: 4) {
+                Image(systemName: course.isCompleted ? "checkmark.seal.fill" : (course.categories.first?.iconName ?? "map"))
+                    .font(.title2)
+                    .foregroundStyle(.indigo.opacity(0.6))
+                if let cat = course.categories.first {
+                    Text(course.isCompleted ? L.Course.completed : cat.displayName)
+                        .font(.caption2.weight(.medium))
+                        .foregroundStyle(.indigo.opacity(0.6))
+                }
+            }
+        }
     }
 }
 
@@ -353,7 +466,7 @@ private struct NearbySpotRow: View {
 
             Spacer()
 
-            Text(L.PilgrimageHome.distanceMeter(Int(distance)))
+            Text(L.PilgrimageHome.distanceFormatted(distance))
                 .font(.caption.bold())
                 .foregroundStyle(.indigo)
         }

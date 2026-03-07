@@ -338,6 +338,14 @@
 "course.type.pilgrimage" = "Pilgrimage";
 "course.type.stampRally" = "Stamp Rally";
 "course.type.myList" = "My List";
+"course.category.history_culture" = "History & Culture";
+"course.category.sightseeing" = "Sightseeing";
+"course.category.architecture" = "Architecture";
+"course.category.nature" = "Nature";
+"course.category.anime" = "Anime & Manga";
+"course.category.art" = "Art";
+"course.category.other" = "Other";
+"course.achieved" = "done";
 "course.notVisited" = "Not Visited";
 "course.noAddress" = "No Address";
 "course.visitedOn" = "Visited on %@";
@@ -355,6 +363,7 @@
 "modeSelection.switchToPilgrimage" = "Switch to Pilgrimage Mode";
 
 // MARK: - Pilgrimage Home
+"pilgrimageHome.navTitle" = "Pilgrimage";
 "pilgrimageHome.heroTitle" = "Start Your Pilgrimage";
 "pilgrimageHome.heroDescription" = "Choose a course and check in each time you visit a spot";
 "pilgrimageHome.viewCourses" = "View Courses";
@@ -362,6 +371,7 @@
 "pilgrimageHome.seeAll" = "See All";
 "pilgrimageHome.progressFormat" = "%d/%d Spots";
 "pilgrimageHome.nearbyTitle" = "Nearby Spots";
+"pilgrimageHome.nearbyRefresh" = "Refresh";
 "pilgrimageHome.noNearbySpots" = "No spots nearby";
 "pilgrimageHome.locationUnavailable" = "Location unavailable";
 "pilgrimageHome.recentTitle" = "Recent Achievements";

@@ -8,7 +8,8 @@ final class CourseJSONService {
         self.repo = repo
     }
 
-    // JSON 構造体（デコード用）
+    // MARK: - JSON 構造体（デコード用）
+
     private struct CourseJSON: Decodable {
         let id: String
         let courseType: String
@@ -19,6 +20,20 @@ final class CourseJSONService {
         let version: Int
         let recognitionRadiusMeters: Double
         let detailUrl: String?
+        let coverImageUrl: String?
+        /// カテゴリ（rawValue 文字列の配列）
+        let categories: [String]?
+        /// セクション形式（新フォーマット）
+        let sections: [SectionJSON]?
+        /// スポット直下形式（後方互換フォーマット）
+        let spots: [SpotJSON]?
+    }
+
+    private struct SectionJSON: Decodable {
+        let sectionId: String
+        let name: String
+        let sectionDescription: String?
+        let orderIndex: Int
         let coverImageUrl: String?
         let spots: [SpotJSON]
     }
@@ -34,38 +49,37 @@ final class CourseJSONService {
         let recognitionRadiusMeters: Double?
     }
 
-    /// バンドルの bundled_courses.json を読み込んで DB に取り込む
+    // MARK: - インポート
+
+    /// courses/index.json に列挙されたファイル名順に各コース JSON を読み込んで DB に取り込む
     /// - 既存コースは version が新しい場合のみメタ情報を更新（チェックイン状態は保持）
+    /// - sections 形式・spots 直下形式の両方をサポート
     func importBundledCoursesIfNeeded() throws {
-        guard let url = Bundle.main.url(forResource: "bundled_courses", withExtension: "json") else {
-            Logger.warning("bundled_courses.json が見つかりません")
+        // courses/index.json からファイル名リスト（表示順）を取得
+        // 実機では IPA バンドル内でリソースがフラット化される場合があるため
+        // subdirectory あり → なし の順にフォールバック
+        guard let indexUrl = bundleURL(resource: "index") else {
+            Logger.warning("courses/index.json が見つかりません")
             return
         }
+        let indexData = try Data(contentsOf: indexUrl)
+        let fileNames = try JSONDecoder().decode([String].self, from: indexData)
 
-        let data = try Data(contentsOf: url)
-        let decoded = try JSONDecoder().decode([CourseJSON].self, from: data)
+        // index の順番通りに各コース JSON を読み込む
+        let decoded: [CourseJSON] = try fileNames.compactMap { name in
+            guard let url = bundleURL(resource: name) else {
+                Logger.warning("コース JSON が見つかりません: \(name).json")
+                return nil
+            }
+            let data = try Data(contentsOf: url)
+            return try JSONDecoder().decode(CourseJSON.self, from: data)
+        }
 
         let courses = try decoded.map { json -> Course in
-            // 既存コースがある場合は isEnabled/everEnabled/チェックイン状態を保持
+            // 既存コースがある場合は everEnabled・チェックイン状態を保持
             let existing = try repo.fetch(id: uuidFromString(json.id))
 
-            let spots = json.spots.enumerated().map { (i, s) in
-                // 既存スポットのチェックイン状態を保持
-                let existingSpot = existing?.spots.first { $0.spotId == s.spotId }
-                return CourseSpot(
-                    id: existingSpot?.id ?? uuidFromString(s.spotId),
-                    spotId: s.spotId,
-                    name: s.name,
-                    address: s.address,
-                    latitude: s.latitude,
-                    longitude: s.longitude,
-                    spotDescription: s.spotDescription,
-                    orderIndex: s.orderIndex,
-                    recognitionRadiusMeters: s.recognitionRadiusMeters,
-                    firstCheckedInAt: existingSpot?.firstCheckedInAt,
-                    visitIds: existingSpot?.visitIds ?? []
-                )
-            }
+            let sections = buildSections(from: json, existing: existing)
 
             return Course(
                 id: uuidFromString(json.id),
@@ -81,12 +95,85 @@ final class CourseJSONService {
                 coverImageUrl: json.coverImageUrl,
                 createdAt: existing?.createdAt ?? Date(),
                 updatedAt: Date(),
-                spots: spots
+                categories: (json.categories ?? []).compactMap { CourseCategory(rawValue: $0) },
+                sections: sections
             )
         }
 
         try repo.saveAll(courses)
-        Logger.info("バンドルコース取り込み完了: \(courses.count)件")
+
+        // index.json に存在しないバンドルコースを DB から削除
+        let importedIds = Set(courses.map(\.id))
+        let allCourses = try repo.fetchAll()
+        let toDelete = allCourses.filter { !$0.isUserCreated && !importedIds.contains($0.id) }
+        for course in toDelete {
+            try repo.delete(course.id)
+            Logger.info("バンドルコース削除: \(course.title)")
+        }
+
+        Logger.info("バンドルコース取り込み完了: \(courses.count)件（削除: \(toDelete.count)件）")
+    }
+
+    // MARK: - Private
+
+    /// JSON から CourseSection 配列を構築。
+    /// - sections キーがある場合 → セクション形式として解析
+    /// - spots キーのみの場合 → 全スポットを仮想セクション1つに包む（後方互換）
+    private func buildSections(from json: CourseJSON, existing: Course?) -> [CourseSection] {
+        if let jsonSections = json.sections {
+            // 新フォーマット: セクション形式
+            return jsonSections.map { sec in
+                let spots = buildSpots(from: sec.spots, existingSpots: existing?.spots ?? [])
+                return CourseSection(
+                    id: uuidFromString(sec.sectionId),
+                    sectionId: sec.sectionId,
+                    name: sec.name,
+                    sectionDescription: sec.sectionDescription,
+                    orderIndex: sec.orderIndex,
+                    coverImageUrl: sec.coverImageUrl,
+                    spots: spots
+                )
+            }
+        } else if let jsonSpots = json.spots {
+            // 後方互換フォーマット: spots 直下 → 仮想セクション1つに包む
+            let spots = buildSpots(from: jsonSpots, existingSpots: existing?.spots ?? [])
+            return [CourseSection(
+                id: uuidFromString(json.id + "-default"),
+                sectionId: nil,
+                name: "",
+                sectionDescription: nil,
+                orderIndex: 0,
+                coverImageUrl: nil,
+                spots: spots
+            )]
+        }
+        return []
+    }
+
+    private func buildSpots(from jsonSpots: [SpotJSON], existingSpots: [CourseSpot]) -> [CourseSpot] {
+        jsonSpots.map { s in
+            let existingSpot = existingSpots.first { $0.spotId == s.spotId }
+            return CourseSpot(
+                id: existingSpot?.id ?? uuidFromString(s.spotId),
+                spotId: s.spotId,
+                name: s.name,
+                address: s.address,
+                latitude: s.latitude,
+                longitude: s.longitude,
+                spotDescription: s.spotDescription,
+                orderIndex: s.orderIndex,
+                recognitionRadiusMeters: s.recognitionRadiusMeters,
+                firstCheckedInAt: existingSpot?.firstCheckedInAt,
+                visitIds: existingSpot?.visitIds ?? []
+            )
+        }
+    }
+
+    /// courses/ サブディレクトリ → バンドルルート の順で JSON URL を解決する。
+    /// 実機では IPA のリソースがフラット化されてサブディレクトリが消えるため両方を試みる。
+    private func bundleURL(resource name: String) -> URL? {
+        Bundle.main.url(forResource: name, withExtension: "json", subdirectory: "courses")
+            ?? Bundle.main.url(forResource: name, withExtension: "json")
     }
 
     /// 文字列を UUID に変換（決定論的な UUID5 相当の変換）

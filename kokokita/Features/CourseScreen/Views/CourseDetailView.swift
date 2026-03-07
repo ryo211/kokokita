@@ -20,10 +20,12 @@ struct CourseDetailView: View {
         _selectedSpotId = State(initialValue: initialSelectedSpotId)
         if let spotId = initialSelectedSpotId,
            let spot = course.spots.first(where: { $0.id == spotId }) {
+            let courseRegion = CourseDetailView.fitRegion(for: course.spots)
+            let span = CourseDetailView.spotSpan(from: courseRegion)
             _cameraPosition = State(initialValue: .region(
                 MKCoordinateRegion(
                     center: CLLocationCoordinate2D(latitude: spot.latitude, longitude: spot.longitude),
-                    span: MKCoordinateSpan(latitudeDelta: 1.5, longitudeDelta: 1.5)
+                    span: span
                 )
             ))
         } else {
@@ -131,25 +133,44 @@ struct CourseDetailView: View {
 
     // MARK: - スポットリスト
 
+    /// グローバルスポット番号（全セクション横断、地図ピンと対応）
+    private var globalSpotIndex: [UUID: Int] {
+        Dictionary(uniqueKeysWithValues: course.spots.enumerated().map { ($1.id, $0) })
+    }
+
     private var spotListArea: some View {
         ScrollViewReader { proxy in
             ScrollView {
                 // LazyVStack は scrollTo 非対応のため VStack を使用
                 VStack(spacing: 0) {
-                    ForEach(Array(course.spots.enumerated()), id: \.element.id) { index, spot in
-                        SpotListRowView(
-                            spot: spot,
-                            orderNumber: index + 1,
-                            isSelected: selectedSpotId == spot.id
-                        )
-                        .id(spot.id)
-                        .onTapGesture {
-                            focusSpot(spot)
+                    let indexMap = globalSpotIndex
+                    ForEach(course.sections) { section in
+                        // セクションヘッダー（名前付きセクションのみ表示）
+                        if section.hasName {
+                            CourseSectionHeaderView(section: section)
                         }
 
-                        if index < course.spots.count - 1 {
+                        ForEach(section.spots) { spot in
+                            SpotListRowView(
+                                spot: spot,
+                                orderNumber: (indexMap[spot.id] ?? 0) + 1,
+                                isSelected: selectedSpotId == spot.id
+                            )
+                            .id(spot.id)
+                            .onTapGesture {
+                                focusSpot(spot)
+                            }
+
+                            // セクション内スポット間の区切り線（最後のスポット以外）
+                            if spot.id != section.spots.last?.id {
+                                Divider()
+                                    .padding(.leading, 52)
+                            }
+                        }
+
+                        // セクション間の区切り（最後のセクション以外）
+                        if section.id != course.sections.last?.id {
                             Divider()
-                                .padding(.leading, 52)
                         }
                     }
                 }
@@ -190,10 +211,12 @@ struct CourseDetailView: View {
                 cameraPosition = .region(CourseDetailView.fitRegion(for: course.spots))
             } else {
                 selectedSpotId = spot.id
+                let courseRegion = CourseDetailView.fitRegion(for: course.spots)
+                let span = CourseDetailView.spotSpan(from: courseRegion)
                 cameraPosition = .region(
                     MKCoordinateRegion(
                         center: CLLocationCoordinate2D(latitude: spot.latitude, longitude: spot.longitude),
-                        span: MKCoordinateSpan(latitudeDelta: 1.5, longitudeDelta: 1.5)
+                        span: span
                     )
                 )
             }
@@ -201,6 +224,13 @@ struct CourseDetailView: View {
     }
 
     // MARK: - 全スポットフィット計算
+
+    /// コース全体スパンの 1/10 をスポットフォーカス時のズームスパンとして返す。
+    /// 最小 0.01°（約1km）、最大 0.08°（約9km）にクランプ。
+    static func spotSpan(from courseRegion: MKCoordinateRegion) -> MKCoordinateSpan {
+        let delta = max(0.01, min(courseRegion.span.latitudeDelta / 10, 0.5))
+        return MKCoordinateSpan(latitudeDelta: delta, longitudeDelta: delta)
+    }
 
     static func fitRegion(for spots: [CourseSpot]) -> MKCoordinateRegion {
         guard !spots.isEmpty else {
@@ -236,6 +266,24 @@ struct CourseDetailView: View {
             center: CLLocationCoordinate2D(latitude: centerLat, longitude: centerLon),
             span: MKCoordinateSpan(latitudeDelta: spanLat, longitudeDelta: spanLon)
         )
+    }
+}
+
+// MARK: - セクションヘッダー
+
+private struct CourseSectionHeaderView: View {
+    let section: CourseSection
+
+    var body: some View {
+        HStack {
+            Text(section.name)
+                .font(.subheadline.bold())
+                .foregroundStyle(.primary)
+            Spacer()
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .background(Color(uiColor: .secondarySystemBackground))
     }
 }
 

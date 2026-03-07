@@ -1,0 +1,1018 @@
+{
+  "id": "course-100-famous-castles-japan-001",
+  "courseType": "pilgrimage",
+  "title": "日本100名城",
+  "summary": "公益財団法人日本城郭協会が選定する「日本100名城」を巡るコースです。全国の名城100件を収録。",
+  "source": "bundled",
+  "isUserCreated": false,
+  "version": 1,
+  "recognitionRadiusMeters": 500.0,
+  "detailUrl": "https://jokaku.jp/japan-top-100-castles/",
+  "coverImageUrl": null,
+  "categories": [
+    "architecture",
+    "history_culture"
+  ],
+  "spots": [
+    {
+      "spotId": "c100-jp-001",
+      "name": "根室半島チャシ跡群",
+      "latitude": 43.388727,
+      "longitude": 145.78241,
+      "spotDescription": "日本100名城（No.1）。北海道根室市。",
+      "orderIndex": 0,
+      "recognitionRadiusMeters": null,
+      "address": "北海道根室市"
+    },
+    {
+      "spotId": "c100-jp-002",
+      "name": "五稜郭",
+      "latitude": 41.797184,
+      "longitude": 140.756831,
+      "spotDescription": "日本100名城（No.2）。北海道函館市。",
+      "orderIndex": 1,
+      "recognitionRadiusMeters": null,
+      "address": "北海道函館市"
+    },
+    {
+      "spotId": "c100-jp-003",
+      "name": "松前城",
+      "latitude": 41.429901,
+      "longitude": 140.108412,
+      "spotDescription": "日本100名城（No.3）。北海道松前町。",
+      "orderIndex": 2,
+      "recognitionRadiusMeters": null,
+      "address": "北海道松前町"
+    },
+    {
+      "spotId": "c100-jp-004",
+      "name": "弘前城",
+      "latitude": 40.607452,
+      "longitude": 140.46418,
+      "spotDescription": "日本100名城（No.4）。青森県弘前市。",
+      "orderIndex": 3,
+      "recognitionRadiusMeters": null,
+      "address": "青森県弘前市"
+    },
+    {
+      "spotId": "c100-jp-005",
+      "name": "根城",
+      "latitude": 40.505802,
+      "longitude": 141.462308,
+      "spotDescription": "日本100名城（No.5）。青森県八戸市。",
+      "orderIndex": 4,
+      "recognitionRadiusMeters": null,
+      "address": "青森県八戸市"
+    },
+    {
+      "spotId": "c100-jp-006",
+      "name": "盛岡城",
+      "latitude": 39.699954,
+      "longitude": 141.147923,
+      "spotDescription": "日本100名城（No.6）。岩手県盛岡市。",
+      "orderIndex": 5,
+      "recognitionRadiusMeters": null,
+      "address": "岩手県盛岡市"
+    },
+    {
+      "spotId": "c100-jp-007",
+      "name": "多賀城",
+      "latitude": 38.295202,
+      "longitude": 140.982755,
+      "spotDescription": "日本100名城（No.7）。宮城県多賀城市。",
+      "orderIndex": 6,
+      "recognitionRadiusMeters": null,
+      "address": "宮城県多賀城市"
+    },
+    {
+      "spotId": "c100-jp-008",
+      "name": "仙台城",
+      "latitude": 38.254463,
+      "longitude": 140.850201,
+      "spotDescription": "日本100名城（No.8）。宮城県仙台市。",
+      "orderIndex": 7,
+      "recognitionRadiusMeters": null,
+      "address": "宮城県仙台市"
+    },
+    {
+      "spotId": "c100-jp-009",
+      "name": "久保田城",
+      "latitude": 39.722488,
+      "longitude": 140.121753,
+      "spotDescription": "日本100名城（No.9）。秋田県秋田市。",
+      "orderIndex": 8,
+      "recognitionRadiusMeters": null,
+      "address": "秋田県秋田市"
+    },
+    {
+      "spotId": "c100-jp-010",
+      "name": "山形城",
+      "latitude": 38.198593,
+      "longitude": 140.224617,
+      "spotDescription": "日本100名城（No.10）。山形県山形市。",
+      "orderIndex": 9,
+      "recognitionRadiusMeters": null,
+      "address": "山形県山形市"
+    },
+    {
+      "spotId": "c100-jp-011",
+      "name": "二本松城",
+      "latitude": 37.598649,
+      "longitude": 140.427799,
+      "spotDescription": "日本100名城（No.11）。福島県二本松市。",
+      "orderIndex": 10,
+      "recognitionRadiusMeters": null,
+      "address": "福島県二本松市"
+    },
+    {
+      "spotId": "c100-jp-012",
+      "name": "会津若松城",
+      "latitude": 37.487824,
+      "longitude": 139.927477,
+      "spotDescription": "日本100名城（No.12）。福島県会津若松市。",
+      "orderIndex": 11,
+      "recognitionRadiusMeters": null,
+      "address": "福島県会津若松市"
+    },
+    {
+      "spotId": "c100-jp-013",
+      "name": "白河小峰城",
+      "latitude": 37.132411,
+      "longitude": 140.211503,
+      "spotDescription": "日本100名城（No.13）。福島県白河市。",
+      "orderIndex": 12,
+      "recognitionRadiusMeters": null,
+      "address": "福島県白河市"
+    },
+    {
+      "spotId": "c100-jp-014",
+      "name": "水戸城",
+      "latitude": 36.374751,
+      "longitude": 140.476766,
+      "spotDescription": "日本100名城（No.14）。茨城県水戸市。",
+      "orderIndex": 13,
+      "recognitionRadiusMeters": null,
+      "address": "茨城県水戸市"
+    },
+    {
+      "spotId": "c100-jp-015",
+      "name": "足利氏館",
+      "latitude": 36.337507,
+      "longitude": 139.450092,
+      "spotDescription": "日本100名城（No.15）。栃木県足利市。",
+      "orderIndex": 14,
+      "recognitionRadiusMeters": null,
+      "address": "栃木県足利市"
+    },
+    {
+      "spotId": "c100-jp-016",
+      "name": "箕輪城",
+      "latitude": 36.404955,
+      "longitude": 138.948768,
+      "spotDescription": "日本100名城（No.16）。群馬県高崎市。",
+      "orderIndex": 15,
+      "recognitionRadiusMeters": null,
+      "address": "群馬県高崎市"
+    },
+    {
+      "spotId": "c100-jp-017",
+      "name": "金山城",
+      "latitude": 36.316845,
+      "longitude": 139.374914,
+      "spotDescription": "日本100名城（No.17）。群馬県太田市。",
+      "orderIndex": 16,
+      "recognitionRadiusMeters": null,
+      "address": "群馬県太田市"
+    },
+    {
+      "spotId": "c100-jp-018",
+      "name": "鉢形城",
+      "latitude": 36.106574,
+      "longitude": 139.194087,
+      "spotDescription": "日本100名城（No.18）。埼玉県寄居町。",
+      "orderIndex": 17,
+      "recognitionRadiusMeters": null,
+      "address": "埼玉県寄居町"
+    },
+    {
+      "spotId": "c100-jp-019",
+      "name": "川越城",
+      "latitude": 35.92448,
+      "longitude": 139.489538,
+      "spotDescription": "日本100名城（No.19）。埼玉県川越市。",
+      "orderIndex": 18,
+      "recognitionRadiusMeters": null,
+      "address": "埼玉県川越市"
+    },
+    {
+      "spotId": "c100-jp-020",
+      "name": "佐倉城",
+      "latitude": 35.722386,
+      "longitude": 140.213922,
+      "spotDescription": "日本100名城（No.20）。千葉県佐倉市。",
+      "orderIndex": 19,
+      "recognitionRadiusMeters": null,
+      "address": "千葉県佐倉市"
+    },
+    {
+      "spotId": "c100-jp-021",
+      "name": "江戸城",
+      "latitude": 35.687751,
+      "longitude": 139.752501,
+      "spotDescription": "日本100名城（No.21）。東京都千代田区。",
+      "orderIndex": 20,
+      "recognitionRadiusMeters": null,
+      "address": "東京都千代田区"
+    },
+    {
+      "spotId": "c100-jp-022",
+      "name": "八王子城",
+      "latitude": 35.652765,
+      "longitude": 139.254159,
+      "spotDescription": "日本100名城（No.22）。東京都八王子市。",
+      "orderIndex": 21,
+      "recognitionRadiusMeters": null,
+      "address": "東京都八王子市"
+    },
+    {
+      "spotId": "c100-jp-023",
+      "name": "小田原城",
+      "latitude": 35.250954,
+      "longitude": 139.151325,
+      "spotDescription": "日本100名城（No.23）。神奈川県小田原市。",
+      "orderIndex": 22,
+      "recognitionRadiusMeters": null,
+      "address": "神奈川県小田原市"
+    },
+    {
+      "spotId": "c100-jp-024",
+      "name": "武田氏館 武田神社",
+      "latitude": 35.686965,
+      "longitude": 138.574773,
+      "spotDescription": "日本100名城（No.24）。山梨県甲府市。",
+      "orderIndex": 23,
+      "recognitionRadiusMeters": null,
+      "address": "山梨県甲府市"
+    },
+    {
+      "spotId": "c100-jp-025",
+      "name": "甲府城",
+      "latitude": 35.665279,
+      "longitude": 138.569144,
+      "spotDescription": "日本100名城（No.25）。山梨県甲府市。",
+      "orderIndex": 24,
+      "recognitionRadiusMeters": null,
+      "address": "山梨県甲府市"
+    },
+    {
+      "spotId": "c100-jp-026",
+      "name": "松代城",
+      "latitude": 36.566016,
+      "longitude": 138.193845,
+      "spotDescription": "日本100名城（No.26）。長野県長野市。",
+      "orderIndex": 25,
+      "recognitionRadiusMeters": null,
+      "address": "長野県長野市"
+    },
+    {
+      "spotId": "c100-jp-027",
+      "name": "上田城",
+      "latitude": 36.40616,
+      "longitude": 138.230848,
+      "spotDescription": "日本100名城（No.27）。長野県上田市。",
+      "orderIndex": 26,
+      "recognitionRadiusMeters": null,
+      "address": "長野県上田市"
+    },
+    {
+      "spotId": "c100-jp-028",
+      "name": "小諸城",
+      "latitude": 36.332052,
+      "longitude": 138.385485,
+      "spotDescription": "日本100名城（No.28）。長野県小諸市。",
+      "orderIndex": 27,
+      "recognitionRadiusMeters": null,
+      "address": "長野県小諸市"
+    },
+    {
+      "spotId": "c100-jp-029",
+      "name": "松本城",
+      "latitude": 36.238656,
+      "longitude": 137.966766,
+      "spotDescription": "日本100名城（No.29）。長野県松本市。",
+      "orderIndex": 28,
+      "recognitionRadiusMeters": null,
+      "address": "長野県松本市"
+    },
+    {
+      "spotId": "c100-jp-030",
+      "name": "高遠城",
+      "latitude": 35.83342,
+      "longitude": 138.060033,
+      "spotDescription": "日本100名城（No.30）。長野県伊那市。",
+      "orderIndex": 29,
+      "recognitionRadiusMeters": null,
+      "address": "長野県伊那市"
+    },
+    {
+      "spotId": "c100-jp-031",
+      "name": "新発田城",
+      "latitude": 37.927937,
+      "longitude": 139.301256,
+      "spotDescription": "日本100名城（No.31）。新潟県新発田市。",
+      "orderIndex": 30,
+      "recognitionRadiusMeters": null,
+      "address": "新潟県新発田市"
+    },
+    {
+      "spotId": "c100-jp-032",
+      "name": "春日山城",
+      "latitude": 37.149143,
+      "longitude": 138.211568,
+      "spotDescription": "日本100名城（No.32）。新潟県上越市。",
+      "orderIndex": 31,
+      "recognitionRadiusMeters": null,
+      "address": "新潟県上越市"
+    },
+    {
+      "spotId": "c100-jp-033",
+      "name": "高岡城",
+      "latitude": 36.747936,
+      "longitude": 137.0189,
+      "spotDescription": "日本100名城（No.33）。富山県高岡市。",
+      "orderIndex": 32,
+      "recognitionRadiusMeters": null,
+      "address": "富山県高岡市"
+    },
+    {
+      "spotId": "c100-jp-034",
+      "name": "七尾城",
+      "latitude": 37.02785,
+      "longitude": 136.957457,
+      "spotDescription": "日本100名城（No.34）。石川県七尾市。",
+      "orderIndex": 33,
+      "recognitionRadiusMeters": null,
+      "address": "石川県七尾市"
+    },
+    {
+      "spotId": "c100-jp-035",
+      "name": "金沢城",
+      "latitude": 36.565506,
+      "longitude": 136.657829,
+      "spotDescription": "日本100名城（No.35）。石川県金沢市。",
+      "orderIndex": 34,
+      "recognitionRadiusMeters": null,
+      "address": "石川県金沢市"
+    },
+    {
+      "spotId": "c100-jp-036",
+      "name": "丸岡城",
+      "latitude": 36.152361,
+      "longitude": 136.269957,
+      "spotDescription": "日本100名城（No.36）。福井県坂井市。",
+      "orderIndex": 35,
+      "recognitionRadiusMeters": null,
+      "address": "福井県坂井市"
+    },
+    {
+      "spotId": "c100-jp-037",
+      "name": "一乗谷城",
+      "latitude": 35.999463,
+      "longitude": 136.293744,
+      "spotDescription": "日本100名城（No.37）。福井県福井市。",
+      "orderIndex": 36,
+      "recognitionRadiusMeters": null,
+      "address": "福井県福井市"
+    },
+    {
+      "spotId": "c100-jp-038",
+      "name": "岩村城",
+      "latitude": 35.362303,
+      "longitude": 137.445098,
+      "spotDescription": "日本100名城（No.38）。岐阜県恵那市。",
+      "orderIndex": 37,
+      "recognitionRadiusMeters": null,
+      "address": "岐阜県恵那市"
+    },
+    {
+      "spotId": "c100-jp-039",
+      "name": "岐阜城",
+      "latitude": 35.433918,
+      "longitude": 136.779883,
+      "spotDescription": "日本100名城（No.39）。岐阜県岐阜市。",
+      "orderIndex": 38,
+      "recognitionRadiusMeters": null,
+      "address": "岐阜県岐阜市"
+    },
+    {
+      "spotId": "c100-jp-040",
+      "name": "山中城",
+      "latitude": 35.155828,
+      "longitude": 138.990746,
+      "spotDescription": "日本100名城（No.40）。静岡県三島市。",
+      "orderIndex": 39,
+      "recognitionRadiusMeters": null,
+      "address": "静岡県三島市"
+    },
+    {
+      "spotId": "c100-jp-041",
+      "name": "駿府城",
+      "latitude": 34.979295,
+      "longitude": 138.381799,
+      "spotDescription": "日本100名城（No.41）。静岡県静岡市。",
+      "orderIndex": 40,
+      "recognitionRadiusMeters": null,
+      "address": "静岡県静岡市"
+    },
+    {
+      "spotId": "c100-jp-042",
+      "name": "掛川城",
+      "latitude": 34.775233,
+      "longitude": 138.011705,
+      "spotDescription": "日本100名城（No.42）。静岡県掛川市。",
+      "orderIndex": 41,
+      "recognitionRadiusMeters": null,
+      "address": "静岡県掛川市"
+    },
+    {
+      "spotId": "c100-jp-043",
+      "name": "犬山城",
+      "latitude": 35.388355,
+      "longitude": 136.936989,
+      "spotDescription": "日本100名城（No.43）。愛知県犬山市。",
+      "orderIndex": 42,
+      "recognitionRadiusMeters": null,
+      "address": "愛知県犬山市"
+    },
+    {
+      "spotId": "c100-jp-044",
+      "name": "名古屋城",
+      "latitude": 35.184666,
+      "longitude": 136.897493,
+      "spotDescription": "日本100名城（No.44）。愛知県名古屋市。",
+      "orderIndex": 43,
+      "recognitionRadiusMeters": null,
+      "address": "愛知県名古屋市"
+    },
+    {
+      "spotId": "c100-jp-045",
+      "name": "岡崎城",
+      "latitude": 34.956299,
+      "longitude": 137.156664,
+      "spotDescription": "日本100名城（No.45）。愛知県岡崎市。",
+      "orderIndex": 44,
+      "recognitionRadiusMeters": null,
+      "address": "愛知県岡崎市"
+    },
+    {
+      "spotId": "c100-jp-046",
+      "name": "長篠城",
+      "latitude": 34.922751,
+      "longitude": 137.557508,
+      "spotDescription": "日本100名城（No.46）。愛知県新城市。",
+      "orderIndex": 45,
+      "recognitionRadiusMeters": null,
+      "address": "愛知県新城市"
+    },
+    {
+      "spotId": "c100-jp-047",
+      "name": "伊賀上野城",
+      "latitude": 34.770164,
+      "longitude": 136.124921,
+      "spotDescription": "日本100名城（No.47）。三重県伊賀市。",
+      "orderIndex": 46,
+      "recognitionRadiusMeters": null,
+      "address": "三重県伊賀市"
+    },
+    {
+      "spotId": "c100-jp-048",
+      "name": "松阪城",
+      "latitude": 34.567311,
+      "longitude": 136.490963,
+      "spotDescription": "日本100名城（No.48）。三重県松阪市。",
+      "orderIndex": 47,
+      "recognitionRadiusMeters": null,
+      "address": "三重県松阪市"
+    },
+    {
+      "spotId": "c100-jp-049",
+      "name": "小谷城",
+      "latitude": 35.474004,
+      "longitude": 136.208179,
+      "spotDescription": "日本100名城（No.49）。滋賀県長浜市。",
+      "orderIndex": 48,
+      "recognitionRadiusMeters": null,
+      "address": "滋賀県長浜市"
+    },
+    {
+      "spotId": "c100-jp-050",
+      "name": "彦根城",
+      "latitude": 35.276452,
+      "longitude": 136.247469,
+      "spotDescription": "日本100名城（No.50）。滋賀県彦根市。",
+      "orderIndex": 49,
+      "recognitionRadiusMeters": null,
+      "address": "滋賀県彦根市"
+    },
+    {
+      "spotId": "c100-jp-051",
+      "name": "安土城",
+      "latitude": 35.153437,
+      "longitude": 136.14085,
+      "spotDescription": "日本100名城（No.51）。滋賀県近江八幡市。",
+      "orderIndex": 50,
+      "recognitionRadiusMeters": null,
+      "address": "滋賀県近江八幡市"
+    },
+    {
+      "spotId": "c100-jp-052",
+      "name": "観音寺城",
+      "latitude": 35.145841,
+      "longitude": 136.155488,
+      "spotDescription": "日本100名城（No.52）。滋賀県近江八幡市。",
+      "orderIndex": 51,
+      "recognitionRadiusMeters": null,
+      "address": "滋賀県近江八幡市"
+    },
+    {
+      "spotId": "c100-jp-053",
+      "name": "二条城",
+      "latitude": 35.01423,
+      "longitude": 135.748218,
+      "spotDescription": "日本100名城（No.53）。京都府京都市。",
+      "orderIndex": 52,
+      "recognitionRadiusMeters": null,
+      "address": "京都府京都市"
+    },
+    {
+      "spotId": "c100-jp-054",
+      "name": "大坂城",
+      "latitude": 34.687315,
+      "longitude": 135.526201,
+      "spotDescription": "日本100名城（No.54）。大阪府大阪市。",
+      "orderIndex": 53,
+      "recognitionRadiusMeters": null,
+      "address": "大阪府大阪市"
+    },
+    {
+      "spotId": "c100-jp-055",
+      "name": "千早城",
+      "latitude": 34.416987,
+      "longitude": 135.649248,
+      "spotDescription": "日本100名城（No.55）。大阪府千早赤阪村。",
+      "orderIndex": 54,
+      "recognitionRadiusMeters": null,
+      "address": "大阪府千早赤阪村"
+    },
+    {
+      "spotId": "c100-jp-056",
+      "name": "竹田城",
+      "latitude": 35.300604,
+      "longitude": 134.829168,
+      "spotDescription": "日本100名城（No.56）。兵庫県朝来市。",
+      "orderIndex": 55,
+      "recognitionRadiusMeters": null,
+      "address": "兵庫県朝来市"
+    },
+    {
+      "spotId": "c100-jp-057",
+      "name": "篠山城",
+      "latitude": 35.073083,
+      "longitude": 135.215632,
+      "spotDescription": "日本100名城（No.57）。兵庫県篠山市。",
+      "orderIndex": 56,
+      "recognitionRadiusMeters": null,
+      "address": "兵庫県篠山市"
+    },
+    {
+      "spotId": "c100-jp-058",
+      "name": "明石城",
+      "latitude": 34.652801,
+      "longitude": 134.991789,
+      "spotDescription": "日本100名城（No.58）。兵庫県明石市。",
+      "orderIndex": 57,
+      "recognitionRadiusMeters": null,
+      "address": "兵庫県明石市"
+    },
+    {
+      "spotId": "c100-jp-059",
+      "name": "姫路城",
+      "latitude": 34.839449,
+      "longitude": 134.693905,
+      "spotDescription": "日本100名城（No.59）。兵庫県姫路市。",
+      "orderIndex": 58,
+      "recognitionRadiusMeters": null,
+      "address": "兵庫県姫路市"
+    },
+    {
+      "spotId": "c100-jp-060",
+      "name": "赤穂城",
+      "latitude": 34.745674,
+      "longitude": 134.388985,
+      "spotDescription": "日本100名城（No.60）。兵庫県赤穂市。",
+      "orderIndex": 59,
+      "recognitionRadiusMeters": null,
+      "address": "兵庫県赤穂市"
+    },
+    {
+      "spotId": "c100-jp-061",
+      "name": "高取城",
+      "latitude": 34.429387,
+      "longitude": 135.824673,
+      "spotDescription": "日本100名城（No.61）。奈良県高取町。",
+      "orderIndex": 60,
+      "recognitionRadiusMeters": null,
+      "address": "奈良県高取町"
+    },
+    {
+      "spotId": "c100-jp-062",
+      "name": "和歌山城",
+      "latitude": 34.229476,
+      "longitude": 135.173855,
+      "spotDescription": "日本100名城（No.62）。和歌山県和歌山市。",
+      "orderIndex": 61,
+      "recognitionRadiusMeters": null,
+      "address": "和歌山県和歌山市"
+    },
+    {
+      "spotId": "c100-jp-063",
+      "name": "鳥取城",
+      "latitude": 35.507426,
+      "longitude": 134.239995,
+      "spotDescription": "日本100名城（No.63）。鳥取県鳥取市。",
+      "orderIndex": 62,
+      "recognitionRadiusMeters": null,
+      "address": "鳥取県鳥取市"
+    },
+    {
+      "spotId": "c100-jp-064",
+      "name": "松江城",
+      "latitude": 35.475133,
+      "longitude": 133.04849,
+      "spotDescription": "日本100名城（No.64）。島根県松江市。",
+      "orderIndex": 63,
+      "recognitionRadiusMeters": null,
+      "address": "島根県松江市"
+    },
+    {
+      "spotId": "c100-jp-065",
+      "name": "月山富田城",
+      "latitude": 35.360932,
+      "longitude": 133.18303,
+      "spotDescription": "日本100名城（No.65）。島根県安来市。",
+      "orderIndex": 64,
+      "recognitionRadiusMeters": null,
+      "address": "島根県安来市"
+    },
+    {
+      "spotId": "c100-jp-066",
+      "name": "津和野城",
+      "latitude": 34.458217,
+      "longitude": 131.758923,
+      "spotDescription": "日本100名城（No.66）。島根県津和野町。",
+      "orderIndex": 65,
+      "recognitionRadiusMeters": null,
+      "address": "島根県津和野町"
+    },
+    {
+      "spotId": "c100-jp-067",
+      "name": "津山城",
+      "latitude": 35.06214,
+      "longitude": 134.003017,
+      "spotDescription": "日本100名城（No.67）。岡山県津山市。",
+      "orderIndex": 66,
+      "recognitionRadiusMeters": null,
+      "address": "岡山県津山市"
+    },
+    {
+      "spotId": "c100-jp-068",
+      "name": "備中松山城",
+      "latitude": 34.809081,
+      "longitude": 133.620117,
+      "spotDescription": "日本100名城（No.68）。岡山県高梁市。",
+      "orderIndex": 67,
+      "recognitionRadiusMeters": null,
+      "address": "岡山県高梁市"
+    },
+    {
+      "spotId": "c100-jp-069",
+      "name": "鬼ノ城",
+      "latitude": 34.725474,
+      "longitude": 133.760185,
+      "spotDescription": "日本100名城（No.69）。岡山県総社市。",
+      "orderIndex": 68,
+      "recognitionRadiusMeters": null,
+      "address": "岡山県総社市"
+    },
+    {
+      "spotId": "c100-jp-070",
+      "name": "岡山城",
+      "latitude": 34.66519,
+      "longitude": 133.933869,
+      "spotDescription": "日本100名城（No.70）。岡山県岡山市。",
+      "orderIndex": 69,
+      "recognitionRadiusMeters": null,
+      "address": "岡山県岡山市"
+    },
+    {
+      "spotId": "c100-jp-071",
+      "name": "福山城",
+      "latitude": 34.491069,
+      "longitude": 133.35893,
+      "spotDescription": "日本100名城（No.71）。広島県福山市。",
+      "orderIndex": 70,
+      "recognitionRadiusMeters": null,
+      "address": "広島県福山市"
+    },
+    {
+      "spotId": "c100-jp-072",
+      "name": "吉田郡山城",
+      "latitude": 34.673622,
+      "longitude": 132.707322,
+      "spotDescription": "日本100名城（No.72）。広島県安芸高田市。",
+      "orderIndex": 71,
+      "recognitionRadiusMeters": null,
+      "address": "広島県安芸高田市"
+    },
+    {
+      "spotId": "c100-jp-073",
+      "name": "広島城",
+      "latitude": 34.401495,
+      "longitude": 132.455229,
+      "spotDescription": "日本100名城（No.73）。広島県広島市。",
+      "orderIndex": 72,
+      "recognitionRadiusMeters": null,
+      "address": "広島県広島市"
+    },
+    {
+      "spotId": "c100-jp-074",
+      "name": "岩国城",
+      "latitude": 34.17524,
+      "longitude": 132.172017,
+      "spotDescription": "日本100名城（No.74）。山口県岩国市。",
+      "orderIndex": 73,
+      "recognitionRadiusMeters": null,
+      "address": "山口県岩国市"
+    },
+    {
+      "spotId": "c100-jp-075",
+      "name": "萩城",
+      "latitude": 34.417955,
+      "longitude": 131.382021,
+      "spotDescription": "日本100名城（No.75）。山口県萩市。",
+      "orderIndex": 74,
+      "recognitionRadiusMeters": null,
+      "address": "山口県萩市"
+    },
+    {
+      "spotId": "c100-jp-076",
+      "name": "徳島城",
+      "latitude": 34.066091,
+      "longitude": 134.546489,
+      "spotDescription": "日本100名城（No.76）。徳島県徳島市。",
+      "orderIndex": 75,
+      "recognitionRadiusMeters": null,
+      "address": "徳島県徳島市"
+    },
+    {
+      "spotId": "c100-jp-077",
+      "name": "高松城",
+      "latitude": 34.355447,
+      "longitude": 134.047482,
+      "spotDescription": "日本100名城（No.77）。香川県高松市。",
+      "orderIndex": 76,
+      "recognitionRadiusMeters": null,
+      "address": "香川県高松市"
+    },
+    {
+      "spotId": "c100-jp-078",
+      "name": "丸亀城",
+      "latitude": 34.285957,
+      "longitude": 133.798092,
+      "spotDescription": "日本100名城（No.78）。香川県丸亀市。",
+      "orderIndex": 77,
+      "recognitionRadiusMeters": null,
+      "address": "香川県丸亀市"
+    },
+    {
+      "spotId": "c100-jp-079",
+      "name": "今治城",
+      "latitude": 34.064502,
+      "longitude": 133.005976,
+      "spotDescription": "日本100名城（No.79）。愛媛県今治市。",
+      "orderIndex": 78,
+      "recognitionRadiusMeters": null,
+      "address": "愛媛県今治市"
+    },
+    {
+      "spotId": "c100-jp-080",
+      "name": "湯築城",
+      "latitude": 33.848489,
+      "longitude": 132.783962,
+      "spotDescription": "日本100名城（No.80）。愛媛県松山市。",
+      "orderIndex": 79,
+      "recognitionRadiusMeters": null,
+      "address": "愛媛県松山市"
+    },
+    {
+      "spotId": "c100-jp-081",
+      "name": "松山城",
+      "latitude": 33.845577,
+      "longitude": 132.763346,
+      "spotDescription": "日本100名城（No.81）。愛媛県松山市。",
+      "orderIndex": 80,
+      "recognitionRadiusMeters": null,
+      "address": "愛媛県松山市"
+    },
+    {
+      "spotId": "c100-jp-082",
+      "name": "大洲城",
+      "latitude": 33.509524,
+      "longitude": 132.538923,
+      "spotDescription": "日本100名城（No.82）。愛媛県大洲市。",
+      "orderIndex": 81,
+      "recognitionRadiusMeters": null,
+      "address": "愛媛県大洲市"
+    },
+    {
+      "spotId": "c100-jp-083",
+      "name": "宇和島城",
+      "latitude": 33.219449,
+      "longitude": 132.56301,
+      "spotDescription": "日本100名城（No.83）。愛媛県宇和島市。",
+      "orderIndex": 82,
+      "recognitionRadiusMeters": null,
+      "address": "愛媛県宇和島市"
+    },
+    {
+      "spotId": "c100-jp-084",
+      "name": "高知城",
+      "latitude": 33.560792,
+      "longitude": 133.5293,
+      "spotDescription": "日本100名城（No.84）。高知県高知市。",
+      "orderIndex": 83,
+      "recognitionRadiusMeters": null,
+      "address": "高知県高知市"
+    },
+    {
+      "spotId": "c100-jp-085",
+      "name": "福岡城",
+      "latitude": 33.592764,
+      "longitude": 130.380611,
+      "spotDescription": "日本100名城（No.85）。福岡県福岡市。",
+      "orderIndex": 84,
+      "recognitionRadiusMeters": null,
+      "address": "福岡県福岡市"
+    },
+    {
+      "spotId": "c100-jp-086",
+      "name": "大野城",
+      "latitude": 33.539801,
+      "longitude": 130.522192,
+      "spotDescription": "日本100名城（No.86）。福岡県大野城市。",
+      "orderIndex": 85,
+      "recognitionRadiusMeters": null,
+      "address": "福岡県大野城市"
+    },
+    {
+      "spotId": "c100-jp-087",
+      "name": "名護屋城",
+      "latitude": 33.529083,
+      "longitude": 129.867561,
+      "spotDescription": "日本100名城（No.87）。佐賀県唐津市。",
+      "orderIndex": 86,
+      "recognitionRadiusMeters": null,
+      "address": "佐賀県唐津市"
+    },
+    {
+      "spotId": "c100-jp-088",
+      "name": "吉野ヶ里遺跡",
+      "latitude": 33.324244,
+      "longitude": 130.38441,
+      "spotDescription": "日本100名城（No.88）。佐賀県吉野ヶ里町。",
+      "orderIndex": 87,
+      "recognitionRadiusMeters": null,
+      "address": "佐賀県吉野ヶ里町"
+    },
+    {
+      "spotId": "c100-jp-089",
+      "name": "佐賀城",
+      "latitude": 33.245141,
+      "longitude": 130.300217,
+      "spotDescription": "日本100名城（No.89）。佐賀県佐賀市。",
+      "orderIndex": 88,
+      "recognitionRadiusMeters": null,
+      "address": "佐賀県佐賀市"
+    },
+    {
+      "spotId": "c100-jp-090",
+      "name": "平戸城",
+      "latitude": 33.368538,
+      "longitude": 129.556942,
+      "spotDescription": "日本100名城（No.90）。長崎県平戸市。",
+      "orderIndex": 89,
+      "recognitionRadiusMeters": null,
+      "address": "長崎県平戸市"
+    },
+    {
+      "spotId": "c100-jp-091",
+      "name": "島原城",
+      "latitude": 32.789219,
+      "longitude": 130.365081,
+      "spotDescription": "日本100名城（No.91）。長崎県島原市。",
+      "orderIndex": 90,
+      "recognitionRadiusMeters": null,
+      "address": "長崎県島原市"
+    },
+    {
+      "spotId": "c100-jp-092",
+      "name": "熊本城",
+      "latitude": 32.806186,
+      "longitude": 130.703645,
+      "spotDescription": "日本100名城（No.92）。熊本県熊本市。",
+      "orderIndex": 91,
+      "recognitionRadiusMeters": null,
+      "address": "熊本県熊本市"
+    },
+    {
+      "spotId": "c100-jp-093",
+      "name": "人吉城",
+      "latitude": 32.210892,
+      "longitude": 130.759798,
+      "spotDescription": "日本100名城（No.93）。熊本県人吉市。",
+      "orderIndex": 92,
+      "recognitionRadiusMeters": null,
+      "address": "熊本県人吉市"
+    },
+    {
+      "spotId": "c100-jp-094",
+      "name": "大分府内城",
+      "latitude": 33.239895,
+      "longitude": 131.609788,
+      "spotDescription": "日本100名城（No.94）。大分県大分市。",
+      "orderIndex": 93,
+      "recognitionRadiusMeters": null,
+      "address": "大分県大分市"
+    },
+    {
+      "spotId": "c100-jp-095",
+      "name": "岡城",
+      "latitude": 32.969103,
+      "longitude": 131.405579,
+      "spotDescription": "日本100名城（No.95）。大分県竹田市。",
+      "orderIndex": 94,
+      "recognitionRadiusMeters": null,
+      "address": "大分県竹田市"
+    },
+    {
+      "spotId": "c100-jp-096",
+      "name": "飫肥城",
+      "latitude": 31.629106,
+      "longitude": 131.348115,
+      "spotDescription": "日本100名城（No.96）。宮崎県日南市。",
+      "orderIndex": 95,
+      "recognitionRadiusMeters": null,
+      "address": "宮崎県日南市"
+    },
+    {
+      "spotId": "c100-jp-097",
+      "name": "鹿児島城",
+      "latitude": 31.598317,
+      "longitude": 130.552806,
+      "spotDescription": "日本100名城（No.97）。鹿児島県鹿児島市。",
+      "orderIndex": 96,
+      "recognitionRadiusMeters": null,
+      "address": "鹿児島県鹿児島市"
+    },
+    {
+      "spotId": "c100-jp-098",
+      "name": "今帰仁城",
+      "latitude": 26.691279,
+      "longitude": 127.926834,
+      "spotDescription": "日本100名城（No.98）。沖縄県今帰仁村。",
+      "orderIndex": 97,
+      "recognitionRadiusMeters": null,
+      "address": "沖縄県今帰仁村"
+    },
+    {
+      "spotId": "c100-jp-099",
+      "name": "中城城",
+      "latitude": 26.283501,
+      "longitude": 127.797482,
+      "spotDescription": "日本100名城（No.99）。沖縄県中城村。",
+      "orderIndex": 98,
+      "recognitionRadiusMeters": null,
+      "address": "沖縄県中城村"
+    },
+    {
+      "spotId": "c100-jp-100",
+      "name": "首里城",
+      "latitude": 26.217014,
+      "longitude": 127.717332,
+      "spotDescription": "日本100名城（No.100）。沖縄県那覇市。",
+      "orderIndex": 99,
+      "recognitionRadiusMeters": null,
+      "address": "沖縄県那覇市"
+    }
+  ]
+}

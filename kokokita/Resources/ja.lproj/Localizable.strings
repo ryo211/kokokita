@@ -340,9 +340,17 @@
 "course.type.pilgrimage" = "巡礼";
 "course.type.stampRally" = "スタンプラリー";
 "course.type.myList" = "マイリスト";
+"course.category.history_culture" = "歴史・文化";
+"course.category.sightseeing" = "観光・名所";
+"course.category.architecture" = "建造物";
+"course.category.nature" = "自然";
+"course.category.anime" = "アニメ・漫画";
+"course.category.art" = "芸術";
+"course.category.other" = "その他";
+"course.achieved" = "達成";
 "course.notVisited" = "未訪問";
 "course.noAddress" = "住所未登録";
-"course.visitedOn" = "%@に訪問済み";
+"course.visitedOn" = "%@に巡礼済み";
 
 // MARK: - Mode Selection
 "modeSelection.title" = "モードを選んでください";
@@ -357,6 +365,7 @@
 "modeSelection.switchToPilgrimage" = "巡礼モードに切り替え";
 
 // MARK: - Pilgrimage Home
+"pilgrimageHome.navTitle" = "聖地巡礼";
 "pilgrimageHome.heroTitle" = "聖地巡礼をはじめよう";
 "pilgrimageHome.heroDescription" = "コースを選んで、スポットを訪れるたびにチェックインが記録されます";
 "pilgrimageHome.viewCourses" = "コース一覧を見る";
@@ -364,6 +373,7 @@
 "pilgrimageHome.seeAll" = "すべて見る";
 "pilgrimageHome.progressFormat" = "%d/%d スポット";
 "pilgrimageHome.nearbyTitle" = "近くの巡礼スポット";
+"pilgrimageHome.nearbyRefresh" = "更新";
 "pilgrimageHome.noNearbySpots" = "近くにスポットはありません";
 "pilgrimageHome.locationUnavailable" = "現在地を取得できませんでした";
 "pilgrimageHome.recentTitle" = "最近の達成";
