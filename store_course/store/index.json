@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-03-09T05:29:46Z",
+  "courses": [
+    {
+      "id": "course-world-heritage-japan-001",
+      "title": "日本の世界遺産",
+      "summary": "ユネスコ世界遺産に登録された日本の遺産地を巡るコースです。文化遺産20件・自然遺産5件の計25件を収録。",
+      "categories": [
+        "history_culture"
+      ],
+      "version": 1,
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/course/course-world-heritage-japan-001.jpg",
+      "spotCount": 28,
+      "jsonPath": "courses/world_heritage_japan_001.json",
+      "updatedAt": "2026-03-09T05:29:46Z"
+    },    
+    {
+      "id": "course-100-famous-castles-japan-001",
+      "title": "日本100名城",
+      "summary": "公益財団法人日本城郭協会が選定する「日本100名城」を巡るコースです。全国の名城100件を収録。",
+      "categories": [
+        "history_culture"
+      ],
+      "version": 1,
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/course/100_famous_castles_japan_001.jpg",
+      "spotCount": 100,
+      "jsonPath": "courses/100_famous_castles_japan_001.json",
+      "updatedAt": "2026-03-09T05:29:46Z"
+    },
+    {
+      "id": "course-continued-100-famous-castles-japan-001",
+      "title": "続日本100名城",
+      "summary": "公益財団法人日本城郭協会が2017年に選定する「続日本100名城」を巡るコースです。",
+      "categories": [
+        "architecture",
+        "history_culture"
+      ],
+      "version": 1,
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/course/continued_100_castles_course_001.jpg",
+      "spotCount": 100,
+      "jsonPath": "courses/continued_100_castles_course_001.json",
+      "updatedAt": "2026-03-09T05:29:46Z"
+    },
+    {
+      "id": "course-tokyo-shitamachi-walk-001",
+      "title": "東京下町さんぽ",
+      "summary": "浅草・上野・谷根千の3エリアを巡る東京下町散歩コースです。エリアごとにセクションが分かれており、半日〜1日で巡れます。",
+      "categories": [
+        "sightseeing",
+        "history_culture"
+      ],
+      "version": 1,
+      "coverImageUrl": null,
+      "spotCount": 9,
+      "jsonPath": "courses/tokyo_shitamachi_walk_001.json",
+      "updatedAt": "2026-03-09T05:29:46Z"
+    }
+  ]
+}

@@ -17,6 +17,12 @@ struct CourseSpot: Identifiable, Equatable {
     let recognitionRadiusMeters: Double?
     /// チェックイン済みかどうか（visitIds が空でなければ true）
     var isCheckedIn: Bool { !visitIds.isEmpty }
+    /// 地図に表示できる有効な座標かどうか
+    var hasValidCoordinate: Bool {
+        latitude >= -90 && latitude <= 90 &&
+        longitude >= -180 && longitude <= 180 &&
+        !(latitude == 0 && longitude == 0)
+    }
     /// 初回チェックイン日時（遡り判定の場合は過去の訪問日時）
     let firstCheckedInAt: Date?
     /// このスポットにリンクされた訪問記録の ID 一覧（VisitEntity.id）

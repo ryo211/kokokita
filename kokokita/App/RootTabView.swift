@@ -221,19 +221,10 @@ private struct CustomBottomBar: View {
                         Text(L.Tab.modePilgrimage)
                             .font(.caption2)
                     }
-                    .foregroundStyle(Color.primary.opacity(0.5))
+                    .foregroundStyle(Color.indigo.opacity(0.7))
                     .frame(width: 52, height: 52)
-                    // 右下三角：巡礼モードの差し色（藍色）
-                    .overlay(alignment: .bottomTrailing) {
-                        Path { p in
-                            p.move(to: CGPoint(x: 16, y: 0))
-                            p.addLine(to: CGPoint(x: 16, y: 16))
-                            p.addLine(to: CGPoint(x: 0, y: 16))
-                            p.closeSubpath()
-                        }
-                        .fill(Color.indigo.opacity(0.8))
-                        .frame(width: 16, height: 16)
-                    }
+                    .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .strokeBorder(Color.indigo.opacity(0.45), lineWidth: 1.5))
                 }
                 .buttonStyle(.plain)
             }

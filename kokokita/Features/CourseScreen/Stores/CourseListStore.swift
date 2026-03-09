@@ -8,18 +8,13 @@ final class CourseListStore {
     var courses: [Course] = []
     var showError: Bool = false
     var errorMessage: String?
-    /// 遡り判定結果（シートで表示）
-    var retroactiveResult: RetroactiveResultItem?
+    /// 新規ダウンロードされたコースのID（コース一覧でハイライト表示に使用）
+    var newlyAddedCourseIds: Set<UUID> = []
 
     private let repo: CourseRepository
-    private let retroactiveService: CourseRetroactiveRecognitionService?
 
-    init(
-        repo: CourseRepository = AppContainer.shared.courseRepo,
-        retroactiveService: CourseRetroactiveRecognitionService? = AppContainer.shared.retroactiveService
-    ) {
+    init(repo: CourseRepository = AppContainer.shared.courseRepo) {
         self.repo = repo
-        self.retroactiveService = retroactiveService
 
         // チェックイン変更を監視して一覧を再ロード
         NotificationCenter.default.addObserver(forName: .courseChanged, object: nil, queue: .main) { [weak self] _ in
@@ -29,18 +24,22 @@ final class CourseListStore {
                 await self.load()
             }
         }
+
+        // 新規ダウンロードを監視してハイライトIDを追加
+        NotificationCenter.default.addObserver(forName: .courseDownloaded, object: nil, queue: .main) { [weak self] notification in
+            guard let self else { return }
+            guard let courseId = notification.object as? UUID else { return }
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                self.newlyAddedCourseIds.insert(courseId)
+            }
+        }
     }
 
-    /// コース一覧を読み込む（遡り判定未実施コースを自動実行）
+    /// コース一覧を読み込む
     func load() async {
         do {
             courses = try repo.fetchAll()
-            // everEnabled == false のコースは初回インポート扱い → 遡り判定を自動実行
-            for course in courses where !course.everEnabled {
-                Task {
-                    await runRetroactiveRecognition(courseId: course.id)
-                }
-            }
         } catch {
             Logger.error("コース一覧読み込みエラー", error: error)
             errorMessage = error.localizedDescription
@@ -48,34 +47,22 @@ final class CourseListStore {
         }
     }
 
-    /// 遡り判定を実行
-    private func runRetroactiveRecognition(courseId: UUID) async {
+    /// コースを削除する
+    func delete(_ courseId: UUID) async {
         do {
-            // 二重実行防止のため先にフラグをセット
-            try repo.setEverEnabled(courseId)
-
-            guard let svc = retroactiveService else { return }
-
-            let result = try await Task.detached(priority: .background) {
-                try svc.recognize(for: courseId)
-            }.value
-
-            guard let r = result, !r.checkedInSpots.isEmpty else { return }
-
-            // UI 更新
-            await load()
-            retroactiveResult = RetroactiveResultItem(
-                course: r.course,
-                checkedInSpots: r.checkedInSpots
-            )
+            try repo.delete(courseId)
+            courses.removeAll { $0.id == courseId }
+            NotificationCenter.default.post(name: .courseChanged, object: nil)
         } catch {
-            Logger.error("遡り判定エラー", error: error)
+            Logger.error("コース削除エラー", error: error)
+            errorMessage = error.localizedDescription
+            showError = true
         }
     }
 }
 
 // 遡り判定結果（sheet 表示用の Identifiable ラッパー）
-struct RetroactiveResultItem: Identifiable {
+struct RetroactiveResultItem: Identifiable, Equatable {
     let id = UUID()
     let course: Course
     let checkedInSpots: [CourseSpot]

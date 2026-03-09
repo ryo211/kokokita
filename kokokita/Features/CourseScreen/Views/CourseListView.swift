@@ -5,6 +5,7 @@ import SwiftUI
 struct CourseListView: View {
     @Bindable var store: CourseListStore
     @State private var selectedCategory: CourseCategory? = nil
+    @State private var showCourseStore = false
 
     private var filteredCourses: [Course] {
         guard let cat = selectedCategory else { return store.courses }
@@ -13,46 +14,67 @@ struct CourseListView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // カテゴリフィルターバー
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
-                    CategoryFilterChip(label: L.Home.filterAll, isSelected: selectedCategory == nil) {
-                        selectedCategory = nil
-                    }
-                    ForEach(CourseCategory.allCases, id: \.rawValue) { category in
-                        CategoryFilterChip(
-                            icon: category.iconName,
-                            label: category.displayName,
-                            isSelected: selectedCategory == category
-                        ) {
-                            selectedCategory = selectedCategory == category ? nil : category
+            // コースがある場合のみカテゴリフィルターバーを表示
+            if !store.courses.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        CategoryFilterChip(label: L.Home.filterAll, isSelected: selectedCategory == nil) {
+                            selectedCategory = nil
+                        }
+                        ForEach(CourseCategory.allCases, id: \.rawValue) { category in
+                            CategoryFilterChip(
+                                icon: category.iconName,
+                                label: category.displayName,
+                                isSelected: selectedCategory == category
+                            ) {
+                                selectedCategory = selectedCategory == category ? nil : category
+                            }
                         }
                     }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 10)
                 }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 10)
+                Divider()
             }
-            Divider()
 
             List {
                 if filteredCourses.isEmpty {
                     ContentUnavailableView(
                         L.Course.emptyTitle,
-                        systemImage: "list.bullet",
+                        systemImage: "plus.circle",
                         description: Text(L.Course.emptyDescription)
                     )
                     .listRowBackground(Color.clear)
+                    .listRowSeparator(.hidden)
                 } else {
                     ForEach(filteredCourses) { course in
+                        let isNew = store.newlyAddedCourseIds.contains(course.id)
                         NavigationLink(value: course.id) {
-                            CourseRowView(course: course)
+                            CourseRowView(course: course, isNew: isNew)
+                        }
+                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                            Button(role: .destructive) {
+                                Task { await store.delete(course.id) }
+                            } label: {
+                                Label(L.Common.delete, systemImage: "trash")
+                            }
                         }
                     }
                 }
             }
             .listStyle(.plain)
         }
+        .navigationTitle(L.Course.listTitle)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button {
+                    showCourseStore = true
+                } label: {
+                    Image(systemName: "plus")
+                }
+            }
+        }
         .alert(L.Common.error, isPresented: $store.showError) {
             Button(L.Common.ok) {}
         } message: {
@@ -61,8 +83,8 @@ struct CourseListView: View {
         .task {
             await store.load()
         }
-        .sheet(item: $store.retroactiveResult) { result in
-            RetroactiveCheckInResultSheet(result: result)
+        .sheet(isPresented: $showCourseStore) {
+            CourseStoreSheet()
         }
     }
 }
@@ -95,17 +117,40 @@ private struct CategoryFilterChip: View {
 // コース行ビュー
 private struct CourseRowView: View {
     let course: Course
+    var isNew: Bool = false
 
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
-            // 左: インジケーター + タイトル + タグ（残り幅を確保し折り返し）
+            // サムネイル
+            Group {
+                if let urlStr = course.coverImageUrl, let url = URL(string: urlStr) {
+                    AsyncImage(url: url) { phase in
+                        if case .success(let image) = phase {
+                            image.resizable().scaledToFill()
+                        } else {
+                            thumbnailPlaceholder
+                        }
+                    }
+                } else {
+                    thumbnailPlaceholder
+                }
+            }
+            .frame(width: 64, height: 64)
+            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+
+            // 中: タイトル + タグ（残り幅を確保し折り返し）
             VStack(alignment: .leading, spacing: 6) {
-                HStack(spacing: 8) {
-                    Circle()
-                        .fill(course.isCompleted ? Color.indigo : Color.secondary.opacity(0.3))
-                        .frame(width: 8, height: 8)
+                HStack(spacing: 6) {
                     Text(course.title)
                         .font(.headline)
+                    if isNew {
+                        Text(L.Course.newBadge)
+                            .font(.caption2.bold())
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(Color.indigo, in: Capsule())
+                    }
                 }
                 if !course.categories.isEmpty {
                     FlowLayout(spacing: 6) {
@@ -113,7 +158,6 @@ private struct CourseRowView: View {
                             CourseCategoryTag(category: category)
                         }
                     }
-                    .padding(.leading, 16)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -132,6 +176,15 @@ private struct CourseRowView: View {
             }
         }
         .padding(.vertical, 4)
+    }
+
+    private var thumbnailPlaceholder: some View {
+        ZStack {
+            Color.indigo.opacity(0.1)
+            Image(systemName: course.isCompleted ? "checkmark.seal.fill" : (course.categories.first?.iconName ?? "map"))
+                .font(.title3)
+                .foregroundStyle(.indigo.opacity(0.5))
+        }
     }
 }
 

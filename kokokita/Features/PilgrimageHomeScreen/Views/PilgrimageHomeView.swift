@@ -8,6 +8,7 @@ struct PilgrimageHomeView: View {
     @State private var store = CourseListStore()
     @State private var userLocation: CLLocation? = CLLocationManager().location
     @State private var isRefreshingNearbySpots = false
+    @State private var showHowToUse = false
 
     // MARK: - Derived Data
 
@@ -65,6 +66,19 @@ struct PilgrimageHomeView: View {
                             .font(.headline)
                     }
                 }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button {
+                        showHowToUse = true
+                    } label: {
+                        Image(systemName: "questionmark.circle.fill")
+                            .font(.title3)
+                            .foregroundStyle(.indigo)
+                    }
+                    .accessibilityLabel(L.PilgrimageHome.howToUseButton)
+                }
+            }
+            .sheet(isPresented: $showHowToUse) {
+                PilgrimageHowToUseSheet()
             }
             .task {
                 await store.load()
@@ -194,19 +208,13 @@ struct PilgrimageHomeView: View {
                 Button {
                     Task { await refreshNearbySpots() }
                 } label: {
-                    ZStack {
-                        Circle()
-                            .fill(.regularMaterial)
-                            .frame(width: 32, height: 32)
-
-                        if isRefreshingNearbySpots {
-                            ProgressView()
-                                .controlSize(.small)
-                        } else {
-                            Image(systemName: "arrow.clockwise")
-                                .font(.system(size: 13, weight: .semibold))
-                                .foregroundStyle(.indigo)
-                        }
+                    if isRefreshingNearbySpots {
+                        ProgressView()
+                            .controlSize(.small)
+                    } else {
+                        Image(systemName: "arrow.clockwise")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(.indigo)
                     }
                 }
                 .buttonStyle(.plain)
@@ -279,7 +287,6 @@ struct PilgrimageHomeView: View {
     private func refreshNearbySpots() async {
         guard !isRefreshingNearbySpots else { return }
         isRefreshingNearbySpots = true
-        defer { isRefreshingNearbySpots = false }
 
         do {
             let locationService = DefaultLocationService()
@@ -291,6 +298,8 @@ struct PilgrimageHomeView: View {
         } catch {
             Logger.warning("Failed to refresh nearby pilgrimage spots location: \(error.localizedDescription)")
         }
+
+        isRefreshingNearbySpots = false
     }
 }
 
@@ -300,34 +309,24 @@ private struct HeroCard: View {
     let course: Course
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            // カバー画像（フル幅でどんと表示）
-            if let urlStr = course.coverImageUrl, let url = URL(string: urlStr) {
-                AsyncImage(url: url) { phase in
-                    switch phase {
-                    case .success(let image):
-                        image
-                            .resizable()
-                            .scaledToFill()
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 180)
-                            .clipped()
-                    case .empty:
-                        Color.indigo.opacity(0.08).frame(height: 180)
-                    default:
-                        EmptyView()
-                    }
-                }
-            }
+        ZStack(alignment: .bottomLeading) {
+            // ── 背景: カバー画像 or プレースホルダー ──
+            heroBackground
 
-            // テキストコンテンツ
-            VStack(alignment: .leading, spacing: 12) {
-                // コース名
-                Text(course.title)
-                    .font(.title3.bold())
-                    .lineLimit(2)
+            // ── グラデーションオーバーレイ ──
+            LinearGradient(
+                stops: [
+                    .init(color: .clear, location: 0.0),
+                    .init(color: .black.opacity(0.25), location: 0.40),
+                    .init(color: .black.opacity(0.82), location: 1.0)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
 
-                // カテゴリタグ（コース一覧と同デザイン）
+            // ── 画像に重なるテキスト・進捗エリア ──
+            VStack(alignment: .leading, spacing: 10) {
+                // カテゴリタグ（白抜き半透明カプセル）
                 if !course.categories.isEmpty {
                     HStack(spacing: 6) {
                         ForEach(course.categories, id: \.rawValue) { cat in
@@ -335,38 +334,77 @@ private struct HeroCard: View {
                                 Image(systemName: cat.iconName)
                                 Text(cat.displayName)
                             }
-                            .font(.caption2.weight(.medium))
-                            .foregroundStyle(.indigo)
+                            .font(.caption2.weight(.semibold))
+                            .foregroundStyle(.white)
                             .padding(.horizontal, 8)
                             .padding(.vertical, 3)
-                            .background(Color.indigo.opacity(0.1), in: Capsule())
+                            .background(.white.opacity(0.2), in: Capsule())
                         }
                     }
                 }
 
+                // コース名
+                Text(course.title)
+                    .font(.title3.bold())
+                    .foregroundStyle(.white)
+                    .lineLimit(2)
+                    .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 1)
+
                 // 進捗テキスト
                 HStack {
                     Text(L.PilgrimageHome.progressFormat(course.checkedInCount, course.totalSpotCount))
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .font(.caption)
+                        .foregroundStyle(.white.opacity(0.85))
                     Spacer()
                     Text("\(Int(course.completionRate * 100))%")
-                        .font(.subheadline.bold())
-                        .foregroundStyle(course.isCompleted ? .green : .indigo)
+                        .font(.caption.bold())
+                        .foregroundStyle(course.isCompleted ? Color.green : .white)
                 }
 
-                // プログレスバー（大）
+                // プログレスバー（太めで視認しやすく）
                 ProgressView(value: course.completionRate)
                     .progressViewStyle(.linear)
-                    .tint(course.isCompleted ? .green : .indigo)
-                    .scaleEffect(y: 1.8, anchor: .center)
+                    .tint(course.isCompleted ? .green : .white)
+                    .scaleEffect(y: 2.8, anchor: .center)
+                    // トラック（背景）を半透明白に
+                    .environment(\.colorScheme, .dark)
             }
-            .padding(20)
+            .padding(.horizontal, 20)
+            .padding(.top, 20)
+            .padding(.bottom, 28)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.regularMaterial)
+        .frame(maxWidth: .infinity)
+        .frame(height: 220)
         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-        .shadow(color: .black.opacity(0.08), radius: 12, x: 0, y: 4)
+        .shadow(color: .black.opacity(0.12), radius: 12, x: 0, y: 4)
+    }
+
+    @ViewBuilder
+    private var heroBackground: some View {
+        if let urlStr = course.coverImageUrl, let url = URL(string: urlStr) {
+            AsyncImage(url: url) { phase in
+                switch phase {
+                case .success(let image):
+                    image
+                        .resizable()
+                        .scaledToFill()
+                case .empty:
+                    placeholderBackground
+                default:
+                    placeholderBackground
+                }
+            }
+        } else {
+            placeholderBackground
+        }
+    }
+
+    private var placeholderBackground: some View {
+        LinearGradient(
+            colors: [Color.indigo.opacity(0.5), Color.indigo.opacity(0.25)],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
     }
 }
 
@@ -405,6 +443,19 @@ private struct CourseCard: View {
                     .font(.subheadline.bold())
                     .lineLimit(2)
                     .foregroundStyle(.primary)
+
+                // 代表カテゴリタグ（1件）
+                if let cat = course.categories.first {
+                    HStack(spacing: 3) {
+                        Image(systemName: cat.iconName)
+                        Text(cat.displayName)
+                    }
+                    .font(.caption2.weight(.medium))
+                    .foregroundStyle(.indigo)
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 3)
+                    .background(Color.indigo.opacity(0.1), in: Capsule())
+                }
 
                 // 達成数
                 Text("\(course.checkedInCount)/\(course.totalSpotCount)")
@@ -516,4 +567,30 @@ private enum PilgrimageHomeRoute: Hashable {
     case courseList
     /// コース詳細（指定スポットをフォーカス）
     case courseDetail(courseId: UUID, spotId: UUID)
+}
+
+// MARK: - 使い方シート
+
+private struct PilgrimageHowToUseSheet: View {
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                // TODO: 使い方説明コンテンツを追加
+                Text("準備中")
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .padding(.top, 80)
+            }
+            .navigationTitle(L.PilgrimageHome.howToUseTitle)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button(L.Common.close) { dismiss() }
+                }
+            }
+        }
+        .presentationDetents([.medium, .large])
+    }
 }

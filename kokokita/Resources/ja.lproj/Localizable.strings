@@ -327,8 +327,16 @@
 "course.title" = "コース";
 "course.comingSoon" = "準備中";
 "course.description" = "コース機能は近日公開予定です";
+"course.listTitle" = "コース一覧";
+"courseStore.title" = "コースを追加";
+"courseStore.emptyTitle" = "コースがありません";
+"courseStore.emptyDescription" = "現在ダウンロード可能なコースはありません";
+"courseStore.downloadButton" = "取得";
+"courseStore.downloadedBadge" = "済み";
+"courseStore.updateButton" = "更新";
+"courseStore.spotCount" = "%d スポット";
 "course.emptyTitle" = "コースがありません";
-"course.emptyDescription" = "コースは準備中です";
+"course.emptyDescription" = "右上の＋からコースを追加できます";
 "course.enable" = "有効にする";
 "course.disable" = "無効にする";
 "course.enableToggle" = "このコースを有効にする";
@@ -341,12 +349,10 @@
 "course.type.stampRally" = "スタンプラリー";
 "course.type.myList" = "マイリスト";
 "course.category.history_culture" = "歴史・文化";
-"course.category.sightseeing" = "観光・名所";
-"course.category.architecture" = "建造物";
 "course.category.nature" = "自然";
+"course.category.art_entertainment" = "アート・エンタメ";
 "course.category.anime" = "アニメ・漫画";
-"course.category.art" = "芸術";
-"course.category.other" = "その他";
+"course.newBadge" = "NEW";
 "course.achieved" = "達成";
 "course.notVisited" = "未訪問";
 "course.noAddress" = "住所未登録";
@@ -366,6 +372,8 @@
 
 // MARK: - Pilgrimage Home
 "pilgrimageHome.navTitle" = "聖地巡礼";
+"pilgrimageHome.howToUseButton" = "使い方";
+"pilgrimageHome.howToUseTitle" = "聖地巡礼の使い方";
 "pilgrimageHome.heroTitle" = "聖地巡礼をはじめよう";
 "pilgrimageHome.heroDescription" = "コースを選んで、スポットを訪れるたびにチェックインが記録されます";
 "pilgrimageHome.viewCourses" = "コース一覧を見る";

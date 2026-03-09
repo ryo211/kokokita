@@ -382,6 +382,7 @@ enum L {
         static let title = localized("course.title")
         static let comingSoon = localized("course.comingSoon")
         static let description = localized("course.description")
+        static let listTitle = localized("course.listTitle")
         static let emptyTitle = localized("course.emptyTitle")
         static let emptyDescription = localized("course.emptyDescription")
         static let enable = localized("course.enable")
@@ -395,17 +396,26 @@ enum L {
         static let typePilgrimage = localized("course.type.pilgrimage")
         static let typeStampRally = localized("course.type.stampRally")
         static let typeMyList = localized("course.type.myList")
-        static let categoryHistoryCulture = localized("course.category.history_culture")
-        static let categorySightseeing    = localized("course.category.sightseeing")
-        static let categoryArchitecture   = localized("course.category.architecture")
-        static let categoryNature         = localized("course.category.nature")
-        static let categoryAnime          = localized("course.category.anime")
-        static let categoryArt            = localized("course.category.art")
-        static let categoryOther          = localized("course.category.other")
+        static let categoryHistoryCulture  = localized("course.category.history_culture")
+        static let categoryNature          = localized("course.category.nature")
+        static let categoryArtEntertainment = localized("course.category.art_entertainment")
+        static let categoryAnime           = localized("course.category.anime")
+        static let newBadge = localized("course.newBadge")
         static let achieved = localized("course.achieved")
         static let notVisited = localized("course.notVisited")
         static let noAddress = localized("course.noAddress")
         static func visitedOn(_ dateString: String) -> String { String(format: localized("course.visitedOn"), dateString) }
+    }
+
+    // MARK: - Course Store（コースダウンロード）
+    enum CourseStore {
+        static let title = localized("courseStore.title")
+        static let emptyTitle = localized("courseStore.emptyTitle")
+        static let emptyDescription = localized("courseStore.emptyDescription")
+        static let downloadButton = localized("courseStore.downloadButton")
+        static let downloadedBadge = localized("courseStore.downloadedBadge")
+        static let updateButton = localized("courseStore.updateButton")
+        static func spotCount(_ count: Int) -> String { String(format: localized("courseStore.spotCount"), count) }
     }
 
     // MARK: - Manual Entry (後付け記録)
@@ -481,6 +491,8 @@ enum L {
     // MARK: - Pilgrimage Home
     enum PilgrimageHome {
         static let navTitle = localized("pilgrimageHome.navTitle")
+        static let howToUseButton = localized("pilgrimageHome.howToUseButton")
+        static let howToUseTitle = localized("pilgrimageHome.howToUseTitle")
         static let heroTitle = localized("pilgrimageHome.heroTitle")
         static let heroDescription = localized("pilgrimageHome.heroDescription")
         static let viewCourses = localized("pilgrimageHome.viewCourses")

@@ -325,8 +325,16 @@
 "course.title" = "Course";
 "course.comingSoon" = "Coming Soon";
 "course.description" = "Course feature will be available soon";
+"course.listTitle" = "Course List";
+"courseStore.title" = "Add Courses";
+"courseStore.emptyTitle" = "No Courses Available";
+"courseStore.emptyDescription" = "No courses are available for download at this time";
+"courseStore.downloadButton" = "Get";
+"courseStore.downloadedBadge" = "Added";
+"courseStore.updateButton" = "Update";
+"courseStore.spotCount" = "%d spots";
 "course.emptyTitle" = "No Courses";
-"course.emptyDescription" = "Courses coming soon";
+"course.emptyDescription" = "Tap + in the top right to add a course";
 "course.enable" = "Enable";
 "course.disable" = "Disable";
 "course.enableToggle" = "Enable this course";
@@ -339,12 +347,10 @@
 "course.type.stampRally" = "Stamp Rally";
 "course.type.myList" = "My List";
 "course.category.history_culture" = "History & Culture";
-"course.category.sightseeing" = "Sightseeing";
-"course.category.architecture" = "Architecture";
 "course.category.nature" = "Nature";
+"course.category.art_entertainment" = "Art & Entertainment";
 "course.category.anime" = "Anime & Manga";
-"course.category.art" = "Art";
-"course.category.other" = "Other";
+"course.newBadge" = "NEW";
 "course.achieved" = "done";
 "course.notVisited" = "Not Visited";
 "course.noAddress" = "No Address";
@@ -364,6 +370,8 @@
 
 // MARK: - Pilgrimage Home
 "pilgrimageHome.navTitle" = "Pilgrimage";
+"pilgrimageHome.howToUseButton" = "How to Use";
+"pilgrimageHome.howToUseTitle" = "How to Use Pilgrimage";
 "pilgrimageHome.heroTitle" = "Start Your Pilgrimage";
 "pilgrimageHome.heroDescription" = "Choose a course and check in each time you visit a spot";
 "pilgrimageHome.viewCourses" = "View Courses";

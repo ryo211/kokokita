@@ -127,19 +127,10 @@ private struct PilgrimageBottomBar: View {
                         Text(L.Tab.modeRecord)
                             .font(.caption2)
                     }
-                    .foregroundStyle(Color.primary.opacity(0.5))
+                    .foregroundStyle(Color.accentColor.opacity(0.7))
                     .frame(width: 52, height: 52)
-                    // 右下三角：記録モードの差し色（青色）
-                    .overlay(alignment: .bottomTrailing) {
-                        Path { p in
-                            p.move(to: CGPoint(x: 16, y: 0))
-                            p.addLine(to: CGPoint(x: 16, y: 16))
-                            p.addLine(to: CGPoint(x: 0, y: 16))
-                            p.closeSubpath()
-                        }
-                        .fill(Color.blue.opacity(0.8))
-                        .frame(width: 16, height: 16)
-                    }
+                    .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .strokeBorder(Color.accentColor.opacity(0.45), lineWidth: 1.5))
                 }
                 .buttonStyle(.plain)
             }

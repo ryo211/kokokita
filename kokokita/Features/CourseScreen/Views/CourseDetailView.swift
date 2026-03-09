@@ -12,10 +12,15 @@ struct CourseDetailView: View {
     @State private var selectedSpotId: UUID? = nil
     @State private var cameraPosition: MapCameraPosition
     @State private var showSummary = false
+    /// 遡り判定結果（この画面を開いたタイミングで表示）
+    @State private var pendingRetroactiveResult: RetroactiveResultItem? = nil
+    /// コース一覧ストア（遡り判定結果の取得に使用）
+    var courseListStore: CourseListStore? = nil
 
-    init(course: Course, showTitle: Bool = true, initialSelectedSpotId: UUID? = nil) {
+    init(course: Course, showTitle: Bool = true, initialSelectedSpotId: UUID? = nil, courseListStore: CourseListStore? = nil) {
         self.showTitle = showTitle
         self.courseId = course.id
+        self.courseListStore = courseListStore
         _course = State(initialValue: course)
         _selectedSpotId = State(initialValue: initialSelectedSpotId)
         if let spotId = initialSelectedSpotId,
@@ -49,7 +54,15 @@ struct CourseDetailView: View {
         .navigationTitle(showTitle ? course.title : "")
         .navigationBarTitleDisplayMode(.inline)
         // 画面表示のたびに最新データを取得（CoreDataキャッシュを確実に反映）
-        .task { reloadCourse() }
+        .task {
+            reloadCourse()
+            // ハイライトを解除（詳細を開いたことで「新規」状態を消費）
+            courseListStore?.newlyAddedCourseIds.remove(courseId)
+            // everEnabled == false のコースは遡り判定未実施 → 直接実行
+            if !course.everEnabled {
+                await performRetroactiveRecognition()
+            }
+        }
         .onReceive(NotificationCenter.default.publisher(for: .courseChanged)) { _ in
             // チェックイン通知受信時も即時更新
             reloadCourse()
@@ -68,6 +81,32 @@ struct CourseDetailView: View {
         .sheet(isPresented: $showSummary) {
             CourseSummarySheet(course: course)
         }
+        // 遡り判定結果シート（ストアシートとの競合を避けるためここに配置）
+        .sheet(item: $pendingRetroactiveResult) { result in
+            RetroactiveCheckInResultSheet(result: result)
+        }
+    }
+
+    // MARK: - 遡り判定
+
+    /// コース詳細を開いたタイミングで遡り判定を直接実行し、結果をシートで表示する
+    private func performRetroactiveRecognition() async {
+        let svc = AppContainer.shared.retroactiveService
+        let repo = AppContainer.shared.courseRepo
+        do {
+            // 二重実行防止のため先にフラグをセット
+            try repo.setEverEnabled(courseId)
+            let result = try svc.recognize(for: courseId)
+            guard let r = result, !r.checkedInSpots.isEmpty else { return }
+            // コース情報を最新化してからシートを表示
+            reloadCourse()
+            pendingRetroactiveResult = RetroactiveResultItem(
+                course: r.course,
+                checkedInSpots: r.checkedInSpots
+            )
+        } catch {
+            Logger.error("遡り判定エラー", error: error)
+        }
     }
 
     // MARK: - 地図エリア
@@ -75,18 +114,21 @@ struct CourseDetailView: View {
     private var mapArea: some View {
         Map(position: $cameraPosition) {
             ForEach(Array(course.spots.enumerated()), id: \.element.id) { index, spot in
-                Annotation(
-                    "",
-                    coordinate: CLLocationCoordinate2D(latitude: spot.latitude, longitude: spot.longitude),
-                    anchor: .center
-                ) {
-                    SpotPinView(
-                        orderNumber: index + 1,
-                        isCheckedIn: spot.isCheckedIn,
-                        isSelected: selectedSpotId == spot.id
-                    )
-                    .onTapGesture {
-                        focusSpot(spot)
+                // 不正な座標のスポットはピンを立てない
+                if spot.hasValidCoordinate {
+                    Annotation(
+                        "",
+                        coordinate: CLLocationCoordinate2D(latitude: spot.latitude, longitude: spot.longitude),
+                        anchor: .center
+                    ) {
+                        SpotPinView(
+                            orderNumber: index + 1,
+                            isCheckedIn: spot.isCheckedIn,
+                            isSelected: selectedSpotId == spot.id
+                        )
+                        .onTapGesture {
+                            focusSpot(spot)
+                        }
                     }
                 }
             }
@@ -211,6 +253,8 @@ struct CourseDetailView: View {
                 cameraPosition = .region(CourseDetailView.fitRegion(for: course.spots))
             } else {
                 selectedSpotId = spot.id
+                // 不正な座標の場合は選択状態だけ更新してカメラ移動はしない
+                guard spot.hasValidCoordinate else { return }
                 let courseRegion = CourseDetailView.fitRegion(for: course.spots)
                 let span = CourseDetailView.spotSpan(from: courseRegion)
                 cameraPosition = .region(
@@ -233,6 +277,7 @@ struct CourseDetailView: View {
     }
 
     static func fitRegion(for spots: [CourseSpot]) -> MKCoordinateRegion {
+        let spots = spots.filter { $0.hasValidCoordinate }
         guard !spots.isEmpty else {
             // 0件 → 日本中心（span 10°）
             return MKCoordinateRegion(

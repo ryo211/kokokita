@@ -1,6 +1,5 @@
 import SwiftUI
 import MapKit
-import UIKit
 
 /// 場所検索シート
 struct LocationSearchSheet: View {
@@ -10,7 +9,6 @@ struct LocationSearchSheet: View {
     @State private var isSearching = false
     @State private var searchTask: Task<Void, Never>?
     @State private var hasSearched = false
-    @State private var isIMEComposing = false
     @FocusState private var isSearchFieldFocused: Bool
 
     /// 場所選択時のコールバック（座標、住所、場所名）
@@ -26,17 +24,12 @@ struct LocationSearchSheet: View {
                     TextField(L.ManualEntry.searchLocation, text: $searchText)
                         .textFieldStyle(.plain)
                         .focused($isSearchFieldFocused)
-                        .submitLabel(.done)
-                        .onReceive(NotificationCenter.default.publisher(for: UITextField.textDidChangeNotification)) { notification in
-                            guard let textField = notification.object as? UITextField else { return }
-                            let wasComposing = isIMEComposing
-                            let nowComposing = textField.markedTextRange != nil
-                            isIMEComposing = nowComposing
-
-                            // 変換確定の瞬間に検索を再開
-                            if wasComposing && !nowComposing {
-                                scheduleLiveSearch(for: searchText)
-                            }
+                        .submitLabel(.search)
+                        .onSubmit {
+                            let trimmed = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+                            guard !trimmed.isEmpty else { return }
+                            searchTask?.cancel()
+                            searchTask = Task { await search(query: trimmed) }
                         }
                     if !searchText.isEmpty {
                         Button {
@@ -68,7 +61,7 @@ struct LocationSearchSheet: View {
                             .padding(.vertical, 60)
                         } else if searchResults.isEmpty {
                             let trimmed = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
-                            if trimmed.isEmpty || isIMEComposing || !hasSearched {
+                            if trimmed.isEmpty || !hasSearched {
                                 VStack(spacing: 16) {
                                     Image(systemName: "magnifyingglass")
                                         .font(.system(size: 40))
@@ -120,11 +113,6 @@ struct LocationSearchSheet: View {
                     }
                 }
             }
-            .onChange(of: searchText) { _, newValue in
-                // IME変換中は未確定入力のため検索しない
-                if isIMEComposing { return }
-                scheduleLiveSearch(for: newValue)
-            }
             .onAppear {
                 requestInitialFocus()
             }
@@ -171,24 +159,6 @@ struct LocationSearchSheet: View {
         .contentShape(Rectangle())
     }
 
-    private func scheduleLiveSearch(for query: String) {
-        searchTask?.cancel()
-        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
-        hasSearched = false
-
-        guard !trimmed.isEmpty else {
-            isSearching = false
-            searchResults = []
-            return
-        }
-
-        searchTask = Task {
-            try? await Task.sleep(nanoseconds: 300_000_000)
-            guard !Task.isCancelled else { return }
-            await search(query: trimmed)
-        }
-    }
-
     private func search(query: String) async {
         isSearching = true
         defer { isSearching = false }
@@ -198,8 +168,8 @@ struct LocationSearchSheet: View {
         request.resultTypes = [.pointOfInterest, .address]
 
         do {
-            let search = MKLocalSearch(request: request)
-            let response = try await search.start()
+            let mkSearch = MKLocalSearch(request: request)
+            let response = try await mkSearch.start()
             guard !Task.isCancelled else { return }
             searchResults = response.mapItems
             hasSearched = true
@@ -248,10 +218,7 @@ struct LocationSearchSheet: View {
     }
 
     private func requestInitialFocus() {
-        // まず即時にフォーカスを試みる
         isSearchFieldFocused = true
-
-        // シート表示タイミングで外れるケース向けに軽く再試行
         Task { @MainActor in
             try? await Task.sleep(nanoseconds: 30_000_000)
             if !isSearchFieldFocused {
