@@ -235,6 +235,7 @@ struct PilgrimageHomeView: View {
                     ForEach(Array(nearbySpots.enumerated()), id: \.element.spot.id) { index, item in
                         NavigationLink(value: PilgrimageHomeRoute.courseDetail(courseId: item.course.id, spotId: item.spot.id)) {
                             NearbySpotRow(course: item.course, spot: item.spot, distance: item.distance)
+                                .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
                         if index < nearbySpots.count - 1 {
@@ -267,6 +268,7 @@ struct PilgrimageHomeView: View {
                     ForEach(Array(recentAchievements.enumerated()), id: \.element.spot.id) { index, item in
                         NavigationLink(value: PilgrimageHomeRoute.courseDetail(courseId: item.course.id, spotId: item.spot.id)) {
                             RecentAchievementRow(course: item.course, spot: item.spot)
+                                .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
                         if index < recentAchievements.count - 1 {

@@ -33,7 +33,7 @@ struct SettingsSheet: View {
                         Label(L.SettingsSheet.followOnX, systemImage: "link")
                     }
 
-                    Link(destination: URL(string: "https://kokokita.irodoriq.com/support/")!) {
+                    Link(destination: URL(string: "https://kokokita.irodoriq.com/course/support/")!) {
                         Label(L.SettingsSheet.support, systemImage: "headphones.circle")
                     }
                 }

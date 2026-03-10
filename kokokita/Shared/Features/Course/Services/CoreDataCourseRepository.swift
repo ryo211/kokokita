@@ -48,7 +48,7 @@ final class CoreDataCourseRepository: CourseRepository {
 
     func checkIn(spotId: UUID, visitId: UUID?) throws {
         // fetchLimit を設けず同UUID の全エンティティを更新する
-        // （syncSpots の不具合で重複エンティティが生成された場合も確実にリンクを反映するため）
+        // （syncSections の不具合で重複エンティティが生成された場合も確実にリンクを反映するため）
         let req = CourseSpotEntity.fetchRequest()
         req.predicate = NSPredicate(format: "id == %@", spotId as CVarArg)
         let found = try ctx.fetch(req)
@@ -87,7 +87,7 @@ final class CoreDataCourseRepository: CourseRepository {
 
     func fetchSpotsForRetroactive(courseId: UUID) throws -> [CourseSpot] {
         guard let entity = try fetchEntity(id: courseId) else { return [] }
-        return mapToSpots(entity)
+        return mapToSections(entity).flatMap(\.spots)
     }
 
     // MARK: - Private ヘルパー
@@ -112,25 +112,72 @@ final class CoreDataCourseRepository: CourseRepository {
         entity.everEnabled = NSNumber(value: course.everEnabled)
         entity.detailUrl = course.detailUrl
         entity.coverImageUrl = course.coverImageUrl
+        entity.categories = course.categories.isEmpty ? nil : course.categories.map(\.rawValue).joined(separator: ",")
         entity.createdAt = course.createdAt
         entity.updatedAt = course.updatedAt
 
-        // スポットを同期（既存スポットのチェックイン状態を保持しつつメタ情報を更新）
-        syncSpots(course.spots, to: entity)
+        // セクション（内包スポット）を同期
+        syncSections(course.sections, to: entity)
+    }
+
+    /// セクション一覧を同期
+    private func syncSections(_ sections: [CourseSection], to courseEntity: CourseEntity) {
+        // 既存セクションを sectionId でマッピング（nil の場合は id で識別）
+        let existingSections: [String: CourseSectionEntity] =
+            (courseEntity.sections?.array as? [CourseSectionEntity])?
+                .reduce(into: [:]) { dict, e in
+                    let key = e.sectionId ?? e.id?.uuidString ?? UUID().uuidString
+                    dict[key] = e
+                } ?? [:]
+
+        // 既存スポットを id でマッピング（セクション横断で収集）
+        let existingSpots: [UUID: CourseSpotEntity] =
+            (courseEntity.sections?.array as? [CourseSectionEntity])?
+                .flatMap { ($0.spots?.array as? [CourseSpotEntity]) ?? [] }
+                .reduce(into: [:]) { dict, e in
+                    if let id = e.id { dict[id] = e }
+                } ?? [:]
+
+        // v3 互換: course.spots 直下のスポットも収集
+        let legacySpots: [UUID: CourseSpotEntity] =
+            (courseEntity.spots?.array as? [CourseSpotEntity])?
+                .reduce(into: [:]) { dict, e in
+                    if let id = e.id { dict[id] = e }
+                } ?? [:]
+
+        let allExistingSpots = existingSpots.merging(legacySpots) { current, _ in current }
+
+        var orderedSections: [CourseSectionEntity] = []
+        for section in sections {
+            let key = section.sectionId ?? section.id.uuidString
+            let sectionEntity = existingSections[key] ?? CourseSectionEntity(context: ctx)
+            sectionEntity.id = section.id
+            sectionEntity.sectionId = section.sectionId
+            sectionEntity.name = section.name
+            sectionEntity.sectionDescription = section.sectionDescription
+            sectionEntity.orderIndex = Int32(section.orderIndex)
+            sectionEntity.coverImageUrl = section.coverImageUrl
+            sectionEntity.course = courseEntity
+
+            // スポットを同期
+            syncSpots(section.spots, to: sectionEntity, existingSpots: allExistingSpots)
+            orderedSections.append(sectionEntity)
+        }
+
+        courseEntity.sections = NSOrderedSet(array: orderedSections)
+        // v3 互換の直下 spots リレーションはクリア（セクション経由に一本化）
+        courseEntity.spots = NSOrderedSet()
     }
 
     /// スポット一覧を同期（チェックイン済みフラグは上書きしない）
-    private func syncSpots(_ spots: [CourseSpot], to courseEntity: CourseEntity) {
-        // 既存スポットを id でマッピング
-        // NSOrderedSet は Set<T> に直接キャストできないため .array 経由で取得する
-        let existing: [UUID: CourseSpotEntity] = (courseEntity.spots?.array as? [CourseSpotEntity])?
-            .reduce(into: [:]) { dict, e in
-                if let id = e.id { dict[id] = e }
-            } ?? [:]
-
+    private func syncSpots(
+        _ spots: [CourseSpot],
+        to sectionEntity: CourseSectionEntity,
+        existingSpots: [UUID: CourseSpotEntity]
+    ) {
         var ordered: [CourseSpotEntity] = []
         for spot in spots {
-            let e = existing[spot.id] ?? CourseSpotEntity(context: ctx)
+            let e = existingSpots[spot.id] ?? CourseSpotEntity(context: ctx)
             e.id = spot.id
             e.spotId = spot.spotId
             e.name = spot.name
@@ -141,16 +188,16 @@ final class CoreDataCourseRepository: CourseRepository {
             e.orderIndex = Int32(spot.orderIndex)
             e.recognitionRadiusMeters = spot.recognitionRadiusMeters.map { NSNumber(value: $0) }
             // チェックイン状態は既存の値を保持（JSONで上書きしない）
-            if existing[spot.id] == nil {
+            if existingSpots[spot.id] == nil {
                 e.isCheckedIn = NSNumber(value: false)
                 e.firstCheckedInAt = nil
             }
-            e.course = courseEntity
+            // v3 互換の course リレーションをクリアし section に付け替え
+            e.course = nil
+            e.section = sectionEntity
             ordered.append(e)
         }
-
-        // ordered relationship に設定
-        courseEntity.spots = NSOrderedSet(array: ordered)
+        sectionEntity.spots = NSOrderedSet(array: ordered)
     }
 
     /// CoreData エンティティ → Course ドメインモデルへの変換
@@ -169,32 +216,79 @@ final class CoreDataCourseRepository: CourseRepository {
             coverImageUrl: entity.coverImageUrl,
             createdAt: entity.createdAt ?? Date(),
             updatedAt: entity.updatedAt ?? Date(),
-            spots: mapToSpots(entity)
+            categories: (entity.categories ?? "")
+                .split(separator: ",")
+                .compactMap { CourseCategory(rawValue: String($0)) },
+            sections: mapToSections(entity)
         )
     }
 
-    private func mapToSpots(_ entity: CourseEntity) -> [CourseSpot] {
-        guard let ordered = entity.spots?.array as? [CourseSpotEntity] else { return [] }
-        return ordered.map { s in
-            // visits リレーションから VisitEntity.id を日時昇順で取得
-            let sortedVisitDetails = ((s.visits as? Set<VisitDetailsEntity>) ?? [])
-                .sorted { ($0.visit?.timestampUTC ?? .distantPast) < ($1.visit?.timestampUTC ?? .distantPast) }
-            let visitIds: [UUID] = sortedVisitDetails.compactMap { $0.visit?.id }
-            // firstCheckedInAt は visits の最古の訪問日時から導出（CoreData フラグは参照しない）
-            let firstCheckedInAt: Date? = sortedVisitDetails.first?.visit?.timestampUTC
-            return CourseSpot(
-                id: s.id ?? UUID(),
-                spotId: s.spotId ?? "",
-                name: s.name ?? "",
-                address: s.address,
-                latitude: s.latitude,
-                longitude: s.longitude,
-                spotDescription: s.spotDescription,
-                orderIndex: Int(s.orderIndex),
-                recognitionRadiusMeters: s.recognitionRadiusMeters?.doubleValue,
-                firstCheckedInAt: firstCheckedInAt,
-                visitIds: visitIds
-            )
+    /// CourseEntity → [CourseSection] への変換。
+    /// v4 以降は sections リレーションを使用。
+    /// v3 からの移行データは spots 直下にあるため仮想セクションとして包む（後方互換）
+    private func mapToSections(_ entity: CourseEntity) -> [CourseSection] {
+        // v4: sections リレーションが存在する場合はそれを使用
+        if let sectionsOrdered = entity.sections?.array as? [CourseSectionEntity],
+           !sectionsOrdered.isEmpty {
+            return sectionsOrdered.map { mapToSection($0) }
         }
+        // v3 互換: spots が course 直下に紐づいている場合、仮想セクションとして扱う
+        let legacySpots = mapToSpotsFromEntity(entity)
+        guard !legacySpots.isEmpty else { return [] }
+        return [CourseSection(
+            id: entity.id ?? UUID(),
+            sectionId: nil,
+            name: "",
+            sectionDescription: nil,
+            orderIndex: 0,
+            coverImageUrl: nil,
+            spots: legacySpots
+        )]
+    }
+
+    private func mapToSection(_ entity: CourseSectionEntity) -> CourseSection {
+        CourseSection(
+            id: entity.id ?? UUID(),
+            sectionId: entity.sectionId,
+            name: entity.name ?? "",
+            sectionDescription: entity.sectionDescription,
+            orderIndex: Int(entity.orderIndex),
+            coverImageUrl: entity.coverImageUrl,
+            spots: mapToSpotsFromSection(entity)
+        )
+    }
+
+    /// CourseSectionEntity → [CourseSpot] への変換
+    private func mapToSpotsFromSection(_ entity: CourseSectionEntity) -> [CourseSpot] {
+        guard let ordered = entity.spots?.array as? [CourseSpotEntity] else { return [] }
+        return ordered.map { mapToSpot($0) }
+    }
+
+    /// v3 互換: CourseEntity.spots 直下からスポットを取得
+    private func mapToSpotsFromEntity(_ entity: CourseEntity) -> [CourseSpot] {
+        guard let ordered = entity.spots?.array as? [CourseSpotEntity] else { return [] }
+        return ordered.map { mapToSpot($0) }
+    }
+
+    private func mapToSpot(_ s: CourseSpotEntity) -> CourseSpot {
+        // visits リレーションから VisitEntity.id を日時昇順で取得
+        let sortedVisitDetails = ((s.visits as? Set<VisitDetailsEntity>) ?? [])
+            .sorted { ($0.visit?.timestampUTC ?? .distantPast) < ($1.visit?.timestampUTC ?? .distantPast) }
+        let visitIds: [UUID] = sortedVisitDetails.compactMap { $0.visit?.id }
+        // firstCheckedInAt は visits の最古の訪問日時から導出（CoreData フラグは参照しない）
+        let firstCheckedInAt: Date? = sortedVisitDetails.first?.visit?.timestampUTC
+        return CourseSpot(
+            id: s.id ?? UUID(),
+            spotId: s.spotId ?? "",
+            name: s.name ?? "",
+            address: s.address,
+            latitude: s.latitude,
+            longitude: s.longitude,
+            spotDescription: s.spotDescription,
+            orderIndex: Int(s.orderIndex),
+            recognitionRadiusMeters: s.recognitionRadiusMeters?.doubleValue,
+            firstCheckedInAt: firstCheckedInAt,
+            visitIds: visitIds
+        )
     }
 }

@@ -355,6 +355,9 @@
 "course.notVisited" = "Not Visited";
 "course.noAddress" = "No Address";
 "course.visitedOn" = "Visited on %@";
+"course.spotProgress" = "Spots achieved %d/%d";
+"course.sort.default" = "Default";
+"course.sort.distance" = "Nearest";
 
 // MARK: - Mode Selection
 "modeSelection.title" = "Choose Your Mode";

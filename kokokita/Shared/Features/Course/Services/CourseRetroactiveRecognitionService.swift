@@ -63,10 +63,17 @@ final class CourseRetroactiveRecognitionService {
 
         guard !checkedInSpots.isEmpty else { return nil }
 
-        // 最新のコース情報を再取得（チェックイン状態が更新されているため）
+        // 最新のコース情報を再取得（visits リレーション更新後）
         course = try courseRepo.fetch(id: courseId) ?? course
 
-        return RetroactiveResult(course: course, checkedInSpots: checkedInSpots)
+        // checkedInSpots を再フェッチ済みコースのスポットで上書き
+        // （visits が実際にリンクされたスポットのみが isCheckedIn == true になる）
+        let checkedInIds = Set(checkedInSpots.map { $0.id })
+        let updatedCheckedInSpots = course.spots.filter { checkedInIds.contains($0.id) && $0.isCheckedIn }
+
+        guard !updatedCheckedInSpots.isEmpty else { return nil }
+
+        return RetroactiveResult(course: course, checkedInSpots: updatedCheckedInSpots)
     }
 
     // MARK: - Private

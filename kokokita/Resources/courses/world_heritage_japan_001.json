@@ -8,10 +8,9 @@
   "version": 1,
   "recognitionRadiusMeters": 500.0,
   "detailUrl": null,
-  "coverImageUrl": "https://kokokita.irodoriq.com/images/course/course-world-heritage-japan-001.jpg",
+  "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/course/course-world-heritage-japan-001.jpg",
   "categories": [
-    "history_culture",
-    "sightseeing"
+    "history_culture"
   ],
   "spots": [
     {

@@ -357,6 +357,9 @@
 "course.notVisited" = "未訪問";
 "course.noAddress" = "住所未登録";
 "course.visitedOn" = "%@に巡礼済み";
+"course.spotProgress" = "達成したスポット %d/%d";
+"course.sort.default" = "デフォルト順";
+"course.sort.distance" = "近い順";
 
 // MARK: - Mode Selection
 "modeSelection.title" = "モードを選んでください";

@@ -18,8 +18,13 @@ struct Course: Identifiable, Equatable {
     let coverImageUrl: String?
     let createdAt: Date
     let updatedAt: Date
-    /// スポット一覧（orderIndex 昇順）
-    let spots: [CourseSpot]
+    /// コースに付与されたカテゴリ（複数可）
+    let categories: [CourseCategory]
+    /// セクション一覧（orderIndex 昇順）
+    let sections: [CourseSection]
+
+    /// 全スポット一覧（セクションをフラット展開）。後方互換・認識処理用
+    var spots: [CourseSpot] { sections.flatMap(\.spots) }
 
     /// チェックイン済みスポット数
     var checkedInCount: Int { spots.filter { $0.isCheckedIn }.count }

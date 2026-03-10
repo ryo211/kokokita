@@ -8,9 +8,8 @@
   "version": 1,
   "recognitionRadiusMeters": 500.0,
   "detailUrl": "https://jokaku.jp/japan-top-100-castles/",
-  "coverImageUrl": null,
+  "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/course/100_famous_castles_japan_001.jpg",
   "categories": [
-    "architecture",
     "history_culture"
   ],
   "spots": [

@@ -118,9 +118,19 @@ private struct CourseStoreRowView: View {
                     .lineLimit(2)
 
                 if !summary.parsedCategories.isEmpty {
-                    Text(summary.parsedCategories.map(\.displayName).joined(separator: "、"))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                    HStack(spacing: 4) {
+                        ForEach(summary.parsedCategories, id: \.rawValue) { category in
+                            HStack(spacing: 3) {
+                                Image(systemName: category.iconName)
+                                Text(category.displayName)
+                            }
+                            .font(.caption2.weight(.medium))
+                            .foregroundStyle(.indigo)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 3)
+                            .background(Color.indigo.opacity(0.1), in: Capsule())
+                        }
+                    }
                 }
 
                 Text(L.CourseStore.spotCount(summary.spotCount))

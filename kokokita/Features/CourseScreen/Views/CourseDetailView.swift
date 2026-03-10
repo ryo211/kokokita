@@ -16,6 +16,11 @@ struct CourseDetailView: View {
     @State private var pendingRetroactiveResult: RetroactiveResultItem? = nil
     /// コース一覧ストア（遡り判定結果の取得に使用）
     var courseListStore: CourseListStore? = nil
+    /// 現在地表示
+    @State private var userLocation: CLLocationCoordinate2D? = nil
+    @State private var isFetchingLocation = false
+    /// 距離順ソート
+    @State private var sortByDistance = false
 
     init(course: Course, showTitle: Bool = true, initialSelectedSpotId: UUID? = nil, courseListStore: CourseListStore? = nil) {
         self.showTitle = showTitle
@@ -43,7 +48,10 @@ struct CourseDetailView: View {
             VStack(spacing: 0) {
                 // 地図エリア（55%）
                 mapArea
-                    .frame(height: geo.size.height * 0.55)
+                    .frame(height: geo.size.height * 0.50)
+
+                // 進捗バー（地図とリストの間に固定表示）
+                progressStrip
 
                 Divider()
 
@@ -62,6 +70,8 @@ struct CourseDetailView: View {
             if !course.everEnabled {
                 await performRetroactiveRecognition()
             }
+            // 現在地を初回取得
+            await fetchUserLocation(zoomTo: false)
         }
         .onReceive(NotificationCenter.default.publisher(for: .courseChanged)) { _ in
             // チェックイン通知受信時も即時更新
@@ -130,6 +140,31 @@ struct CourseDetailView: View {
                             focusSpot(spot)
                         }
                     }
+
+                    // フォーカス中スポットのチェックイン有効範囲を表示
+                    if selectedSpotId == spot.id, spot.hasValidCoordinate {
+                        MapCircle(
+                            center: CLLocationCoordinate2D(latitude: spot.latitude, longitude: spot.longitude),
+                            radius: spot.recognitionRadiusMeters ?? course.recognitionRadiusMeters
+                        )
+                        .foregroundStyle(Color.indigo.opacity(0.08))
+                        .stroke(Color.indigo.opacity(0.5), lineWidth: 1.5)
+                    }
+                }
+            }
+
+            // 現在地ピン
+            if let coord = userLocation {
+                Annotation("", coordinate: coord, anchor: .center) {
+                    ZStack {
+                        Circle()
+                            .fill(.blue.opacity(0.15))
+                            .frame(width: 26, height: 26)
+                        Circle()
+                            .fill(.blue)
+                            .frame(width: 14, height: 14)
+                            .overlay(Circle().stroke(.white, lineWidth: 2))
+                    }
                 }
             }
         }
@@ -139,38 +174,53 @@ struct CourseDetailView: View {
             MapScaleView()
         }
         .overlay(alignment: .bottomTrailing) {
-            progressBadge
+            locationButton
                 .padding([.trailing, .bottom], 12)
         }
     }
 
-    // MARK: - 進捗バッジ（地図右下オーバーレイ）
+    // MARK: - 進捗ストリップ（地図とリストの間に固定表示）
 
-    private var progressBadge: some View {
-        Group {
+    private var progressStrip: some View {
+        HStack(spacing: 8) {
             if course.isCompleted {
-                // 完了バッジ
                 Label(L.Course.completed, systemImage: "checkmark.seal.fill")
                     .font(.caption.bold())
                     .foregroundStyle(.indigo)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(.ultraThinMaterial, in: Capsule())
             } else {
-                // 通常の進捗バッジ
-                HStack(spacing: 6) {
-                    Image(systemName: "circle.fill")
-                        .font(.system(size: 8))
-                        .foregroundStyle(.indigo)
-                    Text("\(course.checkedInCount)/\(course.totalSpotCount)")
-                        .font(.caption.bold())
-                        .foregroundStyle(.primary)
+                Text(L.Course.spotProgress(course.checkedInCount, course.totalSpotCount))
+                    .font(.caption.bold())
+                    .foregroundStyle(.secondary)
+                ProgressView(value: Double(course.checkedInCount), total: Double(course.totalSpotCount))
+                    .tint(.indigo)
+            }
+            Spacer()
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+    }
+
+    // MARK: - 現在地ボタン（地図右下）
+
+    private var locationButton: some View {
+        Button {
+            Task { await fetchUserLocation(zoomTo: true) }
+        } label: {
+            ZStack {
+                Circle()
+                    .fill(.regularMaterial)
+                    .frame(width: 36, height: 36)
+                    .shadow(color: .black.opacity(0.15), radius: 4, x: 0, y: 2)
+                if isFetchingLocation {
+                    ProgressView().controlSize(.small)
+                } else {
+                    Image(systemName: userLocation != nil ? "location.fill" : "location")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundStyle(userLocation != nil ? Color.blue : Color.secondary)
                 }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-                .background(.ultraThinMaterial, in: Capsule())
             }
         }
+        .buttonStyle(.plain)
     }
 
     // MARK: - スポットリスト
@@ -181,57 +231,101 @@ struct CourseDetailView: View {
     }
 
     private var spotListArea: some View {
-        ScrollViewReader { proxy in
-            ScrollView {
-                // LazyVStack は scrollTo 非対応のため VStack を使用
-                VStack(spacing: 0) {
-                    let indexMap = globalSpotIndex
-                    ForEach(course.sections) { section in
-                        // セクションヘッダー（名前付きセクションのみ表示）
-                        if section.hasName {
-                            CourseSectionHeaderView(section: section)
-                        }
+        VStack(spacing: 0) {
+            // ソートヘッダー
+            HStack(spacing: 8) {
+                SortChip(label: L.Course.sortDefault, isSelected: !sortByDistance) {
+                    sortByDistance = false
+                }
+                SortChip(label: L.Course.sortDistance, isSelected: sortByDistance) {
+                    sortByDistance = true
+                }
+                .disabled(userLocation == nil)
+                .opacity(userLocation == nil ? 0.4 : 1)
+                Spacer()
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
 
-                        ForEach(section.spots) { spot in
-                            SpotListRowView(
-                                spot: spot,
-                                orderNumber: (indexMap[spot.id] ?? 0) + 1,
-                                isSelected: selectedSpotId == spot.id
-                            )
-                            .id(spot.id)
-                            .onTapGesture {
-                                focusSpot(spot)
+            Divider()
+
+            ScrollViewReader { proxy in
+                ScrollView {
+                    VStack(spacing: 0) {
+                        let indexMap = globalSpotIndex
+                        if sortByDistance {
+                            // 距離順フラットリスト（セクション無視）
+                            let sorted = distanceSortedSpots
+                            ForEach(sorted, id: \.spot.id) { item in
+                                SpotListRowView(
+                                    spot: item.spot,
+                                    orderNumber: (indexMap[item.spot.id] ?? 0) + 1,
+                                    isSelected: selectedSpotId == item.spot.id,
+                                    distance: item.distance
+                                )
+                                .id(item.spot.id)
+                                .onTapGesture { focusSpot(item.spot) }
+
+                                if item.spot.id != sorted.last?.spot.id {
+                                    Divider().padding(.leading, 52)
+                                }
                             }
+                        } else {
+                            // デフォルト: セクション別
+                            ForEach(course.sections) { section in
+                                if section.hasName {
+                                    CourseSectionHeaderView(section: section)
+                                }
+                                ForEach(section.spots) { spot in
+                                    let distance: Double? = userLocation.map { loc in
+                                        CLLocation(latitude: loc.latitude, longitude: loc.longitude)
+                                            .distance(from: CLLocation(latitude: spot.latitude, longitude: spot.longitude))
+                                    }
+                                    SpotListRowView(
+                                        spot: spot,
+                                        orderNumber: (indexMap[spot.id] ?? 0) + 1,
+                                        isSelected: selectedSpotId == spot.id,
+                                        distance: distance
+                                    )
+                                    .id(spot.id)
+                                    .onTapGesture { focusSpot(spot) }
 
-                            // セクション内スポット間の区切り線（最後のスポット以外）
-                            if spot.id != section.spots.last?.id {
-                                Divider()
-                                    .padding(.leading, 52)
+                                    if spot.id != section.spots.last?.id {
+                                        Divider().padding(.leading, 52)
+                                    }
+                                }
+                                if section.id != course.sections.last?.id {
+                                    Divider()
+                                }
                             }
-                        }
-
-                        // セクション間の区切り（最後のセクション以外）
-                        if section.id != course.sections.last?.id {
-                            Divider()
                         }
                     }
                 }
-            }
-            .onChange(of: selectedSpotId) { _, newId in
-                if let id = newId {
-                    withAnimation {
-                        proxy.scrollTo(id, anchor: .top)
+                .onChange(of: selectedSpotId) { _, newId in
+                    if let id = newId {
+                        withAnimation { proxy.scrollTo(id, anchor: .top) }
                     }
                 }
-            }
-            .task {
-                // 初期選択スポットがある場合、レンダリング完了後にスクロール
-                guard let id = selectedSpotId else { return }
-                try? await Task.sleep(nanoseconds: 150_000_000) // 0.15秒待機
-                withAnimation {
-                    proxy.scrollTo(id, anchor: .top)
+                .task {
+                    guard let id = selectedSpotId else { return }
+                    try? await Task.sleep(nanoseconds: 150_000_000)
+                    withAnimation { proxy.scrollTo(id, anchor: .top) }
                 }
             }
+        }
+    }
+
+    /// 距離順にソートしたスポット一覧
+    private var distanceSortedSpots: [(spot: CourseSpot, distance: Double?)] {
+        course.spots.map { spot in
+            let distance: Double? = userLocation.map { loc in
+                CLLocation(latitude: loc.latitude, longitude: loc.longitude)
+                    .distance(from: CLLocation(latitude: spot.latitude, longitude: spot.longitude))
+            }
+            return (spot, distance)
+        }
+        .sorted {
+            ($0.distance ?? .infinity) < ($1.distance ?? .infinity)
         }
     }
 
@@ -240,6 +334,33 @@ struct CourseDetailView: View {
     private func reloadCourse() {
         if let updated = try? AppContainer.shared.courseRepo.fetch(id: courseId) {
             course = updated
+        }
+    }
+
+    // MARK: - 現在地取得
+
+    @MainActor
+    private func fetchUserLocation(zoomTo: Bool) async {
+        guard !isFetchingLocation else { return }
+        isFetchingLocation = true
+        defer { isFetchingLocation = false }
+        do {
+            let service = DefaultLocationService()
+            let (location, _) = try await service.requestOneShotLocation(
+                accuracy: kCLLocationAccuracyHundredMeters,
+                timeout: 8.0
+            )
+            userLocation = location.coordinate
+            if zoomTo {
+                withAnimation(.easeInOut(duration: 0.5)) {
+                    cameraPosition = .region(MKCoordinateRegion(
+                        center: location.coordinate,
+                        span: MKCoordinateSpan(latitudeDelta: 0.005, longitudeDelta: 0.005)
+                    ))
+                }
+            }
+        } catch {
+            Logger.warning("現在地取得失敗: \(error)")
         }
     }
 
@@ -314,6 +435,26 @@ struct CourseDetailView: View {
     }
 }
 
+// MARK: - ソートチップ
+
+private struct SortChip: View {
+    let label: String
+    let isSelected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Text(label)
+                .font(.caption.weight(isSelected ? .semibold : .regular))
+                .foregroundStyle(isSelected ? Color.white : Color.primary)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 5)
+                .background(isSelected ? Color.indigo : Color.secondary.opacity(0.12), in: Capsule())
+        }
+        .buttonStyle(.plain)
+    }
+}
+
 // MARK: - セクションヘッダー
 
 private struct CourseSectionHeaderView: View {
@@ -370,6 +511,12 @@ private struct SpotListRowView: View {
     let spot: CourseSpot
     let orderNumber: Int
     let isSelected: Bool
+    var distance: Double? = nil
+
+    private var distanceText: String? {
+        guard let d = distance else { return nil }
+        return d < 1000 ? String(format: "%.0fm", d) : String(format: "%.1fkm", d / 1000)
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -406,6 +553,12 @@ private struct SpotListRowView: View {
                 }
 
                 Spacer()
+
+                if let text = distanceText {
+                    Text(text)
+                        .font(.caption2.monospacedDigit())
+                        .foregroundStyle(.secondary)
+                }
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 10)
@@ -432,32 +585,43 @@ private struct SpotDetailExpandedView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            // 住所（未設定の場合はその旨を表示）
-            Label(
-                spot.address ?? L.Course.noAddress,
-                systemImage: "mappin"
-            )
-            .font(.caption)
-            .foregroundStyle(spot.address != nil ? .secondary : Color(uiColor: .tertiaryLabel))
+            // 住所・訪問日（アイコン幅を固定してインデントを揃える）
+            let iconWidth: CGFloat = 14
+            HStack(alignment: .top, spacing: 6) {
+                Image(systemName: "mappin.circle")
+                    .font(.caption)
+                    .frame(width: iconWidth)
+                Text(spot.address ?? L.Course.noAddress)
+                    .font(.caption)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .foregroundStyle(spot.address != nil ? Color.secondary : Color.secondary.opacity(0.5))
             .padding(.leading, 60)
             .padding(.trailing, 16)
 
-            // 訪問日（未訪問の場合はその旨を表示）
             if let date = spot.firstCheckedInAt {
-                Label(
-                    L.Course.visitedOn(date.formatted(date: .long, time: .omitted)),
-                    systemImage: "calendar"
-                )
-                .font(.caption)
-                .foregroundStyle(.indigo)
+                HStack(alignment: .top, spacing: 6) {
+                    Image(systemName: "calendar.circle")
+                        .font(.caption)
+                        .frame(width: iconWidth)
+                    Text(L.Course.visitedOn(date.formatted(date: .long, time: .omitted)))
+                        .font(.caption)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .foregroundStyle(Color.indigo)
                 .padding(.leading, 60)
                 .padding(.trailing, 16)
             } else {
-                Label(L.Course.notVisited, systemImage: "calendar")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .padding(.leading, 60)
-                    .padding(.trailing, 16)
+                HStack(alignment: .top, spacing: 6) {
+                    Image(systemName: "calendar.circle")
+                        .font(.caption)
+                        .frame(width: iconWidth)
+                    Text(L.Course.notVisited)
+                        .font(.caption)
+                }
+                .foregroundStyle(Color.secondary)
+                .padding(.leading, 60)
+                .padding(.trailing, 16)
             }
 
             // 紐づいた記録カード横スクロール（紐づきがある場合のみ）
@@ -572,10 +736,32 @@ private struct CourseSummarySheet: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                Text(course.summary ?? "")
-                    .font(.body)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding()
+                VStack(alignment: .leading, spacing: 0) {
+                    // カバー画像
+                    if let urlStr = course.coverImageUrl, let url = URL(string: urlStr) {
+                        AsyncImage(url: url) { phase in
+                            if case .success(let image) = phase {
+                                image
+                                    .resizable()
+                                    .scaledToFill()
+                                    .frame(maxWidth: .infinity)
+                                    .frame(height: 200)
+                                    .clipped()
+                            } else {
+                                Color.indigo.opacity(0.15)
+                                    .frame(height: 200)
+                            }
+                        }
+                    }
+
+                    // 概要テキスト
+                    if let summary = course.summary {
+                        Text(summary)
+                            .font(.body)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding()
+                    }
+                }
             }
             .navigationTitle(course.title)
             .navigationBarTitleDisplayMode(.inline)

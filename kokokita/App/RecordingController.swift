@@ -206,23 +206,31 @@ final class RecordingController {
             NotificationCenter.default.post(name: .courseChanged, object: nil)
 
             return results.map { result in
-                let updatedSpots = result.course.spots.map { spot -> CourseSpot in
-                    guard checkedSpotIds.contains(spot.id) else { return spot }
-                    // visitIds は UI 上の一時オブジェクトなので既存 + 今回の visitId を反映
-                    let newVisitIds: [UUID]
-                    if let vid = visitId {
-                        newVisitIds = spot.visitIds + [vid]
-                    } else {
-                        newVisitIds = spot.visitIds
-                    }
-                    return CourseSpot(
-                        id: spot.id, spotId: spot.spotId, name: spot.name,
-                        address: spot.address, latitude: spot.latitude,
-                        longitude: spot.longitude, spotDescription: spot.spotDescription,
-                        orderIndex: spot.orderIndex,
-                        recognitionRadiusMeters: spot.recognitionRadiusMeters,
-                        firstCheckedInAt: checkInTime,
-                        visitIds: newVisitIds
+                // セクション構造を保持しつつチェックイン済みスポットのみ visitIds を更新
+                let updatedSections = result.course.sections.map { section in
+                    CourseSection(
+                        id: section.id, sectionId: section.sectionId,
+                        name: section.name, sectionDescription: section.sectionDescription,
+                        orderIndex: section.orderIndex, coverImageUrl: section.coverImageUrl,
+                        spots: section.spots.map { spot -> CourseSpot in
+                            guard checkedSpotIds.contains(spot.id) else { return spot }
+                            // visitIds は UI 上の一時オブジェクトなので既存 + 今回の visitId を反映
+                            let newVisitIds: [UUID]
+                            if let vid = visitId {
+                                newVisitIds = spot.visitIds + [vid]
+                            } else {
+                                newVisitIds = spot.visitIds
+                            }
+                            return CourseSpot(
+                                id: spot.id, spotId: spot.spotId, name: spot.name,
+                                address: spot.address, latitude: spot.latitude,
+                                longitude: spot.longitude, spotDescription: spot.spotDescription,
+                                orderIndex: spot.orderIndex,
+                                recognitionRadiusMeters: spot.recognitionRadiusMeters,
+                                firstCheckedInAt: checkInTime,
+                                visitIds: newVisitIds
+                            )
+                        }
                     )
                 }
                 let updatedCourse = Course(
@@ -234,8 +242,10 @@ final class RecordingController {
                     everEnabled: result.course.everEnabled, detailUrl: result.course.detailUrl,
                     coverImageUrl: result.course.coverImageUrl,
                     createdAt: result.course.createdAt, updatedAt: result.course.updatedAt,
-                    spots: updatedSpots
+                    categories: result.course.categories,
+                    sections: updatedSections
                 )
+                let updatedSpots = updatedSections.flatMap(\.spots)
                 let updatedSpot = updatedSpots.first(where: { $0.id == result.spot.id }) ?? result.spot
                 return CourseRecognitionService.RecognitionResult(
                     course: updatedCourse, spot: updatedSpot, distanceMeters: result.distanceMeters

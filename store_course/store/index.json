@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-03-09T05:29:46Z",
+  "generatedAt": "2026-03-10T14:16:15Z",
   "courses": [
     {
       "id": "course-world-heritage-japan-001",
@@ -13,8 +13,8 @@
       "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/course/course-world-heritage-japan-001.jpg",
       "spotCount": 28,
       "jsonPath": "courses/world_heritage_japan_001.json",
-      "updatedAt": "2026-03-09T05:29:46Z"
-    },    
+      "updatedAt": "2026-03-10T14:16:13Z"
+    },
     {
       "id": "course-100-famous-castles-japan-001",
       "title": "日本100名城",
@@ -26,7 +26,7 @@
       "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/course/100_famous_castles_japan_001.jpg",
       "spotCount": 100,
       "jsonPath": "courses/100_famous_castles_japan_001.json",
-      "updatedAt": "2026-03-09T05:29:46Z"
+      "updatedAt": "2026-03-10T14:16:12Z"
     },
     {
       "id": "course-continued-100-famous-castles-japan-001",
@@ -40,7 +40,7 @@
       "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/course/continued_100_castles_course_001.jpg",
       "spotCount": 100,
       "jsonPath": "courses/continued_100_castles_course_001.json",
-      "updatedAt": "2026-03-09T05:29:46Z"
+      "updatedAt": "2026-03-10T14:16:14Z"
     },
     {
       "id": "course-tokyo-shitamachi-walk-001",
@@ -54,7 +54,20 @@
       "coverImageUrl": null,
       "spotCount": 9,
       "jsonPath": "courses/tokyo_shitamachi_walk_001.json",
-      "updatedAt": "2026-03-09T05:29:46Z"
+      "updatedAt": "2026-03-10T14:16:11Z"
+    },
+    {
+      "id": "course-major-aquariums-japan-001",
+      "title": "全国の主要水族館",
+      "summary": "日本全国の主要水族館を巡るコースです。全49館収録。 参考：公益社団法人日本動物園水族館協会（JAZA）",
+      "categories": [
+        "nature"
+      ],
+      "version": 1,
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/course/course-major-aquariums-japan-001.jpg",
+      "spotCount": 49,
+      "jsonPath": "courses/course-major-aquariums-japan-001.json",
+      "updatedAt": "2026-03-10T14:16:13Z"
     }
   ]
 }
