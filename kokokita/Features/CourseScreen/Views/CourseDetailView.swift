@@ -23,6 +23,8 @@ struct CourseDetailView: View {
     @State private var sortByDistance = false
     /// フォーカス中スポットのスクリーン座標（リーダーライン描画用）
     @State private var selectedSpotScreenPoint: CGPoint? = nil
+    /// ライトボックス表示中の画像 URL
+    @State private var expandedImageUrl: URL? = nil
 
     init(course: Course, showTitle: Bool = true, initialSelectedSpotId: UUID? = nil, courseListStore: CourseListStore? = nil) {
         self.showTitle = showTitle
@@ -97,6 +99,32 @@ struct CourseDetailView: View {
         .sheet(item: $pendingRetroactiveResult) { result in
             RetroactiveCheckInResultSheet(result: result)
         }
+        // スポット画像ライトボックス（タップで閉じる）
+        .overlay {
+            if let url = expandedImageUrl {
+                ZStack {
+                    Color.black.opacity(0.65)
+                        .ignoresSafeArea()
+                    AsyncImage(url: url) { phase in
+                        if case .success(let image) = phase {
+                            image
+                                .resizable()
+                                .scaledToFit()
+                                .padding(32)
+                                .shadow(color: .black.opacity(0.35), radius: 24, x: 0, y: 8)
+                        }
+                    }
+                }
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        expandedImageUrl = nil
+                    }
+                }
+                .transition(.opacity.combined(with: .scale(scale: 0.92)))
+            }
+        }
+        .animation(.easeInOut(duration: 0.2), value: expandedImageUrl != nil)
     }
 
     // MARK: - 遡り判定
@@ -219,8 +247,12 @@ struct CourseDetailView: View {
            let spot = course.spots.first(where: { $0.id == selectedSpotId }),
            let urlStr = spot.coverImageUrl,
            let url = URL(string: urlStr) {
-            SpotLeaderLineView(spotPoint: spotPoint, imageUrl: url)
-                .transition(.opacity)
+            SpotLeaderLineView(spotPoint: spotPoint, imageUrl: url) {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    expandedImageUrl = url
+                }
+            }
+            .transition(.opacity)
         }
     }
 
@@ -777,6 +809,7 @@ private struct SpotDetailExpandedView: View {
 private struct SpotLeaderLineView: View {
     let spotPoint: CGPoint
     let imageUrl: URL
+    var onImageTap: () -> Void = {}
 
     private let imgW: CGFloat = 110
     private let imgH: CGFloat = 74
@@ -847,6 +880,7 @@ private struct SpotLeaderLineView: View {
                 }
             }
             .position(imgCenter)
+            .onTapGesture { onImageTap() }
         }
     }
 }
