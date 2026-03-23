@@ -21,6 +21,8 @@ struct CourseDetailView: View {
     @State private var isFetchingLocation = false
     /// 距離順ソート
     @State private var sortByDistance = false
+    /// フォーカス中スポットのスクリーン座標（リーダーライン描画用）
+    @State private var selectedSpotScreenPoint: CGPoint? = nil
 
     init(course: Course, showTitle: Bool = true, initialSelectedSpotId: UUID? = nil, courseListStore: CourseListStore? = nil) {
         self.showTitle = showTitle
@@ -122,95 +124,103 @@ struct CourseDetailView: View {
     // MARK: - 地図エリア
 
     private var mapArea: some View {
-        Map(position: $cameraPosition) {
-            ForEach(Array(course.spots.enumerated()), id: \.element.id) { index, spot in
-                // 不正な座標のスポットはピンを立てない
-                if spot.hasValidCoordinate {
-                    Annotation(
-                        "",
-                        coordinate: CLLocationCoordinate2D(latitude: spot.latitude, longitude: spot.longitude),
-                        anchor: .center
-                    ) {
-                        SpotPinView(
-                            orderNumber: index + 1,
-                            isCheckedIn: spot.isCheckedIn,
-                            isSelected: selectedSpotId == spot.id
-                        )
-                        .onTapGesture {
-                            focusSpot(spot)
+        MapReader { proxy in
+            Map(position: $cameraPosition) {
+                ForEach(Array(course.spots.enumerated()), id: \.element.id) { index, spot in
+                    // 不正な座標のスポットはピンを立てない
+                    if spot.hasValidCoordinate {
+                        Annotation(
+                            "",
+                            coordinate: CLLocationCoordinate2D(latitude: spot.latitude, longitude: spot.longitude),
+                            anchor: .center
+                        ) {
+                            SpotPinView(
+                                orderNumber: index + 1,
+                                isCheckedIn: spot.isCheckedIn,
+                                isSelected: selectedSpotId == spot.id
+                            )
+                            .onTapGesture {
+                                focusSpot(spot)
+                            }
+                        }
+
+                        // フォーカス中スポットのチェックイン有効範囲を表示
+                        if selectedSpotId == spot.id, spot.hasValidCoordinate {
+                            MapCircle(
+                                center: CLLocationCoordinate2D(latitude: spot.latitude, longitude: spot.longitude),
+                                radius: spot.recognitionRadiusMeters ?? course.recognitionRadiusMeters
+                            )
+                            .foregroundStyle(Color.indigo.opacity(0.08))
+                            .stroke(Color.indigo.opacity(0.5), lineWidth: 1.5)
                         }
                     }
+                }
 
-                    // フォーカス中スポットのチェックイン有効範囲を表示
-                    if selectedSpotId == spot.id, spot.hasValidCoordinate {
-                        MapCircle(
-                            center: CLLocationCoordinate2D(latitude: spot.latitude, longitude: spot.longitude),
-                            radius: spot.recognitionRadiusMeters ?? course.recognitionRadiusMeters
-                        )
-                        .foregroundStyle(Color.indigo.opacity(0.08))
-                        .stroke(Color.indigo.opacity(0.5), lineWidth: 1.5)
+                // 現在地ピン
+                if let coord = userLocation {
+                    Annotation("", coordinate: coord, anchor: .center) {
+                        ZStack {
+                            Circle()
+                                .fill(.blue.opacity(0.15))
+                                .frame(width: 26, height: 26)
+                            Circle()
+                                .fill(.blue)
+                                .frame(width: 14, height: 14)
+                                .overlay(Circle().stroke(.white, lineWidth: 2))
+                        }
                     }
                 }
             }
-
-            // 現在地ピン
-            if let coord = userLocation {
-                Annotation("", coordinate: coord, anchor: .center) {
-                    ZStack {
-                        Circle()
-                            .fill(.blue.opacity(0.15))
-                            .frame(width: 26, height: 26)
-                        Circle()
-                            .fill(.blue)
-                            .frame(width: 14, height: 14)
-                            .overlay(Circle().stroke(.white, lineWidth: 2))
+            .mapStyle(.standard(emphasis: .muted))
+            .mapControls {
+                MapCompass()
+                MapScaleView()
+            }
+            .onChange(of: selectedSpotId) { _, newId in
+                if newId == nil {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        selectedSpotScreenPoint = nil
                     }
+                } else {
+                    // 選択直後は現在のカメラ位置でスクリーン座標を確定（以降 onMapCameraChange で追従）
+                    updateSpotScreenPoint(proxy: proxy)
                 }
             }
-        }
-        .mapStyle(.standard(emphasis: .muted))
-        .mapControls {
-            MapCompass()
-            MapScaleView()
-        }
-        .overlay(alignment: .topTrailing) {
-            spotCoverImageOverlay
-                .padding([.top, .trailing], 12)
-        }
-        .overlay(alignment: .bottomTrailing) {
-            locationButton
-                .padding([.trailing, .bottom], 12)
+            .onMapCameraChange(frequency: .continuous) { _ in
+                // 地図パン・ズーム・アニメーション中リアルタイム追従
+                updateSpotScreenPoint(proxy: proxy)
+            }
+            .overlay {
+                leaderLineOverlay
+            }
+            .overlay(alignment: .bottomTrailing) {
+                locationButton
+                    .padding([.trailing, .bottom], 12)
+            }
         }
     }
 
-    /// フォーカス中スポットにカバー画像がある場合に右上へ表示
+    /// フォーカス中スポットのスクリーン座標を MapProxy で更新する
+    private func updateSpotScreenPoint(proxy: MapProxy) {
+        guard let spotId = selectedSpotId,
+              let spot = course.spots.first(where: { $0.id == spotId }),
+              spot.hasValidCoordinate else {
+            selectedSpotScreenPoint = nil
+            return
+        }
+        let coord = CLLocationCoordinate2D(latitude: spot.latitude, longitude: spot.longitude)
+        selectedSpotScreenPoint = proxy.convert(coord, to: .local)
+    }
+
+    /// フォーカス中スポットに画像がある場合、スポット位置からリーダーライン付きで表示
     @ViewBuilder
-    private var spotCoverImageOverlay: some View {
-        if let spot = course.spots.first(where: { $0.id == selectedSpotId }),
+    private var leaderLineOverlay: some View {
+        if let spotPoint = selectedSpotScreenPoint,
+           let spot = course.spots.first(where: { $0.id == selectedSpotId }),
            let urlStr = spot.coverImageUrl,
            let url = URL(string: urlStr) {
-            AsyncImage(url: url) { phase in
-                switch phase {
-                case .success(let image):
-                    image
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: 110, height: 74)
-                        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-                        .shadow(color: .black.opacity(0.25), radius: 6, x: 0, y: 2)
-                case .empty:
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .fill(.regularMaterial)
-                        .frame(width: 110, height: 74)
-                        .overlay(ProgressView().controlSize(.small))
-                        .shadow(color: .black.opacity(0.15), radius: 6, x: 0, y: 2)
-                case .failure:
-                    EmptyView()
-                @unknown default:
-                    EmptyView()
-                }
-            }
-            .transition(.opacity.combined(with: .scale(scale: 0.9, anchor: .topTrailing)))
+            SpotLeaderLineView(spotPoint: spotPoint, imageUrl: url)
+                .transition(.opacity)
         }
     }
 
@@ -758,6 +768,86 @@ private struct SpotDetailExpandedView: View {
             photoPaths: agg.details.photoPaths,
             isManualEntry: agg.visit.isManualEntry
         )
+    }
+}
+
+// MARK: - スポット画像リーダーラインビュー
+
+/// スポットのスクリーン座標から右上方向にリーダーライン（指示棒）を伸ばし、画像を表示する
+private struct SpotLeaderLineView: View {
+    let spotPoint: CGPoint
+    let imageUrl: URL
+
+    private let imgW: CGFloat = 110
+    private let imgH: CGFloat = 74
+    /// 画像左辺がスポットから右へのオフセット
+    private let dx: CGFloat = 20
+    /// 画像下辺がスポットから上へのオフセット
+    private let dy: CGFloat = 90
+
+    /// リーダーラインの終点（画像左下隅）
+    private var lineEnd: CGPoint {
+        CGPoint(x: spotPoint.x + dx, y: spotPoint.y - dy)
+    }
+
+    /// 画像中心座標（ZStack 内で .position() に使用）
+    private var imgCenter: CGPoint {
+        CGPoint(x: spotPoint.x + dx + imgW / 2, y: spotPoint.y - dy - imgH / 2)
+    }
+
+    var body: some View {
+        ZStack {
+            // リーダーライン（スポット中心 → 画像左下隅）
+            Canvas { ctx, _ in
+                let path: Path = {
+                    var p = Path()
+                    p.move(to: spotPoint)
+                    p.addLine(to: lineEnd)
+                    return p
+                }()
+                // シャドウ（可読性確保）
+                ctx.stroke(path, with: .color(.black.opacity(0.25)),
+                           style: StrokeStyle(lineWidth: 4.5, lineCap: .round))
+                // 本体（白い線）
+                ctx.stroke(path, with: .color(.white.opacity(0.95)),
+                           style: StrokeStyle(lineWidth: 2.5, lineCap: .round))
+                // スポット側の始点ドット（シャドウ）
+                ctx.fill(
+                    Path(ellipseIn: CGRect(x: spotPoint.x - 4.5, y: spotPoint.y - 4.5, width: 9, height: 9)),
+                    with: .color(.black.opacity(0.25))
+                )
+                // スポット側の始点ドット（本体）
+                ctx.fill(
+                    Path(ellipseIn: CGRect(x: spotPoint.x - 3.5, y: spotPoint.y - 3.5, width: 7, height: 7)),
+                    with: .color(.white.opacity(0.95))
+                )
+            }
+            .allowsHitTesting(false)
+
+            // スポット画像
+            AsyncImage(url: imageUrl) { phase in
+                switch phase {
+                case .success(let image):
+                    image
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: imgW, height: imgH)
+                        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                        .shadow(color: .black.opacity(0.3), radius: 6, x: 0, y: 2)
+                case .empty:
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(.regularMaterial)
+                        .frame(width: imgW, height: imgH)
+                        .overlay(ProgressView().controlSize(.small))
+                        .shadow(color: .black.opacity(0.15), radius: 6, x: 0, y: 2)
+                case .failure:
+                    EmptyView()
+                @unknown default:
+                    EmptyView()
+                }
+            }
+            .position(imgCenter)
+        }
     }
 }
 
