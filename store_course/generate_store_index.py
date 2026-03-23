@@ -31,7 +31,7 @@ def count_spots(course: dict) -> int:
 
 
 def build_summary(course: dict, json_filename: str) -> dict:
-    """コース JSON から StoreCourseSummary を構築する"""
+    """コース JSON から updatedAt を除いた StoreCourseSummary を構築する"""
     return {
         "id": course["id"],
         "title": course["title"],
@@ -41,17 +41,29 @@ def build_summary(course: dict, json_filename: str) -> dict:
         "coverImageUrl": course.get("coverImageUrl"),
         "spotCount": count_spots(course),
         "jsonPath": f"courses/{json_filename}",
-        "updatedAt": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
     }
+
+
+def load_existing_index(output_path: str) -> dict:
+    """既存の index.json を取得する"""
+    if not os.path.exists(output_path):
+        return {}
+    with open(output_path, encoding="utf-8") as f:
+        return json.load(f)
 
 
 def load_existing_order(output_path: str) -> list[str]:
     """既存の index.json からコース ID の順序を取得する"""
-    if not os.path.exists(output_path):
-        return []
-    with open(output_path, encoding="utf-8") as f:
-        data = json.load(f)
+    data = load_existing_index(output_path)
     return [c["id"] for c in data.get("courses", [])]
+
+
+def course_has_changed(new_summary: dict, existing_summary: dict) -> bool:
+    """updatedAt を除くコース概要に差分があるか判定する"""
+    comparable_existing = {
+        key: value for key, value in existing_summary.items() if key != "updatedAt"
+    }
+    return new_summary != comparable_existing
 
 
 def main():
@@ -98,6 +110,12 @@ def main():
         print("コース JSON が見つかりませんでした。")
         exit(0)
 
+    existing_index = load_existing_index(output_path)
+    existing_courses_by_id = {
+        course["id"]: course for course in existing_index.get("courses", [])
+    }
+    now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
     # 表示順の決定
     if args.order:
         # --order で明示指定された場合
@@ -120,14 +138,41 @@ def main():
             if cid not in ordered_ids:
                 ordered_ids.append(cid)
 
-    ordered_courses = [summaries_by_id[cid] for cid in ordered_ids]
+    ordered_courses = []
+    changed_course_ids: list[str] = []
+    new_course_ids: list[str] = []
+
+    for cid in ordered_ids:
+        summary = summaries_by_id[cid]
+        existing_summary = existing_courses_by_id.get(cid)
+
+        if existing_summary is None:
+            summary["updatedAt"] = now
+            new_course_ids.append(cid)
+        elif course_has_changed(summary, existing_summary):
+            summary["updatedAt"] = now
+            changed_course_ids.append(cid)
+        else:
+            summary["updatedAt"] = existing_summary.get("updatedAt", now)
+
+        ordered_courses.append(summary)
 
     # index.json を生成
     index = {
         "schemaVersion": 1,
-        "generatedAt": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "generatedAt": now,
         "courses": ordered_courses,
     }
+
+    if (
+        existing_index
+        and existing_index.get("schemaVersion") == index["schemaVersion"]
+        and existing_index.get("courses") == index["courses"]
+    ):
+        index["generatedAt"] = existing_index.get("generatedAt", now)
+        if existing_index == index:
+            print(f"変更なし: {output_path}")
+            return
 
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     with open(output_path, "w", encoding="utf-8") as f:
@@ -135,6 +180,10 @@ def main():
         f.write("\n")
 
     print(f"生成完了: {output_path}")
+    if new_course_ids:
+        print(f"  新規追加: {len(new_course_ids)} 件")
+    if changed_course_ids:
+        print(f"  差分更新: {len(changed_course_ids)} 件")
     for c in ordered_courses:
         print(f"  - {c['title']} ({c['spotCount']} スポット, v{c['version']})")
 

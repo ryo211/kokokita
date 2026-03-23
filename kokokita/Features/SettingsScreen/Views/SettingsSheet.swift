@@ -33,8 +33,12 @@ struct SettingsSheet: View {
                         Label(L.SettingsSheet.followOnX, systemImage: "link")
                     }
 
-                    Link(destination: URL(string: "https://kokokita.irodoriq.com/course/support/")!) {
+                    Link(destination: URL(string: "https://kokokita.irodoriq.com/support/")!) {
                         Label(L.SettingsSheet.support, systemImage: "headphones.circle")
+                    }
+
+                    Link(destination: URL(string: "https://apps.apple.com/app/id6755731775?action=write-review")!) {
+                        Label(L.SettingsSheet.reviewApp, systemImage: "star.bubble")
                     }
                 }
 

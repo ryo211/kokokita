@@ -2,8 +2,12 @@ import SwiftUI
 
 // コースストアシート（モーダル表示）
 struct CourseStoreSheet: View {
-    @State private var store = CourseStoreSheetStore()
+    private let store: CourseStoreSheetStore
     @Environment(\.dismiss) private var dismiss
+
+    init(store: CourseStoreSheetStore) {
+        self.store = store
+    }
 
     var body: some View {
         NavigationStack {
@@ -18,8 +22,12 @@ struct CourseStoreSheet: View {
         }
         .task {
             await store.loadIndex()
+            store.applyDefaultFilter()
         }
-        .alert(L.Common.error, isPresented: $store.showError) {
+        .onDisappear {
+            store.markVisited()
+        }
+        .alert(L.Common.error, isPresented: Bindable(store).showError) {
             Button(L.Common.ok) {}
         } message: {
             Text(store.errorMessage ?? "")
@@ -34,6 +42,23 @@ private struct CourseStoreListView: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            // ダウンロード状態フィルターバー
+            HStack(spacing: 8) {
+                ForEach(StoreDownloadFilter.allCases, id: \.self) { filter in
+                    CourseStoreFilterChip(
+                        label: filter.label,
+                        isSelected: store.selectedDownloadFilter == filter
+                    ) {
+                        store.selectedDownloadFilter = filter
+                    }
+                }
+                Spacer()
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
+
+            Divider()
+
             // カテゴリフィルターバー
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
@@ -54,7 +79,7 @@ private struct CourseStoreListView: View {
                     }
                 }
                 .padding(.horizontal, 16)
-                .padding(.vertical, 10)
+                .padding(.vertical, 8)
             }
             Divider()
 
@@ -73,7 +98,8 @@ private struct CourseStoreListView: View {
                     ForEach(store.filteredCourses) { summary in
                         CourseStoreRowView(
                             summary: summary,
-                            status: store.downloadStatuses[summary.id] ?? .notDownloaded
+                            status: store.downloadStatuses[summary.id] ?? .notDownloaded,
+                            isNew: store.isNew(summary)
                         ) {
                             store.download(summary: summary)
                         }
@@ -90,6 +116,7 @@ private struct CourseStoreListView: View {
 private struct CourseStoreRowView: View {
     let summary: StoreCourseSummary
     let status: CourseDownloadStatus
+    var isNew: Bool = false
     let onAction: () -> Void
 
     var body: some View {
@@ -108,14 +135,24 @@ private struct CourseStoreRowView: View {
                     thumbnailPlaceholder
                 }
             }
-            .frame(width: 64, height: 64)
+            .frame(width: 96, height: 64)
             .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
 
             // テキスト
             VStack(alignment: .leading, spacing: 4) {
-                Text(summary.title)
-                    .font(.body.weight(.semibold))
-                    .lineLimit(2)
+                HStack(spacing: 6) {
+                    Text(summary.title)
+                        .font(.body.weight(.semibold))
+                        .lineLimit(2)
+                    if isNew {
+                        Text(L.Course.newBadge)
+                            .font(.caption2.bold())
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(Color.red, in: Capsule())
+                    }
+                }
 
                 if !summary.parsedCategories.isEmpty {
                     HStack(spacing: 4) {
@@ -133,9 +170,14 @@ private struct CourseStoreRowView: View {
                     }
                 }
 
-                Text(L.CourseStore.spotCount(summary.spotCount))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(L.CourseStore.spotCount(summary.spotCount))
+                    if let updatedAt = summary.updatedAt {
+                        Text(L.Course.updatedAt(updatedAt.formatted(.dateTime.year().month().day())))
+                    }
+                }
+                .font(.caption)
+                .foregroundStyle(.secondary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 

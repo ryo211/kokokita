@@ -1,0 +1,176 @@
+{
+  "id": "slam_dunk_001",
+  "courseType": "pilgrimage",
+  "title": "『スラムダンク』の聖地",
+  "summary": "漫画『SLAM DUNK』、映画『THE FIRST SLAM DUNK』に登場する場所を巡るコースです。全12件収録。",
+  "source": "bundled",
+  "isUserCreated": false,
+  "version": 1,
+  "recognitionRadiusMeters": 100.0,
+  "detailUrl": null,
+  "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/course/slam_dunk_001.jpg",
+  "categories": ["anime"],
+  "sections": [
+    {
+      "sectionId": "sec-kanagawa",
+      "name": "〜インターハイ出場（神奈川）",
+      "sectionDescription": null,
+      "orderIndex": 0,
+      "coverImageUrl": null,
+      "spots": [
+        {
+          "spotId": "slam-dunk-001",
+          "name": "鎌倉高校前駅",
+          "address": "日本、〒248-0033 神奈川県鎌倉市腰越１丁目１",
+          "latitude": 35.3067242,
+          "longitude": 139.5005569,
+          "spotDescription": "アニメのオープニング映像に登場した有名な踏切がある場所",
+          "orderIndex": 0,
+          "recognitionRadiusMeters": null,
+          "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/slam-dunk-001.jpeg",
+          "googlePlaceId": "ChIJIRZ85hZPGGARffzavFo4QRk"
+
+        },
+        {
+          "spotId": "slam-dunk-002",
+          "name": "鎌倉海浜公園 坂ノ下地区",
+          "address": "〒248-0021 神奈川県鎌倉市坂ノ下２５−４",
+          "latitude": 35.308034,
+          "longitude": 139.5338945,
+          "spotDescription": "新装再編版2巻の表紙絵",
+          "orderIndex": 1,
+          "recognitionRadiusMeters": null,
+          "googlePlaceId": "ChIJVdr6u0pFGGARmhYH0dhHHik"
+        },
+        {
+          "spotId": "slam-dunk-003",
+          "name": "藤沢市秋葉台文化体育館",
+          "address": "〒252-0816 神奈川県藤沢市遠藤２０００−１",
+          "latitude": 35.389207,
+          "longitude": 139.444225,
+          "spotDescription": "インターハイ県予選決勝リーグ、海南戦の舞台",
+          "orderIndex": 2,
+          "recognitionRadiusMeters": null,
+          "googlePlaceId": "ChIJRUh7rN9TGGARnTRVz3kC4eY"
+        },
+        {
+          "spotId": "slam-dunk-004",
+          "name": "トッケイセキュリティ平塚総合体育館",
+          "address": "〒254-0074 神奈川県平塚市大原１−１",
+          "latitude": 35.3416653,
+          "longitude": 139.3388682,
+          "spotDescription": "インターハイ出場を賭けた陵南戦の舞台",
+          "orderIndex": 3,
+          "recognitionRadiusMeters": null,
+          "googlePlaceId": "ChIJId4DIO-sGWARZMyyEWEsc4k"
+        },
+        {
+          "spotId": "slam-dunk-005",
+          "name": "鵠沼海岸",
+          "address": "〒251-0037 神奈川県藤沢市鵠沼海岸４",
+          "latitude": 35.3166764,
+          "longitude": 139.461266,
+          "spotDescription": "花道と流川が居た原作ラストシーンの場所",
+          "orderIndex": 4,
+          "recognitionRadiusMeters": 300.0,
+          "googlePlaceId": "ChIJMSwmRkJOGGARItkqZHT5tqI"
+        }
+      ]
+    },
+    {
+      "sectionId": "sec-hiroshima",
+      "name": "インターハイ編（広島）",
+      "sectionDescription": null,
+      "orderIndex": 1,
+      "coverImageUrl": null,
+      "spots": [
+        {
+          "spotId": "slam-dunk-006",
+          "name": "大竹市立総合体育館",
+          "address": "〒739-0605 広島県大竹市立戸１丁目６−１",
+          "latitude": 34.2225852,
+          "longitude": 132.2192241,
+          "spotDescription": "インターハイ1回戦・豊玉戦の舞台",
+          "orderIndex": 0,
+          "recognitionRadiusMeters": null,
+          "googlePlaceId": "ChIJe3w_JLnKWjURvlz6zX62h8U"
+        },
+        {
+          "spotId": "slam-dunk-007",
+          "name": "広島県立総合体育館(広島グリーンアリーナ)",
+          "address": "〒730-0011 広島県広島市中区基町４−１",
+          "latitude": 34.3994354,
+          "longitude": 132.4551203,
+          "spotDescription": "広島インターハイの開会式の会場のモデルで、豊玉高校と一触即発となった現場",
+          "orderIndex": 1,
+          "recognitionRadiusMeters": null,
+          "googlePlaceId": "ChIJ2e7VfDo1RTUR-YeCDwT4eCQ"
+        },
+        {
+          "spotId": "slam-dunk-008",
+          "name": "河鹿荘",
+          "address": "〒738-0721 広島県広島市佐伯区湯来町大字多田２６５９",
+          "latitude": 34.4770191,
+          "longitude": 132.2415997,
+          "spotDescription": "湘北高校の宿舎「ちどり荘」のモデル",
+          "orderIndex": 2,
+          "recognitionRadiusMeters": null,
+          "googlePlaceId": "ChIJNzXNivO_WjURUj63gERyFp8"
+        },
+        {
+          "spotId": "slam-dunk-009",
+          "name": "お好み村",
+          "address": "〒730-0034 広島県広島市中区新天地５−１３",
+          "latitude": 34.3914342,
+          "longitude": 132.4619014,
+          "spotDescription": "安西先生と豊玉の北野監督が居たお好み焼き屋さん",
+          "orderIndex": 3,
+          "recognitionRadiusMeters": null,
+          "googlePlaceId": "ChIJ8wsenQ-iWjUR1opIxHCTeBM"
+        }
+      ]
+    },
+    {
+      "sectionId": "sec-the-first",
+      "name": "映画『THE FIRST SLAM DUNK』",
+      "sectionDescription": null,
+      "orderIndex": 2,
+      "coverImageUrl": null,
+      "spots": [
+        {
+          "spotId": "slam-dunk-010",
+          "name": "渡具知ビーチ",
+          "address": "〒904-0315 沖縄県中頭郡読谷村渡具知 渡具知ビーチ",
+          "latitude": 26.3655625,
+          "longitude": 127.7371875,
+          "spotDescription": "リョータとソータの「秘密基地」がある海岸のモデル",
+          "orderIndex": 0,
+          "recognitionRadiusMeters": 300.0,
+          "googlePlaceId": "ChIJW0H1ZuMT5TQR8AgxVEpcOLE"
+        },
+        {
+          "spotId": "slam-dunk-011",
+          "name": "森子大物忌神社",
+          "address": "〒015-0332 秋田県由利本荘市森子八乙女下９９",
+          "latitude": 39.3059753,
+          "longitude": 140.0953481,
+          "spotDescription": "沢北が願掛けをしていた神社",
+          "orderIndex": 1,
+          "recognitionRadiusMeters": null,
+          "googlePlaceId": "ChIJnZvaW2BWjl8R9S1FWz3Hjn8"
+        },
+        {
+          "spotId": "slam-dunk-012",
+          "name": "辻堂海岸",
+          "address": "〒251-0046 神奈川県藤沢市辻堂西海岸３丁目 辻堂海岸",
+          "latitude": 35.3195629,
+          "longitude": 139.433326,
+          "spotDescription": "インターハイから帰ったリョータを母・カオルが迎えるシーン",
+          "orderIndex": 2,
+          "recognitionRadiusMeters": 300.0,
+          "googlePlaceId": "ChIJtcax_eBNGGARtjIzbtG-nAo"
+        }
+      ]
+    }
+  ]
+}

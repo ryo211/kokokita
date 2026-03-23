@@ -6,6 +6,7 @@ struct CourseListView: View {
     @Bindable var store: CourseListStore
     @State private var selectedCategory: CourseCategory? = nil
     @State private var showCourseStore = false
+    @State private var storeSheetStore = CourseStoreSheetStore()
 
     private var filteredCourses: [Course] {
         guard let cat = selectedCategory else { return store.courses }
@@ -71,7 +72,15 @@ struct CourseListView: View {
                 Button {
                     showCourseStore = true
                 } label: {
-                    Image(systemName: "plus")
+                    ZStack(alignment: .topTrailing) {
+                        Image(systemName: "plus")
+                        if storeSheetStore.hasNewArrivals {
+                            Circle()
+                                .fill(Color.red)
+                                .frame(width: 8, height: 8)
+                                .offset(x: 6, y: -6)
+                        }
+                    }
                 }
             }
         }
@@ -83,8 +92,11 @@ struct CourseListView: View {
         .task {
             await store.load()
         }
+        .task {
+            await storeSheetStore.loadIndex()
+        }
         .sheet(isPresented: $showCourseStore) {
-            CourseStoreSheet()
+            CourseStoreSheet(store: storeSheetStore)
         }
     }
 }
@@ -135,7 +147,7 @@ private struct CourseRowView: View {
                     thumbnailPlaceholder
                 }
             }
-            .frame(width: 64, height: 64)
+            .frame(width: 96, height: 64)
             .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
 
             // 中: タイトル + タグ（残り幅を確保し折り返し）

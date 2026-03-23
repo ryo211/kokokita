@@ -185,6 +185,7 @@ final class CoreDataCourseRepository: CourseRepository {
             e.latitude = spot.latitude
             e.longitude = spot.longitude
             e.spotDescription = spot.spotDescription
+            // coverImageUrl は v6 モデル導入後に保存対応（v5 では無視）
             e.orderIndex = Int32(spot.orderIndex)
             e.recognitionRadiusMeters = spot.recognitionRadiusMeters.map { NSNumber(value: $0) }
             // チェックイン状態は既存の値を保持（JSONで上書きしない）
@@ -285,6 +286,7 @@ final class CoreDataCourseRepository: CourseRepository {
             latitude: s.latitude,
             longitude: s.longitude,
             spotDescription: s.spotDescription,
+            coverImageUrl: nil,
             orderIndex: Int(s.orderIndex),
             recognitionRadiusMeters: s.recognitionRadiusMeters?.doubleValue,
             firstCheckedInAt: firstCheckedInAt,

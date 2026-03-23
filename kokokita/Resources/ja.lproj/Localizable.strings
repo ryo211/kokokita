@@ -320,6 +320,7 @@
 "settingssheet.resetAll" = "すべてリセット";
 "settingssheet.followOnX" = "Xでフォロー";
 "settingssheet.support" = "サポート・お問い合わせ";
+"settingssheet.reviewApp" = "このアプリをレビューする";
 "settingssheet.developerTools" = "開発者ツール";
 "settingssheet.version" = "バージョン";
 
@@ -331,10 +332,14 @@
 "courseStore.title" = "コースを追加";
 "courseStore.emptyTitle" = "コースがありません";
 "courseStore.emptyDescription" = "現在ダウンロード可能なコースはありません";
-"courseStore.downloadButton" = "取得";
-"courseStore.downloadedBadge" = "済み";
+"courseStore.downloadButton" = "+ 追加";
+"courseStore.downloadedBadge" = "追加済み";
 "courseStore.updateButton" = "更新";
 "courseStore.spotCount" = "%d スポット";
+"courseStore.filter.new" = "新着";
+"courseStore.filter.available" = "未入手";
+"courseStore.filter.installed" = "追加済み";
+"courseStore.filter.all" = "すべて";
 "course.emptyTitle" = "コースがありません";
 "course.emptyDescription" = "右上の＋からコースを追加できます";
 "course.enable" = "有効にする";
@@ -357,9 +362,9 @@
 "course.notVisited" = "未訪問";
 "course.noAddress" = "住所未登録";
 "course.visitedOn" = "%@に巡礼済み";
-"course.spotProgress" = "達成したスポット %d/%d";
-"course.sort.default" = "デフォルト順";
-"course.sort.distance" = "近い順";
+"course.spotProgressLabel" = "達成したスポット";
+"course.updatedAt" = "最終更新: %@";
+"course.sort.nearby" = "現在地から近い順";
 
 // MARK: - Mode Selection
 "modeSelection.title" = "モードを選んでください";

@@ -1,6 +1,23 @@
 import Foundation
 import Observation
 
+// ダウンロード状態フィルター
+enum StoreDownloadFilter: CaseIterable {
+    case newArrivals
+    case available
+    case installed
+    case all
+
+    var label: String {
+        switch self {
+        case .newArrivals: L.CourseStore.filterNew
+        case .available:   L.CourseStore.filterAvailable
+        case .installed:   L.CourseStore.filterInstalled
+        case .all:         L.CourseStore.filterAll
+        }
+    }
+}
+
 // コースストアシートの状態管理
 @MainActor
 @Observable
@@ -8,18 +25,84 @@ final class CourseStoreSheetStore {
     var storeCourses: [StoreCourseSummary] = []
     var downloadStatuses: [String: CourseDownloadStatus] = [:]
     var selectedCategory: CourseCategory? = nil
+    var selectedDownloadFilter: StoreDownloadFilter = .available
     var isLoadingIndex: Bool = false
+    /// ロード済みフラグ（CourseListView からの pre-fetch と二重取得防止）
+    private(set) var isIndexLoaded = false
     var showError: Bool = false
     var errorMessage: String?
+
+    private static let lastVisitedKey = "courseStore.lastVisitedAt"
+
+    /// ストアを最後に閲覧した日時（UserDefaults に永続化）
+    private(set) var lastVisitedStoreAt: Date = {
+        (UserDefaults.standard.object(forKey: lastVisitedKey) as? Date) ?? .distantPast
+    }()
 
     private let storeService: CourseStoreService
     private let courseRepo: CourseRepository
     /// 進行中のダウンロードタスク（二重実行防止）
     private var downloadTasks: [String: Task<Void, Never>] = [:]
 
+    // MARK: - 新着判定
+
+    /// 新着 = 最終閲覧日時より後に更新 かつ 未取得（追加済みコースは除外）
+    func isNew(_ summary: StoreCourseSummary) -> Bool {
+        guard let updatedAt = summary.updatedAt else { return false }
+        guard updatedAt > lastVisitedStoreAt else { return false }
+        // 既に取得済み（バンドルコース含む）は新着扱いしない
+        if case .notDownloaded = downloadStatuses[summary.id] ?? .notDownloaded { return true }
+        return false
+    }
+
+    /// 未取得の新着コースが1件以上ある場合 true（+ ボタンバッジ用）
+    var hasNewArrivals: Bool {
+        storeCourses.contains { isNew($0) }
+    }
+
+    /// ストアを閲覧済みとしてマーク（シート閉じ時に呼ぶ）
+    func markVisited() {
+        let now = Date.now
+        lastVisitedStoreAt = now
+        UserDefaults.standard.set(now, forKey: Self.lastVisitedKey)
+    }
+
+    /// シート表示時にデフォルトフィルターを適用（新着あり→新着、なし→未入手）
+    func applyDefaultFilter() {
+        selectedDownloadFilter = hasNewArrivals ? .newArrivals : .available
+    }
+
+    // MARK: - フィルター
+
     var filteredCourses: [StoreCourseSummary] {
-        guard let cat = selectedCategory else { return storeCourses }
-        return storeCourses.filter { $0.parsedCategories.contains(cat) }
+        var result = storeCourses
+
+        // カテゴリフィルター
+        if let cat = selectedCategory {
+            result = result.filter { $0.parsedCategories.contains(cat) }
+        }
+
+        // ダウンロード状態フィルター
+        switch selectedDownloadFilter {
+        case .all:
+            break
+        case .newArrivals:
+            result = result.filter { isNew($0) }
+        case .available:
+            result = result.filter {
+                if case .notDownloaded = downloadStatuses[$0.id] ?? .notDownloaded { return true }
+                return false
+            }
+        case .installed:
+            result = result.filter {
+                switch downloadStatuses[$0.id] ?? .notDownloaded {
+                case .downloaded, .updateAvailable: return true
+                default: return false
+                }
+            }
+        }
+
+        return result
     }
 
     init(
@@ -34,17 +117,33 @@ final class CourseStoreSheetStore {
 
     func loadIndex() async {
         guard !isLoadingIndex else { return }
-        isLoadingIndex = true
-        defer { isLoadingIndex = false }
 
+        // インデックス未取得の場合のみネットワーク通信
+        if !isIndexLoaded {
+            isLoadingIndex = true
+            defer { isLoadingIndex = false }
+            do {
+                let index = try await storeService.fetchIndex()
+                storeCourses = index.courses
+                isIndexLoaded = true
+            } catch {
+                Logger.error("コースストア取得エラー", error: error)
+                errorMessage = error.localizedDescription
+                showError = true
+                return
+            }
+        }
+
+        // シート表示のたびにローカルDBと照合してステータスを最新化
+        // （コース削除後の状態を確実に反映するため）
         do {
-            let index = try await storeService.fetchIndex()
-            storeCourses = index.courses
-            try resolveStatuses(summaries: index.courses)
+            try resolveStatuses(summaries: storeCourses)
         } catch {
-            Logger.error("コースストア取得エラー", error: error)
-            errorMessage = error.localizedDescription
-            showError = true
+            Logger.error("ステータス解決エラー", error: error)
+        }
+
+        if hasNewArrivals {
+            selectedDownloadFilter = .newArrivals
         }
     }
 
@@ -60,7 +159,7 @@ final class CourseStoreSheetStore {
             do {
                 let courseId = CourseJSONParser.uuidFromString(summary.id)
                 let existing = try? courseRepo.fetch(id: courseId)
-                let isNew = existing == nil
+                let isNewCourse = existing == nil
                 let course = try await storeService.fetchCourse(
                     jsonPath: summary.jsonPath,
                     existingCourse: existing
@@ -69,7 +168,7 @@ final class CourseStoreSheetStore {
                 downloadStatuses[summary.id] = .downloaded
                 NotificationCenter.default.post(name: .courseChanged, object: nil)
                 // 新規ダウンロードの場合のみハイライト用通知を送信
-                if isNew {
+                if isNewCourse {
                     NotificationCenter.default.post(name: .courseDownloaded, object: course.id)
                 }
                 Logger.info("コースダウンロード完了: \(summary.title)")

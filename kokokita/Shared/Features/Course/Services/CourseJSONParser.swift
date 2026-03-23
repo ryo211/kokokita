@@ -42,6 +42,7 @@ enum CourseJSONParser {
         let latitude: Double?
         let longitude: Double?
         let spotDescription: String?
+        let coverImageUrl: String?
         let orderIndex: Int
         let recognitionRadiusMeters: Double?
     }
@@ -118,6 +119,7 @@ enum CourseJSONParser {
                 latitude: s.latitude ?? 0,
                 longitude: s.longitude ?? 0,
                 spotDescription: s.spotDescription,
+                coverImageUrl: s.coverImageUrl,
                 orderIndex: s.orderIndex,
                 recognitionRadiusMeters: s.recognitionRadiusMeters,
                 firstCheckedInAt: existingSpot?.firstCheckedInAt,

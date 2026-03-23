@@ -225,6 +225,7 @@ final class RecordingController {
                                 id: spot.id, spotId: spot.spotId, name: spot.name,
                                 address: spot.address, latitude: spot.latitude,
                                 longitude: spot.longitude, spotDescription: spot.spotDescription,
+                                coverImageUrl: spot.coverImageUrl,
                                 orderIndex: spot.orderIndex,
                                 recognitionRadiusMeters: spot.recognitionRadiusMeters,
                                 firstCheckedInAt: checkInTime,

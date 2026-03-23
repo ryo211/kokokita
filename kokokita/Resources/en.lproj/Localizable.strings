@@ -318,6 +318,7 @@
 "settingssheet.resetAll" = "Reset All";
 "settingssheet.followOnX" = "Follow on X";
 "settingssheet.support" = "Support & Contact";
+"settingssheet.reviewApp" = "Review This App";
 "settingssheet.developerTools" = "Developer Tools";
 "settingssheet.version" = "Version";
 
@@ -329,10 +330,14 @@
 "courseStore.title" = "Add Courses";
 "courseStore.emptyTitle" = "No Courses Available";
 "courseStore.emptyDescription" = "No courses are available for download at this time";
-"courseStore.downloadButton" = "Get";
+"courseStore.downloadButton" = "+ Add";
 "courseStore.downloadedBadge" = "Added";
 "courseStore.updateButton" = "Update";
 "courseStore.spotCount" = "%d spots";
+"courseStore.filter.new" = "New";
+"courseStore.filter.available" = "Available";
+"courseStore.filter.installed" = "Installed";
+"courseStore.filter.all" = "All";
 "course.emptyTitle" = "No Courses";
 "course.emptyDescription" = "Tap + in the top right to add a course";
 "course.enable" = "Enable";
@@ -355,9 +360,9 @@
 "course.notVisited" = "Not Visited";
 "course.noAddress" = "No Address";
 "course.visitedOn" = "Visited on %@";
-"course.spotProgress" = "Spots achieved %d/%d";
-"course.sort.default" = "Default";
-"course.sort.distance" = "Nearest";
+"course.spotProgressLabel" = "Spots achieved";
+"course.updatedAt" = "Last updated: %@";
+"course.sort.nearby" = "Nearest first";
 
 // MARK: - Mode Selection
 "modeSelection.title" = "Choose Your Mode";

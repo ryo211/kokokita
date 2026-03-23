@@ -30,8 +30,8 @@ struct CourseDetailView: View {
         _selectedSpotId = State(initialValue: initialSelectedSpotId)
         if let spotId = initialSelectedSpotId,
            let spot = course.spots.first(where: { $0.id == spotId }) {
-            let courseRegion = CourseDetailView.fitRegion(for: course.spots)
-            let span = CourseDetailView.spotSpan(from: courseRegion)
+            let radius = spot.recognitionRadiusMeters ?? course.recognitionRadiusMeters
+            let span = CourseDetailView.spotSpan(recognitionRadius: radius)
             _cameraPosition = State(initialValue: .region(
                 MKCoordinateRegion(
                     center: CLLocationCoordinate2D(latitude: spot.latitude, longitude: spot.longitude),
@@ -173,31 +173,71 @@ struct CourseDetailView: View {
             MapCompass()
             MapScaleView()
         }
+        .overlay(alignment: .topTrailing) {
+            spotCoverImageOverlay
+                .padding([.top, .trailing], 12)
+        }
         .overlay(alignment: .bottomTrailing) {
             locationButton
                 .padding([.trailing, .bottom], 12)
         }
     }
 
+    /// フォーカス中スポットにカバー画像がある場合に右上へ表示
+    @ViewBuilder
+    private var spotCoverImageOverlay: some View {
+        if let spot = course.spots.first(where: { $0.id == selectedSpotId }),
+           let urlStr = spot.coverImageUrl,
+           let url = URL(string: urlStr) {
+            AsyncImage(url: url) { phase in
+                switch phase {
+                case .success(let image):
+                    image
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: 110, height: 74)
+                        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                        .shadow(color: .black.opacity(0.25), radius: 6, x: 0, y: 2)
+                case .empty:
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(.regularMaterial)
+                        .frame(width: 110, height: 74)
+                        .overlay(ProgressView().controlSize(.small))
+                        .shadow(color: .black.opacity(0.15), radius: 6, x: 0, y: 2)
+                case .failure:
+                    EmptyView()
+                @unknown default:
+                    EmptyView()
+                }
+            }
+            .transition(.opacity.combined(with: .scale(scale: 0.9, anchor: .topTrailing)))
+        }
+    }
+
     // MARK: - 進捗ストリップ（地図とリストの間に固定表示）
 
     private var progressStrip: some View {
-        HStack(spacing: 8) {
+        VStack(alignment: .leading, spacing: 6) {
             if course.isCompleted {
                 Label(L.Course.completed, systemImage: "checkmark.seal.fill")
-                    .font(.caption.bold())
+                    .font(.subheadline.bold())
                     .foregroundStyle(.indigo)
             } else {
-                Text(L.Course.spotProgress(course.checkedInCount, course.totalSpotCount))
-                    .font(.caption.bold())
-                    .foregroundStyle(.secondary)
+                (
+                    Text(L.Course.spotProgressLabel)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    + Text(" \(course.checkedInCount)/\(course.totalSpotCount)")
+                        .font(.subheadline.bold())
+                        .foregroundStyle(.primary)
+                )
                 ProgressView(value: Double(course.checkedInCount), total: Double(course.totalSpotCount))
                     .tint(.indigo)
+                    .scaleEffect(x: 1, y: 2, anchor: .center)
             }
-            Spacer()
         }
         .padding(.horizontal, 16)
-        .padding(.vertical, 8)
+        .padding(.vertical, 10)
     }
 
     // MARK: - 現在地ボタン（地図右下）
@@ -233,13 +273,21 @@ struct CourseDetailView: View {
     private var spotListArea: some View {
         VStack(spacing: 0) {
             // ソートヘッダー
-            HStack(spacing: 8) {
-                SortChip(label: L.Course.sortDefault, isSelected: !sortByDistance) {
-                    sortByDistance = false
+            HStack {
+                Button {
+                    sortByDistance.toggle()
+                } label: {
+                    HStack(spacing: 5) {
+                        Image(systemName: sortByDistance ? "location.fill" : "location")
+                        Text(L.Course.sortNearby)
+                    }
+                    .font(.caption.weight(sortByDistance ? .semibold : .regular))
+                    .foregroundStyle(sortByDistance ? Color.white : Color.primary)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
+                    .background(sortByDistance ? Color.indigo : Color.secondary.opacity(0.12), in: Capsule())
                 }
-                SortChip(label: L.Course.sortDistance, isSelected: sortByDistance) {
-                    sortByDistance = true
-                }
+                .buttonStyle(.plain)
                 .disabled(userLocation == nil)
                 .opacity(userLocation == nil ? 0.4 : 1)
                 Spacer()
@@ -376,8 +424,8 @@ struct CourseDetailView: View {
                 selectedSpotId = spot.id
                 // 不正な座標の場合は選択状態だけ更新してカメラ移動はしない
                 guard spot.hasValidCoordinate else { return }
-                let courseRegion = CourseDetailView.fitRegion(for: course.spots)
-                let span = CourseDetailView.spotSpan(from: courseRegion)
+                let radius = spot.recognitionRadiusMeters ?? course.recognitionRadiusMeters
+                let span = CourseDetailView.spotSpan(recognitionRadius: radius)
                 cameraPosition = .region(
                     MKCoordinateRegion(
                         center: CLLocationCoordinate2D(latitude: spot.latitude, longitude: spot.longitude),
@@ -390,10 +438,12 @@ struct CourseDetailView: View {
 
     // MARK: - 全スポットフィット計算
 
-    /// コース全体スパンの 1/10 をスポットフォーカス時のズームスパンとして返す。
-    /// 最小 0.01°（約1km）、最大 0.08°（約9km）にクランプ。
-    static func spotSpan(from courseRegion: MKCoordinateRegion) -> MKCoordinateSpan {
-        let delta = max(0.01, min(courseRegion.span.latitudeDelta / 10, 0.5))
+    /// recognitionRadiusMeters の円が地図上に収まるズームスパンを返す。
+    /// 緯度1度≈111,000m を基準に変換し、直径の2.5倍のパディングを追加。
+    /// 最小 0.002°（約220m）、最大 0.3°（約33km）にクランプ。
+    static func spotSpan(recognitionRadius: Double) -> MKCoordinateSpan {
+        let diameterDegrees = (recognitionRadius * 2) / 111_000.0
+        let delta = max(0.002, min(diameterDegrees * 2.5, 0.3))
         return MKCoordinateSpan(latitudeDelta: delta, longitudeDelta: delta)
     }
 
@@ -432,26 +482,6 @@ struct CourseDetailView: View {
             center: CLLocationCoordinate2D(latitude: centerLat, longitude: centerLon),
             span: MKCoordinateSpan(latitudeDelta: spanLat, longitudeDelta: spanLon)
         )
-    }
-}
-
-// MARK: - ソートチップ
-
-private struct SortChip: View {
-    let label: String
-    let isSelected: Bool
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            Text(label)
-                .font(.caption.weight(isSelected ? .semibold : .regular))
-                .foregroundStyle(isSelected ? Color.white : Color.primary)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 5)
-                .background(isSelected ? Color.indigo : Color.secondary.opacity(0.12), in: Capsule())
-        }
-        .buttonStyle(.plain)
     }
 }
 
@@ -548,16 +578,20 @@ private struct SpotListRowView: View {
                         Text(desc)
                             .font(.caption)
                             .foregroundStyle(.secondary)
-                            .lineLimit(2)
+                            .lineLimit(4)
                     }
                 }
 
                 Spacer()
 
                 if let text = distanceText {
-                    Text(text)
-                        .font(.caption2.monospacedDigit())
-                        .foregroundStyle(.secondary)
+                    HStack(spacing: 2) {
+                        Image(systemName: "location.fill")
+                            .font(.caption2)
+                        Text(text)
+                            .font(.caption2.monospacedDigit())
+                    }
+                    .foregroundStyle(.secondary)
                 }
             }
             .padding(.horizontal, 16)
@@ -754,13 +788,23 @@ private struct CourseSummarySheet: View {
                         }
                     }
 
-                    // 概要テキスト
-                    if let summary = course.summary {
-                        Text(summary)
-                            .font(.body)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding()
+                    VStack(alignment: .leading, spacing: 12) {
+                        // 概要テキスト
+                        if let summary = course.summary {
+                            Text(summary)
+                                .font(.body)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+
+                        // 更新日
+                        HStack(spacing: 4) {
+                            Image(systemName: "clock")
+                            Text(L.Course.updatedAt(course.updatedAt.formatted(.dateTime.year().month().day())))
+                        }
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                     }
+                    .padding()
                 }
             }
             .navigationTitle(course.title)

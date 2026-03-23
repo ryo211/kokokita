@@ -8,7 +8,7 @@ struct PilgrimageHomeView: View {
     @State private var store = CourseListStore()
     @State private var userLocation: CLLocation? = CLLocationManager().location
     @State private var isRefreshingNearbySpots = false
-    @State private var showHowToUse = false
+    @State private var showSettings = false
 
     // MARK: - Derived Data
 
@@ -68,17 +68,17 @@ struct PilgrimageHomeView: View {
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
-                        showHowToUse = true
+                        showSettings = true
                     } label: {
-                        Image(systemName: "questionmark.circle.fill")
+                        Image(systemName: "gearshape.fill")
                             .font(.title3)
                             .foregroundStyle(.indigo)
                     }
-                    .accessibilityLabel(L.PilgrimageHome.howToUseButton)
+                    .accessibilityLabel(L.Menu.title)
                 }
             }
-            .sheet(isPresented: $showHowToUse) {
-                PilgrimageHowToUseSheet()
+            .sheet(isPresented: $showSettings) {
+                SettingsSheet()
             }
             .task {
                 await store.load()
@@ -571,28 +571,3 @@ private enum PilgrimageHomeRoute: Hashable {
     case courseDetail(courseId: UUID, spotId: UUID)
 }
 
-// MARK: - 使い方シート
-
-private struct PilgrimageHowToUseSheet: View {
-    @Environment(\.dismiss) private var dismiss
-
-    var body: some View {
-        NavigationStack {
-            ScrollView {
-                // TODO: 使い方説明コンテンツを追加
-                Text("準備中")
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .padding(.top, 80)
-            }
-            .navigationTitle(L.PilgrimageHome.howToUseTitle)
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button(L.Common.close) { dismiss() }
-                }
-            }
-        }
-        .presentationDetents([.medium, .large])
-    }
-}

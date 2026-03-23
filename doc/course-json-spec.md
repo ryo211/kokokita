@@ -85,6 +85,7 @@
 | `latitude` | double? | | 緯度。`null` の場合は GPS 認識の対象外 |
 | `longitude` | double? | | 経度。`null` の場合は GPS 認識の対象外 |
 | `spotDescription` | string? | | スポット説明 |
+| `coverImageUrl` | string? | | スポット固有のカバー画像 URL |
 | `orderIndex` | int | ✅ | 表示順（0始まり） |
 | `recognitionRadiusMeters` | double? | | 個別の GPS 認識半径。`null` の場合はコースのデフォルト値を使用 |
 
@@ -139,6 +140,7 @@
       "latitude": 34.6148,
       "longitude": 135.7345,
       "spotDescription": "世界最古の木造建築群。",
+      "coverImageUrl": null,
       "orderIndex": 0,
       "recognitionRadiusMeters": null,
       "address": "奈良県生駒郡斑鳩町法隆寺山内1-1"
@@ -173,6 +175,7 @@
           "latitude": 35.7147,
           "longitude": 139.7966,
           "spotDescription": "東京最古の寺院。",
+          "coverImageUrl": null,
           "orderIndex": 0,
           "recognitionRadiusMeters": null,
           "address": "東京都台東区浅草2-3-1"

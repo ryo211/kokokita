@@ -11,6 +11,8 @@ struct CourseSpot: Identifiable, Equatable {
     let latitude: Double
     let longitude: Double
     let spotDescription: String?
+    /// スポット固有のカバー画像 URL（nil の場合は画像なし）
+    let coverImageUrl: String?
     /// コース内での表示順（0始まり）
     let orderIndex: Int
     /// スポット固有の認識半径（nil の場合はコースのデフォルト値を使用）

@@ -1,6 +1,6 @@
 import SwiftUI
 
-// 巡礼モードのルートタブビュー（3タブ: ホーム / コース / メニュー）
+// 巡礼モードのルートタブビュー（2タブ: ホーム / コース）
 // 記録モードと同じカスタムタブバー UI を使用
 struct PilgrimageRootTabView: View {
     @EnvironmentObject private var modeManager: AppModeManager
@@ -21,10 +21,6 @@ struct PilgrimageRootTabView: View {
                 CourseScreen()
                     .opacity(tab == .map ? 1 : 0)
                     .zIndex(tab == .map ? 1 : 0)
-
-                PilgrimageMenuView()
-                    .opacity(tab == .menu ? 1 : 0)
-                    .zIndex(tab == .menu ? 1 : 0)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 
@@ -58,7 +54,6 @@ struct PilgrimageRootTabView: View {
 enum PilgrimageTab: Hashable {
     case home
     case map
-    case menu
 }
 
 // MARK: - 巡礼モードのボトムバー
@@ -105,12 +100,11 @@ private struct PilgrimageBottomBar: View {
                 .buttonStyle(.plain)
                 .accessibilityLabel(L.Tab.kokokita)
 
-                // スライディングタブバー（巡礼モードの3タブ）
+                // スライディングタブバー（巡礼モードの2タブ）
                 SliderTabBar(
                     items: [
                         SliderTabBarItem(id: PilgrimageTab.home, icon: "house.fill", title: L.Tab.home),
                         SliderTabBarItem(id: PilgrimageTab.map, icon: "map", title: L.Tab.course),
-                        SliderTabBarItem(id: PilgrimageTab.menu, icon: "ellipsis.circle.fill", title: L.Tab.menu),
                     ],
                     current: current,
                     onSelect: onSelect,
@@ -136,29 +130,6 @@ private struct PilgrimageBottomBar: View {
             }
             .padding(.horizontal, UIConstants.Spacing.extraLarge + 8)
             .padding(.bottom, UIConstants.Spacing.medium)
-        }
-    }
-}
-
-// MARK: - 巡礼モードのメニュービュー
-
-private struct PilgrimageMenuView: View {
-    @EnvironmentObject private var modeManager: AppModeManager
-
-    var body: some View {
-        NavigationStack {
-            List {
-                Section {
-                    Button {
-                        modeManager.setMode(.record)
-                    } label: {
-                        Label(L.ModeSelection.switchToRecord, systemImage: "mappin.circle")
-                    }
-                } header: {
-                    Text(L.ModeSelection.appModeSection)
-                }
-            }
-            .navigationTitle("")
         }
     }
 }

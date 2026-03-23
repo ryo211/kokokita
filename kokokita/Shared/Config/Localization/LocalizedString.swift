@@ -373,6 +373,7 @@ enum L {
         static let resetAll = localized("settingssheet.resetAll")
         static let followOnX = localized("settingssheet.followOnX")
         static let support = localized("settingssheet.support")
+        static let reviewApp = localized("settingssheet.reviewApp")
         static let developerTools = localized("settingssheet.developerTools")
         static let version = localized("settingssheet.version")
     }
@@ -405,11 +406,9 @@ enum L {
         static let notVisited = localized("course.notVisited")
         static let noAddress = localized("course.noAddress")
         static func visitedOn(_ dateString: String) -> String { String(format: localized("course.visitedOn"), dateString) }
-        static func spotProgress(_ checked: Int, _ total: Int) -> String {
-            String(format: localized("course.spotProgress"), checked, total)
-        }
-        static let sortDefault  = localized("course.sort.default")
-        static let sortDistance = localized("course.sort.distance")
+        static let spotProgressLabel = localized("course.spotProgressLabel")
+        static func updatedAt(_ dateString: String) -> String { String(format: localized("course.updatedAt"), dateString) }
+        static let sortNearby = localized("course.sort.nearby")
     }
 
     // MARK: - Course Store（コースダウンロード）
@@ -421,6 +420,10 @@ enum L {
         static let downloadedBadge = localized("courseStore.downloadedBadge")
         static let updateButton = localized("courseStore.updateButton")
         static func spotCount(_ count: Int) -> String { String(format: localized("courseStore.spotCount"), count) }
+        static let filterNew = localized("courseStore.filter.new")
+        static let filterAvailable = localized("courseStore.filter.available")
+        static let filterInstalled = localized("courseStore.filter.installed")
+        static let filterAll = localized("courseStore.filter.all")
     }
 
     // MARK: - Manual Entry (後付け記録)

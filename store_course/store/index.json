@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-03-10T14:16:15Z",
+  "generatedAt": "2026-03-21T14:40:47Z",
   "courses": [
     {
       "id": "course-world-heritage-japan-001",
@@ -13,7 +13,7 @@
       "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/course/course-world-heritage-japan-001.jpg",
       "spotCount": 28,
       "jsonPath": "courses/world_heritage_japan_001.json",
-      "updatedAt": "2026-03-10T14:16:13Z"
+      "updatedAt": "2026-03-12T16:17:08Z"
     },
     {
       "id": "course-100-famous-castles-japan-001",
@@ -26,7 +26,7 @@
       "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/course/100_famous_castles_japan_001.jpg",
       "spotCount": 100,
       "jsonPath": "courses/100_famous_castles_japan_001.json",
-      "updatedAt": "2026-03-10T14:16:12Z"
+      "updatedAt": "2026-03-12T16:17:08Z"
     },
     {
       "id": "course-continued-100-famous-castles-japan-001",
@@ -40,7 +40,7 @@
       "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/course/continued_100_castles_course_001.jpg",
       "spotCount": 100,
       "jsonPath": "courses/continued_100_castles_course_001.json",
-      "updatedAt": "2026-03-10T14:16:14Z"
+      "updatedAt": "2026-03-12T16:17:08Z"
     },
     {
       "id": "course-tokyo-shitamachi-walk-001",
@@ -54,20 +54,85 @@
       "coverImageUrl": null,
       "spotCount": 9,
       "jsonPath": "courses/tokyo_shitamachi_walk_001.json",
-      "updatedAt": "2026-03-10T14:16:11Z"
+      "updatedAt": "2026-03-12T16:17:08Z"
     },
     {
       "id": "course-major-aquariums-japan-001",
       "title": "全国の主要水族館",
       "summary": "日本全国の主要水族館を巡るコースです。全49館収録。 参考：公益社団法人日本動物園水族館協会（JAZA）",
       "categories": [
-        "nature"
+        "art_entertainment"
       ],
       "version": 1,
       "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/course/course-major-aquariums-japan-001.jpg",
       "spotCount": 49,
       "jsonPath": "courses/course-major-aquariums-japan-001.json",
-      "updatedAt": "2026-03-10T14:16:13Z"
+      "updatedAt": "2026-03-16T08:02:15Z"
+    },
+    {
+      "id": "course-major-museum-tokyo-001",
+      "title": "東京の有名美術館",
+      "summary": "東京の有名美術館を巡るコースです。全19館収録。",
+      "categories": [
+        "art_entertainment"
+      ],
+      "version": 1,
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/course/course-major-museum-tokyo-001.jpg",
+      "spotCount": 19,
+      "jsonPath": "courses/tokyo_museums_001.json",
+      "updatedAt": "2026-03-12T16:17:08Z"
+    },
+    {
+      "id": "nihonsankei-001",
+      "title": "日本三景",
+      "summary": "日本三景を巡るコースです。全3件収録。",
+      "categories": [
+        "nature"
+      ],
+      "version": 1,
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/course/nihonsankei_001.jpg",
+      "spotCount": 3,
+      "jsonPath": "courses/nihonsankei_001.json",
+      "updatedAt": "2026-03-16T08:05:56Z"
+    },
+    {
+      "id": "japan_national_park_001",
+      "title": "日本の国立公園",
+      "summary": "日本の全ての国立公園を巡るコースです。全35件収録。",
+      "categories": [
+        "nature"
+      ],
+      "version": 1,
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/course/japan_national_park_001.jpg",
+      "spotCount": 35,
+      "jsonPath": "courses/japan_national_park_001.json",
+      "updatedAt": "2026-03-17T14:12:54Z"
+    },
+    {
+      "id": "slam_dunk_001",
+      "title": "『スラムダンク』の聖地",
+      "summary": "漫画『SLAM DUNK』、映画『THE FIRST SLAM DUNK』に登場する場所を巡るコースです。全12件収録。",
+      "categories": [
+        "anime"
+      ],
+      "version": 1,
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/course/slam_dunk_001.jpg",
+      "spotCount": 12,
+      "jsonPath": "courses/slam_dunk_001.json",
+      "updatedAt": "2026-03-21T14:40:47Z"
+    },
+    {
+      "id": "kimi_no_nawa_001",
+      "title": "『君の名は』の聖地",
+      "summary": "映画『君の名は』に登場するスポットを巡るコースです。全9件収録。",
+      "categories": [
+        "anime"
+      ],
+      "version": 1,
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/course/kimi_no_nawa_001.jpg",
+      "spotCount": 9,
+      "jsonPath": "courses/kimi_no_nawa_001.json",
+      "updatedAt": "2026-03-21T14:40:47Z"
     }
   ]
 }
