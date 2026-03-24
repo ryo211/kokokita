@@ -9,6 +9,7 @@ struct PilgrimageHomeView: View {
     @State private var userLocation: CLLocation? = CLLocationManager().location
     @State private var isRefreshingNearbySpots = false
     @State private var showSettings = false
+    @State private var showHowToUse = false
 
     // MARK: - Derived Data
 
@@ -58,6 +59,15 @@ struct PilgrimageHomeView: View {
             }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button {
+                        showHowToUse = true
+                    } label: {
+                        Text(L.PilgrimageHome.howToUseButton)
+                            .font(.subheadline)
+                            .foregroundStyle(.indigo)
+                    }
+                }
                 ToolbarItem(placement: .principal) {
                     HStack(spacing: 6) {
                         Image(systemName: "figure.walk")
@@ -76,6 +86,9 @@ struct PilgrimageHomeView: View {
                     }
                     .accessibilityLabel(L.Menu.title)
                 }
+            }
+            .sheet(isPresented: $showHowToUse) {
+                PilgrimageHowToUseSheet()
             }
             .sheet(isPresented: $showSettings) {
                 SettingsSheet()
