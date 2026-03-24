@@ -262,6 +262,7 @@ struct PilgrimageHomeView: View {
                 Text(L.PilgrimageHome.noRecentAchievements)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.leading, 16)
             } else {
                 VStack(spacing: 0) {
