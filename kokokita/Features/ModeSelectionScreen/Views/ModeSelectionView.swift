@@ -33,7 +33,7 @@ struct ModeSelectionView: View {
                     icon: "figure.walk",
                     title: L.ModeSelection.pilgrimageTitle,
                     description: L.ModeSelection.pilgrimageDescription,
-                    color: .orange
+                    color: .indigo
                 ) {
                     selectMode(.pilgrimage)
                 }
