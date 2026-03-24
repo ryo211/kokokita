@@ -882,6 +882,8 @@ private struct SpotLeaderLineView: View {
             .position(imgCenter)
             .onTapGesture { onImageTap() }
         }
+        // 地図エリア外への描画を防ぐ
+        .clipped()
     }
 }
 
