@@ -204,18 +204,20 @@ struct CourseDetailView: View {
                 MapCompass()
                 MapScaleView()
             }
-            .onChange(of: selectedSpotId) { _, newId in
-                if newId == nil {
-                    withAnimation(.easeInOut(duration: 0.2)) {
-                        selectedSpotScreenPoint = nil
-                    }
-                } else {
-                    // 選択直後は現在のカメラ位置でスクリーン座標を確定（以降 onMapCameraChange で追従）
+            .onChange(of: selectedSpotId) { _, _ in
+                // スポット変更（選択・解除問わず）は即座に非表示
+                // → カメラ停止後に onEnd で座標を確定して再表示
+                selectedSpotScreenPoint = nil
+            }
+            .onMapCameraChange(frequency: .onEnd) { _ in
+                // カメラ停止後にスポット座標を確定してフェードイン表示
+                withAnimation(.easeInOut(duration: 0.2)) {
                     updateSpotScreenPoint(proxy: proxy)
                 }
             }
             .onMapCameraChange(frequency: .continuous) { _ in
-                // 地図パン・ズーム・アニメーション中リアルタイム追従
+                // 画像が表示済みの場合のみリアルタイム追従（手動パン中）
+                guard selectedSpotScreenPoint != nil else { return }
                 updateSpotScreenPoint(proxy: proxy)
             }
             .overlay {
