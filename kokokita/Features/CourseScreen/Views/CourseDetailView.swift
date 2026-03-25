@@ -2,6 +2,21 @@ import SwiftUI
 import MapKit
 import CoreLocation
 
+/// 地図とリストの表示レイアウトモード
+private enum CourseViewLayout: CaseIterable {
+    case mapFull   // 地図のみ（リスト非表示）
+    case split     // 地図50% / リスト50%
+    case listFull  // リストのみ（地図非表示）
+
+    var icon: String {
+        switch self {
+        case .mapFull:  return "map"
+        case .split:    return "rectangle.split.1x2"
+        case .listFull: return "list.bullet"
+        }
+    }
+}
+
 // コース詳細画面（地図＋スポット同期リスト）
 struct CourseDetailView: View {
     // IDを別途保持することでナビゲーション遷移時のキャプチャに依存しない
@@ -19,8 +34,8 @@ struct CourseDetailView: View {
     /// 現在地表示
     @State private var userLocation: CLLocationCoordinate2D? = nil
     @State private var isFetchingLocation = false
-    /// 距離順ソート
-    @State private var sortByDistance = false
+    /// 地図とリストの表示レイアウト
+    @State private var viewLayout: CourseViewLayout = .split
 
     init(course: Course, showTitle: Bool = true, initialSelectedSpotId: UUID? = nil, courseListStore: CourseListStore? = nil) {
         self.showTitle = showTitle
@@ -46,18 +61,31 @@ struct CourseDetailView: View {
     var body: some View {
         GeometryReader { geo in
             VStack(spacing: 0) {
-                // 地図エリア（55%）
-                mapArea
-                    .frame(height: geo.size.height * 0.50)
+                // 地図エリア（mapFull: 全画面 / split: 50% / listFull: 非表示）
+                if viewLayout == .mapFull {
+                    mapArea
+                } else if viewLayout == .split {
+                    mapArea
+                        .frame(height: geo.size.height * 0.50)
+                }
 
-                // 進捗バー（地図とリストの間に固定表示）
+                // 進捗バー＋レイアウト切替ボタン（常時表示）
                 progressStrip
 
                 Divider()
 
-                // スポットリストエリア（45%）
-                spotListArea
+                // リストエリア（mapFull: 非表示 / split: 50% / listFull: 全画面）
+                if viewLayout != .mapFull {
+                    SpotListAreaView(
+                        course: course,
+                        userLocation: userLocation,
+                        selectedSpotId: selectedSpotId,
+                        onSpotTapped: focusSpot
+                    )
+                    .equatable()
+                }
             }
+            .animation(.easeInOut(duration: 0.3), value: viewLayout)
         }
         .navigationTitle(showTitle ? course.title : "")
         .navigationBarTitleDisplayMode(.inline)
@@ -195,9 +223,31 @@ struct CourseDetailView: View {
                     .tint(.indigo)
             }
             Spacer()
+            // レイアウト切替ボタン
+            HStack(spacing: 2) {
+                ForEach(CourseViewLayout.allCases, id: \.self) { layout in
+                    Button {
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            viewLayout = layout
+                        }
+                    } label: {
+                        Image(systemName: layout.icon)
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(viewLayout == layout ? Color.indigo : Color.secondary)
+                            .frame(width: 28, height: 28)
+                            .background(
+                                viewLayout == layout
+                                    ? Color.indigo.opacity(0.12)
+                                    : Color.clear,
+                                in: RoundedRectangle(cornerRadius: 6)
+                            )
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
         }
         .padding(.horizontal, 16)
-        .padding(.vertical, 8)
+        .padding(.vertical, 6)
     }
 
     // MARK: - 現在地ボタン（地図右下）
@@ -221,112 +271,6 @@ struct CourseDetailView: View {
             }
         }
         .buttonStyle(.plain)
-    }
-
-    // MARK: - スポットリスト
-
-    /// グローバルスポット番号（全セクション横断、地図ピンと対応）
-    private var globalSpotIndex: [UUID: Int] {
-        Dictionary(uniqueKeysWithValues: course.spots.enumerated().map { ($1.id, $0) })
-    }
-
-    private var spotListArea: some View {
-        VStack(spacing: 0) {
-            // ソートヘッダー
-            HStack(spacing: 8) {
-                SortChip(label: L.Course.sortDefault, isSelected: !sortByDistance) {
-                    sortByDistance = false
-                }
-                SortChip(label: L.Course.sortDistance, isSelected: sortByDistance) {
-                    sortByDistance = true
-                }
-                .disabled(userLocation == nil)
-                .opacity(userLocation == nil ? 0.4 : 1)
-                Spacer()
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
-
-            Divider()
-
-            ScrollViewReader { proxy in
-                ScrollView {
-                    VStack(spacing: 0) {
-                        let indexMap = globalSpotIndex
-                        if sortByDistance {
-                            // 距離順フラットリスト（セクション無視）
-                            let sorted = distanceSortedSpots
-                            ForEach(sorted, id: \.spot.id) { item in
-                                SpotListRowView(
-                                    spot: item.spot,
-                                    orderNumber: (indexMap[item.spot.id] ?? 0) + 1,
-                                    isSelected: selectedSpotId == item.spot.id,
-                                    distance: item.distance
-                                )
-                                .id(item.spot.id)
-                                .onTapGesture { focusSpot(item.spot) }
-
-                                if item.spot.id != sorted.last?.spot.id {
-                                    Divider().padding(.leading, 52)
-                                }
-                            }
-                        } else {
-                            // デフォルト: セクション別
-                            ForEach(course.sections) { section in
-                                if section.hasName {
-                                    CourseSectionHeaderView(section: section)
-                                }
-                                ForEach(section.spots) { spot in
-                                    let distance: Double? = userLocation.map { loc in
-                                        CLLocation(latitude: loc.latitude, longitude: loc.longitude)
-                                            .distance(from: CLLocation(latitude: spot.latitude, longitude: spot.longitude))
-                                    }
-                                    SpotListRowView(
-                                        spot: spot,
-                                        orderNumber: (indexMap[spot.id] ?? 0) + 1,
-                                        isSelected: selectedSpotId == spot.id,
-                                        distance: distance
-                                    )
-                                    .id(spot.id)
-                                    .onTapGesture { focusSpot(spot) }
-
-                                    if spot.id != section.spots.last?.id {
-                                        Divider().padding(.leading, 52)
-                                    }
-                                }
-                                if section.id != course.sections.last?.id {
-                                    Divider()
-                                }
-                            }
-                        }
-                    }
-                }
-                .onChange(of: selectedSpotId) { _, newId in
-                    if let id = newId {
-                        withAnimation { proxy.scrollTo(id, anchor: .top) }
-                    }
-                }
-                .task {
-                    guard let id = selectedSpotId else { return }
-                    try? await Task.sleep(nanoseconds: 150_000_000)
-                    withAnimation { proxy.scrollTo(id, anchor: .top) }
-                }
-            }
-        }
-    }
-
-    /// 距離順にソートしたスポット一覧
-    private var distanceSortedSpots: [(spot: CourseSpot, distance: Double?)] {
-        course.spots.map { spot in
-            let distance: Double? = userLocation.map { loc in
-                CLLocation(latitude: loc.latitude, longitude: loc.longitude)
-                    .distance(from: CLLocation(latitude: spot.latitude, longitude: spot.longitude))
-            }
-            return (spot, distance)
-        }
-        .sorted {
-            ($0.distance ?? .infinity) < ($1.distance ?? .infinity)
-        }
     }
 
     // MARK: - データ再取得
@@ -432,6 +376,129 @@ struct CourseDetailView: View {
             center: CLLocationCoordinate2D(latitude: centerLat, longitude: centerLon),
             span: MKCoordinateSpan(latitudeDelta: spanLat, longitudeDelta: spanLon)
         )
+    }
+}
+
+// MARK: - スポットリストエリア
+
+/// course・selectedSpotId・userLocation が変化しない限り再レンダリングをスキップする。
+/// ドラッグ中は mapDragDelta しか変わらないため、リスト側の評価コストをゼロにできる。
+private struct SpotListAreaView: View, Equatable {
+    let course: Course
+    let userLocation: CLLocationCoordinate2D?
+    let selectedSpotId: UUID?
+    let onSpotTapped: (CourseSpot) -> Void
+
+    @State private var sortByDistance = false
+
+    /// closureは比較対象外。データの変化のみで再レンダリング判定する
+    static func == (lhs: Self, rhs: Self) -> Bool {
+        lhs.course == rhs.course &&
+        lhs.selectedSpotId == rhs.selectedSpotId &&
+        lhs.userLocation?.latitude == rhs.userLocation?.latitude &&
+        lhs.userLocation?.longitude == rhs.userLocation?.longitude
+    }
+
+    /// グローバルスポット番号（全セクション横断、地図ピンと対応）
+    private var globalSpotIndex: [UUID: Int] {
+        Dictionary(uniqueKeysWithValues: course.spots.enumerated().map { ($1.id, $0) })
+    }
+
+    /// 距離順にソートしたスポット一覧
+    private var distanceSortedSpots: [(spot: CourseSpot, distance: Double?)] {
+        course.spots.map { spot in
+            let distance: Double? = userLocation.map { loc in
+                CLLocation(latitude: loc.latitude, longitude: loc.longitude)
+                    .distance(from: CLLocation(latitude: spot.latitude, longitude: spot.longitude))
+            }
+            return (spot, distance)
+        }
+        .sorted { ($0.distance ?? .infinity) < ($1.distance ?? .infinity) }
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            // ソートヘッダー
+            HStack(spacing: 8) {
+                SortChip(label: L.Course.sortDefault, isSelected: !sortByDistance) {
+                    sortByDistance = false
+                }
+                SortChip(label: L.Course.sortDistance, isSelected: sortByDistance) {
+                    sortByDistance = true
+                }
+                .disabled(userLocation == nil)
+                .opacity(userLocation == nil ? 0.4 : 1)
+                Spacer()
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+
+            Divider()
+
+            ScrollViewReader { proxy in
+                ScrollView {
+                    VStack(spacing: 0) {
+                        let indexMap = globalSpotIndex
+                        if sortByDistance {
+                            // 距離順フラットリスト（セクション無視）
+                            let sorted = distanceSortedSpots
+                            ForEach(sorted, id: \.spot.id) { item in
+                                SpotListRowView(
+                                    spot: item.spot,
+                                    orderNumber: (indexMap[item.spot.id] ?? 0) + 1,
+                                    isSelected: selectedSpotId == item.spot.id,
+                                    distance: item.distance
+                                )
+                                .id(item.spot.id)
+                                .onTapGesture { onSpotTapped(item.spot) }
+
+                                if item.spot.id != sorted.last?.spot.id {
+                                    Divider().padding(.leading, 52)
+                                }
+                            }
+                        } else {
+                            // デフォルト: セクション別
+                            ForEach(course.sections) { section in
+                                if section.hasName {
+                                    CourseSectionHeaderView(section: section)
+                                }
+                                ForEach(section.spots) { spot in
+                                    let distance: Double? = userLocation.map { loc in
+                                        CLLocation(latitude: loc.latitude, longitude: loc.longitude)
+                                            .distance(from: CLLocation(latitude: spot.latitude, longitude: spot.longitude))
+                                    }
+                                    SpotListRowView(
+                                        spot: spot,
+                                        orderNumber: (indexMap[spot.id] ?? 0) + 1,
+                                        isSelected: selectedSpotId == spot.id,
+                                        distance: distance
+                                    )
+                                    .id(spot.id)
+                                    .onTapGesture { onSpotTapped(spot) }
+
+                                    if spot.id != section.spots.last?.id {
+                                        Divider().padding(.leading, 52)
+                                    }
+                                }
+                                if section.id != course.sections.last?.id {
+                                    Divider()
+                                }
+                            }
+                        }
+                    }
+                }
+                .onChange(of: selectedSpotId) { _, newId in
+                    if let id = newId {
+                        withAnimation { proxy.scrollTo(id, anchor: .top) }
+                    }
+                }
+                .task {
+                    guard let id = selectedSpotId else { return }
+                    try? await Task.sleep(nanoseconds: 150_000_000)
+                    withAnimation { proxy.scrollTo(id, anchor: .top) }
+                }
+            }
+        }
     }
 }
 
