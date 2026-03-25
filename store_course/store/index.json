@@ -29,34 +29,6 @@
       "updatedAt": "2026-03-12T16:17:08Z"
     },
     {
-      "id": "course-continued-100-famous-castles-japan-001",
-      "title": "続日本100名城",
-      "summary": "公益財団法人日本城郭協会が2017年に選定する「続日本100名城」を巡るコースです。",
-      "categories": [
-        "architecture",
-        "history_culture"
-      ],
-      "version": 1,
-      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/course/continued_100_castles_course_001.jpg",
-      "spotCount": 100,
-      "jsonPath": "courses/continued_100_castles_course_001.json",
-      "updatedAt": "2026-03-12T16:17:08Z"
-    },
-    {
-      "id": "course-tokyo-shitamachi-walk-001",
-      "title": "東京下町さんぽ",
-      "summary": "浅草・上野・谷根千の3エリアを巡る東京下町散歩コースです。エリアごとにセクションが分かれており、半日〜1日で巡れます。",
-      "categories": [
-        "sightseeing",
-        "history_culture"
-      ],
-      "version": 1,
-      "coverImageUrl": null,
-      "spotCount": 9,
-      "jsonPath": "courses/tokyo_shitamachi_walk_001.json",
-      "updatedAt": "2026-03-12T16:17:08Z"
-    },
-    {
       "id": "course-major-aquariums-japan-001",
       "title": "全国の主要水族館",
       "summary": "日本全国の主要水族館を巡るコースです。全49館収録。 参考：公益社団法人日本動物園水族館協会（JAZA）",
@@ -110,7 +82,7 @@
     },
     {
       "id": "slam_dunk_001",
-      "title": "『スラムダンク』の聖地",
+      "title": "『SLAM DUNK』の聖地",
       "summary": "漫画『SLAM DUNK』、映画『THE FIRST SLAM DUNK』に登場する場所を巡るコースです。全12件収録。",
       "categories": [
         "anime"

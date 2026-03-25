@@ -1,47 +1,47 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="24299" systemVersion="25A354" minimumToolsVersion="Automatic" sourceLanguage="Swift" usedWithSwiftData="NO" userDefinedModelVersionIdentifier="">
-    <entity name="CourseSectionEntity" representedClassName="CourseSectionEntity" syncable="YES" codeGenerationType="class">
-        <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
-        <attribute name="sectionId" optional="YES" attributeType="String"/>
-        <attribute name="name" attributeType="String" defaultValueString=""/>
-        <attribute name="sectionDescription" optional="YES" attributeType="String"/>
-        <attribute name="orderIndex" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
+<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="24411" systemVersion="25B78" minimumToolsVersion="Automatic" sourceLanguage="Swift" userDefinedModelVersionIdentifier="">
+    <entity name="CourseEntity" representedClassName="CourseEntity" syncable="YES" codeGenerationType="class">
+        <attribute name="categories" optional="YES" attributeType="String"/>
+        <attribute name="courseType" attributeType="String"/>
         <attribute name="coverImageUrl" optional="YES" attributeType="String"/>
+        <attribute name="createdAt" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="detailUrl" optional="YES" attributeType="String"/>
+        <attribute name="everEnabled" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="NO"/>
+        <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="isEnabled" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="NO"/>
+        <attribute name="isUserCreated" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="NO"/>
+        <attribute name="recognitionRadiusMeters" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <attribute name="source" attributeType="String"/>
+        <attribute name="summary" optional="YES" attributeType="String"/>
+        <attribute name="title" attributeType="String"/>
+        <attribute name="updatedAt" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="version" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
+        <relationship name="sections" optional="YES" toMany="YES" deletionRule="Cascade" ordered="YES" destinationEntity="CourseSectionEntity" inverseName="course" inverseEntity="CourseSectionEntity"/>
+        <relationship name="spots" optional="YES" toMany="YES" deletionRule="Cascade" ordered="YES" destinationEntity="CourseSpotEntity" inverseName="course" inverseEntity="CourseSpotEntity"/>
+    </entity>
+    <entity name="CourseSectionEntity" representedClassName="CourseSectionEntity" syncable="YES" codeGenerationType="class">
+        <attribute name="coverImageUrl" optional="YES" attributeType="String"/>
+        <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="name" attributeType="String" defaultValueString=""/>
+        <attribute name="orderIndex" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="sectionDescription" optional="YES" attributeType="String"/>
+        <attribute name="sectionId" optional="YES" attributeType="String"/>
         <relationship name="course" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="CourseEntity" inverseName="sections" inverseEntity="CourseEntity"/>
         <relationship name="spots" optional="YES" toMany="YES" deletionRule="Cascade" ordered="YES" destinationEntity="CourseSpotEntity" inverseName="section" inverseEntity="CourseSpotEntity"/>
     </entity>
-    <entity name="CourseEntity" representedClassName="CourseEntity" syncable="YES" codeGenerationType="class">
-        <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
-        <attribute name="courseType" attributeType="String"/>
-        <attribute name="title" attributeType="String"/>
-        <attribute name="summary" optional="YES" attributeType="String"/>
-        <attribute name="source" attributeType="String"/>
-        <attribute name="isUserCreated" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="NO"/>
-        <attribute name="version" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
-        <attribute name="recognitionRadiusMeters" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
-        <attribute name="isEnabled" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="NO"/>
-        <attribute name="everEnabled" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="NO"/>
-        <attribute name="detailUrl" optional="YES" attributeType="String"/>
-        <attribute name="coverImageUrl" optional="YES" attributeType="String"/>
-        <attribute name="categories" optional="YES" attributeType="String"/>
-        <attribute name="createdAt" attributeType="Date" usesScalarValueType="NO"/>
-        <attribute name="updatedAt" attributeType="Date" usesScalarValueType="NO"/>
-        <relationship name="spots" optional="YES" toMany="YES" deletionRule="Cascade" ordered="YES" destinationEntity="CourseSpotEntity" inverseName="course" inverseEntity="CourseSpotEntity"/>
-        <relationship name="sections" optional="YES" toMany="YES" deletionRule="Cascade" ordered="YES" destinationEntity="CourseSectionEntity" inverseName="course" inverseEntity="CourseSectionEntity"/>
-    </entity>
     <entity name="CourseSpotEntity" representedClassName="CourseSpotEntity" syncable="YES" codeGenerationType="class">
-        <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
-        <attribute name="spotId" attributeType="String"/>
-        <attribute name="name" attributeType="String"/>
         <attribute name="address" optional="YES" attributeType="String"/>
+        <attribute name="coverImageUrl" optional="YES" attributeType="String"/>
+        <attribute name="firstCheckedInAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="isCheckedIn" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="NO"/>
         <attribute name="latitude" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
         <attribute name="longitude" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
-        <attribute name="spotDescription" optional="YES" attributeType="String"/>
-        <attribute name="coverImageUrl" optional="YES" attributeType="String"/>
+        <attribute name="name" attributeType="String"/>
         <attribute name="orderIndex" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
         <attribute name="recognitionRadiusMeters" optional="YES" attributeType="Double" usesScalarValueType="NO"/>
-        <attribute name="isCheckedIn" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="NO"/>
-        <attribute name="firstCheckedInAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="spotDescription" optional="YES" attributeType="String"/>
+        <attribute name="spotId" attributeType="String"/>
         <relationship name="course" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="CourseEntity" inverseName="spots" inverseEntity="CourseEntity"/>
         <relationship name="section" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="CourseSectionEntity" inverseName="spots" inverseEntity="CourseSectionEntity"/>
         <relationship name="visits" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="VisitDetailsEntity" inverseName="courseSpots" inverseEntity="VisitDetailsEntity"/>
@@ -98,6 +98,6 @@
         <attribute name="filePath" attributeType="String"/>
         <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
         <attribute name="orderIndex" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
-        <relationship name="details" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="VisitDetailsEntity" inverseName="photos" inverseEntity="VisitPhotoEntity"/>
+        <relationship name="details" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="VisitDetailsEntity" inverseName="photos" inverseEntity="VisitDetailsEntity"/>
     </entity>
 </model>

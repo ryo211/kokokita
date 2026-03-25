@@ -11,9 +11,10 @@ struct ModeSelectionView: View {
 
             // ロゴ・タイトル
             VStack(spacing: 16) {
-                Image(systemName: "mappin.and.ellipse")
-                    .font(.system(size: 60))
-                    .foregroundStyle(Color.accentColor)
+                Image("kokokita_irodori_blue")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 72, height: 72)
 
                 Text(L.ModeSelection.title)
                     .font(.largeTitle.bold())

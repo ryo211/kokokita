@@ -6,7 +6,7 @@
   "source": "bundled",
   "isUserCreated": false,
   "version": 1,
-  "recognitionRadiusMeters": 500.0,
+  "recognitionRadiusMeters": 800.0,
   "detailUrl": null,
   "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/course/course-world-heritage-japan-001.jpg",
   "categories": [
@@ -201,6 +201,7 @@
       "spotDescription": "日本最高峰の霊峰。富士山本宮浅間大社の御神体。（静岡・山梨県境）",
       "orderIndex": 18,
       "recognitionRadiusMeters": 5000.0,
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/wh-jp-017.jpg",
       "address": "静岡県富士宮市粟倉地先"
     },
     {
@@ -280,16 +281,6 @@
       "longitude": 140.6993,
       "spotDescription": "約5,900〜4,200年前の大規模縄文集落跡。六本柱建物が復元されている。（青森市）",
       "orderIndex": 26,
-      "recognitionRadiusMeters": null,
-      "address": "青森県青森市大字三内字丸山305"
-    },
-    {
-      "spotId": "wh-jp-026",
-      "name": "TEST",
-      "latitude": 35.76855,
-      "longitude": 139.8037,
-      "spotDescription": "約5,900〜4,200年前の大規模縄文集落跡。六本柱建物が復元されている。（青森市）",
-      "orderIndex": 27,
       "recognitionRadiusMeters": null,
       "address": "青森県青森市大字三内字丸山305"
     }

@@ -15,6 +15,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		456100792F71A452005C3728 /* Kokokita v6.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = "Kokokita v6.xcdatamodel"; sourceTree = "<group>"; };
 		45B214B72E7EDB560004B944 /* kokokita.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = kokokita.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		45B215832E7EF0B70004B944 /* Kokokita.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = Kokokita.xcdatamodel; sourceTree = "<group>"; };
 		839241C028E14D72997A5066 /* Kokokita v2.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = "Kokokita v2.xcdatamodel"; sourceTree = "<group>"; };
@@ -324,7 +325,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 15;
+				CURRENT_PROJECT_VERSION = 16;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_ASSET_PATHS = "\"kokokita/Preview Content\"";
 				DEVELOPMENT_TEAM = G3W2XG2N42;
@@ -346,7 +347,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.1.0;
+				MARKETING_VERSION = 3.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.irodori.kokokita.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -361,7 +362,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 15;
+				CURRENT_PROJECT_VERSION = 16;
 				DEVELOPMENT_ASSET_PATHS = "\"kokokita/Preview Content\"";
 				DEVELOPMENT_TEAM = G3W2XG2N42;
 				ENABLE_PREVIEWS = YES;
@@ -382,7 +383,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.1.0;
+				MARKETING_VERSION = 3.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.irodori.kokokita.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -468,13 +469,14 @@
 		45B215822E7EF0B70004B944 /* Kokokita.xcdatamodeld */ = {
 			isa = XCVersionGroup;
 			children = (
+				456100792F71A452005C3728 /* Kokokita v6.xcdatamodel */,
 				45B215832E7EF0B70004B944 /* Kokokita.xcdatamodel */,
 				839241C028E14D72997A5066 /* Kokokita v2.xcdatamodel */,
 				A1B2C3D4E5F6789012345678 /* Kokokita v3.xcdatamodel */,
 				B2C3D4E5F6789012345678AB /* Kokokita v4.xcdatamodel */,
 				C3D4E5F6789012345678ABCD /* Kokokita v5.xcdatamodel */,
 			);
-			currentVersion = C3D4E5F6789012345678ABCD /* Kokokita v5.xcdatamodel */;
+			currentVersion = 456100792F71A452005C3728 /* Kokokita v6.xcdatamodel */;
 			path = Kokokita.xcdatamodeld;
 			sourceTree = "<group>";
 			versionGroupType = wrapper.xcdatamodel;
