@@ -954,77 +954,78 @@ private struct SpotLeaderLineView: View {
 
     private let imgW: CGFloat = 110
     private let imgH: CGFloat = 74
-    /// 画像左辺がスポットから右へのオフセット
-    private let dx: CGFloat = 20
-    /// 画像下辺がスポットから上へのオフセット
-    private let dy: CGFloat = 90
-
-    /// リーダーラインの終点（画像左下隅）
-    private var lineEnd: CGPoint {
-        CGPoint(x: spotPoint.x + dx, y: spotPoint.y - dy)
-    }
-
-    /// 画像中心座標（ZStack 内で .position() に使用）
-    private var imgCenter: CGPoint {
-        CGPoint(x: spotPoint.x + dx + imgW / 2, y: spotPoint.y - dy - imgH / 2)
-    }
+    /// 地図端からのマージン
+    private let margin: CGFloat = 12
 
     var body: some View {
-        ZStack {
-            // リーダーライン（スポット中心 → 画像左下隅）
-            Canvas { ctx, _ in
-                let path: Path = {
-                    var p = Path()
-                    p.move(to: spotPoint)
-                    p.addLine(to: lineEnd)
-                    return p
-                }()
-                // シャドウ（可読性確保）
-                ctx.stroke(path, with: .color(.black.opacity(0.25)),
-                           style: StrokeStyle(lineWidth: 4.5, lineCap: .round))
-                // 本体（白い線）
-                ctx.stroke(path, with: .color(.white.opacity(0.95)),
-                           style: StrokeStyle(lineWidth: 2.5, lineCap: .round))
-                // スポット側の始点ドット（シャドウ）
-                ctx.fill(
-                    Path(ellipseIn: CGRect(x: spotPoint.x - 4.5, y: spotPoint.y - 4.5, width: 9, height: 9)),
-                    with: .color(.black.opacity(0.25))
-                )
-                // スポット側の始点ドット（本体）
-                ctx.fill(
-                    Path(ellipseIn: CGRect(x: spotPoint.x - 3.5, y: spotPoint.y - 3.5, width: 7, height: 7)),
-                    with: .color(.white.opacity(0.95))
-                )
-            }
-            .allowsHitTesting(false)
+        GeometryReader { geo in
+            // 画像を右上固定位置に配置（インフォボタンの下あたり）
+            let imgCenter = CGPoint(
+                x: geo.size.width - imgW / 2 - margin,
+                y: imgH / 2 + margin
+            )
+            // リーダーラインの終点（画像の左下隅）
+            let lineEnd = CGPoint(
+                x: imgCenter.x - imgW / 2,
+                y: imgCenter.y + imgH / 2
+            )
 
-            // スポット画像
-            AsyncImage(url: imageUrl) { phase in
-                switch phase {
-                case .success(let image):
-                    image
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: imgW, height: imgH)
-                        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-                        .shadow(color: .black.opacity(0.3), radius: 6, x: 0, y: 2)
-                case .empty:
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .fill(.regularMaterial)
-                        .frame(width: imgW, height: imgH)
-                        .overlay(ProgressView().controlSize(.small))
-                        .shadow(color: .black.opacity(0.15), radius: 6, x: 0, y: 2)
-                case .failure:
-                    EmptyView()
-                @unknown default:
-                    EmptyView()
+            ZStack {
+                // リーダーライン（スポット中心 → 画像左下隅）
+                Canvas { ctx, _ in
+                    let path: Path = {
+                        var p = Path()
+                        p.move(to: spotPoint)
+                        p.addLine(to: lineEnd)
+                        return p
+                    }()
+                    // シャドウ（可読性確保）
+                    ctx.stroke(path, with: .color(.black.opacity(0.25)),
+                               style: StrokeStyle(lineWidth: 4.5, lineCap: .round))
+                    // 本体（白い線）
+                    ctx.stroke(path, with: .color(.white.opacity(0.95)),
+                               style: StrokeStyle(lineWidth: 2.5, lineCap: .round))
+                    // スポット側の始点ドット（シャドウ）
+                    ctx.fill(
+                        Path(ellipseIn: CGRect(x: spotPoint.x - 4.5, y: spotPoint.y - 4.5, width: 9, height: 9)),
+                        with: .color(.black.opacity(0.25))
+                    )
+                    // スポット側の始点ドット（本体）
+                    ctx.fill(
+                        Path(ellipseIn: CGRect(x: spotPoint.x - 3.5, y: spotPoint.y - 3.5, width: 7, height: 7)),
+                        with: .color(.white.opacity(0.95))
+                    )
                 }
+                .allowsHitTesting(false)
+
+                // スポット画像
+                AsyncImage(url: imageUrl) { phase in
+                    switch phase {
+                    case .success(let image):
+                        image
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: imgW, height: imgH)
+                            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                            .shadow(color: .black.opacity(0.3), radius: 6, x: 0, y: 2)
+                    case .empty:
+                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .fill(.regularMaterial)
+                            .frame(width: imgW, height: imgH)
+                            .overlay(ProgressView().controlSize(.small))
+                            .shadow(color: .black.opacity(0.15), radius: 6, x: 0, y: 2)
+                    case .failure:
+                        EmptyView()
+                    @unknown default:
+                        EmptyView()
+                    }
+                }
+                .position(imgCenter)
+                .onTapGesture { onImageTap() }
             }
-            .position(imgCenter)
-            .onTapGesture { onImageTap() }
+            // 地図エリア外への描画を防ぐ
+            .clipped()
         }
-        // 地図エリア外への描画を防ぐ
-        .clipped()
     }
 }
 
