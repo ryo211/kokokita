@@ -40,6 +40,8 @@ struct CourseDetailView: View {
     @State private var selectedSpotScreenPoint: CGPoint? = nil
     /// ライトボックス表示中の画像 URL
     @State private var expandedImageUrl: URL? = nil
+    /// 進捗バースワイプの二重発火防止フラグ
+    @State private var progressSwipeConsumed = false
 
     init(course: Course, showTitle: Bool = true, initialSelectedSpotId: UUID? = nil, courseListStore: CourseListStore? = nil) {
         self.showTitle = showTitle
@@ -84,7 +86,8 @@ struct CourseDetailView: View {
                         course: course,
                         userLocation: userLocation,
                         selectedSpotId: selectedSpotId,
-                        onSpotTapped: focusSpot
+                        onSpotTapped: focusSpot,
+                        onLayoutSwipe: switchLayout
                     )
                     .equatable()
                 }
@@ -327,6 +330,44 @@ struct CourseDetailView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 6)
+        .contentShape(Rectangle())
+        // 上下スワイプでレイアウト切替（仕切りをドラッグする感覚）
+        // 上スワイプ → リスト拡大方向 / 下スワイプ → 地図拡大方向
+        .gesture(
+            DragGesture(minimumDistance: 5, coordinateSpace: .local)
+                .onChanged { value in
+                    guard !progressSwipeConsumed else { return }
+                    if value.translation.height < -15 {
+                        progressSwipeConsumed = true
+                        switchLayout(true)
+                    } else if value.translation.height > 15 {
+                        progressSwipeConsumed = true
+                        switchLayout(false)
+                    }
+                }
+                .onEnded { _ in progressSwipeConsumed = false }
+        )
+    }
+
+    // MARK: - レイアウト切替ヘルパー
+
+    /// isUp=true: リスト拡大方向 / isUp=false: 地図拡大方向
+    private func switchLayout(_ isUp: Bool) {
+        withAnimation(.easeInOut(duration: 0.3)) {
+            if isUp {
+                switch viewLayout {
+                case .mapFull:  viewLayout = .split
+                case .split:    viewLayout = .listFull
+                case .listFull: break
+                }
+            } else {
+                switch viewLayout {
+                case .mapFull:  break
+                case .split:    viewLayout = .mapFull
+                case .listFull: viewLayout = .split
+                }
+            }
+        }
     }
 
     // MARK: - 現在地ボタン（地図右下）
@@ -469,8 +510,11 @@ private struct SpotListAreaView: View, Equatable {
     let userLocation: CLLocationCoordinate2D?
     let selectedSpotId: UUID?
     let onSpotTapped: (CourseSpot) -> Void
+    /// 上スワイプ=true / 下スワイプ=false でレイアウト切替を親に通知
+    var onLayoutSwipe: (Bool) -> Void = { _ in }
 
     @State private var sortByDistance = false
+    @State private var sortHeaderSwipeConsumed = false
 
     /// closureは比較対象外。データの変化のみで再レンダリング判定する
     static func == (lhs: Self, rhs: Self) -> Bool {
@@ -513,6 +557,21 @@ private struct SpotListAreaView: View, Equatable {
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 8)
+            .contentShape(Rectangle())
+            .gesture(
+                DragGesture(minimumDistance: 5, coordinateSpace: .local)
+                    .onChanged { value in
+                        guard !sortHeaderSwipeConsumed else { return }
+                        if value.translation.height < -15 {
+                            sortHeaderSwipeConsumed = true
+                            onLayoutSwipe(true)
+                        } else if value.translation.height > 15 {
+                            sortHeaderSwipeConsumed = true
+                            onLayoutSwipe(false)
+                        }
+                    }
+                    .onEnded { _ in sortHeaderSwipeConsumed = false }
+            )
 
             Divider()
 
