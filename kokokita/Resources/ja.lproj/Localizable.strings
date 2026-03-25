@@ -363,17 +363,20 @@
 "course.noAddress" = "住所未登録";
 "course.visitedOn" = "%@に巡礼済み";
 "course.spotProgressLabel" = "達成したスポット";
+"course.spotProgress" = "達成したスポット %d/%d";
 "course.updatedAt" = "最終更新: %@";
 "course.sort.nearby" = "現在地から近い順";
+"course.sort.default" = "デフォルト順";
+"course.sort.distance" = "近い順";
 
 // MARK: - Mode Selection
 "modeSelection.title" = "モードを選んでください";
-"modeSelection.subtitle" = "あとで設定から変更できます";
+"modeSelection.subtitle" = "あとで自由に切り替えられます";
 "modeSelection.pilgrimageTitle" = "巡礼モード";
-"modeSelection.pilgrimageDescription" = "コースに沿って聖地・世界遺産などをチェックインしながら巡礼";
+"modeSelection.pilgrimageDescription" = "世界遺産やアニメの聖地などの巡礼コースを巡る";
 "modeSelection.recordTitle" = "記録モード";
-"modeSelection.recordDescription" = "今いる場所を自由に記録する";
-"modeSelection.canChangeInSettings" = "あとで設定から変更できます";
+"modeSelection.recordDescription" = "今いる場所を記録し、地図やカレンダーで振り返る";
+"modeSelection.canChangeInSettings" = "記録したデータはどちらのモードにも反映されます";
 "modeSelection.appModeSection" = "アプリモード";
 "modeSelection.switchToRecord" = "記録モードに切り替え";
 "modeSelection.switchToPilgrimage" = "巡礼モードに切り替え";
@@ -392,15 +395,15 @@
 "pilgrimageHome.nearbyRefresh" = "更新";
 "pilgrimageHome.noNearbySpots" = "近くにスポットはありません";
 "pilgrimageHome.locationUnavailable" = "現在地を取得できませんでした";
-"pilgrimageHome.recentTitle" = "最近の達成";
+"pilgrimageHome.recentTitle" = "最近達成した巡礼スポット";
 "pilgrimageHome.noRecentAchievements" = "まだ達成がありません";
 "pilgrimageHome.distanceMeter" = "%dm";
 
 // MARK: - CheckIn Result
-"checkIn.resultTitle" = "チェックイン！";
-"checkIn.resultSubtitle" = "コーススポットに到達しました";
+"checkIn.resultTitle" = "聖地巡礼達成！";
+"checkIn.resultSubtitle" = "聖地巡礼スポットに到達しました";
 "checkIn.distanceFormat" = "約%dm";
-"checkIn.retroactiveTitle" = "過去の記録からチェックイン認定！";
+"checkIn.retroactiveTitle" = "過去の記録から巡礼スポット達成認定！";
 "checkIn.retroactiveSubtitle" = "以前に訪れた記録がこのコースのスポットと一致しました";
 "checkIn.retroactiveDateSuffix" = "の記録より";
 

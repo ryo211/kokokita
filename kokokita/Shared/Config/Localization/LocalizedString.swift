@@ -407,8 +407,11 @@ enum L {
         static let noAddress = localized("course.noAddress")
         static func visitedOn(_ dateString: String) -> String { String(format: localized("course.visitedOn"), dateString) }
         static let spotProgressLabel = localized("course.spotProgressLabel")
+        static func spotProgress(_ checked: Int, _ total: Int) -> String { String(format: localized("course.spotProgress"), checked, total) }
         static func updatedAt(_ dateString: String) -> String { String(format: localized("course.updatedAt"), dateString) }
         static let sortNearby = localized("course.sort.nearby")
+        static let sortDefault  = localized("course.sort.default")
+        static let sortDistance = localized("course.sort.distance")
     }
 
     // MARK: - Course Store（コースダウンロード）

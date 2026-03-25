@@ -361,8 +361,11 @@
 "course.noAddress" = "No Address";
 "course.visitedOn" = "Visited on %@";
 "course.spotProgressLabel" = "Spots achieved";
+"course.spotProgress" = "Spots achieved %d/%d";
 "course.updatedAt" = "Last updated: %@";
 "course.sort.nearby" = "Nearest first";
+"course.sort.default" = "Default";
+"course.sort.distance" = "Nearest";
 
 // MARK: - Mode Selection
 "modeSelection.title" = "Choose Your Mode";
