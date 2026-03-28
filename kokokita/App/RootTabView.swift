@@ -30,9 +30,9 @@ struct RootTabView: View {
     @State private var tab: RootTab = .home
     @State private var recording = RecordingController()
     @Environment(AppUIState.self) private var ui
-    @EnvironmentObject private var modeManager: AppModeManager
+    @Environment(AppModeManager.self) private var modeManager
     #if DEBUG
-    @ObservedObject private var debugSettings = DebugSettings.shared
+    private var debugSettings = DebugSettings.shared
     #endif
 
     var body: some View {

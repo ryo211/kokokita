@@ -4,7 +4,7 @@ import SwiftUI
 // AppModeManager を参照して初回起動時のモード選択画面を表示し、
 // モードに応じて RootTabView または PilgrimageRootTabView に分岐する
 struct RootView: View {
-    @StateObject private var modeManager = AppModeManager()
+    @State private var modeManager = AppModeManager()
     /// 現在描画しているモード（アニメーション中は切り替えタイミングを制御するため modeManager.mode と一時的にズレる）
     @State private var renderMode: AppMode = RootView.savedMode()
     @State private var flipAngle: Double = 0
@@ -14,7 +14,7 @@ struct RootView: View {
             if !modeManager.hasSeenModeSelection {
                 // 初回起動: モード選択画面を表示
                 ModeSelectionView()
-                    .environmentObject(modeManager)
+                    .environment(modeManager)
             } else {
                 modeContent(for: renderMode)
                     .rotation3DEffect(
@@ -24,7 +24,7 @@ struct RootView: View {
                     )
             }
         }
-        .environmentObject(modeManager)
+        .environment(modeManager)
         .onChange(of: modeManager.mode) { _, newMode in
             performFlip(to: newMode)
         }
@@ -39,7 +39,7 @@ struct RootView: View {
             RootTabView()
         case .pilgrimage:
             PilgrimageRootTabView()
-                .environmentObject(modeManager)
+                .environment(modeManager)
         }
     }
 

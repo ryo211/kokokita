@@ -3,7 +3,7 @@ import SwiftUI
 // 初回起動時に表示するモード選択画面
 // ユーザーが「記録モード」または「巡礼モード」を選択する
 struct ModeSelectionView: View {
-    @EnvironmentObject private var modeManager: AppModeManager
+    @Environment(AppModeManager.self) private var modeManager
 
     var body: some View {
         VStack(spacing: 0) {

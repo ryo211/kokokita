@@ -3,11 +3,11 @@ import SwiftUI
 // 巡礼モードのルートタブビュー（2タブ: ホーム / コース）
 // 記録モードと同じカスタムタブバー UI を使用
 struct PilgrimageRootTabView: View {
-    @EnvironmentObject private var modeManager: AppModeManager
+    @Environment(AppModeManager.self) private var modeManager
     @State private var tab: PilgrimageTab = .home
     @State private var recording = RecordingController()
     #if DEBUG
-    @ObservedObject private var debugSettings = DebugSettings.shared
+    private var debugSettings = DebugSettings.shared
     #endif
 
     var body: some View {

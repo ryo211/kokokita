@@ -2,7 +2,7 @@ import SwiftUI
 
 struct SettingsSheet: View {
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject private var modeManager: AppModeManager
+    @Environment(AppModeManager.self) private var modeManager
 
     var body: some View {
         NavigationStack {
