@@ -70,7 +70,7 @@ struct RetroactiveCheckInResultSheet: View {
                 }
             }
         }
-        .presentationDetents([.medium, .large])
+        .iPadSheetSize(iPhoneDetents: [.medium, .large])
     }
 }
 

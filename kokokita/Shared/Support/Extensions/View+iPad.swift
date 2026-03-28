@@ -1,18 +1,24 @@
 import SwiftUI
+#if canImport(UIKit)
 import UIKit
+#endif
 
 extension View {
     /// iPadでシートをより大きく表示するためのモディファイア
-    func iPadSheetSize() -> some View {
-        self
-            .modifier(iPadSheetSizeModifier())
+    /// - Parameter iPhoneDetents: iPhoneで使用するdetents（デフォルト: [.large]）
+    func iPadSheetSize(iPhoneDetents: Set<PresentationDetent> = [.large]) -> some View {
+        self.modifier(iPadSheetSizeModifier(iPhoneDetents: iPhoneDetents))
     }
 }
 
 private struct iPadSheetSizeModifier: ViewModifier {
+    let iPhoneDetents: Set<PresentationDetent>
+
+    @ViewBuilder
     func body(content: Content) -> some View {
+#if canImport(UIKit)
         if UIDevice.current.userInterfaceIdiom == .pad {
-            // iPadの場合：コンテンツに最小サイズを設定し、背景とpresentationDetentsを調整
+            // iPadの場合：最小サイズを確保し、常にlarge表示
             content
                 .frame(
                     minWidth: UIScreen.main.bounds.width * 0.7,
@@ -23,9 +29,13 @@ private struct iPadSheetSizeModifier: ViewModifier {
                 .presentationDetents([.large])
                 .presentationBackground(.regularMaterial)
         } else {
-            // iPhoneの場合：標準の.large
+            // iPhoneの場合：呼び出し側で指定されたdetents
             content
-                .presentationDetents([.large])
+                .presentationDetents(iPhoneDetents)
         }
+#else
+        content
+            .presentationDetents(iPhoneDetents)
+#endif
     }
 }
