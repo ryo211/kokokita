@@ -75,7 +75,7 @@ struct ManualEntryScreen: View {
             .sheet(isPresented: $showCamera) { cameraSheet }
             .sheet(isPresented: $showManualEntryInfoSheet) {
                 ManualEntryInfoSheet()
-                    .presentationDetents([.medium, .large])
+                    .iPadSheetSize(iPhoneDetents: [.medium, .large])
                     .presentationDragIndicator(.visible)
             }
             .fullScreenCover(item: fullScreenBinding) { photoFullScreen(for: $0) }

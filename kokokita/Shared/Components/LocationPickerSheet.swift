@@ -392,7 +392,7 @@ struct LocationPickerSheet: View {
                 }
             }
         }
-        .presentationDetents([.medium, .large])
+        .iPadSheetSize(iPhoneDetents: [.medium, .large])
     }
 
     private func nearbyPOIRow(for item: MKMapItem) -> some View {

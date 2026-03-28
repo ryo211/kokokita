@@ -398,18 +398,20 @@ private struct HeroCard: View {
     @ViewBuilder
     private var heroBackground: some View {
         if let urlStr = course.coverImageUrl, let url = URL(string: urlStr) {
-            AsyncImage(url: url) { phase in
-                switch phase {
-                case .success(let image):
-                    image
-                        .resizable()
-                        .scaledToFill()
-                case .empty:
-                    placeholderBackground
-                default:
-                    placeholderBackground
+            // Color.clear がZStack内でフル展開し、overlay経由でAsyncImageを正確なサイズに収める
+            Color.clear
+                .overlay {
+                    AsyncImage(url: url) { phase in
+                        if case .success(let image) = phase {
+                            image
+                                .resizable()
+                                .scaledToFill()
+                        } else {
+                            placeholderBackground
+                        }
+                    }
                 }
-            }
+                .clipped()
         } else {
             placeholderBackground
         }

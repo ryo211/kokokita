@@ -55,7 +55,7 @@ struct CheckInResultSheet: View {
                 }
             }
         }
-        .presentationDetents([.medium, .large])
+        .iPadSheetSize(iPhoneDetents: [.medium, .large])
     }
 }
 
@@ -64,9 +64,22 @@ private struct CheckInResultRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            Image(systemName: "checkmark.circle.fill")
-                .foregroundStyle(.indigo)
-                .font(.system(size: 24))
+            // スポット画像またはチェックマークアイコン
+            if let urlStr = result.spot.coverImageUrl, let url = URL(string: urlStr) {
+                AsyncImage(url: url) { phase in
+                    if case .success(let image) = phase {
+                        image
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: 96, height: 64)
+                            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    } else {
+                        spotIconPlaceholder
+                    }
+                }
+            } else {
+                spotIconPlaceholder
+            }
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(result.spot.name)
@@ -92,5 +105,12 @@ private struct CheckInResultRow: View {
             }
         }
         .padding(16)
+    }
+
+    private var spotIconPlaceholder: some View {
+        Image(systemName: "checkmark.circle.fill")
+            .foregroundStyle(.indigo)
+            .font(.system(size: 24))
+            .frame(width: 96, height: 64)
     }
 }

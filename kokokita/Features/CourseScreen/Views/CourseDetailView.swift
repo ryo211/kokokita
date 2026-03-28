@@ -1083,6 +1083,6 @@ private struct CourseSummarySheet: View {
                 }
             }
         }
-        .presentationDetents([.medium, .large])
+        .iPadSheetSize(iPhoneDetents: [.medium, .large])
     }
 }

@@ -70,7 +70,7 @@ struct RetroactiveCheckInResultSheet: View {
                 }
             }
         }
-        .presentationDetents([.medium, .large])
+        .iPadSheetSize(iPhoneDetents: [.medium, .large])
     }
 }
 
@@ -79,9 +79,22 @@ private struct RetroactiveSpotRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            Image(systemName: "clock.arrow.circlepath")
-                .foregroundStyle(.indigo)
-                .font(.system(size: 22))
+            // スポット画像または時計アイコン
+            if let urlStr = spot.coverImageUrl, let url = URL(string: urlStr) {
+                AsyncImage(url: url) { phase in
+                    if case .success(let image) = phase {
+                        image
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: 96, height: 64)
+                            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    } else {
+                        spotIconPlaceholder
+                    }
+                }
+            } else {
+                spotIconPlaceholder
+            }
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(spot.name)
@@ -100,5 +113,12 @@ private struct RetroactiveSpotRow: View {
             Spacer()
         }
         .padding(16)
+    }
+
+    private var spotIconPlaceholder: some View {
+        Image(systemName: "clock.arrow.circlepath")
+            .foregroundStyle(.indigo)
+            .font(.system(size: 22))
+            .frame(width: 96, height: 64)
     }
 }
