@@ -50,8 +50,8 @@ struct SliderTabBar<Tab: Hashable>: View {
                     }
                     .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 3)
 
-                let tabCount = CGFloat(items.count)
-                let tabWidth = (geometry.size.width - 16) / tabCount
+                let tabCount = max(CGFloat(items.count), 1)
+                let tabWidth = max((geometry.size.width - 16) / tabCount, 0)
                 let currentIndex = items.firstIndex(where: { $0.id == current }) ?? 0
 
                 // スライディングインジケーター（ヌルッと移動）
@@ -97,7 +97,7 @@ struct SliderTabBar<Tab: Hashable>: View {
                                 lineWidth: 1
                             )
                     }
-                    .frame(width: tabWidth, height: geometry.size.height - 12)
+                    .frame(width: tabWidth, height: max(geometry.size.height - 12, 0))
                     .shadow(color: Color.black.opacity(0.08), radius: 6, x: 0, y: 2)
                     .offset(x: 6 + CGFloat(currentIndex) * tabWidth)
                     .animation(.interpolatingSpring(stiffness: 150, damping: 18), value: current)

@@ -12,7 +12,7 @@ final class CoreDataVisitRepository {
 
     func create(visit: Visit, details: VisitDetails, saveImmediately: Bool = true) throws {
         // 既存のVisitをチェック（リストア時の重複防止）
-        if let existing = try fetchVisitEntity(id: visit.id) {
+        if (try fetchVisitEntity(id: visit.id)) != nil {
             Logger.warning("Visit with ID \(visit.id) already exists, skipping creation")
             throw NSError(domain: "Visit", code: 2,
                           userInfo: [NSLocalizedDescriptionKey: "Visit with ID \(visit.id) already exists"])
