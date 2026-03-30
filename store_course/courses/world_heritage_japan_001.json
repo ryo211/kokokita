@@ -81,6 +81,7 @@
       "spotDescription": "急勾配の茅葺き屋根「合掌造り」が残る伝統的集落。（岐阜県白川村）",
       "orderIndex": 6,
       "recognitionRadiusMeters": 1000.0,
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/wh-jp-006.jpg",
       "address": "岐阜県大野郡白川村荻町"
     },
     {
@@ -101,6 +102,7 @@
       "spotDescription": "海上に浮かぶ大鳥居で有名な神社。宮島（廿日市市）に鎮座。",
       "orderIndex": 8,
       "recognitionRadiusMeters": null,
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/wh-jp-008.jpg",
       "address": "広島県廿日市市宮島町1-1"
     },
     {
