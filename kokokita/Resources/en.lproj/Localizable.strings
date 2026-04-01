@@ -60,7 +60,7 @@
 "home.search.placeholder" = "Search";
 "home.deleteConfirmTitle" = "Delete this record?";
 "home.deleteConfirmMessage" = "This action cannot be undone.";
-"home.noTitle" = "";
+"home.noTitle" = "No Title";
 "home.itemsCount" = "items";
 "home.switchToMap" = "Switch to Map";
 "home.switchToList" = "Switch to List";
@@ -99,6 +99,8 @@
 "tab.menu" = "Menu";
 "tab.kokokita" = "Kokokita";
 "tab.course" = "Course";
+"tab.modePilgrimage" = "Pilgrimage";
+"tab.modeRecord" = "Record";
 
 // MARK: - Error Messages
 "error.locationSimulated" = "Location data appears to be simulated or from an external accessory and cannot be recorded.";
@@ -316,6 +318,7 @@
 "settingssheet.resetAll" = "Reset All";
 "settingssheet.followOnX" = "Follow on X";
 "settingssheet.support" = "Support & Contact";
+"settingssheet.reviewApp" = "Review This App";
 "settingssheet.developerTools" = "Developer Tools";
 "settingssheet.version" = "Version";
 
@@ -323,6 +326,84 @@
 "course.title" = "Course";
 "course.comingSoon" = "Coming Soon";
 "course.description" = "Course feature will be available soon";
+"course.listTitle" = "Course List";
+"courseStore.title" = "Add Courses";
+"courseStore.emptyTitle" = "No Courses Available";
+"courseStore.emptyDescription" = "No courses are available for download at this time";
+"courseStore.downloadButton" = "+ Add";
+"courseStore.downloadedBadge" = "Added";
+"courseStore.updateButton" = "Update";
+"courseStore.spotCount" = "%d spots";
+"courseStore.filter.new" = "New";
+"courseStore.filter.available" = "Available";
+"courseStore.filter.installed" = "Installed";
+"courseStore.filter.all" = "All";
+"course.emptyTitle" = "No Courses";
+"course.emptyDescription" = "Tap + in the top right to add a course";
+"course.enable" = "Enable";
+"course.disable" = "Disable";
+"course.enableToggle" = "Enable this course";
+"course.settingsSection" = "Settings";
+"course.spotsCount" = " spots";
+"course.spotsSection" = "Spots";
+"course.progress" = "Progress";
+"course.completed" = "Completed!";
+"course.type.pilgrimage" = "Pilgrimage";
+"course.type.stampRally" = "Stamp Rally";
+"course.type.myList" = "My List";
+"course.category.history_culture" = "History & Culture";
+"course.category.nature" = "Nature";
+"course.category.art_entertainment" = "Art & Entertainment";
+"course.category.anime" = "Anime & Manga";
+"course.newBadge" = "NEW";
+"course.achieved" = "done";
+"course.notVisited" = "Not Visited";
+"course.noAddress" = "No Address";
+"course.visitedOn" = "Visited on %@";
+"course.spotProgressLabel" = "Spots achieved";
+"course.spotProgress" = "Spots achieved %d/%d";
+"course.updatedAt" = "Last updated: %@";
+"course.sort.nearby" = "Nearest first";
+"course.sort.default" = "Default";
+"course.sort.distance" = "Nearest";
+
+// MARK: - Mode Selection
+"modeSelection.title" = "Choose Your Mode";
+"modeSelection.subtitle" = "You can change this later in Settings";
+"modeSelection.pilgrimageTitle" = "Pilgrimage Mode";
+"modeSelection.pilgrimageDescription" = "Check in at sacred places and World Heritage sites along courses";
+"modeSelection.recordTitle" = "Record Mode";
+"modeSelection.recordDescription" = "Freely record the places you visit";
+"modeSelection.canChangeInSettings" = "You can change this later in Settings";
+"modeSelection.appModeSection" = "App Mode";
+"modeSelection.switchToRecord" = "Switch to Record Mode";
+"modeSelection.switchToPilgrimage" = "Switch to Pilgrimage Mode";
+
+// MARK: - Pilgrimage Home
+"pilgrimageHome.navTitle" = "Pilgrimage";
+"pilgrimageHome.howToUseButton" = "How to Use";
+"pilgrimageHome.howToUseTitle" = "How to Use Pilgrimage";
+"pilgrimageHome.heroTitle" = "Start Your Pilgrimage";
+"pilgrimageHome.heroDescription" = "Choose a course and check in each time you visit a spot";
+"pilgrimageHome.viewCourses" = "View Courses";
+"pilgrimageHome.coursesTitle" = "Courses";
+"pilgrimageHome.seeAll" = "See All";
+"pilgrimageHome.progressFormat" = "%d/%d Spots";
+"pilgrimageHome.nearbyTitle" = "Nearby Spots";
+"pilgrimageHome.nearbyRefresh" = "Refresh";
+"pilgrimageHome.noNearbySpots" = "No spots nearby";
+"pilgrimageHome.locationUnavailable" = "Location unavailable";
+"pilgrimageHome.recentTitle" = "Recent Achievements";
+"pilgrimageHome.noRecentAchievements" = "No achievements yet";
+"pilgrimageHome.distanceMeter" = "%dm";
+
+// MARK: - CheckIn Result
+"checkIn.resultTitle" = "Checked In!";
+"checkIn.resultSubtitle" = "You reached a course spot";
+"checkIn.distanceFormat" = "~%dm away";
+"checkIn.retroactiveTitle" = "Check-in Recognized from Past Records!";
+"checkIn.retroactiveSubtitle" = "Your past visits matched spots in this course";
+"checkIn.retroactiveDateSuffix" = " (from past record)";
 
 // MARK: - Manual Entry
 "manualEntry.title" = "Add Record";

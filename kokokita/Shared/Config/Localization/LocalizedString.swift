@@ -147,6 +147,8 @@ enum L {
         static let menu = localized("tab.menu")
         static let kokokita = localized("tab.kokokita")
         static let course = localized("tab.course")
+        static let modePilgrimage = localized("tab.modePilgrimage")
+        static let modeRecord = localized("tab.modeRecord")
     }
 
     // MARK: - Label Management
@@ -371,6 +373,7 @@ enum L {
         static let resetAll = localized("settingssheet.resetAll")
         static let followOnX = localized("settingssheet.followOnX")
         static let support = localized("settingssheet.support")
+        static let reviewApp = localized("settingssheet.reviewApp")
         static let developerTools = localized("settingssheet.developerTools")
         static let version = localized("settingssheet.version")
     }
@@ -380,6 +383,50 @@ enum L {
         static let title = localized("course.title")
         static let comingSoon = localized("course.comingSoon")
         static let description = localized("course.description")
+        static let listTitle = localized("course.listTitle")
+        static let emptyTitle = localized("course.emptyTitle")
+        static let emptyDescription = localized("course.emptyDescription")
+        static let enable = localized("course.enable")
+        static let disable = localized("course.disable")
+        static let enableToggle = localized("course.enableToggle")
+        static let settingsSection = localized("course.settingsSection")
+        static let spotsCount = localized("course.spotsCount")
+        static let spotsSection = localized("course.spotsSection")
+        static let progress = localized("course.progress")
+        static let completed = localized("course.completed")
+        static let typePilgrimage = localized("course.type.pilgrimage")
+        static let typeStampRally = localized("course.type.stampRally")
+        static let typeMyList = localized("course.type.myList")
+        static let categoryHistoryCulture  = localized("course.category.history_culture")
+        static let categoryNature          = localized("course.category.nature")
+        static let categoryArtEntertainment = localized("course.category.art_entertainment")
+        static let categoryAnime           = localized("course.category.anime")
+        static let newBadge = localized("course.newBadge")
+        static let achieved = localized("course.achieved")
+        static let notVisited = localized("course.notVisited")
+        static let noAddress = localized("course.noAddress")
+        static func visitedOn(_ dateString: String) -> String { String(format: localized("course.visitedOn"), dateString) }
+        static let spotProgressLabel = localized("course.spotProgressLabel")
+        static func spotProgress(_ checked: Int, _ total: Int) -> String { String(format: localized("course.spotProgress"), checked, total) }
+        static func updatedAt(_ dateString: String) -> String { String(format: localized("course.updatedAt"), dateString) }
+        static let sortNearby = localized("course.sort.nearby")
+        static let sortDefault  = localized("course.sort.default")
+        static let sortDistance = localized("course.sort.distance")
+    }
+
+    // MARK: - Course Store（コースダウンロード）
+    enum CourseStore {
+        static let title = localized("courseStore.title")
+        static let emptyTitle = localized("courseStore.emptyTitle")
+        static let emptyDescription = localized("courseStore.emptyDescription")
+        static let downloadButton = localized("courseStore.downloadButton")
+        static let downloadedBadge = localized("courseStore.downloadedBadge")
+        static let updateButton = localized("courseStore.updateButton")
+        static func spotCount(_ count: Int) -> String { String(format: localized("courseStore.spotCount"), count) }
+        static let filterNew = localized("courseStore.filter.new")
+        static let filterAvailable = localized("courseStore.filter.available")
+        static let filterInstalled = localized("courseStore.filter.installed")
+        static let filterAll = localized("courseStore.filter.all")
     }
 
     // MARK: - Manual Entry (後付け記録)
@@ -436,6 +483,55 @@ enum L {
         static let verifiedDescription = localized("recordBadge.verifiedDescription")
         static let manualTitle = localized("recordBadge.manualTitle")
         static let manualDescription = localized("recordBadge.manualDescription")
+    }
+
+    // MARK: - Mode Selection
+    enum ModeSelection {
+        static let title = localized("modeSelection.title")
+        static let subtitle = localized("modeSelection.subtitle")
+        static let pilgrimageTitle = localized("modeSelection.pilgrimageTitle")
+        static let pilgrimageDescription = localized("modeSelection.pilgrimageDescription")
+        static let recordTitle = localized("modeSelection.recordTitle")
+        static let recordDescription = localized("modeSelection.recordDescription")
+        static let canChangeInSettings = localized("modeSelection.canChangeInSettings")
+        static let appModeSection = localized("modeSelection.appModeSection")
+        static let switchToRecord = localized("modeSelection.switchToRecord")
+        static let switchToPilgrimage = localized("modeSelection.switchToPilgrimage")
+    }
+
+    // MARK: - Pilgrimage Home
+    enum PilgrimageHome {
+        static let navTitle = localized("pilgrimageHome.navTitle")
+        static let howToUseButton = localized("pilgrimageHome.howToUseButton")
+        static let howToUseTitle = localized("pilgrimageHome.howToUseTitle")
+        static let heroTitle = localized("pilgrimageHome.heroTitle")
+        static let heroDescription = localized("pilgrimageHome.heroDescription")
+        static let viewCourses = localized("pilgrimageHome.viewCourses")
+        static let coursesTitle = localized("pilgrimageHome.coursesTitle")
+        static let seeAll = localized("pilgrimageHome.seeAll")
+        static let nearbyTitle = localized("pilgrimageHome.nearbyTitle")
+        static let nearbyRefresh = localized("pilgrimageHome.nearbyRefresh")
+        static let noNearbySpots = localized("pilgrimageHome.noNearbySpots")
+        static let locationUnavailable = localized("pilgrimageHome.locationUnavailable")
+        static let recentTitle = localized("pilgrimageHome.recentTitle")
+        static let noRecentAchievements = localized("pilgrimageHome.noRecentAchievements")
+        static func progressFormat(_ checked: Int, _ total: Int) -> String { String(format: localized("pilgrimageHome.progressFormat"), checked, total) }
+        static func distanceMeter(_ meters: Int) -> String { String(format: localized("pilgrimageHome.distanceMeter"), meters) }
+        static func distanceFormatted(_ meters: Double) -> String {
+            meters >= 1000
+                ? String(format: "%.1fkm", meters / 1000)
+                : "\(Int(meters))m"
+        }
+    }
+
+    // MARK: - CheckIn Result
+    enum CheckIn {
+        static let resultTitle = localized("checkIn.resultTitle")
+        static let resultSubtitle = localized("checkIn.resultSubtitle")
+        static let distanceFormat = localized("checkIn.distanceFormat")
+        static let retroactiveTitle = localized("checkIn.retroactiveTitle")
+        static let retroactiveSubtitle = localized("checkIn.retroactiveSubtitle")
+        static let retroactiveDateSuffix = localized("checkIn.retroactiveDateSuffix")
     }
 
     // MARK: - Helper

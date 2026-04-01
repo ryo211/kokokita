@@ -60,6 +60,15 @@ final class VisitFormStore {
     /// 位置情報検証ロジック（純粋関数）
     private let locationValidator = LocationValidator()
 
+    /// コース認識サービス（注入された場合のみ有効）
+    private let courseRecognitionService: CourseRecognitionService?
+
+    /// コースリポジトリ（チェックイン更新用）
+    private let courseRepo: CourseRepository?
+
+    /// チェックイン判定結果（CheckInResultSheet 表示用）
+    var pendingCheckInResults: [CourseRecognitionService.RecognitionResult] = []
+
     // MARK: - Initialization
 
     init(
@@ -67,10 +76,14 @@ final class VisitFormStore {
         poi: MapKitPlaceLookupService = AppContainer.shared.poi,
         integ: DefaultIntegrityService = AppContainer.shared.integ,
         repo: CoreDataVisitRepository = AppContainer.shared.repo,
+        courseRecognitionService: CourseRecognitionService? = nil,
+        courseRepo: CourseRepository? = nil,
         initialLocationData: LocationData? = nil
     ) {
         self.integ = integ
         self.repo = repo
+        self.courseRecognitionService = courseRecognitionService
+        self.courseRepo = courseRepo
 
         // Effectsを初期化
         self.photoEffects = PhotoEffects()
@@ -261,10 +274,42 @@ final class VisitFormStore {
             )
 
             try repo.create(visit: visit, details: details)
+
+            // コース認識を同期実行（保存完了後、画面遷移前に結果を確定）
+            let lat = latitude
+            let lon = longitude
+            if let svc = courseRecognitionService, let cRepo = courseRepo {
+                recognizeCourses(latitude: lat, longitude: lon, visitId: id, service: svc, courseRepo: cRepo)
+            }
+
             return true
         } catch {
             alert = error.localizedDescription
             return false
+        }
+    }
+
+    /// コース認識を実行（同期、MainActor 上で CoreData viewContext に安全にアクセス）
+    @MainActor
+    private func recognizeCourses(
+        latitude: Double,
+        longitude: Double,
+        visitId: UUID,
+        service: CourseRecognitionService,
+        courseRepo: CourseRepository
+    ) {
+        do {
+            let results = try service.recognize(latitude: latitude, longitude: longitude, isManualEntry: false)
+
+            guard !results.isEmpty else { return }
+
+            for result in results {
+                try courseRepo.checkIn(spotId: result.spot.id, visitId: visitId)
+            }
+
+            pendingCheckInResults = results
+        } catch {
+            Logger.error("コース認識エラー", error: error)
         }
     }
 

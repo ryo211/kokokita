@@ -29,7 +29,7 @@ struct FlowRow: Layout {
 
     func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
         let maxW = bounds.width
-        var x: CGFloat = 0, y: CGFloat = 0, rowH: CGFloat = 0
+        var x: CGFloat = 0, y: CGFloat = 0
 
         // 各行の要素を収集して、行ごとに中央配置するための情報を保持
         var rows: [[Int]] = [[]]  // 各行のsubviewインデックス
@@ -60,7 +60,7 @@ struct FlowRow: Layout {
         y = 0
         currentRow = 0
 
-        for (index, v) in subviews.enumerated() {
+        for (_, v) in subviews.enumerated() {
             let sz = v.sizeThatFits(.unspecified)
 
             // 折り返し判定

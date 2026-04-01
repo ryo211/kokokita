@@ -60,8 +60,17 @@ struct VisitRow: View {
                     }
                 }
             } else {
-                // タイトルがない場合は住所の後にアイコンを表示
-                RecordTypeIcon(isManualEntry: agg.visit.isManualEntry, compact: compact)
+                // タイトルがない場合はグレーで "タイトルなし" + バッジを表示
+                InlineRecordTypeTitle(
+                    title: L.Home.noTitle,
+                    isManualEntry: agg.visit.isManualEntry,
+                    compact: compact,
+                    maxLines: 1,
+                    textStyle: compact ? .subheadline : .headline,
+                    fontWeight: .bold,
+                    textColor: .tertiaryLabel
+                )
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
 
             // グループ（フォルダ帰属表示）

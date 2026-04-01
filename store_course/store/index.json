@@ -1,0 +1,110 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-03-21T14:40:47Z",
+  "courses": [
+    {
+      "id": "course-world-heritage-japan-001",
+      "title": "日本の世界遺産",
+      "summary": "ユネスコ世界遺産に登録された日本の遺産地を巡るコースです。文化遺産20件・自然遺産5件の計25件を収録。",
+      "categories": [
+        "history_culture"
+      ],
+      "version": 1,
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/course/course-world-heritage-japan-001.jpg",
+      "spotCount": 28,
+      "jsonPath": "courses/world_heritage_japan_001.json",
+      "updatedAt": "2026-03-12T16:17:08Z"
+    },
+    {
+      "id": "course-100-famous-castles-japan-001",
+      "title": "日本100名城",
+      "summary": "公益財団法人日本城郭協会が選定する「日本100名城」を巡るコースです。全国の名城100件を収録。",
+      "categories": [
+        "history_culture"
+      ],
+      "version": 1,
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/course/100_famous_castles_japan_001.jpg",
+      "spotCount": 100,
+      "jsonPath": "courses/100_famous_castles_japan_001.json",
+      "updatedAt": "2026-03-12T16:17:08Z"
+    },
+    {
+      "id": "course-major-aquariums-japan-001",
+      "title": "全国の主要水族館",
+      "summary": "日本全国の主要水族館を巡るコースです。全49館収録。 参考：公益社団法人日本動物園水族館協会（JAZA）",
+      "categories": [
+        "art_entertainment"
+      ],
+      "version": 1,
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/course/course-major-aquariums-japan-001.jpg",
+      "spotCount": 49,
+      "jsonPath": "courses/course-major-aquariums-japan-001.json",
+      "updatedAt": "2026-03-16T08:02:15Z"
+    },
+    {
+      "id": "course-major-museum-tokyo-001",
+      "title": "東京の有名美術館",
+      "summary": "東京の有名美術館を巡るコースです。全19館収録。",
+      "categories": [
+        "art_entertainment"
+      ],
+      "version": 1,
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/course/course-major-museum-tokyo-001.jpg",
+      "spotCount": 19,
+      "jsonPath": "courses/tokyo_museums_001.json",
+      "updatedAt": "2026-03-12T16:17:08Z"
+    },
+    {
+      "id": "nihonsankei-001",
+      "title": "日本三景",
+      "summary": "日本三景を巡るコースです。全3件収録。",
+      "categories": [
+        "nature"
+      ],
+      "version": 1,
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/course/nihonsankei_001.jpg",
+      "spotCount": 3,
+      "jsonPath": "courses/nihonsankei_001.json",
+      "updatedAt": "2026-03-16T08:05:56Z"
+    },
+    {
+      "id": "japan_national_park_001",
+      "title": "日本の国立公園",
+      "summary": "日本の全ての国立公園を巡るコースです。全35件収録。",
+      "categories": [
+        "nature"
+      ],
+      "version": 1,
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/course/japan_national_park_001.jpg",
+      "spotCount": 35,
+      "jsonPath": "courses/japan_national_park_001.json",
+      "updatedAt": "2026-03-17T14:12:54Z"
+    },
+    {
+      "id": "slam_dunk_001",
+      "title": "『SLAM DUNK』の聖地",
+      "summary": "漫画『SLAM DUNK』、映画『THE FIRST SLAM DUNK』に登場する場所を巡るコースです。全12件収録。",
+      "categories": [
+        "anime"
+      ],
+      "version": 1,
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/course/slam_dunk_001.jpg",
+      "spotCount": 12,
+      "jsonPath": "courses/slam_dunk_001.json",
+      "updatedAt": "2026-03-21T14:40:47Z"
+    },
+    {
+      "id": "kimi_no_nawa_001",
+      "title": "『君の名は』の聖地",
+      "summary": "映画『君の名は』に登場するスポットを巡るコースです。全9件収録。",
+      "categories": [
+        "anime"
+      ],
+      "version": 1,
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/course/kimi_no_nawa_001.jpg",
+      "spotCount": 9,
+      "jsonPath": "courses/kimi_no_nawa_001.json",
+      "updatedAt": "2026-03-21T14:40:47Z"
+    }
+  ]
+}

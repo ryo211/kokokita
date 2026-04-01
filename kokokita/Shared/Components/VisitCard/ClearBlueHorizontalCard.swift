@@ -118,6 +118,13 @@ struct ClearBlueHorizontalCard: View {
         return ""
     }
 
+    /// タイトル・施設名が実際に入力されているか
+    private var hasRealTitle: Bool {
+        let title = aggregate.details.title?.trimmed ?? ""
+        let facility = aggregate.details.facilityName?.trimmed ?? ""
+        return !title.isEmpty || !facility.isEmpty
+    }
+
     /// タイトル + 記録タイプアイコン（インライン）
     private func inlineTitle(maxLines: Int, textStyle: UIFont.TextStyle, compactBadge: Bool) -> some View {
         InlineRecordTypeTitle(
@@ -127,7 +134,7 @@ struct ClearBlueHorizontalCard: View {
             maxLines: maxLines,
             textStyle: textStyle,
             fontWeight: .bold,
-            textColor: visitCardTitleUIColor
+            textColor: hasRealTitle ? visitCardTitleUIColor : visitCardTitleUIColor.withAlphaComponent(0.4)
         )
     }
 

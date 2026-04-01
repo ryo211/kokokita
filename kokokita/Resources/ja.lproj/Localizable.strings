@@ -60,7 +60,7 @@
 "home.search.placeholder" = "検索";
 "home.deleteConfirmTitle" = "この記録を削除しますか？";
 "home.deleteConfirmMessage" = "この操作は取り消せません。";
-"home.noTitle" = "";
+"home.noTitle" = "No Title";
 "home.itemsCount" = "件";
 "home.switchToMap" = "地図に切り替え";
 "home.switchToList" = "一覧に切り替え";
@@ -99,6 +99,8 @@
 "tab.menu" = "メニュー";
 "tab.kokokita" = "ココキタ";
 "tab.course" = "コース";
+"tab.modePilgrimage" = "巡礼";
+"tab.modeRecord" = "記録";
 
 // MARK: - Location
 "location.acquiringLocation" = "位置情報を取得中...";
@@ -318,6 +320,7 @@
 "settingssheet.resetAll" = "すべてリセット";
 "settingssheet.followOnX" = "Xでフォロー";
 "settingssheet.support" = "サポート・お問い合わせ";
+"settingssheet.reviewApp" = "このアプリをレビューする";
 "settingssheet.developerTools" = "開発者ツール";
 "settingssheet.version" = "バージョン";
 
@@ -325,6 +328,84 @@
 "course.title" = "コース";
 "course.comingSoon" = "準備中";
 "course.description" = "コース機能は近日公開予定です";
+"course.listTitle" = "コース一覧";
+"courseStore.title" = "コースを追加";
+"courseStore.emptyTitle" = "コースがありません";
+"courseStore.emptyDescription" = "現在ダウンロード可能なコースはありません";
+"courseStore.downloadButton" = "+ 追加";
+"courseStore.downloadedBadge" = "追加済み";
+"courseStore.updateButton" = "更新";
+"courseStore.spotCount" = "%d スポット";
+"courseStore.filter.new" = "新着";
+"courseStore.filter.available" = "未入手";
+"courseStore.filter.installed" = "追加済み";
+"courseStore.filter.all" = "すべて";
+"course.emptyTitle" = "コースがありません";
+"course.emptyDescription" = "右上の＋からコースを追加できます";
+"course.enable" = "有効にする";
+"course.disable" = "無効にする";
+"course.enableToggle" = "このコースを有効にする";
+"course.settingsSection" = "設定";
+"course.spotsCount" = "件";
+"course.spotsSection" = "スポット一覧";
+"course.progress" = "達成状況";
+"course.completed" = "達成！";
+"course.type.pilgrimage" = "巡礼";
+"course.type.stampRally" = "スタンプラリー";
+"course.type.myList" = "マイリスト";
+"course.category.history_culture" = "歴史・文化";
+"course.category.nature" = "自然";
+"course.category.art_entertainment" = "アート・エンタメ";
+"course.category.anime" = "アニメ・漫画";
+"course.newBadge" = "NEW";
+"course.achieved" = "達成";
+"course.notVisited" = "未訪問";
+"course.noAddress" = "住所未登録";
+"course.visitedOn" = "%@に巡礼済み";
+"course.spotProgressLabel" = "達成したスポット";
+"course.spotProgress" = "達成したスポット %d/%d";
+"course.updatedAt" = "最終更新: %@";
+"course.sort.nearby" = "現在地から近い順";
+"course.sort.default" = "デフォルト順";
+"course.sort.distance" = "近い順";
+
+// MARK: - Mode Selection
+"modeSelection.title" = "モードを選んでください";
+"modeSelection.subtitle" = "あとで自由に切り替えられます";
+"modeSelection.pilgrimageTitle" = "巡礼モード";
+"modeSelection.pilgrimageDescription" = "世界遺産やアニメの聖地などの巡礼コースを巡る";
+"modeSelection.recordTitle" = "記録モード";
+"modeSelection.recordDescription" = "今いる場所を記録し、地図やカレンダーで振り返る";
+"modeSelection.canChangeInSettings" = "記録したデータはどちらのモードにも反映されます";
+"modeSelection.appModeSection" = "アプリモード";
+"modeSelection.switchToRecord" = "記録モードに切り替え";
+"modeSelection.switchToPilgrimage" = "巡礼モードに切り替え";
+
+// MARK: - Pilgrimage Home
+"pilgrimageHome.navTitle" = "聖地巡礼";
+"pilgrimageHome.howToUseButton" = "使い方";
+"pilgrimageHome.howToUseTitle" = "聖地巡礼の使い方";
+"pilgrimageHome.heroTitle" = "聖地巡礼をはじめよう";
+"pilgrimageHome.heroDescription" = "コースを選んで、スポットを訪れるたびにチェックインが記録されます";
+"pilgrimageHome.viewCourses" = "コース一覧を見る";
+"pilgrimageHome.coursesTitle" = "コース一覧";
+"pilgrimageHome.seeAll" = "すべて見る";
+"pilgrimageHome.progressFormat" = "%d/%d スポット";
+"pilgrimageHome.nearbyTitle" = "近くの巡礼スポット";
+"pilgrimageHome.nearbyRefresh" = "更新";
+"pilgrimageHome.noNearbySpots" = "近くにスポットはありません";
+"pilgrimageHome.locationUnavailable" = "現在地を取得できませんでした";
+"pilgrimageHome.recentTitle" = "最近達成した巡礼スポット";
+"pilgrimageHome.noRecentAchievements" = "まだ達成がありません";
+"pilgrimageHome.distanceMeter" = "%dm";
+
+// MARK: - CheckIn Result
+"checkIn.resultTitle" = "聖地巡礼達成！";
+"checkIn.resultSubtitle" = "聖地巡礼スポットに到達しました";
+"checkIn.distanceFormat" = "約%dm";
+"checkIn.retroactiveTitle" = "過去の記録から巡礼スポット達成認定！";
+"checkIn.retroactiveSubtitle" = "以前に訪れた記録がこのコースのスポットと一致しました";
+"checkIn.retroactiveDateSuffix" = "の記録より";
 
 // MARK: - Manual Entry (後付け記録)
 "manualEntry.title" = "記録を追加";

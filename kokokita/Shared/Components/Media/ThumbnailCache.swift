@@ -83,8 +83,9 @@ final class ThumbnailCache {
             let thumbnail = self.generateThumbnail(from: original, targetSize: size)
             if let thumbnail = thumbnail {
                 let cost = self.estimateCost(thumbnail)
+                let cacheKey = key as String
                 await MainActor.run {
-                    self.cache.setObject(thumbnail, forKey: key, cost: cost)
+                    self.cache.setObject(thumbnail, forKey: cacheKey as NSString, cost: cost)
                 }
             }
 

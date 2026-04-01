@@ -550,8 +550,8 @@ private struct AbstractMapGridPath: Shape {
     }
 }
 
-private struct AnyShape: Shape {
-    private let _path: (CGRect) -> Path
+private struct AnyShape: Shape, @unchecked Sendable {
+    private let _path: @Sendable (CGRect) -> Path
 
     init<S: Shape>(_ shape: S) {
         _path = { rect in

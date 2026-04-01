@@ -364,7 +364,10 @@ enum RestoreError: LocalizedError {
 extension FileManager {
     /// ZIPファイルを解凍する（ZIPFoundation使用）
     func unzipItem(at sourceURL: URL, to destinationURL: URL) throws {
-        guard let archive = Archive(url: sourceURL, accessMode: .read) else {
+        let archive: Archive
+        do {
+            archive = try Archive(url: sourceURL, accessMode: .read)
+        } catch {
             throw RestoreError.invalidBackupFile("ZIPファイルを開けません")
         }
 

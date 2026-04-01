@@ -1,43 +1,20 @@
 import SwiftUI
 
+// 記録モードのコースタブ（CourseListViewのラッパー）
+// ストアを所有し、navigationDestination をルートに配置
+// 遡り判定シートはここに配置（NavigationStack 外）して CourseStoreSheet との競合を回避
 struct CourseScreen: View {
+    @State private var store = CourseListStore()
+
     var body: some View {
         NavigationStack {
-            VStack(spacing: 24) {
-                Spacer()
-
-                Image(systemName: "map.fill")
-                    .font(.system(size: 80))
-                    .foregroundStyle(.secondary)
-                    .opacity(0.5)
-
-                VStack(spacing: 12) {
-                    Text(L.Course.comingSoon)
-                        .font(.title2.bold())
-                        .foregroundStyle(.primary)
-
-                    Text(L.Course.description)
-                        .font(.body)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 40)
+            CourseListView(store: store)
+                .navigationDestination(for: UUID.self) { courseId in
+                    if let course = store.courses.first(where: { $0.id == courseId }) {
+                        // courseListStore を渡し、詳細を開いたタイミングで遡り判定シートを表示
+                        CourseDetailView(course: course, courseListStore: store)
+                    }
                 }
-
-                Spacer()
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(
-                LinearGradient(
-                    colors: [
-                        Color(.systemBackground),
-                        Color(.secondarySystemBackground)
-                    ],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-            )
-            .navigationTitle(L.Course.title)
-            .toolbar(.hidden, for: .navigationBar)
         }
     }
 }

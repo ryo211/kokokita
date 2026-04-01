@@ -1,0 +1,135 @@
+{
+  "id": "course-tokyo-shitamachi-walk-001",
+  "courseType": "pilgrimage",
+  "title": "東京下町さんぽ",
+  "summary": "浅草・上野・谷根千の3エリアを巡る東京下町散歩コースです。エリアごとにセクションが分かれており、半日〜1日で巡れます。",
+  "source": "bundled",
+  "isUserCreated": false,
+  "version": 1,
+  "recognitionRadiusMeters": 150.0,
+  "detailUrl": null,
+  "coverImageUrl": null,
+  "categories": [
+    "sightseeing",
+    "history_culture"
+  ],
+  "sections": [
+    {
+      "sectionId": "sec-asakusa",
+      "name": "浅草エリア",
+      "sectionDescription": "雷門・仲見世・浅草寺を中心とした浅草観光スポット。東京を代表する下町情緒が残る地区。",
+      "orderIndex": 0,
+      "coverImageUrl": null,
+      "spots": [
+        {
+          "spotId": "shitamachi-001",
+          "name": "浅草寺",
+          "latitude": 35.7147,
+          "longitude": 139.7966,
+          "spotDescription": "東京最古の寺院。雷門（風雷神門）と仲見世通りが有名。",
+          "orderIndex": 0,
+          "recognitionRadiusMeters": 200.0,
+          "address": "東京都台東区浅草2-3-1"
+        },
+        {
+          "spotId": "shitamachi-002",
+          "name": "仲見世通り",
+          "latitude": 35.7124,
+          "longitude": 139.7964,
+          "spotDescription": "浅草寺参道に並ぶ約90軒の商店街。人形焼・雷おこしなど名物土産が揃う。",
+          "orderIndex": 1,
+          "recognitionRadiusMeters": null,
+          "address": "東京都台東区浅草1丁目"
+        },
+        {
+          "spotId": "shitamachi-003",
+          "name": "浅草花やしき",
+          "latitude": 35.7148,
+          "longitude": 139.7956,
+          "spotDescription": "1853年創業、日本最古の遊園地。下町風情漂うレトロな雰囲気が魅力。",
+          "orderIndex": 2,
+          "recognitionRadiusMeters": null,
+          "address": "東京都台東区浅草2-28-1"
+        }
+      ]
+    },
+    {
+      "sectionId": "sec-ueno",
+      "name": "上野エリア",
+      "sectionDescription": "上野恩賜公園を中心に美術館・博物館・動物園が集まる文化ゾーン。",
+      "orderIndex": 1,
+      "coverImageUrl": null,
+      "spots": [
+        {
+          "spotId": "shitamachi-004",
+          "name": "上野恩賜公園",
+          "latitude": 35.7141,
+          "longitude": 139.7741,
+          "spotDescription": "東京初の公園。桜の名所としても有名で、春は花見客で賑わう。",
+          "orderIndex": 3,
+          "recognitionRadiusMeters": 400.0,
+          "address": "東京都台東区上野公園"
+        },
+        {
+          "spotId": "shitamachi-005",
+          "name": "国立西洋美術館",
+          "latitude": 35.7155,
+          "longitude": 139.7757,
+          "spotDescription": "ル・コルビュジエ設計の世界遺産建築。ロダンの彫刻や西洋絵画を所蔵。",
+          "orderIndex": 4,
+          "recognitionRadiusMeters": null,
+          "address": "東京都台東区上野公園7-7"
+        },
+        {
+          "spotId": "shitamachi-006",
+          "name": "上野動物園",
+          "latitude": 35.7168,
+          "longitude": 139.772,
+          "spotDescription": "1882年開園、日本最古の動物園。パンダが人気を集める。",
+          "orderIndex": 5,
+          "recognitionRadiusMeters": null,
+          "address": "東京都台東区上野公園9-83"
+        }
+      ]
+    },
+    {
+      "sectionId": "sec-yanesen",
+      "name": "谷根千エリア",
+      "sectionDescription": "谷中・根津・千駄木の頭文字をとった下町エリア。昔ながらの路地や寺社が残る。",
+      "orderIndex": 2,
+      "coverImageUrl": null,
+      "spots": [
+        {
+          "spotId": "shitamachi-007",
+          "name": "谷中銀座",
+          "latitude": 35.7257,
+          "longitude": 139.765,
+          "spotDescription": "昭和の雰囲気が残る商店街。猫が多い町としても知られ「夕焼けだんだん」が人気。",
+          "orderIndex": 6,
+          "recognitionRadiusMeters": null,
+          "address": "東京都台東区谷中3丁目"
+        },
+        {
+          "spotId": "shitamachi-008",
+          "name": "根津神社",
+          "latitude": 35.7199,
+          "longitude": 139.7628,
+          "spotDescription": "1900年以上の歴史をもつ古社。4〜5月のつつじまつりが有名。",
+          "orderIndex": 7,
+          "recognitionRadiusMeters": null,
+          "address": "東京都文京区根津1-28-9"
+        },
+        {
+          "spotId": "shitamachi-009",
+          "name": "千駄木・団子坂",
+          "latitude": 35.724,
+          "longitude": 139.7624,
+          "spotDescription": "森鴎外や夏目漱石ゆかりの文人が集まった坂道。文学散歩の定番スポット。",
+          "orderIndex": 8,
+          "recognitionRadiusMeters": null,
+          "address": "東京都文京区千駄木2丁目"
+        }
+      ]
+    }
+  ]
+}

@@ -496,7 +496,10 @@ struct VisitEditScreen: View {
 
         switch mode {
         case .create:
-            if vm.createNew() { onClose() }
+            if vm.createNew() {
+                // チェックイン結果がある場合はシートを表示してから閉じる
+                if vm.pendingCheckInResults.isEmpty { onClose() }
+            }
         case .edit(let id, let onSaved):
             if vm.saveEdits(for: id) { onSaved(); onClose() }
         }

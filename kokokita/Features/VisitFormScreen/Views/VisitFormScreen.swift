@@ -17,6 +17,8 @@ struct VisitFormScreen: View {
         poi: AppContainer.shared.poi,
         integ: AppContainer.shared.integ,
         repo: AppContainer.shared.repo,
+        courseRecognitionService: AppContainer.shared.courseRecognitionService,
+        courseRepo: AppContainer.shared.courseRepo,
         initialLocationData: initialLocationData
       ))
   }
@@ -35,6 +37,17 @@ struct VisitFormScreen: View {
     .onAppear {
       // ViewModelが完全に初期化された後にPOIを開く
       vm.openPOIIfNeeded(shouldOpenPOI: shouldOpenPOI)
+    }
+    .sheet(isPresented: Binding(
+      get: { !vm.pendingCheckInResults.isEmpty },
+      set: { if !$0 { vm.pendingCheckInResults = [] } }
+    ), onDismiss: {
+      // チェックイン結果シートを閉じたらフォームも閉じる
+      dismiss()
+    }) {
+      CheckInResultSheet(results: vm.pendingCheckInResults) {
+        vm.pendingCheckInResults = []
+      }
     }
   }
 }

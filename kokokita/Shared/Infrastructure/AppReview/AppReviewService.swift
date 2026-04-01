@@ -1,6 +1,6 @@
 import Foundation
 import StoreKit
-import UIKit
+import SwiftUI
 
 /// アプリレビュー誘導サービス
 ///
@@ -82,11 +82,21 @@ final class AppReviewService {
         UserDefaults.standard.set(currentVersion, forKey: Keys.lastReviewRequestVersion)
         UserDefaults.standard.set(true, forKey: Keys.hasRequestedReview)
 
-        // レビュー誘導を表示
-        if let scene = UIApplication.shared.connectedScenes
-            .compactMap({ $0 as? UIWindowScene })
-            .first {
-            SKStoreReviewController.requestReview(in: scene)
+        // レビュー誘導を表示（iOS 18+ の新API を優先使用）
+        if #available(iOS 18.0, *) {
+            Task { @MainActor in
+                if let scene = UIApplication.shared.connectedScenes
+                    .compactMap({ $0 as? UIWindowScene })
+                    .first {
+                    AppStore.requestReview(in: scene)
+                }
+            }
+        } else {
+            if let scene = UIApplication.shared.connectedScenes
+                .compactMap({ $0 as? UIWindowScene })
+                .first {
+                SKStoreReviewController.requestReview(in: scene)
+            }
         }
 
         Logger.info("App review requested at record count: \(UserDefaults.standard.integer(forKey: Keys.recordCount))")
