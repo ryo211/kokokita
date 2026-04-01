@@ -3,8 +3,12 @@ import SwiftUI
 @main
 struct KokokitaApp: App {
     init() {
-        // Core Data スタック初期化は CoreDataStack.shared が内部で行うので特に何も不要
-        // もし起動時にマイグレーションや初期データが必要ならここで呼ぶ
+        // バンドルコースを DB に取り込む（初回起動時 + バージョン更新時に有効）
+        do {
+            try AppContainer.shared.courseJSONService.importBundledCoursesIfNeeded()
+        } catch {
+            Logger.error("バンドルコース取り込みエラー", error: error)
+        }
     }
 
     @State private var uiState = AppUIState()
@@ -12,7 +16,7 @@ struct KokokitaApp: App {
     
     var body: some Scene {
         WindowGroup {
-            RootTabView()
+            RootView()
                 .environment(uiState)
                 .environment(\.managedObjectContext, CoreDataStack.shared.context)
         }

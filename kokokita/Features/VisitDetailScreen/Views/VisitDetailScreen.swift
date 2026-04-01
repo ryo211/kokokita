@@ -15,43 +15,20 @@ struct VisitDetailScreen: View {
     let onUpdate: () -> Void  // 更新時のコールバック
     let onMapTap: (() -> Void)?  // 地図タップ時のコールバック
 
-    // 地図カメラ
+    // Store（ビジネスロジック・状態管理）
+    @State private var store = VisitDetailStore()
+
+    // 地図カメラ（View固有のUI状態）
     @State private var camera: MapCameraPosition
 
-//    @State private var shareImage: UIImage? = nil
-//    @State private var showShareSheet = false
-    @State private var sharePayload: SharePayload? = nil
-    @State private var showDeleteAlert = false
-
-    // タクソノミー詳細画面への遷移用
-    @State private var selectedLabel: LabelTag? = nil
-    @State private var selectedGroup: GroupTag? = nil
-    @State private var selectedMember: MemberTag? = nil
-
-    @State private var labelOptions: [LabelTag] = []
-    @State private var groupOptions: [GroupTag] = []
-    @State private var memberOptions: [MemberTag] = []
-
-    // 写真全画面表示用
+    // 写真全画面表示用（View固有のUI状態）
     @State private var photoFullScreenIndex: Int? = nil
     @State private var photoDragOffset: CGFloat = 0
-
-    // 近くの過去記録
-    @State private var nearbyVisits: [VisitAggregate] = []
-    @State private var nearbyVisitsData: [VisitDetailData] = []
-
-    // 同じグループの記録
-    @State private var sameGroupVisits: [VisitAggregate] = []
-    @State private var sameGroupVisitsData: [VisitDetailData] = []
-    @State private var currentGroupName: String? = nil
-
-    /// ラベル名→色のマップ（labelOptions から構築）
-    private var labelColorMap: [String: Color] { labelOptions.colorMap }
 
     // SNSカードの論理サイズ（表示用は1/3で描画、保存はscale=3で 1080x1350）
     private let logicalSize = CGSize(width: AppConfig.shareImageLogicalWidth,
                                       height: AppConfig.shareImageLogicalHeight)
-    
+
     init(data: VisitDetailData,
          visitId: UUID,
          onBack: @escaping () -> Void = {},
@@ -123,7 +100,7 @@ struct VisitDetailScreen: View {
                 }
 
                 Button {
-                    Task { await makeAndShare() }
+                    Task { await store.makeAndShare(data: data) }
                 } label: {
                     HStack(spacing: 6) {
                         Image(systemName: "square.and.arrow.up")
@@ -133,7 +110,7 @@ struct VisitDetailScreen: View {
                 }
 
                 Button(role: .destructive) {
-                    showDeleteAlert = true
+                    store.showDeleteAlert = true
                 } label: {
                     Image(systemName: "trash")
                 }
@@ -141,10 +118,10 @@ struct VisitDetailScreen: View {
             }
         }
 
-        .sheet(item: $sharePayload) { payload in
+        .sheet(item: $store.sharePayload) { payload in
             ActivityView(items: [payload.text, payload.image])
         }
-        .alert(L.Detail.deleteConfirmTitle, isPresented: $showDeleteAlert) {
+        .alert(L.Detail.deleteConfirmTitle, isPresented: $store.showDeleteAlert) {
             Button(L.Common.delete, role: .destructive) {
                 onDelete()
                 dismiss()
@@ -154,34 +131,34 @@ struct VisitDetailScreen: View {
             Text(L.Detail.deleteConfirmMessage)
         }
         // タクソノミー詳細画面への遷移
-        .navigationDestination(item: $selectedLabel) { label in
+        .navigationDestination(item: $store.selectedLabel) { label in
             LabelDetailView(label: label) { updated, deleted in
-                selectedLabel = nil
+                store.selectedLabel = nil
                 if !deleted {
                     onUpdate()
                 }
             }
         }
-        .navigationDestination(item: $selectedGroup) { group in
+        .navigationDestination(item: $store.selectedGroup) { group in
             GroupDetailView(group: group) { updated, deleted in
-                selectedGroup = nil
+                store.selectedGroup = nil
                 if !deleted {
                     onUpdate()
                 }
             }
         }
-        .navigationDestination(item: $selectedMember) { member in
+        .navigationDestination(item: $store.selectedMember) { member in
             MemberDetailView(member: member) { updated, deleted in
-                selectedMember = nil
+                store.selectedMember = nil
                 if !deleted {
                     onUpdate()
                 }
             }
         }
         .task {
-            await loadTaxonomyData()
-            await loadNearbyVisits()
-            await loadSameGroupVisits()
+            await store.loadTaxonomyData()
+            await store.loadNearbyVisits(visitId: visitId)
+            await store.loadSameGroupVisits(visitId: visitId)
         }
         .onChange(of: photoFullScreenIndex) { oldValue, newValue in
             if newValue != nil {
@@ -215,210 +192,25 @@ struct VisitDetailScreen: View {
             data: data,
             mapSnapshot: nil,
             isSharing: false,
-            nearbyVisits: nearbyVisits,
-            nearbyVisitsData: nearbyVisitsData,
-            sameGroupVisits: sameGroupVisits,
-            sameGroupVisitsData: sameGroupVisitsData,
-            currentGroupName: currentGroupName,
-            onLabelTap: handleLabelTap,
-            onGroupTap: handleGroupTap,
-            onMemberTap: handleMemberTap,
+            nearbyVisits: store.nearbyVisits,
+            nearbyVisitsData: store.nearbyVisitsData,
+            sameGroupVisits: store.sameGroupVisits,
+            sameGroupVisitsData: store.sameGroupVisitsData,
+            currentGroupName: store.currentGroupName,
+            onLabelTap: store.handleLabelTap,
+            onGroupTap: store.handleGroupTap,
+            onMemberTap: store.handleMemberTap,
             onMapTap: handleMapTap,
-            labelColorMap: labelColorMap,
+            labelColorMap: store.labelColorMap,
             photoFullScreenIndex: $photoFullScreenIndex
         )
     }
 
-    // MARK: - Tap Handlers
-    private func handleLabelTap(_ labelName: String) {
-        if let label = labelOptions.first(where: { $0.name == labelName }) {
-            selectedLabel = label
-        }
-    }
-
-    private func handleGroupTap(_ groupName: String) {
-        if let group = groupOptions.first(where: { $0.name == groupName }) {
-            selectedGroup = group
-        }
-    }
-
-    private func handleMemberTap(_ memberName: String) {
-        if let member = memberOptions.first(where: { $0.name == memberName }) {
-            selectedMember = member
-        }
-    }
-
+    // MARK: - 地図タップ（dismiss を使うため View に残す）
     private func handleMapTap() {
         dismiss()
         onMapTap?()
     }
-
-    // MARK: - データロード
-    private func loadTaxonomyData() async {
-        labelOptions = ((try? AppContainer.shared.repo.allLabels()) ?? []).sortedByName
-        groupOptions = ((try? AppContainer.shared.repo.allGroups()) ?? []).sortedByName
-        memberOptions = ((try? AppContainer.shared.repo.allMembers()) ?? []).sortedByName
-    }
-
-    private func loadNearbyVisits() async {
-        let repo = AppContainer.shared.repo
-        guard let currentVisit = try? repo.get(by: visitId) else { return }
-
-        do {
-            let nearby = try repo.fetchNearby(
-                latitude: currentVisit.visit.latitude,
-                longitude: currentVisit.visit.longitude,
-                radius: 100.0,
-                excludingId: visitId,
-                limit: nil  // 制限なし、すべて表示
-            )
-            // 日付順、降順でソート
-            nearbyVisits = nearby.sorted { $0.visit.timestampUTC > $1.visit.timestampUTC }
-            nearbyVisitsData = nearbyVisits.map { toDetailData($0) }
-        } catch {
-            Logger.error("Failed to fetch nearby visits", error: error)
-        }
-    }
-
-    private func loadSameGroupVisits() async {
-        let repo = AppContainer.shared.repo
-        guard let currentVisit = try? repo.get(by: visitId) else { return }
-        guard let groupId = currentVisit.details.groupId else { return }
-
-        // グループ名を取得
-        currentGroupName = groupOptions.first(where: { $0.id == groupId })?.name
-
-        do {
-            let visits = try repo.fetchAll(
-                filterLabel: nil,
-                filterGroup: groupId,
-                filterMember: nil,
-                titleQuery: nil,
-                dateFrom: nil,
-                dateToExclusive: nil
-            )
-
-            // 現在の記録を除外し、日付順（降順）でソート
-            sameGroupVisits = visits
-                .filter { $0.visit.id != visitId }
-                .sorted { $0.visit.timestampUTC > $1.visit.timestampUTC }
-
-            sameGroupVisitsData = sameGroupVisits.map { toDetailData($0) }
-        } catch {
-            Logger.error("Failed to fetch same group visits", error: error)
-        }
-    }
-
-    private func toDetailData(_ agg: VisitAggregate) -> VisitDetailData {
-        let title: String = {
-            let t = agg.details.title?.trimmingCharacters(in: .whitespacesAndNewlines)
-            if let t, !t.isEmpty { return t }
-            if let f = agg.details.facilityName, !f.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { return f }
-            return L.Home.noTitle
-        }()
-
-        let labels: [String] = agg.details.labelIds.compactMap { id in
-            labelOptions.first(where: { $0.id == id })?.name
-        }
-        let group: String? = agg.details.groupId.flatMap { id in
-            groupOptions.first(where: { $0.id == id })?.name
-        }
-        let members: [String] = agg.details.memberIds.compactMap { id in
-            memberOptions.first(where: { $0.id == id })?.name
-        }
-
-        let coord: CLLocationCoordinate2D? = {
-            let lat = agg.visit.latitude
-            let lon = agg.visit.longitude
-            if lat == 0 && lon == 0 { return nil }
-            return CLLocationCoordinate2D(latitude: lat, longitude: lon)
-        }()
-
-        let facility: FacilityInfo? = {
-            guard let name = agg.details.facilityName else { return nil }
-            return FacilityInfo(
-                name: name,
-                address: agg.details.facilityAddress,
-                phone: nil
-            )
-        }()
-
-        return VisitDetailData(
-            title: title,
-            labels: labels,
-            group: group,
-            members: members,
-            timestamp: agg.visit.timestampUTC,
-            address: agg.details.resolvedAddress,
-            coordinate: coord,
-            memo: agg.details.comment,
-            facility: facility,
-            facilityCategory: agg.details.facilityCategory,
-            photoPaths: agg.details.photoPaths,
-            isManualEntry: agg.visit.isManualEntry
-        )
-    }
-
-    private func shareText() -> String {
-        var lines: [String] = []
-        lines.append("【\(L.App.name)】")
-        lines.append(data.title.ifBlank(L.Home.noTitle))
-        lines.append(data.timestamp.kokokitaVisitString)
-//        if let addr = data.address?.trimmingCharacters(in: .whitespacesAndNewlines), !addr.isEmpty {
-//            lines.append(addr)
-//        }
-        return lines.joined(separator: "\n")
-    }
-
-    private func shareMapSize() -> CGSize {
-        // 共有カード内の地図高さと同じにする（余白込みで多少小さめでもOK）
-        CGSize(width: logicalSize.width, height: 300)
-    }
-
-    private func makeAndShare() async {
-        // 1) 地図スナップショット（オフスクリーンでも確実に出る）
-        var mapImage: UIImage? = nil
-        if let c = data.coordinate {
-            mapImage = await MapSnapshotService.makeSnapshot(
-                center: c,
-                size: CGSize(width: AppConfig.shareImageLogicalWidth, height: UIConstants.Size.shareMapHeight),
-                spanMeters: AppConfig.mapDisplayRadius,
-                showCoordinateBadge: true,   // ← バッジを載せる
-                decimals: AppConfig.coordinateDecimals,
-                badgeInset: UIConstants.Spacing.medium
-            )
-        }
-
-        // 2) 同じ中身を共有用フラグでレンダリング
-        let img: UIImage? = await MainActor.run {
-            let content = VStack(spacing: 0) {
-                VisitDetailContent(
-                    data: data,
-                    mapSnapshot: mapImage,
-                    isSharing: true,
-                    nearbyVisits: [],  // 共有時は近くの記録は含めない
-                    nearbyVisitsData: [],
-                    sameGroupVisits: [],  // 共有時はグループ記録は含めない
-                    sameGroupVisitsData: [],
-                    currentGroupName: nil,
-                    labelColorMap: labelColorMap,
-                    photoFullScreenIndex: .constant(nil)
-                )
-                .padding(.all, UIConstants.Spacing.xxLarge)
-            }
-            return ShareImageRenderer.renderWidth(content, width: AppConfig.shareImageLogicalWidth, scale: AppConfig.shareImageScale)
-        }
-
-        // 3) シート表示（前回の SharePayload 方式）
-        if let img {
-            await MainActor.run {
-                self.sharePayload = SharePayload(image: img, text: shareText())
-            }
-        }
-    }
-
-
-    
 }
 
 // MARK: - データ受け渡し用の軽量モデル（UI草案用）

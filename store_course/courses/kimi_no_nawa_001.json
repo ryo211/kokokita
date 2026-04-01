@@ -1,0 +1,142 @@
+{
+  "id": "kimi_no_nawa_001",
+  "courseType": "pilgrimage",
+  "title": "『君の名は』の聖地",
+  "summary": "映画『君の名は』に登場するスポットを巡るコースです。全9件収録。",
+  "source": "bundled",
+  "isUserCreated": false,
+  "version": 1,
+  "recognitionRadiusMeters": 100.0,
+  "detailUrl": null,
+  "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/course/kimi_no_nawa_001.jpg",
+  "categories": ["anime"],
+  "sections": [
+    {
+      "sectionId": "sec-tokyo",
+      "name": "東京",
+      "sectionDescription": null,
+      "orderIndex": 0,
+      "coverImageUrl": null,
+      "spots": [
+        {
+          "spotId": "kimi-no-nawa-001",
+          "name": "バスタ新宿",
+          "address": "〒151-0051 東京都渋谷区千駄ケ谷５丁目２４ 千駄ヶ谷５丁目２４ 55",
+          "latitude": 35.6885178,
+          "longitude": 139.7007421,
+          "spotDescription": "瀧に入れ替わった三葉が東京の街並みに感動するシーン",
+          "orderIndex": 0,
+          "recognitionRadiusMeters": null,
+          "googlePlaceId": "ChIJQ6yrc9CMGGARH6diq4aOJwo"
+        },
+        {
+          "spotId": "kimi-no-nawa-002",
+          "name": "国立新美術館",
+          "address": "〒106-8558 東京都港区六本木７丁目２２−２",
+          "latitude": 35.665289,
+          "longitude": 139.726374,
+          "spotDescription": "瀧と奥寺先輩がデートした美術館",
+          "orderIndex": 1,
+          "recognitionRadiusMeters": null,
+          "googlePlaceId": "ChIJP-vO9nuLGGARGJ2q8uryJUA"
+        },
+        {
+          "spotId": "kimi-no-nawa-003",
+          "name": "信濃町歩道橋",
+          "address": "東京都新宿区 信濃町歩道橋",
+          "latitude": 35.6795313,
+          "longitude": 139.7197521,
+          "spotDescription": "瀧が奥寺先輩とのデート後に三葉に電話をかけようとした場所",
+          "orderIndex": 2,
+          "recognitionRadiusMeters": null,
+          "googlePlaceId": "ChIJMw4RpZGMGGARlE8pOtLzrVU"
+        },
+        {
+          "spotId": "kimi-no-nawa-004",
+          "name": "須賀神社",
+          "address": "〒323-0024 栃木県小山市宮本町１丁目２−４",
+          "latitude": 36.3120264,
+          "longitude": 139.7984377,
+          "spotDescription": "ラストシーンで瀧と三葉が再会する男坂がある神社",
+          "orderIndex": 3,
+          "recognitionRadiusMeters": null,
+          "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/kimi-no-nawa-004.jpg",
+          "googlePlaceId": "ChIJTfQvO-5OH2ARP_dtMLE6SOk"
+        }
+      ]
+    },
+    {
+      "sectionId": "sec-gifu",
+      "name": "岐阜（飛騨）",
+      "sectionDescription": null,
+      "orderIndex": 1,
+      "coverImageUrl": null,
+      "spots": [
+        {
+          "spotId": "kimi-no-nawa-005",
+          "name": "気多若宮神社",
+          "address": "〒509-4212 岐阜県飛騨市古川町上気多１２９７",
+          "latitude": 36.23948,
+          "longitude": 137.197827,
+          "spotDescription": "宮水神社のモデルとされている神社",
+          "orderIndex": 0,
+          "recognitionRadiusMeters": null,
+          "googlePlaceId": "ChIJ_bxu79ygAmARZMuDzC9_KR8"
+        },
+        {
+          "spotId": "kimi-no-nawa-006",
+          "name": "飛騨古川駅",
+          "address": "日本、〒509-4225 岐阜県飛騨市古川町金森町８",
+          "latitude": 36.2367259,
+          "longitude": 137.1896028,
+          "spotDescription": "瀧が奥寺先輩・司と共に糸守町を探しに訪れた駅",
+          "orderIndex": 1,
+          "recognitionRadiusMeters": 300.0,
+          "googlePlaceId": "ChIJX1oW4-WgAmARiYsUBi2FUBA"
+        },
+        {
+          "spotId": "kimi-no-nawa-007",
+          "name": "飛驒市図書館",
+          "address": "〒509-4232 岐阜県飛騨市古川町本町２−２２",
+          "latitude": 36.2380633,
+          "longitude": 137.1855448,
+          "spotDescription": "瀧、奥寺先輩、司が糸守町の隕石落下について調べた図書館",
+          "orderIndex": 2,
+          "recognitionRadiusMeters": null,
+          "googlePlaceId": "ChIJwU5GLu6gAmARpAEl1lggBCQ"
+        },
+        {
+          "spotId": "kimi-no-nawa-008",
+          "name": "飛騨市宮川町落合のバス停合",
+          "address": "〒509-4415 岐阜県飛騨市宮川町落合 越 中西 街道",
+          "latitude": 36.3033513,
+          "longitude": 137.1124084,
+          "spotDescription": "瀧、奥寺先輩、司が糸守町を探している時に登場したバス停",
+          "orderIndex": 3,
+          "recognitionRadiusMeters": null,
+          "googlePlaceId": "ChIJ_8jJh3YM-F8RocTh4zpBRUs"
+        }
+      ]
+    },
+    {
+      "sectionId": "sec-nagano",
+      "name": "長野",
+      "sectionDescription": null,
+      "orderIndex": 2,
+      "coverImageUrl": null,
+      "spots": [
+        {
+          "spotId": "kimi-no-nawa-009",
+          "name": "立石公園",
+          "address": "〒392-0003 長野県諏訪市上諏訪立石町１０３９９",
+          "latitude": 36.0534825,
+          "longitude": 138.1225291,
+          "spotDescription": "糸守湖のモデルとされている諏訪湖を一望できる公園",
+          "orderIndex": 0,
+          "recognitionRadiusMeters": 500.0,
+          "googlePlaceId": "ChIJgy1ZVFJUHGARrmB2toTQHvA"
+        }
+      ]
+    }
+  ]
+}

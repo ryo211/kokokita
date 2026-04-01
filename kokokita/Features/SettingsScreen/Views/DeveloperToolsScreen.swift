@@ -4,7 +4,7 @@ import FirebaseCrashlytics
 #if DEBUG
 struct DeveloperToolsScreen: View {
     @State private var showCrashAlert = false
-    @ObservedObject private var debugSettings = DebugSettings.shared
+    private var debugSettings = DebugSettings.shared
 
     var body: some View {
         List {
@@ -18,7 +18,8 @@ struct DeveloperToolsScreen: View {
             }
 
             Section {
-                Toggle(isOn: $debugSettings.isAdDisplayEnabled) {
+                @Bindable var bindableSettings = debugSettings
+                Toggle(isOn: $bindableSettings.isAdDisplayEnabled) {
                     VStack(alignment: .leading, spacing: 4) {
                         Label(L.Settings.adDisplay, systemImage: "rectangle.inset.filled.and.person.filled")
                         Text(L.Settings.adDisplayDescription)

@@ -1,0 +1,49 @@
+{
+  "id": "nihonsankei-001",
+  "courseType": "pilgrimage",
+  "title": "日本三景",
+  "summary": "日本三景を巡るコースです。全3件収録。",
+  "source": "bundled",
+  "isUserCreated": false,
+  "version": 1,
+  "recognitionRadiusMeters": 1000.0,
+  "detailUrl": null,
+  "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/course/nihonsankei_001.jpg",
+  "categories": ["nature"],
+  "spots": [
+    {
+      "spotId": "nihonsankei-001",
+      "name": "松島町",
+      "address": "宮城県宮城郡松島町",
+      "latitude": 38.3801905,
+      "longitude": 141.067293,
+      "spotDescription": "260余りの島々が浮かぶ多島美が特徴の太平洋の絶景。",
+      "orderIndex": 0,
+      "recognitionRadiusMeters": null,
+      "googlePlaceId": "ChIJHZOGqwSciV8RmYQoravaI2c"
+    },
+    {
+      "spotId": "nihonsankei-002",
+      "name": "天橋立",
+      "address": "〒626-0001 京都府宮津市文珠",
+      "latitude": 35.5698022,
+      "longitude": 135.1918204,
+      "spotDescription": "長さ 3.6 km の砂洲。美しい景観、砂浜、数千本もの松林で有名。",
+      "orderIndex": 1,
+      "recognitionRadiusMeters": null,
+      "googlePlaceId": "ChIJl-LBxy2X_18RgWzksvPOYbo"
+    },
+    {
+      "spotId": "nihonsankei-003",
+      "name": "宮島(厳島)",
+      "address": "〒739-0588 広島県廿日市市宮島町 厳島",
+      "latitude": 34.2732114,
+      "longitude": 132.3052488,
+      "spotDescription": "多くの寺や神社、歴史博物館、民俗資料館がある島。",
+      "orderIndex": 2,
+      "recognitionRadiusMeters": null,
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/nihonsankei-003.jpg",
+      "googlePlaceId": "ChIJGcmNiM-2WjURAUMA7utiH8k"
+    }
+  ]
+}

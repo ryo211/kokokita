@@ -42,9 +42,16 @@ struct VisitRow: View {
             // タイトル・カテゴリ + 記録タイプアイコン
             if let title = agg.details.title, !title.isEmpty {
                 VStack(alignment: .leading, spacing: compact ? 1 : 2) {
-                    titleWithIcon(title)
-                        .font(compact ? .subheadline : .headline)
-                        .lineLimit(compact ? 1 : 2)
+                    InlineRecordTypeTitle(
+                        title: title,
+                        isManualEntry: agg.visit.isManualEntry,
+                        compact: compact,
+                        maxLines: compact ? 1 : 2,
+                        textStyle: compact ? .subheadline : .headline,
+                        fontWeight: .bold,
+                        textColor: .label
+                    )
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     if let catRaw = agg.details.facilityCategory {
                         let category = MKPointOfInterestCategory(rawValue: catRaw)
                         Text(category.localizedName)
@@ -53,8 +60,17 @@ struct VisitRow: View {
                     }
                 }
             } else {
-                // タイトルがない場合は住所の後にアイコンを表示
-                RecordTypeIcon(isManualEntry: agg.visit.isManualEntry, compact: compact)
+                // タイトルがない場合はグレーで "タイトルなし" + バッジを表示
+                InlineRecordTypeTitle(
+                    title: L.Home.noTitle,
+                    isManualEntry: agg.visit.isManualEntry,
+                    compact: compact,
+                    maxLines: 1,
+                    textStyle: compact ? .subheadline : .headline,
+                    fontWeight: .bold,
+                    textColor: .tertiaryLabel
+                )
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
 
             // グループ（フォルダ帰属表示）
@@ -89,16 +105,5 @@ struct VisitRow: View {
                 .padding(.top, compact ? 2 : 4)
             }
         }
-    }
-
-    // MARK: - Helpers
-
-    /// タイトルの末尾にインラインで記録タイプアイコンを表示
-    private func titleWithIcon(_ title: String) -> Text {
-        let iconName = agg.visit.isManualEntry ? "wrench.adjustable.fill" : "checkmark.seal.fill"
-        let iconColor: Color = agg.visit.isManualEntry ? .orange : .blue
-        return Text(title)
-            + Text(" ")
-            + Text(Image(systemName: iconName)).foregroundColor(iconColor)
     }
 }

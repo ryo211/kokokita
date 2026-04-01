@@ -12,7 +12,7 @@ final class CoreDataVisitRepository {
 
     func create(visit: Visit, details: VisitDetails, saveImmediately: Bool = true) throws {
         // 既存のVisitをチェック（リストア時の重複防止）
-        if let existing = try fetchVisitEntity(id: visit.id) {
+        if (try fetchVisitEntity(id: visit.id)) != nil {
             Logger.warning("Visit with ID \(visit.id) already exists, skipping creation")
             throw NSError(domain: "Visit", code: 2,
                           userInfo: [NSLocalizedDescriptionKey: "Visit with ID \(visit.id) already exists"])
@@ -156,6 +156,24 @@ final class CoreDataVisitRepository {
         }
 
         Logger.info("Created manual entry: \(visit.id)")
+    }
+
+    /// 後付け記録のVisit本体（日時・座標）を更新
+    func updateManualEntryCore(id: UUID, timestamp: Date, latitude: Double, longitude: Double, accuracy: Double?) throws {
+        guard let v = try fetchVisitEntity(id: id) else {
+            Logger.warning("Visit not found for manual entry update: \(id)")
+            return
+        }
+        guard v.isManualEntry?.boolValue == true else {
+            Logger.error("updateManualEntryCore called on non-manual entry")
+            return
+        }
+        v.timestampUTC = timestamp
+        v.latitude = latitude
+        v.longitude = longitude
+        v.horizontalAccuracy = accuracy.map { NSNumber(value: $0) }
+        preflightValidate([v])
+        try ctx.save()
     }
 
     func updateDetails(id: UUID, transform: (inout VisitDetails) -> Void) throws {

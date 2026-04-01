@@ -12,16 +12,14 @@ struct RecordBadgeExplanationSheet: View {
                 VStack(alignment: .leading, spacing: 24) {
                     // 証明付き記録の説明
                     badgeExplanationCard(
-                        icon: "checkmark.seal.fill",
-                        iconColor: .blue,
+                        isManualEntry: false,
                         title: L.RecordBadge.verifiedTitle,
                         description: L.RecordBadge.verifiedDescription
                     )
 
                     // 後付け記録の説明
                     badgeExplanationCard(
-                        icon: "wrench.adjustable.fill",
-                        iconColor: .orange,
+                        isManualEntry: true,
                         title: L.RecordBadge.manualTitle,
                         description: L.RecordBadge.manualDescription
                     )
@@ -42,16 +40,15 @@ struct RecordBadgeExplanationSheet: View {
 
     @ViewBuilder
     private func badgeExplanationCard(
-        icon: String,
-        iconColor: Color,
+        isManualEntry: Bool,
         title: String,
         description: String
     ) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 10) {
-                Image(systemName: icon)
-                    .font(.title2)
-                    .foregroundStyle(iconColor)
+                // 共通のRecordTypeIconを使用（大きめサイズ）
+                RecordTypeIcon(isManualEntry: isManualEntry, compact: false)
+                    .scaleEffect(1.5)
 
                 Text(title)
                     .font(.headline)

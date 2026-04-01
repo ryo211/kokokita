@@ -4,6 +4,21 @@ import UIKit
 import Observation
 import PhotosUI
 
+/// 後付け記録の入力ステップ
+enum ManualEntryStep: Int, CaseIterable {
+    case essentials = 1     // ステップ1: 必須項目（日時+場所）
+    case additionalInfo = 2 // ステップ2: 付加情報
+
+    var title: String {
+        switch self {
+        case .essentials:
+            return L.ManualEntry.step1Title
+        case .additionalInfo:
+            return L.ManualEntry.step2Title
+        }
+    }
+}
+
 /// 後付け記録画面のStore
 @MainActor
 @Observable
@@ -25,9 +40,18 @@ final class ManualEntryStore {
     var groupId: UUID?
     var memberIds: Set<UUID> = []
 
+    // MARK: - 編集モード
+    /// 編集対象のID（nilなら新規作成）
+    private(set) var editingId: UUID?
+
+    var isEditing: Bool { editingId != nil }
+
     // MARK: - UI State
     var alert: String?
     var isPhotoImported = false
+
+    // MARK: - Step Management
+    var currentStep: ManualEntryStep = .essentials
 
     // MARK: - Dependencies (Services)
     private let repo: CoreDataVisitRepository
@@ -78,6 +102,49 @@ final class ManualEntryStore {
         }
         guard let lat = latitude, let lon = longitude else { return nil }
         return String(format: "%.5f, %.5f", lat, lon)
+    }
+
+    /// ステップ1の入力が完了しているか（次へ進める条件）
+    var canProceedToNextStep: Bool {
+        hasValidLocation && hasValidTimestamp
+    }
+
+    // MARK: - Edit Mode
+
+    /// 既存の後付け記録をStoreに読み込む（編集モード用）
+    func loadExisting(_ aggregate: VisitAggregate) {
+        editingId = aggregate.id
+        timestampDisplay = aggregate.visit.timestampUTC
+        latitude = aggregate.visit.latitude
+        longitude = aggregate.visit.longitude
+        accuracy = aggregate.visit.horizontalAccuracy
+        addressLine = aggregate.details.resolvedAddress ?? aggregate.details.facilityAddress
+        title = aggregate.details.title ?? aggregate.details.facilityName ?? ""
+        facilityName = aggregate.details.facilityName
+        facilityAddress = aggregate.details.facilityAddress
+        facilityCategory = aggregate.details.facilityCategory
+        comment = aggregate.details.comment ?? ""
+        labelIds = Set(aggregate.details.labelIds)
+        groupId = aggregate.details.groupId
+        memberIds = Set(aggregate.details.memberIds)
+        photoEffects.loadForEdit(aggregate.details.photoPaths)
+    }
+
+    // MARK: - Step Navigation
+
+    /// 次のステップへ進む
+    func goToNextStep() {
+        guard canProceedToNextStep else { return }
+        if currentStep == .essentials {
+            currentStep = .additionalInfo
+        }
+    }
+
+    /// 前のステップへ戻る
+    func goToPreviousStep() {
+        if currentStep == .additionalInfo {
+            currentStep = .essentials
+        }
     }
 
     // MARK: - EXIF Import
@@ -240,9 +307,18 @@ final class ManualEntryStore {
 
     // MARK: - Save
 
-    /// 後付け記録を保存
+    /// 後付け記録を保存（新規作成 or 更新）
     @discardableResult
     func save() -> Bool {
+        if let id = editingId {
+            return updateExisting(id: id)
+        } else {
+            return createNew()
+        }
+    }
+
+    /// 新規作成
+    private func createNew() -> Bool {
         guard canSave else {
             if !hasValidLocation {
                 alert = L.ManualEntry.locationRequired
@@ -260,7 +336,6 @@ final class ManualEntryStore {
         do {
             let id = UUID()
 
-            // 後付け記録用のVisit（署名なし）
             let visit = Visit(
                 id: id,
                 timestampUTC: timestampDisplay,
@@ -283,12 +358,59 @@ final class ManualEntryStore {
             )
 
             try repo.createManualEntry(visit: visit, details: details)
-
-            // 記録変更を通知
             NotificationCenter.default.post(name: .visitsChanged, object: nil)
-
-            // レビュー誘導用：記録数をカウント
             AppReviewService.shared.recordCreated()
+
+            return true
+        } catch {
+            alert = error.localizedDescription
+            return false
+        }
+    }
+
+    /// 既存の後付け記録を更新
+    private func updateExisting(id: UUID) -> Bool {
+        guard canSave else {
+            if !hasValidLocation {
+                alert = L.ManualEntry.locationRequired
+            } else if !hasValidTimestamp {
+                alert = L.ManualEntry.futureDateNotAllowed
+            }
+            return false
+        }
+
+        guard let lat = latitude, let lon = longitude else {
+            alert = L.ManualEntry.locationRequired
+            return false
+        }
+
+        do {
+            // Visit本体（日時・座標）を更新
+            try repo.updateManualEntryCore(
+                id: id,
+                timestamp: timestampDisplay,
+                latitude: lat,
+                longitude: lon,
+                accuracy: accuracy
+            )
+
+            // Details（メタデータ・写真）を更新
+            let newPaths = photoEffects.getCurrentPaths()
+            try repo.updateDetails(id: id) { details in
+                details.title = self.title.nilIfBlank
+                details.facilityName = self.facilityName
+                details.facilityAddress = self.facilityAddress
+                details.facilityCategory = self.facilityCategory
+                details.comment = self.comment.nilIfBlank
+                details.labelIds = Array(self.labelIds)
+                details.groupId = self.groupId
+                details.memberIds = Array(self.memberIds)
+                details.resolvedAddress = self.addressLine
+                details.photoPaths = newPaths
+            }
+
+            photoEffects.commitEdits()
+            NotificationCenter.default.post(name: .visitsChanged, object: nil)
 
             return true
         } catch {

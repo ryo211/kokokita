@@ -15,10 +15,7 @@ actor DataBackupService {
         // 1. 全データを取得
         let allData = try await collectAllData()
 
-        // 2. JSON化
-        let jsonData = try encodeToJSON(allData)
-
-        // 3. 写真ファイルを収集
+        // 2. 写真ファイルを収集
         let photoFiles = try await collectPhotoFiles(from: allData.visits)
 
         // 4. 一時ディレクトリにファイルを作成

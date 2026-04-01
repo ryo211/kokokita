@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 /// 縦型クリアブルー記録カード
 ///
@@ -20,6 +21,7 @@ import SwiftUI
 ///      160pt
 /// ```
 struct ClearBlueVerticalCard: View {
+    private let visitCardTitleUIColor = UIColor(named: "AccentColor") ?? .systemBlue
     /// 表示する訪問記録
     let aggregate: VisitAggregate
 
@@ -45,6 +47,13 @@ struct ClearBlueVerticalCard: View {
         return L.Home.noTitle
     }
 
+    /// タイトル・施設名が実際に入力されているか（"タイトルなし" フォールバックでないか）
+    private var hasRealTitle: Bool {
+        let title = aggregate.details.title?.trimmed ?? ""
+        let facility = aggregate.details.facilityName?.trimmed ?? ""
+        return !title.isEmpty || !facility.isEmpty
+    }
+
     /// フォーマットされた日付文字列
     private var formattedDate: String {
         aggregate.visit.timestampUTC.kokokitaVisitString
@@ -60,13 +69,17 @@ struct ClearBlueVerticalCard: View {
         aggregate.details.photoPaths
     }
 
-    /// タイトルの末尾にインラインで記録タイプアイコンを表示
-    private var titleWithIcon: Text {
-        let iconName = aggregate.visit.isManualEntry ? "wrench.adjustable.fill" : "checkmark.seal.fill"
-        let iconColor: Color = aggregate.visit.isManualEntry ? .orange : .blue
-        return Text(displayTitle)
-            + Text(" ")
-            + Text(Image(systemName: iconName)).foregroundColor(iconColor)
+    /// タイトル + 記録タイプアイコン（インライン）
+    private var inlineTitleView: some View {
+        InlineRecordTypeTitle(
+            title: displayTitle,
+            isManualEntry: aggregate.visit.isManualEntry,
+            compact: true,
+            maxLines: 1,
+            textStyle: .subheadline,
+            fontWeight: .bold,
+            textColor: hasRealTitle ? visitCardTitleUIColor : visitCardTitleUIColor.withAlphaComponent(0.4)
+        )
     }
 
     // MARK: - Body
@@ -85,10 +98,8 @@ struct ClearBlueVerticalCard: View {
 
             // テキストエリア（固定位置・固定高さ）
             VStack(alignment: .leading, spacing: 2) {
-                // タイトル + 記録タイプアイコン（インライン、固定位置、1行）
-                titleWithIcon
-                    .font(VisitCardStyle.verticalTitleFont)
-                    .foregroundStyle(VisitCardStyle.primaryTextColor)
+                // タイトル + 記録タイプアイコン（固定位置、1行）
+                inlineTitleView
                     .lineLimit(1)
                     .frame(height: 20, alignment: .leading)
 

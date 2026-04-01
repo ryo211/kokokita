@@ -2,20 +2,30 @@ import SwiftUI
 import PhotosUI
 import MapKit
 
-/// 後付け記録画面
+/// 後付け記録画面（2ステップ構成）。editingAggregate を渡すと編集モードで起動する。
 struct ManualEntryScreen: View {
+    private let editingAggregate: VisitAggregate?
+
+    init(editingAggregate: VisitAggregate? = nil) {
+        self.editingAggregate = editingAggregate
+    }
+
     @Environment(\.dismiss) private var dismiss
     @State private var store = ManualEntryStore()
 
     // PhotosPicker用
     @State private var showCamera = false
 
-    // 場所設定シート
-    @State private var showLocationPicker = false
+    // 写真取り込みシート
+    @State private var showPhotoImport = false
 
     // フルスクリーン写真表示
     @State private var fullScreenIndex: Int? = nil
     @State private var photoDragOffset: CGFloat = 0
+    @State private var step1ScrollToBottomTrigger = 0
+    @State private var showManualEntryInfoSheet = false
+
+    private let step1BottomAnchorId = "manualEntryStep1BottomAnchor"
 
     // ラベル/グループ/メンバー候補
     @State private var labelOptions: [LabelTag] = []
@@ -38,15 +48,46 @@ struct ManualEntryScreen: View {
 
     var body: some View {
         NavigationStack {
-            formContent
-                .navigationTitle(L.ManualEntry.title)
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar { toolbarContent }
-                .alert(item: alertBinding) { alertView(for: $0) }
-                .sheet(isPresented: $showLocationPicker) { locationPickerSheet }
-                .sheet(isPresented: $showCamera) { cameraSheet }
-                .fullScreenCover(item: fullScreenBinding) { photoFullScreen(for: $0) }
-                .task { await loadTaxonomyOptions() }
+            VStack(spacing: 0) {
+                StepIndicator(currentStep: store.currentStep)
+                    .padding(.top, 8)
+
+                // ステップに応じたコンテンツ
+                Group {
+                    switch store.currentStep {
+                    case .essentials:
+                        step1Content
+                    case .additionalInfo:
+                        step2Content
+                    }
+                }
+                .transition(.asymmetric(
+                    insertion: .move(edge: store.currentStep == .essentials ? .leading : .trailing),
+                    removal: .move(edge: store.currentStep == .essentials ? .trailing : .leading)
+                ))
+                .animation(.easeInOut(duration: 0.3), value: store.currentStep)
+            }
+            .navigationTitle(editingAggregate != nil ? L.ManualEntry.editTitle : L.ManualEntry.title)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar { toolbarContent }
+            .alert(item: alertBinding) { alertView(for: $0) }
+            .sheet(isPresented: $showPhotoImport) { photoImportSheet }
+            .sheet(isPresented: $showCamera) { cameraSheet }
+            .sheet(isPresented: $showManualEntryInfoSheet) {
+                ManualEntryInfoSheet()
+                    .iPadSheetSize(iPhoneDetents: [.medium, .large])
+                    .presentationDragIndicator(.visible)
+            }
+            .fullScreenCover(item: fullScreenBinding) { photoFullScreen(for: $0) }
+            .task {
+                if let agg = editingAggregate {
+                    store.loadExisting(agg)
+                }
+                await loadTaxonomyOptions()
+            }
+            .safeAreaInset(edge: .bottom) {
+                footerButtons
+            }
         }
         .sheet(isPresented: $labelPickerShown) { labelPickerSheetContent }
         .sheet(isPresented: $groupPickerShown) { groupPickerSheetContent }
@@ -61,18 +102,6 @@ struct ManualEntryScreen: View {
         memberOptions = ((try? AppContainer.shared.repo.allMembers()) ?? []).sortedByName
     }
 
-    // MARK: - Form Content
-
-    private var formContent: some View {
-        Form {
-            locationSection
-            dateTimeSection
-            metadataSection
-            taxonomySection
-            photoSection
-        }
-    }
-
     // MARK: - Toolbar
 
     @ToolbarContentBuilder
@@ -80,178 +109,214 @@ struct ManualEntryScreen: View {
         ToolbarItem(placement: .cancellationAction) {
             Button(L.Common.cancel) { dismiss() }
         }
-        ToolbarItem(placement: .confirmationAction) {
-            Button(L.Common.save) {
-                if store.save() { dismiss() }
+        ToolbarItem(placement: .principal) {
+            HStack(spacing: 4) {
+                RecordTypeIcon(isManualEntry: true, compact: true)
+                Text(editingAggregate != nil ? L.ManualEntry.editTitle : L.ManualEntry.title)
+                    .font(.headline)
+                Button {
+                    showManualEntryInfoSheet = true
+                } label: {
+                    Image(systemName: "info.circle")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+                .padding(.leading, 2)
+                .accessibilityLabel(L.ManualEntry.infoSheetTitle)
             }
-            .disabled(!store.canSave)
-            .fontWeight(.bold)
         }
     }
 
-    // MARK: - Alert
+    // MARK: - Step 1: 日時と場所（必須項目）
 
-    private var alertBinding: Binding<AlertMsg?> {
-        Binding(
-            get: { store.alert.map { AlertMsg(id: UUID(), text: $0) } },
-            set: { _ in store.alert = nil }
-        )
-    }
+    private var step1Content: some View {
+        ScrollViewReader { proxy in
+            ScrollView {
+                VStack(spacing: 16) {
+                    photoImportBanner
+                    dateTimeSection
+                    locationSectionHeader
+                    selectedLocationInfoView
 
-    private func alertView(for msg: AlertMsg) -> Alert {
-        Alert(
-            title: Text(L.Common.error),
-            message: Text(msg.text),
-            dismissButton: .default(Text(L.Common.ok))
-        )
-    }
+                    IntegratedLocationView(
+                        latitude: $store.latitude,
+                        longitude: $store.longitude,
+                        addressLine: $store.addressLine,
+                        placeName: $store.title,
+                        showSelectedLocationInfo: false, // 選択した場所の情報はScrollView内で表示
+                        onMapTapLocationSelected: {
+                            withAnimation(.easeInOut(duration: 0.25)) {
+                                step1ScrollToBottomTrigger += 1
+                            }
+                        }
+                    )
+                    .background(Color(.systemBackground))
 
-    // MARK: - Sheets
-
-    private var locationPickerSheet: some View {
-        LocationPickerSheet(
-            latitude: $store.latitude,
-            longitude: $store.longitude,
-            addressLine: $store.addressLine,
-            placeName: $store.title
-        ) { coordinate, timestamp, image in
-            // 写真から取り込み時のコールバック
-            handlePhotoImport(coordinate: coordinate, timestamp: timestamp, image: image)
+                    Color.clear
+                        .frame(height: 1)
+                        .id(step1BottomAnchorId)
+                }
+                .padding(16)
+            }
+            .onChange(of: step1ScrollToBottomTrigger) { _, _ in
+                withAnimation(.easeInOut(duration: 0.25)) {
+                    proxy.scrollTo(step1BottomAnchorId, anchor: .bottom)
+                }
+            }
         }
     }
 
-    private func handlePhotoImport(coordinate: CLLocationCoordinate2D?, timestamp: Date?, image: UIImage?) {
-        let hasLocation = coordinate != nil
-        let hasTimestamp = timestamp != nil && timestamp! <= Date()
-
-        // 日時を設定
-        if let timestamp = timestamp, timestamp <= Date() {
-            store.timestampDisplay = timestamp
+    /// 場所セクションのヘッダー（ラベルと警告メッセージ）
+    private var locationSectionHeader: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text(L.ManualEntry.setLocation)
+                .font(.headline)
+                .foregroundStyle(.primary)
         }
-
-        // 写真を追加
-        if let image = image {
-            store.addPhotos([image])
-        }
-
-        store.isPhotoImported = true
-
-        // 位置情報または日時情報がない場合はエラーメッセージを表示
-        if !hasLocation && !hasTimestamp {
-            store.alert = L.ManualEntry.noLocationInPhoto + "\n" + L.ManualEntry.noDateInPhoto
-        } else if !hasLocation {
-            store.alert = L.ManualEntry.noLocationInPhoto
-        } else if !hasTimestamp {
-            store.alert = L.ManualEntry.noDateInPhoto
-        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    private var cameraSheet: some View {
-        CameraPicker { image in
-            store.addPhotos([image])
-        }
-        .ignoresSafeArea()
-    }
-
-    // MARK: - Full Screen Photo
-
-    private var fullScreenBinding: Binding<PhotoPager.IndexWrapper?> {
-        Binding(
-            get: { fullScreenIndex.map { PhotoPager.IndexWrapper(index: $0) } },
-            set: { fullScreenIndex = $0?.index }
-        )
-    }
-
-    private func photoFullScreen(for wrapper: PhotoPager.IndexWrapper) -> some View {
-        PhotoPager(
-            paths: store.photoEffects.photoPathsEditing,
-            startIndex: wrapper.index,
-            externalDragOffset: $photoDragOffset
-        )
-    }
-
-    // MARK: - Sections
-
-    private var locationSection: some View {
-        Section {
-            // 場所名と設定ボタン
+    /// 選択した場所の情報（ScrollView内に配置）
+    private var selectedLocationInfoView: some View {
+        VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Image(systemName: "mappin.circle.fill")
-                    .foregroundStyle(store.hasValidLocation ? .orange : .secondary)
+                Image(systemName: "mappin.and.ellipse")
+                    .foregroundStyle(.orange)
 
-                if store.hasValidLocation {
-                    // 場所が設定されている場合は場所名を表示
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(store.title.isEmpty ? store.addressLine ?? "" : store.title)
-                            .font(.subheadline)
-                        if !store.title.isEmpty, let address = store.addressLine {
+                VStack(alignment: .leading, spacing: 2) {
+                    if store.hasValidLocation {
+                        if !store.title.isEmpty {
+                            Text(store.title)
+                                .font(.subheadline.bold())
+                        }
+
+                        if let address = store.addressLine, !address.isEmpty {
                             Text(address)
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
-                                .lineLimit(1)
+                                .lineLimit(2)
                         }
+
+                        if let lat = store.latitude, let lon = store.longitude {
+                            Text(String(format: "%.5f, %.5f", lat, lon))
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                    } else {
+                        VStack(alignment: .leading, spacing: 0) {
+                            Spacer(minLength: 0)
+                            Text(L.ManualEntry.locationRequired)
+                                .font(.caption)
+                                .foregroundStyle(.orange)
+                            Spacer(minLength: 0)
+                        }
+                        .frame(height: 29, alignment: .center)
                     }
-                } else {
-                    // 場所が未設定の場合
-                    Text(L.ManualEntry.locationRequired)
-                        .font(.subheadline)
+                }
+
+                Spacer()
+
+                // クリアボタン
+                if store.hasValidLocation {
+                    Button {
+                        clearLocation()
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundStyle(.secondary)
+                            .imageScale(.medium)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+        .padding()
+        .background(Color(.systemGray6))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+
+    /// 場所をクリア
+    private func clearLocation() {
+        store.latitude = nil
+        store.longitude = nil
+        store.addressLine = nil
+        store.title = ""
+    }
+
+    private var dateTimeSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(L.ManualEntry.setDateTime)
+                .font(.headline)
+                .foregroundStyle(.primary)
+
+            HStack {
+                Image(systemName: "calendar")
+                    .foregroundStyle(.orange)
+
+                DatePicker(
+                    L.ManualEntry.dateTime,
+                    selection: $store.timestampDisplay,
+                    in: ...Date(),
+                    displayedComponents: [.date, .hourAndMinute]
+                )
+            }
+            .padding()
+            .background(Color(.systemGray6))
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+
+            if !store.hasValidTimestamp {
+                Text(L.ManualEntry.futureDateNotAllowed)
+                    .font(.caption)
+                    .foregroundStyle(.red)
+            }
+        }
+    }
+
+    private var photoImportBanner: some View {
+        Button {
+            showPhotoImport = true
+        } label: {
+            HStack(spacing: 12) {
+                Image(systemName: "photo.on.rectangle.angled")
+                    .font(.title3)
+                    .foregroundStyle(.orange)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(L.ManualEntry.importFromPhoto)
+                        .font(.subheadline.bold())
+                        .foregroundStyle(.primary)
+                    Text(L.ManualEntry.photoImportHint)
+                        .font(.caption)
                         .foregroundStyle(.secondary)
                 }
 
                 Spacer()
 
-                Button {
-                    showLocationPicker = true
-                } label: {
-                    Text(L.ManualEntry.setLocation)
-                        .font(.subheadline)
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(Color.orange)
-                        .clipShape(Capsule())
-                }
-                .buttonStyle(.plain)
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
-
-            // 緯度経度表示（設定済みの場合のみ）
-            if let lat = store.latitude, let lon = store.longitude {
-                HStack {
-                    Image(systemName: "location")
-                        .foregroundStyle(.secondary)
-                    Text(String(format: "%.5f, %.5f", lat, lon))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    Spacer()
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundStyle(.green)
-                }
-            }
-        } header: {
-            Text(L.ManualEntry.setLocation)
-        } footer: {
-            if !store.hasValidLocation {
-                Text(L.ManualEntry.locationRequired)
-                    .foregroundStyle(.orange)
-            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color.orange.opacity(0.08))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .strokeBorder(Color.orange.opacity(0.2), lineWidth: 1)
+                    )
+            )
         }
+        .buttonStyle(.plain)
     }
 
-    private var dateTimeSection: some View {
-        Section {
-            DatePicker(
-                L.ManualEntry.dateTime,
-                selection: $store.timestampDisplay,
-                in: ...Date(),
-                displayedComponents: [.date, .hourAndMinute]
-            )
-        } header: {
-            Text(L.ManualEntry.setDateTime)
-        } footer: {
-            if !store.hasValidTimestamp {
-                Text(L.ManualEntry.futureDateNotAllowed)
-                    .foregroundStyle(.red)
-            }
+    // MARK: - Step 2: 付加情報
+
+    private var step2Content: some View {
+        Form {
+            metadataSection
+            taxonomySection
+            photoSection
         }
     }
 
@@ -442,6 +507,179 @@ struct ManualEntryScreen: View {
         }
     }
 
+    // MARK: - Photo Section
+
+    private var photoSection: some View {
+        Section {
+            ManualEntryPhotoGridView(
+                store: store,
+                showCamera: $showCamera,
+                fullScreenIndex: $fullScreenIndex
+            )
+        } header: {
+            Text(L.Photo.photo)
+        }
+    }
+
+    // MARK: - Footer Buttons
+
+    private var footerButtons: some View {
+        VStack(spacing: 12) {
+            Divider()
+            normalModeFooter
+        }
+        .background(.regularMaterial)
+    }
+
+    @ViewBuilder
+    private var normalModeFooter: some View {
+        switch store.currentStep {
+        case .essentials:
+            // ステップ1: 「次へ」と「このまま保存」
+            HStack(spacing: 12) {
+                // このまま保存
+                Button {
+                    if store.save() { dismiss() }
+                } label: {
+                    Text(L.ManualEntry.saveAndSkipDetails)
+                        .font(.subheadline)
+                        .foregroundStyle(store.canSave ? .orange : .secondary)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .background(
+                            RoundedRectangle(cornerRadius: 10)
+                                .stroke(store.canSave ? Color.orange : Color.secondary, lineWidth: 1)
+                        )
+                }
+                .disabled(!store.canSave)
+                .buttonStyle(.plain)
+
+                // 次へ
+                Button {
+                    withAnimation {
+                        store.goToNextStep()
+                    }
+                } label: {
+                    HStack {
+                        Text(L.ManualEntry.next)
+                            .font(.headline)
+                        Image(systemName: "chevron.right")
+                    }
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .background(
+                        RoundedRectangle(cornerRadius: 10)
+                            .fill(store.canProceedToNextStep ? Color.orange : Color.secondary)
+                    )
+                }
+                .disabled(!store.canProceedToNextStep)
+                .buttonStyle(.plain)
+            }
+            .padding(.horizontal)
+            .padding(.bottom, 8)
+
+        case .additionalInfo:
+            // ステップ2: 「戻る」と「保存」
+            HStack(spacing: 12) {
+                // 戻る
+                Button {
+                    withAnimation {
+                        store.goToPreviousStep()
+                    }
+                } label: {
+                    HStack {
+                        Image(systemName: "chevron.left")
+                        Text(L.ManualEntry.back)
+                            .font(.subheadline)
+                    }
+                    .foregroundStyle(.orange)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .background(
+                        RoundedRectangle(cornerRadius: 10)
+                            .stroke(Color.orange, lineWidth: 1)
+                    )
+                }
+                .buttonStyle(.plain)
+
+                // 保存
+                Button {
+                    if store.save() { dismiss() }
+                } label: {
+                    Text(L.Common.save)
+                        .font(.headline)
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .background(
+                            RoundedRectangle(cornerRadius: 10)
+                                .fill(store.canSave ? Color.orange : Color.secondary)
+                        )
+                }
+                .disabled(!store.canSave)
+                .buttonStyle(.plain)
+            }
+            .padding(.horizontal)
+            .padding(.bottom, 8)
+        }
+    }
+
+    // MARK: - Alert
+
+    private var alertBinding: Binding<AlertMsg?> {
+        Binding(
+            get: { store.alert.map { AlertMsg(id: UUID(), text: $0) } },
+            set: { _ in store.alert = nil }
+        )
+    }
+
+    private func alertView(for msg: AlertMsg) -> Alert {
+        Alert(
+            title: Text(L.Common.error),
+            message: Text(msg.text),
+            dismissButton: .default(Text(L.Common.ok))
+        )
+    }
+
+    // MARK: - Sheets
+
+    private var photoImportSheet: some View {
+        PhotoImportSheet(
+            latitude: $store.latitude,
+            longitude: $store.longitude,
+            addressLine: $store.addressLine,
+            timestamp: $store.timestampDisplay
+        ) { image in
+            store.addPhotos([image])
+            store.isPhotoImported = true
+        }
+    }
+
+    private var cameraSheet: some View {
+        CameraPicker { image in
+            store.addPhotos([image])
+        }
+        .ignoresSafeArea()
+    }
+
+    // MARK: - Full Screen Photo
+
+    private var fullScreenBinding: Binding<PhotoPager.IndexWrapper?> {
+        Binding(
+            get: { fullScreenIndex.map { PhotoPager.IndexWrapper(index: $0) } },
+            set: { fullScreenIndex = $0?.index }
+        )
+    }
+
+    private func photoFullScreen(for wrapper: PhotoPager.IndexWrapper) -> some View {
+        PhotoPager(
+            paths: store.photoEffects.photoPathsEditing,
+            startIndex: wrapper.index,
+            externalDragOffset: $photoDragOffset
+        )
+    }
+
     // MARK: - Picker Sheet Contents
 
     @ViewBuilder
@@ -544,19 +782,6 @@ struct ManualEntryScreen: View {
         newMemberName = ""
         memberCreateShown = false
     }
-
-    private var photoSection: some View {
-        Section {
-            ManualEntryPhotoGridView(
-                store: store,
-                showCamera: $showCamera,
-                fullScreenIndex: $fullScreenIndex
-            )
-        } header: {
-            Text(L.Photo.photo)
-        }
-    }
-
 }
 
 // MARK: - Photo Grid
@@ -649,4 +874,3 @@ private struct ManualEntryPhotoGridView: View {
         libSelection = []
     }
 }
-

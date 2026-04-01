@@ -7,12 +7,16 @@ struct MapPreview: View {
     var radius: CLLocationDistance = AppConfig.mapDisplayRadius
     var showCoordinateOverlay: Bool = true
     var decimals: Int = AppConfig.coordinateDecimals
+    var markerImageName: String = "kokokita_irodori_blue_for_map"
+    var markerLabelColor: Color = .accentColor
 
     @State private var position: MapCameraPosition
     @State private var showMapAppSheet = false
 
     init(lat: Double, lon: Double, radius: CLLocationDistance = AppConfig.mapDisplayRadius,
-         showCoordinateOverlay: Bool = true, decimals: Int = AppConfig.coordinateDecimals) {
+         showCoordinateOverlay: Bool = true, decimals: Int = AppConfig.coordinateDecimals,
+         markerImageName: String = "kokokita_irodori_blue_for_map",
+         markerLabelColor: Color = .accentColor) {
         let center = CLLocationCoordinate2D(latitude: lat, longitude: lon)
         let region = MKCoordinateRegion(center: center,
                                         latitudinalMeters: radius * 2,
@@ -21,6 +25,8 @@ struct MapPreview: View {
         self.radius = radius
         self.showCoordinateOverlay = showCoordinateOverlay
         self.decimals = decimals
+        self.markerImageName = markerImageName
+        self.markerLabelColor = markerLabelColor
         _position = State(initialValue: .region(region))
     }
 
@@ -48,14 +54,14 @@ struct MapPreview: View {
             VStack(spacing: 2) {
                 Text(L.App.name)
                     .font(.caption.bold())
-                    .foregroundColor(.accentColor)
+                    .foregroundColor(markerLabelColor)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
                     .background(.white)
                     .cornerRadius(8)
                     .shadow(color: .black.opacity(0.2), radius: 2, x: 0, y: 1)
 
-                Image("kokokita_irodori_blue_for_map")
+                Image(markerImageName)
                     .resizable()
                     .scaledToFit()
                     .frame(width: 42, height: 42)

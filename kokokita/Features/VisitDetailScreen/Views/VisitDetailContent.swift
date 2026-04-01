@@ -1,5 +1,6 @@
 import SwiftUI
 import MapKit
+import UIKit
 
 struct VisitDetailContent: View {
     let data: VisitDetailData
@@ -25,42 +26,31 @@ struct VisitDetailContent: View {
         data.title.ifBlank(L.Home.noTitle)
     }
 
-    /// バッジアイコン名
-    private var badgeIconName: String {
-        data.isManualEntry ? "wrench.adjustable.fill" : "checkmark.seal.fill"
+    /// タイトルが実際に入力されているか（"タイトルなし" フォールバックでないか）
+    private var hasRealTitle: Bool {
+        displayTitle != L.Home.noTitle
     }
 
-    /// バッジアイコン色
-    private var badgeIconColor: Color {
-        data.isManualEntry ? .orange : .blue
-    }
-
-    /// タイトルの末尾にインラインで記録タイプアイコンを表示（共有用）
-    private var titleWithIcon: Text {
-        let title = displayTitle
-        return Text(title)
-            + Text(" ")
-            + Text(Image(systemName: badgeIconName)).foregroundColor(badgeIconColor)
+    /// タイトル + 記録タイプアイコン（共有用）
+    private var titleWithIconView: some View {
+        InlineRecordTypeTitle(
+            title: displayTitle,
+            isManualEntry: data.isManualEntry,
+            compact: false,
+            maxLines: 3,
+            textStyle: .title2,
+            fontWeight: .bold,
+            textColor: hasRealTitle ? .label : .tertiaryLabel
+        )
     }
 
     /// タップ可能なタイトル + バッジ（通常表示用）
-    @ViewBuilder
     private var tappableTitleView: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 4) {
-            Text(displayTitle)
-                .font(.title2.bold())
-                .lineLimit(3)
-
-            // タップ可能なバッジアイコン
-            Button {
-                showBadgeExplanation = true
-            } label: {
-                Image(systemName: badgeIconName)
-                    .font(.subheadline)
-                    .foregroundStyle(badgeIconColor)
+        titleWithIconView
+            .contentShape(Rectangle())
+            .onTapGesture {
+            showBadgeExplanation = true
             }
-            .buttonStyle(.plain)
-        }
     }
 
     var body: some View {
@@ -79,11 +69,9 @@ struct VisitDetailContent: View {
             VStack(alignment: .leading, spacing: UIConstants.Spacing.medium) {
                 HStack(spacing: UIConstants.Spacing.medium) {
                     VStack(alignment: .leading, spacing: 2) {
-                        // 共有時はインライン、通常表示時はタップ可能なバッジ
+                        // 共有時は通常表示、通常表示時はタップ可能なバッジ
                         if isSharing {
-                            titleWithIcon
-                                .font(.title2.bold())
-                                .lineLimit(3)
+                            titleWithIconView
                         } else {
                             tappableTitleView
                         }
@@ -200,7 +188,9 @@ struct VisitDetailContent: View {
                         MapPreview(
                             lat: c.latitude,
                             lon: c.longitude,
-                            showCoordinateOverlay: true
+                            showCoordinateOverlay: true,
+                            markerImageName: data.isManualEntry ? "kokokita_irodori_orange" : "kokokita_irodori_blue_for_map",
+                            markerLabelColor: data.isManualEntry ? .orange : .accentColor
                         )
                         .frame(height: UIConstants.Size.mapPreviewHeight)
                         .clipShape(RoundedRectangle(cornerRadius: UIConstants.CornerRadius.large))
