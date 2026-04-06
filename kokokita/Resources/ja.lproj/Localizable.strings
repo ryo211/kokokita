@@ -455,3 +455,52 @@
 "recordBadge.verifiedDescription" = "その時、その場所にいたことが証明されている記録です。アプリがその場で位置情報を取得して作成されました。";
 "recordBadge.manualTitle" = "後付け記録";
 "recordBadge.manualDescription" = "後から手動で追加した記録です。実際に訪れたかどうかの証明はありません。";
+
+// MARK: - My List（マイリスト）
+"myList.title" = "マイリスト";
+"myList.emptyTitle" = "まだコースがありません";
+"myList.emptyDescription" = "+ 新しいコースを作成する";
+"myList.newCourseButton" = "新規コース作成";
+"myList.deleteConfirmTitle" = "コースを削除";
+"myList.deleteConfirmMessage" = "このコースとスポットをすべて削除します。この操作は取り消せません。";
+"myList.spotsCount" = "%d件のスポット";
+
+// MARK: - Course Editor（コース作成・編集）
+"courseEditor.createTitle" = "新しいコース";
+"courseEditor.editTitle" = "コースを編集";
+"courseEditor.titlePlaceholder" = "コースタイトル";
+"courseEditor.summaryPlaceholder" = "コースの説明（任意）";
+"courseEditor.settingsSection" = "コース設定";
+"courseEditor.coverImage" = "カバー画像";
+"courseEditor.recognitionRadius" = "達成判定半径";
+"courseEditor.recognitionRadiusValue" = "%dm";
+"courseEditor.allowRetroactive" = "後付け記録を達成に含める";
+"courseEditor.spotsSection" = "スポット";
+"courseEditor.addSpot" = "+ スポットを追加";
+"courseEditor.unsavedChangesTitle" = "変更を破棄しますか？";
+"courseEditor.unsavedChangesMessage" = "保存されていない変更は失われます。";
+"courseEditor.discard" = "破棄";
+"courseEditor.noTitleWarning" = "タイトルを入力してください";
+
+// MARK: - Spot Editor（スポット作成・編集）
+"spotEditor.createTitle" = "スポットを追加";
+"spotEditor.editTitle" = "スポットを編集";
+"spotEditor.nameLabel" = "スポット名";
+"spotEditor.namePlaceholder" = "スポット名を入力";
+"spotEditor.descriptionPlaceholder" = "説明文（任意）";
+"spotEditor.image" = "画像";
+"spotEditor.recognitionRadius" = "達成判定半径";
+"spotEditor.useCoursDefault" = "コースのデフォルトを使用";
+"spotEditor.addButton" = "追加";
+"spotEditor.saveButton" = "保存";
+"spotEditor.noCoordinateWarning" = "座標が設定されていないため、GPS認識の対象外になります。";
+"spotEditor.modeSearch" = "場所名検索";
+"spotEditor.modeMap" = "地図選択";
+"spotEditor.modePhoto" = "写真から";
+"spotEditor.modeRecord" = "記録から";
+"spotEditor.noExifLocation" = "この写真には位置情報が含まれていません";
+"spotEditor.selectLocation" = "この場所を選択";
+"spotEditor.searchPlaceholder" = "場所名や住所を入力";
+
+// MARK: - Tab Bar（追加分）
+"tab.myList" = "マイリスト";

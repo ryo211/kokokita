@@ -33,6 +33,8 @@ final class CourseRecognitionService {
         var results: [RecognitionResult] = []
 
         for course in courses {
+            // isEnabled == false のコースは判定対象外
+            guard course.isEnabled else { continue }
             // 全スポット対象（チェックイン済みでも再認識する）
             guard !course.spots.isEmpty else { continue }
 

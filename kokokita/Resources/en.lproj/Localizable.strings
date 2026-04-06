@@ -453,3 +453,52 @@
 "recordBadge.verifiedDescription" = "This record proves you were there at that time. It was created by the app capturing your location on the spot.";
 "recordBadge.manualTitle" = "Manual Entry";
 "recordBadge.manualDescription" = "This record was added manually later. There is no proof that you actually visited the location.";
+
+// MARK: - My List
+"myList.title" = "My List";
+"myList.emptyTitle" = "No courses yet";
+"myList.emptyDescription" = "+ Create a new course";
+"myList.newCourseButton" = "New Course";
+"myList.deleteConfirmTitle" = "Delete Course";
+"myList.deleteConfirmMessage" = "This will delete the course and all its spots. This action cannot be undone.";
+"myList.spotsCount" = "%d spots";
+
+// MARK: - Course Editor
+"courseEditor.createTitle" = "New Course";
+"courseEditor.editTitle" = "Edit Course";
+"courseEditor.titlePlaceholder" = "Course Title";
+"courseEditor.summaryPlaceholder" = "Course description (optional)";
+"courseEditor.settingsSection" = "Course Settings";
+"courseEditor.coverImage" = "Cover Image";
+"courseEditor.recognitionRadius" = "Recognition Radius";
+"courseEditor.recognitionRadiusValue" = "%dm";
+"courseEditor.allowRetroactive" = "Include retroactive records";
+"courseEditor.spotsSection" = "Spots";
+"courseEditor.addSpot" = "+ Add Spot";
+"courseEditor.unsavedChangesTitle" = "Discard Changes?";
+"courseEditor.unsavedChangesMessage" = "Unsaved changes will be lost.";
+"courseEditor.discard" = "Discard";
+"courseEditor.noTitleWarning" = "Please enter a title";
+
+// MARK: - Spot Editor
+"spotEditor.createTitle" = "Add Spot";
+"spotEditor.editTitle" = "Edit Spot";
+"spotEditor.nameLabel" = "Spot Name";
+"spotEditor.namePlaceholder" = "Enter spot name";
+"spotEditor.descriptionPlaceholder" = "Description (optional)";
+"spotEditor.image" = "Image";
+"spotEditor.recognitionRadius" = "Recognition Radius";
+"spotEditor.useCoursDefault" = "Use course default";
+"spotEditor.addButton" = "Add";
+"spotEditor.saveButton" = "Save";
+"spotEditor.noCoordinateWarning" = "No coordinates set. This spot will not be recognized by GPS.";
+"spotEditor.modeSearch" = "Search";
+"spotEditor.modeMap" = "Map";
+"spotEditor.modePhoto" = "Photo";
+"spotEditor.modeRecord" = "Record";
+"spotEditor.noExifLocation" = "This photo does not contain location data";
+"spotEditor.selectLocation" = "Select This Location";
+"spotEditor.searchPlaceholder" = "Enter place name or address";
+
+// MARK: - Tab Bar (additions)
+"tab.myList" = "My List";

@@ -14,8 +14,14 @@ struct Course: Identifiable, Equatable {
     let recognitionRadiusMeters: Double
     /// 遡り判定実施済みかどうか（初回インポート後に自動実行）
     let everEnabled: Bool
+    /// コース一覧への表示・達成判定の有効/無効
+    let isEnabled: Bool
+    /// 後付け記録を達成判定に含めるか
+    let allowRetroactive: Bool
     let detailUrl: String?
     let coverImageUrl: String?
+    /// 端末内カバー画像パス（ユーザー作成コース用）
+    let localCoverImagePath: String?
     let createdAt: Date
     let updatedAt: Date
     /// コースに付与されたカテゴリ（複数可）

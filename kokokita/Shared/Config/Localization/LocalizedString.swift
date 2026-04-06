@@ -149,6 +149,57 @@ enum L {
         static let course = localized("tab.course")
         static let modePilgrimage = localized("tab.modePilgrimage")
         static let modeRecord = localized("tab.modeRecord")
+        static let myList = localized("tab.myList")
+    }
+
+    // MARK: - My List（マイリスト）
+    enum MyList {
+        static let title = localized("myList.title")
+        static let emptyTitle = localized("myList.emptyTitle")
+        static let emptyDescription = localized("myList.emptyDescription")
+        static let newCourseButton = localized("myList.newCourseButton")
+        static let deleteConfirmTitle = localized("myList.deleteConfirmTitle")
+        static let deleteConfirmMessage = localized("myList.deleteConfirmMessage")
+        static func spotsCount(_ count: Int) -> String { String(format: localized("myList.spotsCount"), count) }
+    }
+
+    // MARK: - Course Editor（コース作成・編集）
+    enum CourseEditor {
+        static let createTitle = localized("courseEditor.createTitle")
+        static let editTitle = localized("courseEditor.editTitle")
+        static let titlePlaceholder = localized("courseEditor.titlePlaceholder")
+        static let summaryPlaceholder = localized("courseEditor.summaryPlaceholder")
+        static let settingsSection = localized("courseEditor.settingsSection")
+        static let coverImage = localized("courseEditor.coverImage")
+        static let recognitionRadius = localized("courseEditor.recognitionRadius")
+        static func recognitionRadiusValue(_ meters: Int) -> String { String(format: localized("courseEditor.recognitionRadiusValue"), meters) }
+        static let allowRetroactive = localized("courseEditor.allowRetroactive")
+        static let spotsSection = localized("courseEditor.spotsSection")
+        static let addSpot = localized("courseEditor.addSpot")
+        static let unsavedChangesTitle = localized("courseEditor.unsavedChangesTitle")
+        static let unsavedChangesMessage = localized("courseEditor.unsavedChangesMessage")
+        static let discard = localized("courseEditor.discard")
+    }
+
+    // MARK: - Spot Editor（スポット作成・編集）
+    enum SpotEditor {
+        static let createTitle = localized("spotEditor.createTitle")
+        static let editTitle = localized("spotEditor.editTitle")
+        static let namePlaceholder = localized("spotEditor.namePlaceholder")
+        static let descriptionPlaceholder = localized("spotEditor.descriptionPlaceholder")
+        static let image = localized("spotEditor.image")
+        static let recognitionRadius = localized("spotEditor.recognitionRadius")
+        static let useCourseDefault = localized("spotEditor.useCoursDefault")
+        static let addButton = localized("spotEditor.addButton")
+        static let saveButton = localized("spotEditor.saveButton")
+        static let noCoordinateWarning = localized("spotEditor.noCoordinateWarning")
+        static let modeSearch = localized("spotEditor.modeSearch")
+        static let modeMap = localized("spotEditor.modeMap")
+        static let modePhoto = localized("spotEditor.modePhoto")
+        static let modeRecord = localized("spotEditor.modeRecord")
+        static let noExifLocation = localized("spotEditor.noExifLocation")
+        static let selectLocation = localized("spotEditor.selectLocation")
+        static let searchPlaceholder = localized("spotEditor.searchPlaceholder")
     }
 
     // MARK: - Label Management

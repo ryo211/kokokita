@@ -37,9 +37,14 @@ final class CourseListStore {
     }
 
     /// コース一覧を読み込む
+    /// - bundled / downloaded コースは常に表示
+    /// - isUserCreated == true のコースは isEnabled == true のみ表示
     func load() async {
         do {
-            courses = try repo.fetchAll()
+            let all = try repo.fetchAll()
+            courses = all.filter { course in
+                !course.isUserCreated || course.isEnabled
+            }
         } catch {
             Logger.error("コース一覧読み込みエラー", error: error)
             errorMessage = error.localizedDescription

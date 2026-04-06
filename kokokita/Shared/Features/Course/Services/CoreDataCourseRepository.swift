@@ -110,8 +110,11 @@ final class CoreDataCourseRepository: CourseRepository {
         entity.version = Int32(course.version)
         entity.recognitionRadiusMeters = course.recognitionRadiusMeters
         entity.everEnabled = NSNumber(value: course.everEnabled)
+        entity.isEnabled = NSNumber(value: course.isEnabled)
+        entity.allowRetroactive = NSNumber(value: course.allowRetroactive)
         entity.detailUrl = course.detailUrl
         entity.coverImageUrl = course.coverImageUrl
+        entity.localCoverImagePath = course.localCoverImagePath
         entity.categories = course.categories.isEmpty ? nil : course.categories.map(\.rawValue).joined(separator: ",")
         entity.createdAt = course.createdAt
         entity.updatedAt = course.updatedAt
@@ -186,6 +189,7 @@ final class CoreDataCourseRepository: CourseRepository {
             e.longitude = spot.longitude
             e.spotDescription = spot.spotDescription
             e.coverImageUrl = spot.coverImageUrl
+            e.localCoverImagePath = spot.localCoverImagePath
             e.orderIndex = Int32(spot.orderIndex)
             e.recognitionRadiusMeters = spot.recognitionRadiusMeters.map { NSNumber(value: $0) }
             // チェックイン状態は既存の値を保持（JSONで上書きしない）
@@ -213,8 +217,11 @@ final class CoreDataCourseRepository: CourseRepository {
             version: Int(entity.version),
             recognitionRadiusMeters: entity.recognitionRadiusMeters,
             everEnabled: entity.everEnabled?.boolValue ?? false,
+            isEnabled: entity.isEnabled?.boolValue ?? false,
+            allowRetroactive: entity.allowRetroactive?.boolValue ?? false,
             detailUrl: entity.detailUrl,
             coverImageUrl: entity.coverImageUrl,
+            localCoverImagePath: entity.localCoverImagePath,
             createdAt: entity.createdAt ?? Date(),
             updatedAt: entity.updatedAt ?? Date(),
             categories: (entity.categories ?? "")
@@ -287,6 +294,7 @@ final class CoreDataCourseRepository: CourseRepository {
             longitude: s.longitude,
             spotDescription: s.spotDescription,
             coverImageUrl: s.coverImageUrl,
+            localCoverImagePath: s.localCoverImagePath,
             orderIndex: Int(s.orderIndex),
             recognitionRadiusMeters: s.recognitionRadiusMeters?.doubleValue,
             firstCheckedInAt: firstCheckedInAt,

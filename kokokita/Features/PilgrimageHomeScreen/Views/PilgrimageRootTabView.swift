@@ -1,6 +1,6 @@
 import SwiftUI
 
-// 巡礼モードのルートタブビュー（2タブ: ホーム / コース）
+// 巡礼モードのルートタブビュー（3タブ: ホーム / コース / マイリスト）
 // 記録モードと同じカスタムタブバー UI を使用
 struct PilgrimageRootTabView: View {
     @Environment(AppModeManager.self) private var modeManager
@@ -21,6 +21,12 @@ struct PilgrimageRootTabView: View {
                 CourseScreen()
                     .opacity(tab == .map ? 1 : 0)
                     .zIndex(tab == .map ? 1 : 0)
+
+                NavigationStack {
+                    MyListView()
+                }
+                .opacity(tab == .myList ? 1 : 0)
+                .zIndex(tab == .myList ? 1 : 0)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 
@@ -54,6 +60,7 @@ struct PilgrimageRootTabView: View {
 enum PilgrimageTab: Hashable {
     case home
     case map
+    case myList
 }
 
 // MARK: - 巡礼モードのボトムバー
@@ -100,11 +107,12 @@ private struct PilgrimageBottomBar: View {
                 .buttonStyle(.plain)
                 .accessibilityLabel(L.Tab.kokokita)
 
-                // スライディングタブバー（巡礼モードの2タブ）
+                // スライディングタブバー（巡礼モードの3タブ）
                 SliderTabBar(
                     items: [
                         SliderTabBarItem(id: PilgrimageTab.home, icon: "house.fill", title: L.Tab.home),
                         SliderTabBarItem(id: PilgrimageTab.map, icon: "map", title: L.Tab.course),
+                        SliderTabBarItem(id: PilgrimageTab.myList, icon: "person.text.rectangle", title: L.Tab.myList),
                     ],
                     current: current,
                     onSelect: onSelect,
