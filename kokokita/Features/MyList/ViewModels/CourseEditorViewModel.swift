@@ -62,7 +62,8 @@ final class CourseEditorViewModel {
 
     // MARK: - 内部状態
 
-    private let mode: Mode
+    /// CourseEditorView からモードを参照できるように internal に公開
+    let mode: Mode
     private let repo: CourseRepository
     private var originalCourse: Course?
 
