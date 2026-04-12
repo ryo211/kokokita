@@ -27,7 +27,7 @@ struct PhotoImportSheet: View {
     private let geocoder = CLGeocoder()
 
     private var hasExtractedData: Bool {
-        extractedCoordinate != nil || extractedTimestamp != nil
+        extractedCoordinate != nil
     }
 
     var body: some View {
@@ -55,14 +55,14 @@ struct PhotoImportSheet: View {
                             .clipShape(RoundedRectangle(cornerRadius: 12))
                             .overlay(
                                 RoundedRectangle(cornerRadius: 12)
-                                    .stroke(Color.orange, lineWidth: 2)
+                                    .stroke(Color.indigo, lineWidth: 2)
                             )
                     } else {
                         // 未選択時のプレースホルダー
                         VStack(spacing: 12) {
                             Image(systemName: "photo.on.rectangle.angled")
                                 .font(.system(size: 48))
-                                .foregroundStyle(.orange)
+                                .foregroundStyle(.indigo)
 
                             Text(L.ManualEntry.importFromPhoto)
                                 .font(.headline)
@@ -88,7 +88,7 @@ struct PhotoImportSheet: View {
                 if let error = errorMessage {
                     Text(error)
                         .font(.caption)
-                        .foregroundStyle(.orange)
+                        .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal)
                 }
@@ -105,7 +105,7 @@ struct PhotoImportSheet: View {
                             .foregroundStyle(.white)
                             .frame(maxWidth: .infinity)
                             .padding()
-                            .background(Color.orange)
+                            .background(Color.indigo)
                             .clipShape(RoundedRectangle(cornerRadius: 12))
                     }
                     .padding(.horizontal)
@@ -127,59 +127,28 @@ struct PhotoImportSheet: View {
 
     private var extractedDataView: some View {
         VStack(alignment: .leading, spacing: 12) {
-            // 日時情報
-            if let timestamp = extractedTimestamp {
-                HStack {
-                    Image(systemName: "calendar")
-                        .foregroundStyle(.orange)
-                    VStack(alignment: .leading) {
-                        Text(L.ManualEntry.dateTime)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                        Text(timestamp.formatted(date: .long, time: .shortened))
-                            .font(.subheadline)
-                    }
-                    Spacer()
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundStyle(.green)
-                }
-            } else {
-                HStack {
-                    Image(systemName: "calendar.badge.exclamationmark")
-                        .foregroundStyle(.secondary)
-                    Text(L.ManualEntry.noDateInPhoto)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                    Spacer()
-                }
-            }
-
-            Divider()
-
-            // 位置情報
+            // 位置情報（住所または座標を表示）
             if let coord = extractedCoordinate {
-                HStack {
+                HStack(alignment: .top) {
                     Image(systemName: "mappin.circle.fill")
-                        .foregroundStyle(.orange)
-                    VStack(alignment: .leading) {
+                        .foregroundStyle(.indigo)
+                        .font(.title3)
+                    VStack(alignment: .leading, spacing: 3) {
                         Text(L.ManualEntry.setLocation)
                             .font(.caption)
                             .foregroundStyle(.secondary)
-                        Text(String(format: "%.5f, %.5f", coord.latitude, coord.longitude))
-                            .font(.subheadline)
+                        if let addr = addressLine, !addr.isEmpty {
+                            Text(addr)
+                                .font(.subheadline)
+                        } else {
+                            Text(String(format: "%.5f, %.5f", coord.latitude, coord.longitude))
+                                .font(.subheadline.monospacedDigit()
+)
+                        }
                     }
                     Spacer()
                     Image(systemName: "checkmark.circle.fill")
-                        .foregroundStyle(.green)
-                }
-            } else {
-                HStack {
-                    Image(systemName: "mappin.slash")
-                        .foregroundStyle(.secondary)
-                    Text(L.ManualEntry.noLocationInPhoto)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                    Spacer()
+                        .foregroundStyle(.indigo)
                 }
             }
         }
@@ -220,13 +189,9 @@ struct PhotoImportSheet: View {
                 await reverseGeocode(coordinate: coord)
             }
 
-            // 両方取得できなかった場合のエラーメッセージ
-            if extractedCoordinate == nil && extractedTimestamp == nil {
-                errorMessage = L.ManualEntry.noLocationInPhoto + "\n" + L.ManualEntry.noDateInPhoto
-            } else if extractedCoordinate == nil {
+            // 位置情報が取得できなかった場合のエラーメッセージ
+            if extractedCoordinate == nil {
                 errorMessage = L.ManualEntry.noLocationInPhoto
-            } else if extractedTimestamp == nil {
-                errorMessage = L.ManualEntry.noDateInPhoto
             }
 
             photoSelection = nil

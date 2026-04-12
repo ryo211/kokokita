@@ -12,12 +12,14 @@ final class CourseListStore {
     var newlyAddedCourseIds: Set<UUID> = []
 
     private let repo: CourseRepository
+    /// addObserver の戻り値トークンを保持しないとオブザーバーが即座に解放されるため保存
+    private var observers: [NSObjectProtocol] = []
 
     init(repo: CourseRepository = AppContainer.shared.courseRepo) {
         self.repo = repo
 
         // チェックイン変更を監視して一覧を再ロード
-        NotificationCenter.default.addObserver(forName: .courseChanged, object: nil, queue: .main) { [weak self] _ in
+        let courseObserver = NotificationCenter.default.addObserver(forName: .courseChanged, object: nil, queue: .main) { [weak self] _ in
             guard let self else { return }
             Task { @MainActor [weak self] in
                 guard let self else { return }
@@ -26,7 +28,7 @@ final class CourseListStore {
         }
 
         // 新規ダウンロードを監視してハイライトIDを追加
-        NotificationCenter.default.addObserver(forName: .courseDownloaded, object: nil, queue: .main) { [weak self] notification in
+        let downloadObserver = NotificationCenter.default.addObserver(forName: .courseDownloaded, object: nil, queue: .main) { [weak self] notification in
             guard let self else { return }
             guard let courseId = notification.object as? UUID else { return }
             Task { @MainActor [weak self] in
@@ -34,6 +36,8 @@ final class CourseListStore {
                 self.newlyAddedCourseIds.insert(courseId)
             }
         }
+
+        observers = [courseObserver, downloadObserver]
     }
 
     /// コース一覧を読み込む

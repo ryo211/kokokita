@@ -65,9 +65,17 @@ struct CourseListView: View {
             }
             .listStyle(.plain)
         }
-        .navigationTitle(L.Course.listTitle)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
+            ToolbarItem(placement: .principal) {
+                HStack(spacing: 6) {
+                    Image(systemName: "map")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.indigo)
+                    Text(L.Course.listTitle)
+                        .font(.headline)
+                }
+            }
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button {
                     showCourseStore = true

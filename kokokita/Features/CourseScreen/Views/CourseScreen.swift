@@ -16,5 +16,8 @@ struct CourseScreen: View {
                     }
                 }
         }
+        .onReceive(NotificationCenter.default.publisher(for: .courseChanged)) { _ in
+            Task { await store.load() }
+        }
     }
 }

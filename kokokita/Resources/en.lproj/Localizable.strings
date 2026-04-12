@@ -22,6 +22,8 @@
 "common.clear" = "Clear";
 "common.share" = "Share";
 "common.copy" = "Copy";
+"common.showOptions" = "More options";
+"common.hideOptions" = "Hide options";
 
 // MARK: - Visit Edit
 "visit.edit.titlePlaceholder" = "Title";
@@ -355,6 +357,7 @@
 "course.category.nature" = "Nature";
 "course.category.art_entertainment" = "Art & Entertainment";
 "course.category.anime" = "Anime & Manga";
+"course.category.user_created" = "My Courses";
 "course.newBadge" = "NEW";
 "course.achieved" = "done";
 "course.notVisited" = "Not Visited";
@@ -445,7 +448,7 @@
 "locationPicker.nearbySpots" = "Nearby Spots";
 "locationPicker.searchPlaceholder" = "Enter place name or address (e.g. Tokyo Skytree)";
 "locationPicker.noResults" = "No matching places found";
-"locationPicker.photoImportDescription" = "Import date and location from photo";
+"locationPicker.photoImportDescription" = "Import location from photo";
 
 // MARK: - Record Badge
 "recordBadge.explanationTitle" = "About Record Types";
@@ -479,13 +482,17 @@
 "courseEditor.unsavedChangesMessage" = "Unsaved changes will be lost.";
 "courseEditor.discard" = "Discard";
 "courseEditor.noTitleWarning" = "Please enter a title";
+"courseEditor.noSpotsMessage" = "Add spots to get started";
+"courseEditor.unnamedSpot" = "(Untitled)";
+"courseEditor.cancelChangesMessage" = "Your changes will be discarded.";
 
 // MARK: - Spot Editor
 "spotEditor.createTitle" = "Add Spot";
 "spotEditor.editTitle" = "Edit Spot";
 "spotEditor.nameLabel" = "Spot Name";
+"spotEditor.descriptionLabel" = "Description";
 "spotEditor.namePlaceholder" = "Enter spot name";
-"spotEditor.descriptionPlaceholder" = "Description (optional)";
+"spotEditor.descriptionPlaceholder" = "Enter description";
 "spotEditor.image" = "Image";
 "spotEditor.recognitionRadius" = "Recognition Radius";
 "spotEditor.useCoursDefault" = "Use course default";
@@ -499,6 +506,18 @@
 "spotEditor.noExifLocation" = "This photo does not contain location data";
 "spotEditor.selectLocation" = "Select This Location";
 "spotEditor.searchPlaceholder" = "Enter place name or address";
+"spotEditor.detailsSettings" = "Details";
+"spotEditor.nameRequired" = "Please enter a spot name";
+"spotEditor.locationRequired" = "Please select a location";
+"spotEditor.importFromPhoto" = "Get location from photo";
+"spotEditor.nearbyPlaces" = "Nearby places";
+"spotEditor.noLocationSelected" = "Select a location";
+"spotEditor.importButton" = "Import";
+"spotEditor.enterCoordinates" = "Enter Coordinates";
+"spotEditor.coordinateInputTitle" = "Enter Coordinates";
+"spotEditor.latitude" = "Latitude";
+"spotEditor.longitude" = "Longitude";
 
 // MARK: - Tab Bar (additions)
 "tab.myList" = "My List";
+"tab.create" = "Create";

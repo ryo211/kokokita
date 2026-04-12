@@ -24,8 +24,17 @@ struct MyListView: View {
                 courseList
             }
         }
-        .navigationTitle(L.MyList.title)
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
+            ToolbarItem(placement: .principal) {
+                HStack(spacing: 6) {
+                    Image(systemName: "plus.square.on.square")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.indigo)
+                    Text(L.MyList.title)
+                        .font(.headline)
+                }
+            }
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button {
                     showCreateEditor = true

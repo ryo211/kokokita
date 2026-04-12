@@ -25,6 +25,8 @@ enum L {
         static let clear = localized("common.clear")
         static let share = localized("common.share")
         static let copy = localized("common.copy")
+        static let showOptions = localized("common.showOptions")
+        static let hideOptions = localized("common.hideOptions")
     }
 
     // MARK: - Visit Edit
@@ -150,6 +152,7 @@ enum L {
         static let modePilgrimage = localized("tab.modePilgrimage")
         static let modeRecord = localized("tab.modeRecord")
         static let myList = localized("tab.myList")
+        static let create = localized("tab.create")
     }
 
     // MARK: - My List（マイリスト）
@@ -179,13 +182,18 @@ enum L {
         static let unsavedChangesTitle = localized("courseEditor.unsavedChangesTitle")
         static let unsavedChangesMessage = localized("courseEditor.unsavedChangesMessage")
         static let discard = localized("courseEditor.discard")
+        static let noSpotsMessage = localized("courseEditor.noSpotsMessage")
+        static let unnamedSpot = localized("courseEditor.unnamedSpot")
+        static let cancelChangesMessage = localized("courseEditor.cancelChangesMessage")
     }
 
     // MARK: - Spot Editor（スポット作成・編集）
     enum SpotEditor {
         static let createTitle = localized("spotEditor.createTitle")
         static let editTitle = localized("spotEditor.editTitle")
+        static let nameLabel = localized("spotEditor.nameLabel")
         static let namePlaceholder = localized("spotEditor.namePlaceholder")
+        static let descriptionLabel = localized("spotEditor.descriptionLabel")
         static let descriptionPlaceholder = localized("spotEditor.descriptionPlaceholder")
         static let image = localized("spotEditor.image")
         static let recognitionRadius = localized("spotEditor.recognitionRadius")
@@ -200,6 +208,17 @@ enum L {
         static let noExifLocation = localized("spotEditor.noExifLocation")
         static let selectLocation = localized("spotEditor.selectLocation")
         static let searchPlaceholder = localized("spotEditor.searchPlaceholder")
+        static let detailsSettings = localized("spotEditor.detailsSettings")
+        static let nameRequired = localized("spotEditor.nameRequired")
+        static let locationRequired = localized("spotEditor.locationRequired")
+        static let importFromPhoto = localized("spotEditor.importFromPhoto")
+        static let nearbyPlaces = localized("spotEditor.nearbyPlaces")
+        static let noLocationSelected = localized("spotEditor.noLocationSelected")
+        static let importButton = localized("spotEditor.importButton")
+        static let enterCoordinates = localized("spotEditor.enterCoordinates")
+        static let coordinateInputTitle = localized("spotEditor.coordinateInputTitle")
+        static let latitude = localized("spotEditor.latitude")
+        static let longitude = localized("spotEditor.longitude")
     }
 
     // MARK: - Label Management
@@ -452,6 +471,7 @@ enum L {
         static let categoryNature          = localized("course.category.nature")
         static let categoryArtEntertainment = localized("course.category.art_entertainment")
         static let categoryAnime           = localized("course.category.anime")
+        static let categoryUserCreated     = localized("course.category.user_created")
         static let newBadge = localized("course.newBadge")
         static let achieved = localized("course.achieved")
         static let notVisited = localized("course.notVisited")

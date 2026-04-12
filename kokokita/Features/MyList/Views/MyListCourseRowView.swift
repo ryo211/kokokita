@@ -10,7 +10,7 @@ struct MyListCourseRowView: View {
         HStack(spacing: 12) {
             // カバー画像またはプレースホルダー
             coverImageView
-                .frame(width: 60, height: 60)
+                .frame(width: 96, height: 64)
                 .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
 
             // テキスト情報
@@ -79,5 +79,6 @@ struct MyListCourseRowView: View {
     private func toggleEnabled(_ newValue: Bool) {
         course.isEnabled = NSNumber(value: newValue)
         try? CoreDataStack.shared.context.save()
+        NotificationCenter.default.post(name: .courseChanged, object: nil)
     }
 }

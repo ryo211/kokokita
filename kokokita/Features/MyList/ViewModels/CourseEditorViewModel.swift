@@ -46,7 +46,7 @@ final class CourseEditorViewModel {
     var recognitionRadiusMeters: Double = 150
     var allowRetroactive: Bool = false
     var isEnabled: Bool = true
-    var categories: [CourseCategory] = [.anime]
+    var categories: [CourseCategory] = [.userCreated]
     var coverImage: UIImage?
     var localCoverImagePath: String?
     var coverImageUrl: String?
@@ -63,12 +63,15 @@ final class CourseEditorViewModel {
     // MARK: - 内部状態
 
     /// CourseEditorView からモードを参照できるように internal に公開
-    let mode: Mode
+    /// 新規作成保存後に .edit へ遷移するため var にしている
+    private(set) var mode: Mode
     private let repo: CourseRepository
     private var originalCourse: Course?
 
     /// 保存に成功したかどうか（画面を閉じるトリガー）
     var didSave: Bool = false
+    /// 新規作成時に保存したコースID（edit モード遷移用）
+    private(set) var savedCourseId: UUID?
 
     // MARK: - 初期化
 
@@ -97,22 +100,7 @@ final class CourseEditorViewModel {
                 coverImage = LocalImageStorage.shared.load(from: path)
             }
             // スポット一覧をフラット化
-            spots = course.spots.map { spot in
-                EditingSpot(
-                    id: spot.id,
-                    existingId: spot.id,
-                    name: spot.name,
-                    address: spot.address,
-                    latitude: spot.latitude == 0 ? nil : spot.latitude,
-                    longitude: spot.longitude == 0 ? nil : spot.longitude,
-                    spotDescription: spot.spotDescription,
-                    coverImage: spot.localCoverImagePath.flatMap { LocalImageStorage.shared.load(from: $0) },
-                    localCoverImagePath: spot.localCoverImagePath,
-                    coverImageUrl: spot.coverImageUrl,
-                    useCustomRadius: spot.recognitionRadiusMeters != nil,
-                    customRadius: spot.recognitionRadiusMeters ?? 150
-                )
-            }
+            spots = course.spots.map { Self.makeEditingSpot(from: $0) }
         } catch {
             Logger.error("コース読み込み失敗: \(error)")
         }
@@ -155,7 +143,10 @@ final class CourseEditorViewModel {
 
             // Course ドメインモデルを組み立て
             let course = buildCourse(spots: builtSpots, coverPath: savedCoverPath)
+            // 新規作成時は保存後に edit モードへ遷移できるよう ID を保持
+            if case .create = mode { savedCourseId = course.id }
             try repo.save(course)
+            NotificationCenter.default.post(name: .courseChanged, object: nil)
             didSave = true
         } catch {
             saveError = error.localizedDescription
@@ -171,6 +162,24 @@ final class CourseEditorViewModel {
         guard let path = localCoverImagePath else { return coverImage != nil }
         let existing = LocalImageStorage.shared.load(from: path)
         return existing == nil
+    }
+
+    /// CourseSpot → EditingSpot 変換（loadIfNeeded / reloadOriginalData で共用）
+    private static func makeEditingSpot(from spot: CourseSpot) -> EditingSpot {
+        EditingSpot(
+            id: spot.id,
+            existingId: spot.id,
+            name: spot.name,
+            address: spot.address,
+            latitude: spot.latitude == 0 ? nil : spot.latitude,
+            longitude: spot.longitude == 0 ? nil : spot.longitude,
+            spotDescription: spot.spotDescription,
+            coverImage: spot.localCoverImagePath.flatMap { LocalImageStorage.shared.load(from: $0) },
+            localCoverImagePath: spot.localCoverImagePath,
+            coverImageUrl: spot.coverImageUrl,
+            useCustomRadius: spot.recognitionRadiusMeters != nil,
+            customRadius: spot.recognitionRadiusMeters ?? 150
+        )
     }
 
     private func buildSpots(savedCoverPath: String?) throws -> [CourseSpot] {
@@ -250,13 +259,53 @@ final class CourseEditorViewModel {
             localCoverImagePath: coverPath,
             createdAt: createdAt,
             updatedAt: now,
-            categories: categories.isEmpty ? [.anime] : categories,
+            categories: categories.isEmpty ? [.userCreated] : categories,
             sections: [section]
         )
     }
 
     private func generateSpotId(index: Int) -> String {
         "user-\(String(format: "%03d", index + 1))"
+    }
+
+    // MARK: - 編集キャンセル / 保存後リセット
+
+    /// 編集をキャンセルし、元のコースデータに戻す
+    func reloadOriginalData() {
+        guard case .edit = mode, let original = originalCourse else { return }
+        title = original.title
+        summary = original.summary ?? ""
+        recognitionRadiusMeters = original.recognitionRadiusMeters
+        allowRetroactive = original.allowRetroactive
+        isEnabled = original.isEnabled
+        categories = original.categories
+        localCoverImagePath = original.localCoverImagePath
+        coverImageUrl = original.coverImageUrl
+        coverImage = original.localCoverImagePath.flatMap { LocalImageStorage.shared.load(from: $0) }
+        spots = original.spots.map { Self.makeEditingSpot(from: $0) }
+    }
+
+    /// 保存後に didSave をリセットし、次回編集の差分検知を正常化する（edit モード用）
+    func resetAfterSave() {
+        didSave = false
+        guard case .edit(let courseId) = mode else { return }
+        do {
+            originalCourse = try repo.fetch(id: courseId)
+        } catch {
+            Logger.error("コース再読み込み失敗: \(error)")
+        }
+    }
+
+    /// 新規作成保存後に edit モードへ遷移し、閲覧モードで表示できるようにする
+    func resetAfterCreateSave() {
+        guard let id = savedCourseId else { return }
+        didSave = false
+        mode = .edit(courseId: id)
+        do {
+            originalCourse = try repo.fetch(id: id)
+        } catch {
+            Logger.error("作成後のコース再読み込み失敗: \(error)")
+        }
     }
 
     // MARK: - スポット操作

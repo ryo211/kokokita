@@ -112,7 +112,7 @@ private struct PilgrimageBottomBar: View {
                     items: [
                         SliderTabBarItem(id: PilgrimageTab.home, icon: "house.fill", title: L.Tab.home),
                         SliderTabBarItem(id: PilgrimageTab.map, icon: "map", title: L.Tab.course),
-                        SliderTabBarItem(id: PilgrimageTab.myList, icon: "person.text.rectangle", title: L.Tab.myList),
+                        SliderTabBarItem(id: PilgrimageTab.myList, icon: "plus.square.on.square", title: L.Tab.create),
                     ],
                     current: current,
                     onSelect: onSelect,
