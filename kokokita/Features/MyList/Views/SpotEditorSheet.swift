@@ -106,6 +106,9 @@ struct SpotEditorSheet: View {
                     // 通常モード：地図 + 下エリア
                     VStack(spacing: 0) {
                         mapArea
+                            // キーボード表示中も地図の高さを固定するため
+                            // ignoresSafeArea(.keyboard) を GeometryReader に適用し
+                            // geo.size.height がキーボードで変化しないようにしている
                             .frame(height: geo.size.height * 0.50)
                         Divider()
                         bottomArea
@@ -118,6 +121,9 @@ struct SpotEditorSheet: View {
                 }
                 .animation(.easeInOut(duration: 0.25), value: isSearching)
             }
+            // キーボード表示/非表示で GeometryReader のサイズが変わらないようにする
+            // → 地図フレームが安定し、キーボード操作時の地図カメラ再レイアウトを防ぐ
+            .ignoresSafeArea(.keyboard)
             .navigationTitle(isSearching ? "" : navigationTitle)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -515,6 +521,8 @@ struct SpotEditorSheet: View {
                 }
             }
         }
+        // スワイプでキーボードをインタラクティブに閉じられるようにする
+        .scrollDismissesKeyboard(.interactively)
         .animation(.spring(response: 0.35, dampingFraction: 0.85), value: hasValidLocation)
     }
 
@@ -828,8 +836,8 @@ struct SpotEditorSheet: View {
 
     private func commitSave() {
         let existingId: UUID?
-        let existingPath: String?
         let existingUrl: String?
+        var existingPath: String?
 
         switch mode {
         case .create:
@@ -838,6 +846,13 @@ struct SpotEditorSheet: View {
             existingId = spot.existingId
             existingPath = spot.localCoverImagePath
             existingUrl = spot.coverImageUrl
+        }
+
+        // 画像が新たに選択された場合（imagePickerItem が設定済み）は既存パスを nil にする
+        // → buildSpots が新画像をディスクに保存する
+        // 画像がクリアされた場合も nil にする → 古いパスが引き継がれない
+        if imagePickerItem != nil || spotImage == nil {
+            existingPath = nil
         }
 
         var result = EditingSpot(

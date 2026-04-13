@@ -113,13 +113,11 @@ struct CourseDetailView: View {
             reloadCourse()
         }
         .toolbar {
-            if course.summary != nil {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button {
-                        showSummary = true
-                    } label: {
-                        Image(systemName: "info.circle")
-                    }
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button {
+                    showSummary = true
+                } label: {
+                    Image(systemName: "info.circle")
                 }
             }
         }
@@ -277,15 +275,21 @@ struct CourseDetailView: View {
     @ViewBuilder
     private var leaderLineOverlay: some View {
         if let spotPoint = selectedSpotScreenPoint,
-           let spot = course.spots.first(where: { $0.id == selectedSpotId }),
-           let urlStr = spot.coverImageUrl,
-           let url = URL(string: urlStr) {
-            SpotLeaderLineView(spotPoint: spotPoint, imageUrl: url) {
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    expandedImageUrl = url
+           let spot = course.spots.first(where: { $0.id == selectedSpotId }) {
+            // ローカル保存画像 → リモートURL の順で優先
+            let localImage = spot.localCoverImagePath.flatMap { LocalImageStorage.shared.load(from: $0) }
+            let remoteUrl = spot.coverImageUrl.flatMap { URL(string: $0) }
+
+            if localImage != nil || remoteUrl != nil {
+                SpotLeaderLineView(spotPoint: spotPoint, localImage: localImage, imageUrl: remoteUrl) {
+                    if let url = remoteUrl {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            expandedImageUrl = url
+                        }
+                    }
                 }
+                .transition(.opacity)
             }
-            .transition(.opacity)
         }
     }
 
@@ -744,7 +748,7 @@ private struct SpotListRowView: View {
                         Text(spot.name)
                             .font(.body)
 
-                        if spot.coverImageUrl != nil {
+                        if spot.coverImageUrl != nil || spot.localCoverImagePath != nil {
                             Image(systemName: "camera")
                                 .font(.caption)
                                 .foregroundStyle(Color.secondary)
@@ -949,7 +953,10 @@ private struct SpotDetailExpandedView: View {
 /// スポットのスクリーン座標から右上方向にリーダーライン（指示棒）を伸ばし、画像を表示する
 private struct SpotLeaderLineView: View {
     let spotPoint: CGPoint
-    let imageUrl: URL
+    /// ローカル保存画像（優先）
+    var localImage: UIImage? = nil
+    /// リモート画像URL（ローカルがない場合にフォールバック）
+    var imageUrl: URL? = nil
     var onImageTap: () -> Void = {}
 
     private let imgW: CGFloat = 110
@@ -998,26 +1005,37 @@ private struct SpotLeaderLineView: View {
                 }
                 .allowsHitTesting(false)
 
-                // スポット画像
-                AsyncImage(url: imageUrl) { phase in
-                    switch phase {
-                    case .success(let image):
-                        image
+                // スポット画像（ローカル優先、なければリモートURL）
+                Group {
+                    if let uiImage = localImage {
+                        Image(uiImage: uiImage)
                             .resizable()
                             .scaledToFill()
                             .frame(width: imgW, height: imgH)
                             .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
                             .shadow(color: .black.opacity(0.3), radius: 6, x: 0, y: 2)
-                    case .empty:
-                        RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .fill(.regularMaterial)
-                            .frame(width: imgW, height: imgH)
-                            .overlay(ProgressView().controlSize(.small))
-                            .shadow(color: .black.opacity(0.15), radius: 6, x: 0, y: 2)
-                    case .failure:
-                        EmptyView()
-                    @unknown default:
-                        EmptyView()
+                    } else if let url = imageUrl {
+                        AsyncImage(url: url) { phase in
+                            switch phase {
+                            case .success(let image):
+                                image
+                                    .resizable()
+                                    .scaledToFill()
+                                    .frame(width: imgW, height: imgH)
+                                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                                    .shadow(color: .black.opacity(0.3), radius: 6, x: 0, y: 2)
+                            case .empty:
+                                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                    .fill(.regularMaterial)
+                                    .frame(width: imgW, height: imgH)
+                                    .overlay(ProgressView().controlSize(.small))
+                                    .shadow(color: .black.opacity(0.15), radius: 6, x: 0, y: 2)
+                            case .failure:
+                                EmptyView()
+                            @unknown default:
+                                EmptyView()
+                            }
+                        }
                     }
                 }
                 .position(imgCenter)
@@ -1039,8 +1057,15 @@ private struct CourseSummarySheet: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
-                    // カバー画像
-                    if let urlStr = course.coverImageUrl, let url = URL(string: urlStr) {
+                    // カバー画像（ローカル優先、なければリモートURL）
+                    if let uiImage = course.localCoverImagePath.flatMap({ LocalImageStorage.shared.load(from: $0) }) {
+                        Image(uiImage: uiImage)
+                            .resizable()
+                            .scaledToFill()
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 200)
+                            .clipped()
+                    } else if let urlStr = course.coverImageUrl, let url = URL(string: urlStr) {
                         AsyncImage(url: url) { phase in
                             if case .success(let image) = phase {
                                 image

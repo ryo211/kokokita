@@ -57,9 +57,36 @@ final class CourseListStore {
     }
 
     /// コースを削除する
+    /// - 自作コース（isUserCreated）: isEnabled = false に設定するだけ（マイリストには残す）
+    /// - それ以外（bundled / downloaded）: 物理削除
     func delete(_ courseId: UUID) async {
         do {
-            try repo.delete(courseId)
+            if let course = try repo.fetch(id: courseId), course.isUserCreated {
+                // 自作コースはコース一覧から非表示にするだけで実体は残す
+                let disabled = Course(
+                    id: course.id,
+                    courseType: course.courseType,
+                    title: course.title,
+                    summary: course.summary,
+                    source: course.source,
+                    isUserCreated: course.isUserCreated,
+                    version: course.version,
+                    recognitionRadiusMeters: course.recognitionRadiusMeters,
+                    everEnabled: course.everEnabled,
+                    isEnabled: false,
+                    allowRetroactive: course.allowRetroactive,
+                    detailUrl: course.detailUrl,
+                    coverImageUrl: course.coverImageUrl,
+                    localCoverImagePath: course.localCoverImagePath,
+                    createdAt: course.createdAt,
+                    updatedAt: Date(),
+                    categories: course.categories,
+                    sections: course.sections
+                )
+                try repo.save(disabled)
+            } else {
+                try repo.delete(courseId)
+            }
             courses.removeAll { $0.id == courseId }
             NotificationCenter.default.post(name: .courseChanged, object: nil)
         } catch {

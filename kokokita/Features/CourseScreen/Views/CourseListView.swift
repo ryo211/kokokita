@@ -142,8 +142,14 @@ private struct CourseRowView: View {
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
             // サムネイル
+            // ローカル保存画像 → リモートURL → プレースホルダーの順で優先
             Group {
-                if let urlStr = course.coverImageUrl, let url = URL(string: urlStr) {
+                if let path = course.localCoverImagePath,
+                   let uiImage = LocalImageStorage.shared.load(from: path) {
+                    Image(uiImage: uiImage)
+                        .resizable()
+                        .scaledToFill()
+                } else if let urlStr = course.coverImageUrl, let url = URL(string: urlStr) {
                     AsyncImage(url: url) { phase in
                         if case .success(let image) = phase {
                             image.resizable().scaledToFill()
