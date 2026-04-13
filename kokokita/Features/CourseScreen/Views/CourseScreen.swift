@@ -12,7 +12,7 @@ struct CourseScreen: View {
                 .navigationDestination(for: UUID.self) { courseId in
                     if let course = store.courses.first(where: { $0.id == courseId }) {
                         // courseListStore を渡し、詳細を開いたタイミングで遡り判定シートを表示
-                        CourseDetailView(course: course, courseListStore: store)
+                        CourseDetailView(course: course, courseListStore: store, showSummaryOnAppear: true)
                     }
                 }
         }

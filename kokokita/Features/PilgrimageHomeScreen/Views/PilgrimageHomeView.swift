@@ -10,6 +10,8 @@ struct PilgrimageHomeView: View {
     @State private var isRefreshingNearbySpots = false
     @State private var showSettings = false
     @State private var showHowToUse = false
+    @State private var selectedCourseIndex = 0
+    @State private var selectedCourseDetailRoute: SelectedCourseRoute?
 
     // MARK: - Derived Data
 
@@ -96,10 +98,14 @@ struct PilgrimageHomeView: View {
             .task {
                 await store.load()
                 userLocation = CLLocationManager().location
+                normalizeSelectedCourseIndex()
             }
             .onReceive(NotificationCenter.default.publisher(for: .courseChanged)) { _ in
                 Task { await store.load() }
                 userLocation = CLLocationManager().location
+            }
+            .onChange(of: store.courses) { _, _ in
+                normalizeSelectedCourseIndex()
             }
             // コース一覧・コース詳細（スポット指定）への遷移
             .navigationDestination(for: PilgrimageHomeRoute.self) { route in
@@ -113,9 +119,9 @@ struct PilgrimageHomeView: View {
                 }
             }
             // コース詳細への遷移（CourseListView が非ルートのためここで処理）
-            .navigationDestination(for: UUID.self) { courseId in
-                if let course = store.courses.first(where: { $0.id == courseId }) {
-                    CourseDetailView(course: course)
+            .navigationDestination(item: $selectedCourseDetailRoute) { route in
+                if let course = store.courses.first(where: { $0.id == route.id }) {
+                    CourseDetailView(course: course, showSummaryOnAppear: true)
                 }
             }
         }
@@ -153,60 +159,32 @@ struct PilgrimageHomeView: View {
     private var mainContent: some View {
         ScrollView {
             VStack(spacing: 0) {
-                // ① ヒーローカード
-                if let top = topCourse {
-                    NavigationLink(value: top.id) {
-                        HeroCard(course: top)
-                    }
-                    .buttonStyle(.plain)
-                    .padding(.horizontal, 16)
-                    .padding(.top, 16)
-                    .padding(.bottom, 28)
-                }
-
-                // ② コース一覧（横スクロール）
+                // ① コース一覧
                 courseScrollSection
                     .padding(.bottom, 28)
 
-                // ③ 近くのスポット
+                // ② 近くのスポット
                 nearbySection
                     .padding(.bottom, 28)
 
-                // ④ 最近の達成
+                // ③ 最近の達成
                 recentSection
                     .padding(.bottom, 32)
             }
         }
     }
 
-    // MARK: - ② コース横スクロール
+    // MARK: - ① コース横スクロール
 
     private var courseScrollSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Text(L.PilgrimageHome.coursesTitle)
-                    .font(.headline)
-                    .padding(.leading, 16)
-                Spacer()
-                NavigationLink(value: PilgrimageHomeRoute.courseList) {
-                    Text(L.PilgrimageHome.seeAll)
-                        .font(.subheadline)
-                        .foregroundStyle(.indigo)
+        VStack(alignment: .leading, spacing: 0) {
+            CourseSelectionCarousel(
+                courses: store.courses,
+                selectedIndex: $selectedCourseIndex,
+                onCourseTap: { course in
+                    selectedCourseDetailRoute = SelectedCourseRoute(id: course.id)
                 }
-                .padding(.trailing, 16)
-            }
-
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 12) {
-                    ForEach(store.courses) { course in
-                        NavigationLink(value: course.id) {
-                            CourseCard(course: course)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-                .padding(.horizontal, 16)
-            }
+            )
         }
     }
 
@@ -317,195 +295,372 @@ struct PilgrimageHomeView: View {
 
         isRefreshingNearbySpots = false
     }
+
+    private func normalizeSelectedCourseIndex() {
+        guard !store.courses.isEmpty else {
+            selectedCourseIndex = 0
+            return
+        }
+        selectedCourseIndex = ((selectedCourseIndex % store.courses.count) + store.courses.count) % store.courses.count
+    }
 }
 
-// MARK: - ① ヒーローカード
+// MARK: - ① コース選択カルーセル
 
-private struct HeroCard: View {
+private struct CourseSelectionCarousel: View {
+    let courses: [Course]
+    @Binding var selectedIndex: Int
+    let onCourseTap: (Course) -> Void
+
+    @GestureState private var dragOffset: CGFloat = 0
+
+    var body: some View {
+        GeometryReader { proxy in
+            let width = proxy.size.width
+            let centerCardWidth = min(width * 0.68, 320)
+            let cardSpacing = centerCardWidth * 0.72
+
+            ZStack {
+                CourseCarouselStage()
+
+                if courses.count == 1, let course = courses.first {
+                    Button {
+                        onCourseTap(course)
+                    } label: {
+                        CourseCarouselCard(course: course, style: .focused)
+                            .frame(width: centerCardWidth)
+                    }
+                    .buttonStyle(.plain)
+                } else if !courses.isEmpty {
+                    ForEach(Array(courses.enumerated()), id: \.element.id) { index, course in
+                        let progress = relativeProgress(for: index, dragOffset: dragOffset, cardSpacing: cardSpacing)
+
+                        if abs(progress) < 2.4 {
+                            Button {
+                                handleTap(for: index, course: course)
+                            } label: {
+                                CourseCarouselCard(
+                                    course: course,
+                                    style: abs(progress) < 0.35 ? .focused : .side
+                                )
+                                .frame(width: centerCardWidth)
+                            }
+                            .buttonStyle(.plain)
+                            .allowsHitTesting(abs(dragOffset) < 8)
+                            .scaleEffect(cardScale(for: progress))
+                            .rotationEffect(.degrees(cardTilt(for: progress)))
+                            .rotation3DEffect(.degrees(cardYaw(for: progress)), axis: (x: 0, y: 1, z: 0), perspective: 0.8)
+                            .offset(x: cardXOffset(for: progress, spacing: cardSpacing), y: cardYOffset(for: progress))
+                            .opacity(cardOpacity(for: progress))
+                            .zIndex(cardZIndex(for: progress))
+                        }
+                    }
+                }
+            }
+            .padding(.horizontal, 16)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .contentShape(Rectangle())
+            .highPriorityGesture(carouselGesture(cardSpacing: cardSpacing))
+            .animation(.spring(response: 0.36, dampingFraction: 0.82), value: selectedIndex)
+            .animation(.spring(response: 0.28, dampingFraction: 0.88), value: dragOffset)
+        }
+        .frame(height: 310)
+        .padding(.top, 4)
+    }
+
+    private func handleTap(for index: Int, course: Course) {
+        if index == wrappedIndex(selectedIndex) {
+            onCourseTap(course)
+        } else {
+            withAnimation(.spring(response: 0.36, dampingFraction: 0.82)) {
+                selectedIndex = index
+            }
+        }
+    }
+
+    private func carouselGesture(cardSpacing: CGFloat) -> some Gesture {
+        DragGesture(minimumDistance: 10)
+            .updating($dragOffset) { value, state, _ in
+                state = value.translation.width
+            }
+            .onEnded { value in
+                let rawStep = -(value.predictedEndTranslation.width / cardSpacing)
+                let clampedStep = max(-1, min(1, Int(round(rawStep))))
+
+                withAnimation(.spring(response: 0.38, dampingFraction: 0.82)) {
+                    shiftSelection(by: clampedStep)
+                }
+            }
+    }
+
+    private func shiftSelection(by delta: Int) {
+        guard !courses.isEmpty else { return }
+        selectedIndex = wrappedIndex(selectedIndex + delta)
+    }
+
+    private func wrappedIndex(_ index: Int) -> Int {
+        guard !courses.isEmpty else { return 0 }
+        return ((index % courses.count) + courses.count) % courses.count
+    }
+
+    private func relativeProgress(for index: Int, dragOffset: CGFloat, cardSpacing: CGFloat) -> CGFloat {
+        let relativeIndex = wrappedDistance(from: selectedIndex, to: index)
+        let dragProgress = dragOffset / cardSpacing
+        return CGFloat(relativeIndex) + dragProgress
+    }
+
+    private func wrappedDistance(from current: Int, to target: Int) -> Int {
+        guard !courses.isEmpty else { return 0 }
+        let forward = (target - current + courses.count) % courses.count
+        let backward = forward - courses.count
+        return abs(forward) <= abs(backward) ? forward : backward
+    }
+
+    private func cardXOffset(for progress: CGFloat, spacing: CGFloat) -> CGFloat {
+        let sign: CGFloat = progress >= 0 ? 1 : -1
+        let magnitude = min(abs(progress), 2.1)
+        let eased = pow(magnitude, 0.92)
+        return sign * eased * spacing
+    }
+
+    private func cardYOffset(for progress: CGFloat) -> CGFloat {
+        12 + min(abs(progress), 1.8) * 26
+    }
+
+    private func cardScale(for progress: CGFloat) -> CGFloat {
+        let distance = min(abs(progress), 2)
+        return max(0.72, 1 - distance * 0.16)
+    }
+
+    private func cardOpacity(for progress: CGFloat) -> Double {
+        let distance = min(abs(progress), 2)
+        return max(0.26, 1 - Double(distance) * 0.32)
+    }
+
+    private func cardTilt(for progress: CGFloat) -> Double {
+        Double(progress) * 9
+    }
+
+    private func cardYaw(for progress: CGFloat) -> Double {
+        Double(progress) * -26
+    }
+
+    private func cardZIndex(for progress: CGFloat) -> Double {
+        10 - Double(abs(progress))
+    }
+}
+
+private struct CourseCarouselStage: View {
+    var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 28, style: .continuous)
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            Color.indigo.opacity(0.16),
+                            Color.cyan.opacity(0.08),
+                            Color.white.opacity(0.7)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+
+            RoundedRectangle(cornerRadius: 28, style: .continuous)
+                .strokeBorder(.white.opacity(0.65), lineWidth: 1.2)
+
+            Circle()
+                .fill(Color.indigo.opacity(0.14))
+                .frame(width: 180, height: 180)
+                .offset(x: -120, y: -80)
+
+            Circle()
+                .fill(Color.cyan.opacity(0.11))
+                .frame(width: 140, height: 140)
+                .offset(x: 130, y: 90)
+        }
+        .shadow(color: .indigo.opacity(0.08), radius: 18, x: 0, y: 8)
+    }
+}
+
+private struct CourseCarouselCard: View {
+    enum Style: Equatable {
+        case focused
+        case side
+
+        var cardHeight: CGFloat {
+            switch self {
+            case .focused: 236
+            case .side: 210
+            }
+        }
+
+        var titleFont: Font {
+            switch self {
+            case .focused: .title3.weight(.bold)
+            case .side: .headline.weight(.bold)
+            }
+        }
+
+        var detailOpacity: Double {
+            switch self {
+            case .focused: 1
+            case .side: 0.9
+            }
+        }
+
+        var titleLineLimit: Int {
+            switch self {
+            case .focused: 2
+            case .side: 3
+            }
+        }
+
+        var contentPadding: CGFloat {
+            switch self {
+            case .focused: 18
+            case .side: 16
+            }
+        }
+
+        var progressScale: CGFloat {
+            switch self {
+            case .focused: 2.2
+            case .side: 1.8
+            }
+        }
+    }
+
     let course: Course
+    let style: Style
 
     var body: some View {
         ZStack(alignment: .bottomLeading) {
-            // ── 背景: カバー画像 or プレースホルダー ──
-            heroBackground
+            CourseArtwork(course: course)
 
-            // ── グラデーションオーバーレイ ──
             LinearGradient(
                 stops: [
                     .init(color: .clear, location: 0.0),
-                    .init(color: .black.opacity(0.25), location: 0.40),
+                    .init(color: .black.opacity(0.22), location: 0.40),
                     .init(color: .black.opacity(0.82), location: 1.0)
                 ],
                 startPoint: .top,
                 endPoint: .bottom
             )
 
-            // ── 画像に重なるテキスト・進捗エリア ──
             VStack(alignment: .leading, spacing: 10) {
-                // カテゴリタグ（白抜き半透明カプセル）
                 if !course.categories.isEmpty {
                     HStack(spacing: 6) {
-                        ForEach(course.categories, id: \.rawValue) { cat in
-                            HStack(spacing: 3) {
+                        ForEach(Array(course.categories.prefix(style == .focused ? 3 : 2)), id: \.rawValue) { cat in
+                            HStack(spacing: 4) {
                                 Image(systemName: cat.iconName)
                                 Text(cat.displayName)
                             }
                             .font(.caption2.weight(.semibold))
                             .foregroundStyle(.white)
                             .padding(.horizontal, 8)
-                            .padding(.vertical, 3)
-                            .background(.white.opacity(0.2), in: Capsule())
+                            .padding(.vertical, 4)
+                            .background(.white.opacity(0.18), in: Capsule())
                         }
                     }
                 }
 
-                // コース名
                 Text(course.title)
-                    .font(.title3.bold())
+                    .font(style.titleFont)
                     .foregroundStyle(.white)
-                    .lineLimit(2)
+                    .lineLimit(style.titleLineLimit)
                     .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 1)
 
-                // 進捗テキスト
                 HStack {
                     Text(L.PilgrimageHome.progressFormat(course.checkedInCount, course.totalSpotCount))
-                        .font(.caption)
-                        .foregroundStyle(.white.opacity(0.85))
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(.white.opacity(0.84 * style.detailOpacity))
                     Spacer()
-                    Text("\(Int(course.completionRate * 100))%")
+                    Text(course.isCompleted ? L.Course.completed : "\(Int(course.completionRate * 100))%")
                         .font(.caption.bold())
                         .foregroundStyle(course.isCompleted ? Color.green : .white)
                 }
 
-                // プログレスバー（太めで視認しやすく）
                 ProgressView(value: course.completionRate)
                     .progressViewStyle(.linear)
                     .tint(course.isCompleted ? .green : .white)
-                    .scaleEffect(y: 2.8, anchor: .center)
-                    // トラック（背景）を半透明白に
+                    .scaleEffect(y: style.progressScale, anchor: .center)
                     .environment(\.colorScheme, .dark)
             }
-            .padding(.horizontal, 20)
-            .padding(.top, 20)
-            .padding(.bottom, 28)
+            .padding(style.contentPadding)
+            .padding(.bottom, style == .focused ? 6 : 2)
         }
-        .frame(maxWidth: .infinity)
-        .frame(height: 220)
-        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-        .shadow(color: .black.opacity(0.12), radius: 12, x: 0, y: 4)
-    }
-
-    @ViewBuilder
-    private var heroBackground: some View {
-        if let urlStr = course.coverImageUrl, let url = URL(string: urlStr) {
-            // Color.clear がZStack内でフル展開し、overlay経由でAsyncImageを正確なサイズに収める
-            Color.clear
-                .overlay {
-                    AsyncImage(url: url) { phase in
-                        if case .success(let image) = phase {
-                            image
-                                .resizable()
-                                .scaledToFill()
-                        } else {
-                            placeholderBackground
-                        }
-                    }
-                }
-                .clipped()
-        } else {
-            placeholderBackground
+        .frame(height: style.cardHeight)
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .strokeBorder(.white.opacity(0.18), lineWidth: 1.1)
         }
-    }
-
-    private var placeholderBackground: some View {
-        LinearGradient(
-            colors: [Color.indigo.opacity(0.5), Color.indigo.opacity(0.25)],
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
-        )
+        .shadow(color: .black.opacity(style == .focused ? 0.18 : 0.1), radius: style == .focused ? 18 : 10, x: 0, y: style == .focused ? 10 : 6)
     }
 }
 
-// MARK: - ② コースカード（横スクロール用）
-
-private struct CourseCard: View {
+private struct CourseArtwork: View {
     let course: Course
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            // カバー画像エリア（リモート画像 or カテゴリアイコンフォールバック）
-            Group {
-                if let urlStr = course.coverImageUrl, let url = URL(string: urlStr) {
-                    AsyncImage(url: url) { phase in
-                        switch phase {
-                        case .success(let image):
-                            image
-                                .resizable()
-                                .scaledToFill()
-                                .frame(height: 80)
-                                .clipped()
-                                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                        default:
-                            courseIconPlaceholder
-                        }
+        ZStack {
+            if let urlStr = course.coverImageUrl, let url = URL(string: urlStr) {
+                AsyncImage(url: url) { phase in
+                    switch phase {
+                    case .success(let image):
+                        image
+                            .resizable()
+                            .scaledToFill()
+                    default:
+                        placeholder
                     }
-                } else {
-                    courseIconPlaceholder
                 }
+            } else {
+                placeholder
             }
-            .frame(height: 80)
 
-            VStack(alignment: .leading, spacing: 4) {
-                // コース名
-                Text(course.title)
-                    .font(.subheadline.bold())
-                    .lineLimit(2)
-                    .foregroundStyle(.primary)
-
-                // 代表カテゴリタグ（1件）
-                if let cat = course.categories.first {
-                    HStack(spacing: 3) {
-                        Image(systemName: cat.iconName)
-                        Text(cat.displayName)
-                    }
-                    .font(.caption2.weight(.medium))
-                    .foregroundStyle(.indigo)
-                    .padding(.horizontal, 7)
-                    .padding(.vertical, 3)
-                    .background(Color.indigo.opacity(0.1), in: Capsule())
-                }
-
-                // 達成数
-                Text("\(course.checkedInCount)/\(course.totalSpotCount)")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            .padding(.horizontal, 2)
+            LinearGradient(
+                stops: [
+                    .init(color: .clear, location: 0),
+                    .init(color: .black.opacity(0.08), location: 0.45),
+                    .init(color: .black.opacity(0.38), location: 1)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
         }
-        .frame(width: 140)
-        .padding(12)
-        .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(.regularMaterial)
-                .shadow(color: .black.opacity(0.06), radius: 6, x: 0, y: 2)
-        )
+        .clipped()
     }
 
-    // カテゴリアイコンのプレースホルダー
-    private var courseIconPlaceholder: some View {
+    private var placeholder: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(Color.indigo.opacity(0.12))
-            VStack(spacing: 4) {
-                Image(systemName: course.isCompleted ? "checkmark.seal.fill" : (course.categories.first?.iconName ?? "map"))
-                    .font(.title2)
-                    .foregroundStyle(.indigo.opacity(0.6))
-                if let cat = course.categories.first {
-                    Text(course.isCompleted ? L.Course.completed : cat.displayName)
-                        .font(.caption2.weight(.medium))
-                        .foregroundStyle(.indigo.opacity(0.6))
-                }
+            LinearGradient(
+                colors: [
+                    Color.indigo.opacity(0.85),
+                    Color.cyan.opacity(0.68)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+
+            Circle()
+                .fill(.white.opacity(0.14))
+                .frame(width: 120, height: 120)
+                .offset(x: -40, y: -24)
+
+            Circle()
+                .fill(.white.opacity(0.1))
+                .frame(width: 92, height: 92)
+                .offset(x: 72, y: 38)
+
+            VStack(spacing: 8) {
+                Image(systemName: course.isCompleted ? "checkmark.seal.fill" : (course.categories.first?.iconName ?? "map.fill"))
+                    .font(.system(size: 34, weight: .bold))
+                Text(course.categories.first.map { course.isCompleted ? L.Course.completed : $0.displayName } ?? "Pilgrimage")
+                    .font(.caption.weight(.bold))
             }
+            .foregroundStyle(.white.opacity(0.92))
         }
     }
 }
@@ -579,6 +734,10 @@ private struct RecentAchievementRow: View {
     }
 }
 
+private struct SelectedCourseRoute: Identifiable, Hashable {
+    let id: UUID
+}
+
 // MARK: - ナビゲーションルート
 
 private enum PilgrimageHomeRoute: Hashable {
@@ -586,4 +745,3 @@ private enum PilgrimageHomeRoute: Hashable {
     /// コース詳細（指定スポットをフォーカス）
     case courseDetail(courseId: UUID, spotId: UUID)
 }
-

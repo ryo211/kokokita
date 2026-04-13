@@ -22,6 +22,7 @@ struct CourseDetailView: View {
     // IDを別途保持することでナビゲーション遷移時のキャプチャに依存しない
     private let courseId: UUID
     var showTitle: Bool = true
+    private let showSummaryOnAppear: Bool
     @State private var course: Course
 
     @State private var selectedSpotId: UUID? = nil
@@ -43,10 +44,17 @@ struct CourseDetailView: View {
     /// 進捗バースワイプの二重発火防止フラグ
     @State private var progressSwipeConsumed = false
 
-    init(course: Course, showTitle: Bool = true, initialSelectedSpotId: UUID? = nil, courseListStore: CourseListStore? = nil) {
+    init(
+        course: Course,
+        showTitle: Bool = true,
+        initialSelectedSpotId: UUID? = nil,
+        courseListStore: CourseListStore? = nil,
+        showSummaryOnAppear: Bool = false
+    ) {
         self.showTitle = showTitle
         self.courseId = course.id
         self.courseListStore = courseListStore
+        self.showSummaryOnAppear = showSummaryOnAppear
         _course = State(initialValue: course)
         _selectedSpotId = State(initialValue: initialSelectedSpotId)
         if let spotId = initialSelectedSpotId,
@@ -101,6 +109,9 @@ struct CourseDetailView: View {
             reloadCourse()
             // ハイライトを解除（詳細を開いたことで「新規」状態を消費）
             courseListStore?.newlyAddedCourseIds.remove(courseId)
+            if showSummaryOnAppear {
+                showSummary = true
+            }
             // everEnabled == false のコースは遡り判定未実施 → 直接実行
             if !course.everEnabled {
                 await performRetroactiveRecognition()
