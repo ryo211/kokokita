@@ -413,6 +413,8 @@
 "manualEntry.editTitle" = "Edit Manual Entry";
 "manualEntry.badge" = "Manual";
 "manualEntry.importFromPhoto" = "Import from Photo";
+"manualEntry.importFromPhotoWithDateTime" = "Import from Photo (Location & Date)";
+"manualEntry.importedFromPhotoLabel" = "Date imported from photo";
 "manualEntry.searchLocation" = "Search Location";
 "manualEntry.tapOnMap" = "Select on Map";
 "manualEntry.dateTime" = "Date & Time";

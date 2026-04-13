@@ -22,10 +22,24 @@ struct ManualEntryScreen: View {
     // フルスクリーン写真表示
     @State private var fullScreenIndex: Int? = nil
     @State private var photoDragOffset: CGFloat = 0
-    @State private var step1ScrollToBottomTrigger = 0
     @State private var showManualEntryInfoSheet = false
 
-    private let step1BottomAnchorId = "manualEntryStep1BottomAnchor"
+    // MARK: - Step1 地図UI 状態
+    @State private var mapCameraPosition: MapCameraPosition = .region(
+        MKCoordinateRegion(
+            center: CLLocationCoordinate2D(latitude: 35.6812, longitude: 139.7671),
+            span: MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1)
+        )
+    )
+    @State private var mapCenterCoordinate = CLLocationCoordinate2D(latitude: 35.6812, longitude: 139.7671)
+    @State private var nearbyPOIs: [MKMapItem] = []
+    @State private var isLoadingPOI = false
+    @State private var isSearchingLocation = false
+    @State private var locationSearchText = ""
+    @State private var locationSearchResults: [MKMapItem] = []
+    @State private var isLocationSearchLoading = false
+    @State private var showCoordinateInput = false
+    @FocusState private var locationSearchFocused: Bool
 
     // ラベル/グループ/メンバー候補
     @State private var labelOptions: [LabelTag] = []
@@ -73,6 +87,24 @@ struct ManualEntryScreen: View {
             .alert(item: alertBinding) { alertView(for: $0) }
             .sheet(isPresented: $showPhotoImport) { photoImportSheet }
             .sheet(isPresented: $showCamera) { cameraSheet }
+            .sheet(isPresented: $showCoordinateInput) {
+                ManualEntryCoordinateInputSheet { lat, lon in
+                    let coord = CLLocationCoordinate2D(latitude: lat, longitude: lon)
+                    store.latitude = lat
+                    store.longitude = lon
+                    store.addressLine = nil
+                    withAnimation {
+                        mapCameraPosition = .region(MKCoordinateRegion(
+                            center: coord,
+                            span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
+                        ))
+                    }
+                    Task {
+                        await reverseGeocodeForStore(coordinate: coord)
+                        await searchNearbyPOIForStore(at: coord)
+                    }
+                }
+            }
             .sheet(isPresented: $showManualEntryInfoSheet) {
                 ManualEntryInfoSheet()
                     .iPadSheetSize(iPhoneDetents: [.medium, .large])
@@ -82,8 +114,30 @@ struct ManualEntryScreen: View {
             .task {
                 if let agg = editingAggregate {
                     store.loadExisting(agg)
+                    // 編集モード: 既存座標に地図を合わせる
+                    if let lat = store.latitude, let lon = store.longitude {
+                        let coord = CLLocationCoordinate2D(latitude: lat, longitude: lon)
+                        mapCameraPosition = .region(MKCoordinateRegion(
+                            center: coord,
+                            span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
+                        ))
+                        mapCenterCoordinate = coord
+                        await searchNearbyPOIForStore(at: coord)
+                    }
                 }
                 await loadTaxonomyOptions()
+            }
+            // 写真取り込み等の外部変更で座標が更新された場合に地図を追従
+            .onChange(of: store.latitude) { _, lat in
+                guard let lat, let lon = store.longitude else { return }
+                let coord = CLLocationCoordinate2D(latitude: lat, longitude: lon)
+                withAnimation {
+                    mapCameraPosition = .region(MKCoordinateRegion(
+                        center: coord,
+                        span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
+                    ))
+                }
+                Task { await searchNearbyPOIForStore(at: coord) }
             }
             .safeAreaInset(edge: .bottom) {
                 footerButtons
@@ -131,183 +185,539 @@ struct ManualEntryScreen: View {
     // MARK: - Step 1: 日時と場所（必須項目）
 
     private var step1Content: some View {
-        ScrollViewReader { proxy in
-            ScrollView {
-                VStack(spacing: 16) {
-                    photoImportBanner
-                    dateTimeSection
-                    locationSectionHeader
-                    selectedLocationInfoView
-
-                    IntegratedLocationView(
-                        latitude: $store.latitude,
-                        longitude: $store.longitude,
-                        addressLine: $store.addressLine,
-                        placeName: $store.title,
-                        showSelectedLocationInfo: false, // 選択した場所の情報はScrollView内で表示
-                        onMapTapLocationSelected: {
-                            withAnimation(.easeInOut(duration: 0.25)) {
-                                step1ScrollToBottomTrigger += 1
-                            }
-                        }
-                    )
-                    .background(Color(.systemBackground))
-
-                    Color.clear
-                        .frame(height: 1)
-                        .id(step1BottomAnchorId)
+        GeometryReader { geo in
+            ZStack {
+                VStack(spacing: 0) {
+                    step1MapArea
+                        .frame(height: geo.size.height * 0.50)
+                    Divider()
+                    step1BottomArea
                 }
-                .padding(16)
-            }
-            .onChange(of: step1ScrollToBottomTrigger) { _, _ in
-                withAnimation(.easeInOut(duration: 0.25)) {
-                    proxy.scrollTo(step1BottomAnchorId, anchor: .bottom)
+                // インライン検索オーバーレイ
+                if isSearchingLocation {
+                    locationSearchOverlay
+                        .transition(.move(edge: .top).combined(with: .opacity))
                 }
             }
+            .animation(.easeInOut(duration: 0.25), value: isSearchingLocation)
         }
+        // キーボード表示/非表示で地図高さが変わらないように固定
+        .ignoresSafeArea(.keyboard)
     }
 
-    /// 場所セクションのヘッダー（ラベルと警告メッセージ）
-    private var locationSectionHeader: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Text(L.ManualEntry.setLocation)
-                .font(.headline)
-                .foregroundStyle(.primary)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
+    // MARK: - Step1 地図エリア
 
-    /// 選択した場所の情報（ScrollView内に配置）
-    private var selectedLocationInfoView: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Image(systemName: "mappin.and.ellipse")
-                    .foregroundStyle(.orange)
-
-                VStack(alignment: .leading, spacing: 2) {
-                    if store.hasValidLocation {
-                        if !store.title.isEmpty {
-                            Text(store.title)
-                                .font(.subheadline.bold())
-                        }
-
-                        if let address = store.addressLine, !address.isEmpty {
-                            Text(address)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                                .lineLimit(2)
-                        }
-
-                        if let lat = store.latitude, let lon = store.longitude {
-                            Text(String(format: "%.5f, %.5f", lat, lon))
-                                .font(.caption2)
-                                .foregroundStyle(.secondary)
-                        }
-                    } else {
-                        VStack(alignment: .leading, spacing: 0) {
-                            Spacer(minLength: 0)
-                            Text(L.ManualEntry.locationRequired)
-                                .font(.caption)
-                                .foregroundStyle(.orange)
-                            Spacer(minLength: 0)
-                        }
-                        .frame(height: 29, alignment: .center)
+    private var step1MapArea: some View {
+        ZStack(alignment: .top) {
+            // 地図本体
+            Map(position: $mapCameraPosition) {
+                if store.hasValidLocation, let lat = store.latitude, let lon = store.longitude {
+                    let coord = CLLocationCoordinate2D(latitude: lat, longitude: lon)
+                    Annotation("", coordinate: coord, anchor: .bottom) {
+                        Image(systemName: "mappin.circle.fill")
+                            .font(.system(size: 32))
+                            .foregroundStyle(.orange)
+                            .shadow(radius: 4)
                     }
                 }
+            }
+            .mapStyle(.standard(emphasis: .muted))
+            .mapControls { MapCompass() }
+            .onMapCameraChange { ctx in
+                mapCenterCoordinate = ctx.region.center
+            }
+            // 照準（常時表示）
+            .overlay(alignment: .center) {
+                ZStack {
+                    Rectangle()
+                        .fill(Color.orange.opacity(0.6))
+                        .frame(width: 18, height: 1.5)
+                    Rectangle()
+                        .fill(Color.orange.opacity(0.6))
+                        .frame(width: 1.5, height: 18)
+                    Circle()
+                        .fill(Color.orange.opacity(0.8))
+                        .frame(width: 4, height: 4)
+                }
+                .allowsHitTesting(false)
+            }
 
-                Spacer()
-
-                // クリアボタン
-                if store.hasValidLocation {
-                    Button {
-                        clearLocation()
-                    } label: {
-                        Image(systemName: "xmark.circle.fill")
+            // 上部: 検索バー + 取り込みメニュー
+            HStack(spacing: 8) {
+                Button {
+                    withAnimation(.easeInOut(duration: 0.25)) { isSearchingLocation = true }
+                    locationSearchFocused = true
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "magnifyingglass")
+                            .font(.subheadline)
                             .foregroundStyle(.secondary)
-                            .imageScale(.medium)
+                        Text(L.ManualEntry.searchFieldPlaceholder)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                        Spacer()
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 9)
+                    .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+                }
+                .buttonStyle(.plain)
+
+                // 取り込みメニュー（写真 / 緯度経度）
+                Menu {
+                    Button {
+                        showPhotoImport = true
+                    } label: {
+                        // 写真取り込みは位置情報と日時の両方を取り込む旨を明示
+                        Label(L.ManualEntry.importFromPhotoWithDateTime, systemImage: "photo.on.rectangle")
+                    }
+                    Button {
+                        showCoordinateInput = true
+                    } label: {
+                        Label(L.SpotEditor.enterCoordinates, systemImage: "location.circle")
+                    }
+                } label: {
+                    Image(systemName: "arrow.down.to.line.circle.fill")
+                        .font(.system(size: 22, weight: .medium))
+                        .frame(width: 38, height: 38)
+                        .background(.regularMaterial, in: Circle())
+                        .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+                }
+                .menuStyle(.button)
+                .buttonStyle(.plain)
+            }
+            .padding(.horizontal, 12)
+            .padding(.top, 10)
+
+            // 下部: 場所バッジ + 「この場所を選択」ボタン
+            VStack(spacing: 0) {
+                Spacer()
+                HStack(alignment: .bottom) {
+                    // 場所バッジ（常時表示）
+                    Group {
+                        if store.hasValidLocation {
+                            locationBadge
+                        } else {
+                            HStack(spacing: 5) {
+                                Image(systemName: "mappin.slash")
+                                    .font(.system(size: 11))
+                                    .foregroundStyle(.orange)
+                                Text(L.ManualEntry.locationRequired)
+                                    .font(.caption2.weight(.medium))
+                                    .foregroundStyle(.orange)
+                            }
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 7)
+                            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                    .strokeBorder(Color.orange.opacity(0.4), lineWidth: 1)
+                            )
+                            .shadow(color: .orange.opacity(0.15), radius: 6, x: 0, y: 2)
+                        }
+                    }
+                    .animation(.spring(response: 0.3, dampingFraction: 0.8), value: store.hasValidLocation)
+
+                    Spacer()
+
+                    // 「この場所を選択」ボタン
+                    Button { selectMapCenterForStore() } label: {
+                        Text(L.SpotEditor.selectLocation)
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 8)
+                            .background(Color.orange, in: Capsule())
+                            .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
                     }
                     .buttonStyle(.plain)
                 }
+                .padding(.horizontal, 12)
+                .padding(.bottom, 12)
             }
         }
-        .padding()
-        .background(Color(.systemGray6))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 
-    /// 場所をクリア
+    /// 場所選択済みバッジ
+    private var locationBadge: some View {
+        HStack(alignment: .top, spacing: 6) {
+            VStack(alignment: .leading, spacing: 3) {
+                if let addr = store.addressLine, !addr.isEmpty {
+                    Text(addr)
+                        .font(.caption2.weight(.medium))
+                        .foregroundStyle(.primary)
+                        .lineLimit(2)
+                }
+                if let lat = store.latitude, let lon = store.longitude {
+                    Text(String(format: "%.5f, %.5f", lat, lon))
+                        .font(.system(size: 9, weight: .regular, design: .monospaced))
+                        .foregroundStyle(.secondary)
+                }
+            }
+            Image(systemName: "xmark.circle.fill")
+                .font(.system(size: 13))
+                .foregroundStyle(.secondary)
+                .onTapGesture { clearLocation() }
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 7)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .strokeBorder(Color.primary.opacity(0.08), lineWidth: 0.5)
+        )
+        .shadow(color: .black.opacity(0.12), radius: 6, x: 0, y: 2)
+        .frame(maxWidth: 220, alignment: .leading)
+    }
+
+    // MARK: - Step1 下エリア
+
+    private var step1BottomArea: some View {
+        ScrollView {
+            VStack(spacing: 0) {
+                // 近くの場所カルーセル
+                if store.hasValidLocation {
+                    step1POISection
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                    Divider().padding(.horizontal, 16)
+                }
+
+                // タイトル入力
+                HStack(spacing: 8) {
+                    Image(systemName: "pencil")
+                        .foregroundStyle(.orange)
+                        .frame(width: 20)
+                    TextField(L.VisitEdit.titlePlaceholder, text: $store.title)
+                        .font(.body)
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 14)
+
+                Divider().padding(.horizontal, 16)
+
+                // 日時設定
+                VStack(alignment: .leading, spacing: 0) {
+                    // 写真取り込み済みの場合: 取り込んだ日時バッジを表示
+                    if store.isPhotoImported {
+                        HStack(spacing: 10) {
+                            Image(systemName: "camera.fill")
+                                .font(.system(size: 13))
+                                .foregroundStyle(.orange)
+                                .frame(width: 20)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(L.ManualEntry.importedFromPhotoLabel)
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                                Text(store.timestampDisplay.formatted(.dateTime.year().month().day().hour().minute()))
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(.primary)
+                            }
+                            Spacer()
+                            Button {
+                                store.isPhotoImported = false
+                            } label: {
+                                Image(systemName: "xmark.circle.fill")
+                                    .foregroundStyle(.secondary)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 10)
+                        .background(Color.orange.opacity(0.08))
+                        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                .strokeBorder(Color.orange.opacity(0.25), lineWidth: 1)
+                        )
+                        .padding(.horizontal, 16)
+                        .padding(.top, 12)
+                        .padding(.bottom, 4)
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                    }
+
+                    // DatePicker（常時表示: 写真取り込み後も手動調整可）
+                    HStack(spacing: 8) {
+                        Image(systemName: "calendar")
+                            .foregroundStyle(.orange)
+                            .frame(width: 20)
+                        DatePicker(
+                            L.ManualEntry.dateTime,
+                            selection: $store.timestampDisplay,
+                            in: ...Date(),
+                            displayedComponents: [.date, .hourAndMinute]
+                        )
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 14)
+
+                    if !store.hasValidTimestamp {
+                        Text(L.ManualEntry.futureDateNotAllowed)
+                            .font(.caption)
+                            .foregroundStyle(.red)
+                            .padding(.leading, 52)
+                            .padding(.bottom, 8)
+                    }
+                }
+                .animation(.spring(response: 0.35, dampingFraction: 0.85), value: store.isPhotoImported)
+            }
+        }
+        .scrollDismissesKeyboard(.interactively)
+        .animation(.spring(response: 0.35, dampingFraction: 0.85), value: store.hasValidLocation)
+    }
+
+    private var step1POISection: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            if isLoadingPOI {
+                HStack(spacing: 8) {
+                    ProgressView().scaleEffect(0.7)
+                    Text(L.Confirmation.loadingPOI)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+            } else if !nearbyPOIs.isEmpty {
+                Text(L.SpotEditor.nearbyPlaces)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 16)
+                    .padding(.top, 10)
+
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(nearbyPOIs.prefix(8), id: \.self) { item in
+                            Button { selectNearbyPOIForStore(item) } label: {
+                                HStack(spacing: 5) {
+                                    Image(systemName: "mappin.circle.fill")
+                                        .foregroundStyle(.orange)
+                                        .font(.caption)
+                                    VStack(alignment: .leading, spacing: 1) {
+                                        Text(item.name ?? "")
+                                            .font(.caption.weight(.medium))
+                                            .foregroundStyle(.primary)
+                                            .lineLimit(1)
+                                        if let cat = item.pointOfInterestCategory?.localizedName {
+                                            Text(cat)
+                                                .font(.caption2)
+                                                .foregroundStyle(.secondary)
+                                                .lineLimit(1)
+                                        }
+                                    }
+                                }
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 6)
+                                .background(Color(.systemGray6))
+                                .clipShape(Capsule())
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 10)
+                }
+            }
+        }
+    }
+
+    // MARK: - 検索オーバーレイ
+
+    private var locationSearchOverlay: some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 10) {
+                Button { exitLocationSearch() } label: {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundStyle(.primary)
+                }
+                .buttonStyle(.plain)
+
+                ZStack(alignment: .trailing) {
+                    TextField(L.ManualEntry.searchFieldPlaceholder, text: $locationSearchText)
+                        .textFieldStyle(.plain)
+                        .font(.body)
+                        .focused($locationSearchFocused)
+                        .submitLabel(.search)
+                        .padding(.trailing, locationSearchText.isEmpty ? 0 : 24)
+                        .onSubmit {
+                            let q = locationSearchText.trimmingCharacters(in: .whitespacesAndNewlines)
+                            guard !q.isEmpty else { return }
+                            Task { await performLocationSearch(query: q) }
+                        }
+
+                    if !locationSearchText.isEmpty {
+                        Button {
+                            locationSearchText = ""
+                            locationSearchResults = []
+                        } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundStyle(.secondary)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .background(Color(.systemBackground))
+
+            Divider()
+
+            if isLocationSearchLoading {
+                HStack(spacing: 8) {
+                    ProgressView().scaleEffect(0.8)
+                    Text(L.Common.loading)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                ScrollView {
+                    LazyVStack(spacing: 0) {
+                        ForEach(locationSearchResults, id: \.self) { item in
+                            Button { selectLocationSearchResult(item) } label: {
+                                HStack(spacing: 12) {
+                                    Image(systemName: "mappin.circle")
+                                        .foregroundStyle(.orange)
+                                        .font(.title3)
+                                        .frame(width: 32)
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(item.name ?? "")
+                                            .font(.subheadline)
+                                            .foregroundStyle(.primary)
+                                        if let addr = item.placemark.thoroughfare {
+                                            Text(addr)
+                                                .font(.caption)
+                                                .foregroundStyle(.secondary)
+                                        }
+                                    }
+                                    Spacer()
+                                }
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 12)
+                                .contentShape(Rectangle())
+                            }
+                            .buttonStyle(.plain)
+                            Divider().padding(.leading, 60)
+                        }
+                    }
+                }
+            }
+        }
+        .background(Color(.systemBackground))
+    }
+
+    // MARK: - Step1 アクション
+
+    private func selectMapCenterForStore() {
+        let coord = mapCenterCoordinate
+        store.latitude = coord.latitude
+        store.longitude = coord.longitude
+        store.addressLine = nil
+        withAnimation {
+            mapCameraPosition = .region(MKCoordinateRegion(
+                center: coord,
+                span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
+            ))
+        }
+        Task {
+            await reverseGeocodeForStore(coordinate: coord)
+            await searchNearbyPOIForStore(at: coord)
+        }
+    }
+
+    private func selectNearbyPOIForStore(_ item: MKMapItem) {
+        let coord = item.placemark.coordinate
+        store.latitude = coord.latitude
+        store.longitude = coord.longitude
+        if let n = item.name, !n.isEmpty { store.title = n }
+        store.addressLine = formatAddressForStore(item.placemark)
+        withAnimation {
+            mapCameraPosition = .region(MKCoordinateRegion(
+                center: coord,
+                span: MKCoordinateSpan(latitudeDelta: 0.005, longitudeDelta: 0.005)
+            ))
+        }
+    }
+
     private func clearLocation() {
         store.latitude = nil
         store.longitude = nil
         store.addressLine = nil
-        store.title = ""
+        nearbyPOIs = []
     }
 
-    private var dateTimeSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(L.ManualEntry.setDateTime)
-                .font(.headline)
-                .foregroundStyle(.primary)
+    private func exitLocationSearch() {
+        locationSearchFocused = false
+        withAnimation(.easeInOut(duration: 0.25)) { isSearchingLocation = false }
+        locationSearchText = ""
+        locationSearchResults = []
+    }
 
-            HStack {
-                Image(systemName: "calendar")
-                    .foregroundStyle(.orange)
+    private func selectLocationSearchResult(_ item: MKMapItem) {
+        let coord = item.placemark.coordinate
+        exitLocationSearch()
+        store.latitude = coord.latitude
+        store.longitude = coord.longitude
+        store.title = item.name ?? ""
+        store.addressLine = formatAddressForStore(item.placemark)
+        withAnimation {
+            mapCameraPosition = .region(MKCoordinateRegion(
+                center: coord,
+                span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
+            ))
+        }
+        Task { await searchNearbyPOIForStore(at: coord) }
+    }
 
-                DatePicker(
-                    L.ManualEntry.dateTime,
-                    selection: $store.timestampDisplay,
-                    in: ...Date(),
-                    displayedComponents: [.date, .hourAndMinute]
-                )
-            }
-            .padding()
-            .background(Color(.systemGray6))
-            .clipShape(RoundedRectangle(cornerRadius: 12))
-
-            if !store.hasValidTimestamp {
-                Text(L.ManualEntry.futureDateNotAllowed)
-                    .font(.caption)
-                    .foregroundStyle(.red)
-            }
+    private func performLocationSearch(query: String) async {
+        isLocationSearchLoading = true
+        defer { isLocationSearchLoading = false }
+        let req = MKLocalSearch.Request()
+        req.naturalLanguageQuery = query
+        if let res = try? await MKLocalSearch(request: req).start() {
+            locationSearchResults = res.mapItems
+        } else {
+            locationSearchResults = []
         }
     }
 
-    private var photoImportBanner: some View {
-        Button {
-            showPhotoImport = true
-        } label: {
-            HStack(spacing: 12) {
-                Image(systemName: "photo.on.rectangle.angled")
-                    .font(.title3)
-                    .foregroundStyle(.orange)
-
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(L.ManualEntry.importFromPhoto)
-                        .font(.subheadline.bold())
-                        .foregroundStyle(.primary)
-                    Text(L.ManualEntry.photoImportHint)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-
-                Spacer()
-
-                Image(systemName: "chevron.right")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color.orange.opacity(0.08))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .strokeBorder(Color.orange.opacity(0.2), lineWidth: 1)
-                    )
-            )
+    private func reverseGeocodeForStore(coordinate: CLLocationCoordinate2D) async {
+        let geocoder = CLGeocoder()
+        let location = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
+        if let pm = try? await geocoder.reverseGeocodeLocation(location).first {
+            store.addressLine = formatPlacemarkForStore(pm)
         }
-        .buttonStyle(.plain)
+    }
+
+    private func searchNearbyPOIForStore(at coordinate: CLLocationCoordinate2D) async {
+        isLoadingPOI = true
+        defer { isLoadingPOI = false }
+        let req = MKLocalPointsOfInterestRequest(center: coordinate, radius: AppConfig.poiSearchRadius)
+        req.pointOfInterestFilter = MKPointOfInterestFilter(including: [
+            .restaurant, .cafe, .bakery,
+            .museum, .park, .nationalPark, .beach,
+            .store, .hotel, .publicTransport, .airport, .hospital
+        ])
+        if let response = try? await MKLocalSearch(request: req).start() {
+            nearbyPOIs = response.mapItems
+        } else {
+            nearbyPOIs = []
+        }
+    }
+
+    private func formatAddressForStore(_ placemark: MKPlacemark) -> String? {
+        [placemark.administrativeArea, placemark.locality,
+         placemark.subLocality, placemark.thoroughfare]
+            .compactMap { $0 }.filter { !$0.isEmpty }.joined()
+            .nilIfEmpty()
+    }
+
+    private func formatPlacemarkForStore(_ pm: CLPlacemark) -> String? {
+        [pm.administrativeArea, pm.locality, pm.subLocality, pm.thoroughfare]
+            .compactMap { $0 }.filter { !$0.isEmpty }.joined()
+            .nilIfEmpty()
     }
 
     // MARK: - Step 2: 付加情報
@@ -322,7 +732,6 @@ struct ManualEntryScreen: View {
 
     private var metadataSection: some View {
         Section {
-            TextField(L.VisitEdit.titlePlaceholder, text: $store.title)
             TextField(L.VisitEdit.memoPlaceholder, text: $store.comment, axis: .vertical)
                 .lineLimit(3...6)
         } header: {
@@ -649,7 +1058,9 @@ struct ManualEntryScreen: View {
             latitude: $store.latitude,
             longitude: $store.longitude,
             addressLine: $store.addressLine,
-            timestamp: $store.timestampDisplay
+            timestamp: $store.timestampDisplay,
+            showsTimestamp: true,
+            tintColor: .orange
         ) { image in
             store.addPhotos([image])
             store.isPhotoImported = true
@@ -872,5 +1283,59 @@ private struct ManualEntryPhotoGridView: View {
         }
         store.addPhotos(images)
         libSelection = []
+    }
+}
+
+// MARK: - 緯度経度入力シート（後付け記録用）
+
+private struct ManualEntryCoordinateInputSheet: View {
+    let onConfirm: (Double, Double) -> Void
+
+    @Environment(\.dismiss) private var dismiss
+    @State private var latText = ""
+    @State private var lonText = ""
+
+    private var parsedLat: Double? {
+        Double(latText.replacingOccurrences(of: "，", with: ".").replacingOccurrences(of: ",", with: "."))
+    }
+    private var parsedLon: Double? {
+        Double(lonText.replacingOccurrences(of: "，", with: ".").replacingOccurrences(of: ",", with: "."))
+    }
+    private var isValid: Bool {
+        guard let lat = parsedLat, let lon = parsedLon else { return false }
+        return lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section(L.SpotEditor.latitude) {
+                    TextField("35.68123", text: $latText)
+                        .keyboardType(.numbersAndPunctuation)
+                }
+                Section(L.SpotEditor.longitude) {
+                    TextField("139.76712", text: $lonText)
+                        .keyboardType(.numbersAndPunctuation)
+                }
+            }
+            .navigationTitle(L.SpotEditor.coordinateInputTitle)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button(L.Common.cancel) { dismiss() }
+                }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(L.Common.done) {
+                        if let lat = parsedLat, let lon = parsedLon {
+                            onConfirm(lat, lon)
+                            dismiss()
+                        }
+                    }
+                    .fontWeight(.semibold)
+                    .disabled(!isValid)
+                }
+            }
+        }
+        .presentationDetents([.medium])
     }
 }

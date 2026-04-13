@@ -415,6 +415,8 @@
 "manualEntry.editTitle" = "後付け記録を編集";
 "manualEntry.badge" = "後付け";
 "manualEntry.importFromPhoto" = "写真から取り込み";
+"manualEntry.importFromPhotoWithDateTime" = "写真から取り込む（位置情報・日時）";
+"manualEntry.importedFromPhotoLabel" = "写真から取り込んだ日時";
 "manualEntry.searchLocation" = "場所を検索";
 "manualEntry.tapOnMap" = "地図から選択";
 "manualEntry.dateTime" = "日時";

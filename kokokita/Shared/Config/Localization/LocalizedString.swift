@@ -506,6 +506,8 @@ enum L {
         static let editTitle = localized("manualEntry.editTitle")
         static let badge = localized("manualEntry.badge")
         static let importFromPhoto = localized("manualEntry.importFromPhoto")
+        static let importFromPhotoWithDateTime = localized("manualEntry.importFromPhotoWithDateTime")
+        static let importedFromPhotoLabel = localized("manualEntry.importedFromPhotoLabel")
         static let searchLocation = localized("manualEntry.searchLocation")
         static let tapOnMap = localized("manualEntry.tapOnMap")
         static let dateTime = localized("manualEntry.dateTime")
