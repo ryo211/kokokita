@@ -37,7 +37,18 @@ final class CourseListStore {
             }
         }
 
-        observers = [courseObserver, downloadObserver]
+        // 自作コース有効化を監視してNEWバッジIDを追加
+        let enabledObserver = NotificationCenter.default.addObserver(forName: .courseEnabled, object: nil, queue: .main) { [weak self] notification in
+            guard let self else { return }
+            guard let courseId = notification.object as? UUID else { return }
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                self.newlyAddedCourseIds.insert(courseId)
+                await self.load()
+            }
+        }
+
+        observers = [courseObserver, downloadObserver, enabledObserver]
     }
 
     /// コース一覧を読み込む

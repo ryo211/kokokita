@@ -147,6 +147,11 @@ final class CourseEditorViewModel {
             if case .create = mode { savedCourseId = course.id }
             try repo.save(course)
             NotificationCenter.default.post(name: .courseChanged, object: nil)
+            // 新規作成 or 有効化済みコースの保存時は NEW バッジ・タブアニメーションを発火
+            let isNewCourse = { if case .create = mode { return true }; return false }()
+            if isNewCourse && course.isEnabled {
+                NotificationCenter.default.post(name: .courseEnabled, object: course.id)
+            }
             didSave = true
         } catch {
             saveError = error.localizedDescription

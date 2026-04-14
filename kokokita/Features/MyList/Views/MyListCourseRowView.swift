@@ -80,5 +80,9 @@ struct MyListCourseRowView: View {
         course.isEnabled = NSNumber(value: newValue)
         try? CoreDataStack.shared.context.save()
         NotificationCenter.default.post(name: .courseChanged, object: nil)
+        // 有効化した場合はコースIDと共に通知（タブバーアニメーション・NEWバッジ用）
+        if newValue, let id = course.id {
+            NotificationCenter.default.post(name: .courseEnabled, object: id)
+        }
     }
 }

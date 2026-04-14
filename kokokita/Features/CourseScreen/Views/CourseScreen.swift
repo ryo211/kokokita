@@ -4,7 +4,11 @@ import SwiftUI
 // ストアを所有し、navigationDestination をルートに配置
 // 遡り判定シートはここに配置（NavigationStack 外）して CourseStoreSheet との競合を回避
 struct CourseScreen: View {
-    @State private var store = CourseListStore()
+    /// 外部から注入されるストア（nilの場合は内部で生成）
+    var externalStore: CourseListStore? = nil
+    @State private var ownStore = CourseListStore()
+
+    private var store: CourseListStore { externalStore ?? ownStore }
 
     var body: some View {
         NavigationStack {
