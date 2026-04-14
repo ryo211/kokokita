@@ -12,13 +12,9 @@ struct PilgrimageHomeView: View {
     @State private var showHowToUse = false
     @State private var selectedCourseIndex = 0
     @State private var selectedCourseDetailRoute: SelectedCourseRoute?
+    @State private var selectedSpotPanelIndex = 0
 
     // MARK: - Derived Data
-
-    /// 全コース中で最も達成率が高いコース（ヒーロー表示用）
-    private var topCourse: Course? {
-        store.courses.max(by: { $0.completionRate < $1.completionRate })
-    }
 
     /// 未達成の近傍スポット（距離昇順、最大5件）
     private var nearbySpots: [(course: Course, spot: CourseSpot, distance: Double)] {
@@ -163,12 +159,8 @@ struct PilgrimageHomeView: View {
                 courseScrollSection
                     .padding(.bottom, 28)
 
-                // ② 近くのスポット
-                nearbySection
-                    .padding(.bottom, 28)
-
-                // ③ 最近の達成
-                recentSection
+                // ② スポット情報パネル
+                spotPanelsSection
                     .padding(.bottom, 32)
             }
         }
@@ -188,31 +180,76 @@ struct PilgrimageHomeView: View {
         }
     }
 
+    // MARK: - ② スポット情報パネル
+
+    private var spotPanelsSection: some View {
+        VStack(spacing: 14) {
+            VStack(spacing: 14) {
+                HStack(spacing: 8) {
+                    ForEach(0..<2, id: \.self) { index in
+                        Circle()
+                            .fill(index == selectedSpotPanelIndex ? Color.indigo.opacity(0.85) : Color.indigo.opacity(0.22))
+                            .frame(width: 8, height: 8)
+                            .scaleEffect(index == selectedSpotPanelIndex ? 1.05 : 1.0)
+                            .animation(.easeInOut(duration: 0.2), value: selectedSpotPanelIndex)
+                    }
+                }
+
+                TabView(selection: $selectedSpotPanelIndex) {
+                    nearbySection
+                        .tag(0)
+
+                    recentSection
+                        .tag(1)
+                }
+                .tabViewStyle(.page(indexDisplayMode: .never))
+                .frame(height: 388)
+            }
+            .padding(.top, 18)
+            .padding(.horizontal, 16)
+            .padding(.bottom, 16)
+            .background(
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    .fill(Color.white.opacity(0.98))
+                    .shadow(color: .black.opacity(0.1), radius: 18, x: 0, y: 10)
+            )
+            .overlay {
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    .strokeBorder(Color.indigo.opacity(0.08), lineWidth: 1.2)
+            }
+            .padding(.horizontal, 16)
+        }
+    }
+
     // MARK: - ③ 近くのスポット
 
     private var nearbySection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 12) {
-                Text(L.PilgrimageHome.nearbyTitle)
-                    .font(.headline)
+            ZStack {
+                SpotPanelHeader(
+                    title: L.PilgrimageHome.nearbyTitle,
+                    systemImage: "location.north.line.fill"
+                )
+                    .frame(maxWidth: .infinity)
 
-                Button {
-                    Task { await refreshNearbySpots() }
-                } label: {
-                    if isRefreshingNearbySpots {
-                        ProgressView()
-                            .controlSize(.small)
-                    } else {
-                        Image(systemName: "arrow.clockwise")
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundStyle(.indigo)
+                HStack {
+                    Spacer()
+                    Button {
+                        Task { await refreshNearbySpots() }
+                    } label: {
+                        if isRefreshingNearbySpots {
+                            ProgressView()
+                                .controlSize(.small)
+                        } else {
+                            Image(systemName: "arrow.clockwise")
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundStyle(.indigo)
+                        }
                     }
+                    .buttonStyle(.plain)
+                    .disabled(isRefreshingNearbySpots)
+                    .accessibilityLabel("近くの巡礼スポットを更新")
                 }
-                .buttonStyle(.plain)
-                .disabled(isRefreshingNearbySpots)
-                .accessibilityLabel("近くの巡礼スポットを更新")
-
-                Spacer()
             }
             .padding(.horizontal, 16)
 
@@ -234,27 +271,31 @@ struct PilgrimageHomeView: View {
                         }
                     }
                 }
-                .background(.regularMaterial)
+                .background(Color.white.opacity(0.78))
                 .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                .padding(.horizontal, 16)
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
 
     // MARK: - ④ 最近の達成
 
     private var recentSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text(L.PilgrimageHome.recentTitle)
-                .font(.headline)
-                .padding(.leading, 16)
+            SpotPanelHeader(
+                title: L.PilgrimageHome.recentTitle,
+                systemImage: "checkmark.seal.fill"
+            )
+                .frame(maxWidth: .infinity)
+                .padding(.horizontal, 16)
 
             if recentAchievements.isEmpty {
                 Text(L.PilgrimageHome.noRecentAchievements)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.leading, 16)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                    .padding(.horizontal, 24)
             } else {
                 VStack(spacing: 0) {
                     ForEach(Array(recentAchievements.enumerated()), id: \.element.spot.id) { index, item in
@@ -268,11 +309,11 @@ struct PilgrimageHomeView: View {
                         }
                     }
                 }
-                .background(.regularMaterial)
+                .background(Color.white.opacity(0.78))
                 .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                .padding(.horizontal, 16)
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
 
     // MARK: - Actions
@@ -317,8 +358,8 @@ private struct CourseSelectionCarousel: View {
     var body: some View {
         GeometryReader { proxy in
             let width = proxy.size.width
-            let centerCardWidth = min(width * 0.68, 320)
-            let cardSpacing = centerCardWidth * 0.72
+            let centerCardWidth = min(width * 0.56, 268)
+            let cardSpacing = centerCardWidth * 0.88
 
             ZStack {
                 CourseCarouselStage()
@@ -357,15 +398,14 @@ private struct CourseSelectionCarousel: View {
                     }
                 }
             }
-            .padding(.horizontal, 16)
+            .padding(.horizontal, 4)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .contentShape(Rectangle())
             .highPriorityGesture(carouselGesture(cardSpacing: cardSpacing))
             .animation(.spring(response: 0.36, dampingFraction: 0.82), value: selectedIndex)
             .animation(.spring(response: 0.28, dampingFraction: 0.88), value: dragOffset)
         }
-        .frame(height: 310)
-        .padding(.top, 4)
+        .frame(height: 254)
     }
 
     private func handleTap(for index: Int, course: Course) {
@@ -424,7 +464,7 @@ private struct CourseSelectionCarousel: View {
     }
 
     private func cardYOffset(for progress: CGFloat) -> CGFloat {
-        12 + min(abs(progress), 1.8) * 26
+        6 + min(abs(progress), 1.8) * 19
     }
 
     private func cardScale(for progress: CGFloat) -> CGFloat {
@@ -452,34 +492,8 @@ private struct CourseSelectionCarousel: View {
 
 private struct CourseCarouselStage: View {
     var body: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 28, style: .continuous)
-                .fill(
-                    LinearGradient(
-                        colors: [
-                            Color.indigo.opacity(0.16),
-                            Color.cyan.opacity(0.08),
-                            Color.white.opacity(0.7)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-
-            RoundedRectangle(cornerRadius: 28, style: .continuous)
-                .strokeBorder(.white.opacity(0.65), lineWidth: 1.2)
-
-            Circle()
-                .fill(Color.indigo.opacity(0.14))
-                .frame(width: 180, height: 180)
-                .offset(x: -120, y: -80)
-
-            Circle()
-                .fill(Color.cyan.opacity(0.11))
-                .frame(width: 140, height: 140)
-                .offset(x: 130, y: 90)
-        }
-        .shadow(color: .indigo.opacity(0.08), radius: 18, x: 0, y: 8)
+        RoundedRectangle(cornerRadius: 28, style: .continuous)
+            .fill(Color.clear)
     }
 }
 
@@ -490,8 +504,8 @@ private struct CourseCarouselCard: View {
 
         var cardHeight: CGFloat {
             switch self {
-            case .focused: 236
-            case .side: 210
+            case .focused: 204
+            case .side: 182
             }
         }
 
@@ -518,15 +532,15 @@ private struct CourseCarouselCard: View {
 
         var contentPadding: CGFloat {
             switch self {
-            case .focused: 18
-            case .side: 16
+            case .focused: 16
+            case .side: 14
             }
         }
 
         var progressScale: CGFloat {
             switch self {
-            case .focused: 2.2
-            case .side: 1.8
+            case .focused: 2.0
+            case .side: 1.65
             }
         }
     }
@@ -662,6 +676,30 @@ private struct CourseArtwork: View {
             }
             .foregroundStyle(.white.opacity(0.92))
         }
+    }
+}
+
+private struct SpotPanelHeader: View {
+    let title: String
+    let systemImage: String
+
+    var body: some View {
+        HStack(spacing: 8) {
+            ZStack {
+                Circle()
+                    .fill(Color.indigo.opacity(0.1))
+                    .frame(width: 22, height: 22)
+                Image(systemName: systemImage)
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(.indigo)
+            }
+
+            Text(title)
+                .font(.subheadline.weight(.bold))
+                .tracking(0.2)
+                .foregroundStyle(.primary)
+        }
+        .multilineTextAlignment(.center)
     }
 }
 

@@ -394,11 +394,11 @@
 "pilgrimageHome.coursesTitle" = "コース一覧";
 "pilgrimageHome.seeAll" = "すべて見る";
 "pilgrimageHome.progressFormat" = "%d/%d スポット";
-"pilgrimageHome.nearbyTitle" = "近くの巡礼スポット";
+"pilgrimageHome.nearbyTitle" = "近くのスポット";
 "pilgrimageHome.nearbyRefresh" = "更新";
 "pilgrimageHome.noNearbySpots" = "近くにスポットはありません";
 "pilgrimageHome.locationUnavailable" = "現在地を取得できませんでした";
-"pilgrimageHome.recentTitle" = "最近達成した巡礼スポット";
+"pilgrimageHome.recentTitle" = "最近行ったスポット";
 "pilgrimageHome.noRecentAchievements" = "まだ達成がありません";
 "pilgrimageHome.distanceMeter" = "%dm";
 
