@@ -735,6 +735,8 @@ private struct SpotListRowView: View {
     let isSelected: Bool
     var distance: Double? = nil
 
+    @Environment(\.spotFavoriteStore) private var favoriteStore
+
     private var distanceText: String? {
         guard let d = distance else { return nil }
         return d < 1000 ? String(format: "%.0fm", d) : String(format: "%.1fkm", d / 1000)
@@ -776,21 +778,38 @@ private struct SpotListRowView: View {
                         Text(desc)
                             .font(.caption)
                             .foregroundStyle(.secondary)
-                            .lineLimit(4)
+                            // フォーカス時は全表示、非フォーカス時は最大2行
+                            .lineLimit(isSelected ? nil : 2)
+                    }
+
+                    // 現在地からの距離（スポット説明の下）
+                    if let text = distanceText {
+                        HStack(spacing: 2) {
+                            Image(systemName: "location.fill")
+                                .font(.caption2)
+                            Text(text)
+                                .font(.caption2.monospacedDigit())
+                        }
+                        .foregroundStyle(.secondary)
+                        .padding(.top, 1)
                     }
                 }
 
                 Spacer()
 
-                if let text = distanceText {
-                    HStack(spacing: 2) {
-                        Image(systemName: "location.fill")
-                            .font(.caption2)
-                        Text(text)
-                            .font(.caption2.monospacedDigit())
-                    }
-                    .foregroundStyle(.secondary)
+                // ハートボタン（お気に入り）
+                Button {
+                    favoriteStore.toggle(spot.id)
+                } label: {
+                    Image(systemName: favoriteStore.isFavorite(spot.id) ? "heart.fill" : "heart")
+                        .font(.body)
+                        .foregroundStyle(
+                            favoriteStore.isFavorite(spot.id)
+                                ? Color(red: 1.0, green: 0.45, blue: 0.65).opacity(0.8)
+                                : Color.secondary.opacity(0.4)
+                        )
                 }
+                .buttonStyle(.plain)
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 10)

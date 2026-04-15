@@ -597,6 +597,15 @@ enum L {
         }
     }
 
+    // MARK: - Spot Panel List
+    enum SpotPanelList {
+        static let displayLimitSuffix = localized("spotPanelList.displayLimitSuffix")
+        static let displayLimitAll    = localized("spotPanelList.displayLimitAll")
+        static let favoritesTitle     = localized("spotPanelList.favoritesTitle")
+        static let noFavorites        = localized("spotPanelList.noFavorites")
+        static let noFavoritesShort   = localized("spotPanelList.noFavoritesShort")
+    }
+
     // MARK: - CheckIn Result
     enum CheckIn {
         static let resultTitle = localized("checkIn.resultTitle")

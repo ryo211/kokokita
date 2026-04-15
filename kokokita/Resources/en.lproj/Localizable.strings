@@ -400,6 +400,13 @@
 "pilgrimageHome.noRecentAchievements" = "No achievements yet";
 "pilgrimageHome.distanceMeter" = "%dm";
 
+// MARK: - Spot Panel List
+"spotPanelList.displayLimitSuffix" = " items";
+"spotPanelList.displayLimitAll" = "All";
+"spotPanelList.favoritesTitle" = "Favorite Spots";
+"spotPanelList.noFavorites" = "No favorite spots yet\nTap the heart icon in a course to add favorites";
+"spotPanelList.noFavoritesShort" = "No favorites yet";
+
 // MARK: - CheckIn Result
 "checkIn.resultTitle" = "Checked In!";
 "checkIn.resultSubtitle" = "You reached a course spot";

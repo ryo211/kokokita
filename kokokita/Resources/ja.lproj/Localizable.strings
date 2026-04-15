@@ -402,6 +402,13 @@
 "pilgrimageHome.noRecentAchievements" = "まだ達成がありません";
 "pilgrimageHome.distanceMeter" = "%dm";
 
+// MARK: - Spot Panel List
+"spotPanelList.displayLimitSuffix" = "件";
+"spotPanelList.displayLimitAll" = "全件";
+"spotPanelList.favoritesTitle" = "お気に入りスポット";
+"spotPanelList.noFavorites" = "お気に入りに登録されたスポットはありません\nコース詳細のハートアイコンからお気に入りに追加できます";
+"spotPanelList.noFavoritesShort" = "お気に入りスポットはありません";
+
 // MARK: - CheckIn Result
 "checkIn.resultTitle" = "聖地巡礼達成！";
 "checkIn.resultSubtitle" = "聖地巡礼スポットに到達しました";

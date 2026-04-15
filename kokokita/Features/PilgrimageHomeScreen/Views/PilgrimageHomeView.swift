@@ -14,7 +14,20 @@ struct PilgrimageHomeView: View {
     @State private var selectedCourseDetailRoute: SelectedCourseRoute?
     @State private var selectedSpotPanelIndex = 0
 
+    @Environment(\.spotFavoriteStore) private var favoriteStore
+
     // MARK: - Derived Data
+
+    /// お気に入りスポット（最大5件）
+    private var favoriteSpots: [(course: Course, spot: CourseSpot)] {
+        var results: [(course: Course, spot: CourseSpot)] = []
+        for course in store.courses {
+            for spot in course.spots where favoriteStore.isFavorite(spot.id) {
+                results.append((course, spot))
+            }
+        }
+        return Array(results.prefix(5))
+    }
 
     /// 未達成の近傍スポット（距離昇順、最大5件）
     private var nearbySpots: [(course: Course, spot: CourseSpot, distance: Double)] {
@@ -103,7 +116,7 @@ struct PilgrimageHomeView: View {
             .onChange(of: store.courses) { _, _ in
                 normalizeSelectedCourseIndex()
             }
-            // コース一覧・コース詳細（スポット指定）への遷移
+            // コース一覧・コース詳細・スポットパネルリストへの遷移
             .navigationDestination(for: PilgrimageHomeRoute.self) { route in
                 switch route {
                 case .courseList:
@@ -112,6 +125,12 @@ struct PilgrimageHomeView: View {
                     if let course = store.courses.first(where: { $0.id == courseId }) {
                         CourseDetailView(course: course, initialSelectedSpotId: spotId)
                     }
+                case .courseDetailSummary(let courseId):
+                    if let course = store.courses.first(where: { $0.id == courseId }) {
+                        CourseDetailView(course: course, showSummaryOnAppear: true)
+                    }
+                case .spotPanelList(let kind):
+                    SpotPanelListView(kind: kind, store: store, userLocation: userLocation)
                 }
             }
             // コース詳細への遷移（CourseListView が非ルートのためここで処理）
@@ -186,7 +205,7 @@ struct PilgrimageHomeView: View {
         VStack(spacing: 14) {
             VStack(spacing: 14) {
                 HStack(spacing: 8) {
-                    ForEach(0..<2, id: \.self) { index in
+                    ForEach(0..<3, id: \.self) { index in
                         Circle()
                             .fill(index == selectedSpotPanelIndex ? Color.indigo.opacity(0.85) : Color.indigo.opacity(0.22))
                             .frame(width: 8, height: 8)
@@ -199,11 +218,14 @@ struct PilgrimageHomeView: View {
                     nearbySection
                         .tag(0)
 
-                    recentSection
+                    favoritesSection
                         .tag(1)
+
+                    recentSection
+                        .tag(2)
                 }
                 .tabViewStyle(.page(indexDisplayMode: .never))
-                .frame(height: 388)
+                .frame(height: 492)
             }
             .padding(.top, 18)
             .padding(.horizontal, 16)
@@ -226,11 +248,14 @@ struct PilgrimageHomeView: View {
     private var nearbySection: some View {
         VStack(alignment: .leading, spacing: 12) {
             ZStack {
-                SpotPanelHeader(
-                    title: L.PilgrimageHome.nearbyTitle,
-                    systemImage: "location.north.line.fill"
-                )
+                NavigationLink(value: PilgrimageHomeRoute.spotPanelList(kind: .nearby)) {
+                    SpotPanelHeader(
+                        title: L.PilgrimageHome.nearbyTitle,
+                        systemImage: "location.north.line.fill"
+                    )
                     .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.plain)
 
                 HStack {
                     Spacer()
@@ -278,24 +303,70 @@ struct PilgrimageHomeView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
 
+    // MARK: - ③ お気に入りスポット
+
+    private var favoritesSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            NavigationLink(value: PilgrimageHomeRoute.spotPanelList(kind: .favorites)) {
+                SpotPanelHeader(
+                    title: L.SpotPanelList.favoritesTitle,
+                    systemImage: "heart.fill"
+                )
+                .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.plain)
+            .padding(.horizontal, 16)
+
+            if favoriteSpots.isEmpty {
+                Text(L.SpotPanelList.noFavoritesShort)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: .infinity, alignment: .top)
+                    .padding(.horizontal, 24)
+                    .padding(.top, 72)
+            } else {
+                VStack(spacing: 0) {
+                    ForEach(Array(favoriteSpots.enumerated()), id: \.element.spot.id) { index, item in
+                        NavigationLink(value: PilgrimageHomeRoute.courseDetail(courseId: item.course.id, spotId: item.spot.id)) {
+                            FavoriteSpotRow(course: item.course, spot: item.spot)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        if index < favoriteSpots.count - 1 {
+                            Divider().padding(.leading, 56)
+                        }
+                    }
+                }
+                .background(Color.white.opacity(0.78))
+                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+    }
+
     // MARK: - ④ 最近の達成
 
     private var recentSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            SpotPanelHeader(
-                title: L.PilgrimageHome.recentTitle,
-                systemImage: "checkmark.seal.fill"
-            )
+            NavigationLink(value: PilgrimageHomeRoute.spotPanelList(kind: .recentAchievements)) {
+                SpotPanelHeader(
+                    title: L.PilgrimageHome.recentTitle,
+                    systemImage: "checkmark.seal.fill"
+                )
                 .frame(maxWidth: .infinity)
-                .padding(.horizontal, 16)
+            }
+            .buttonStyle(.plain)
+            .padding(.horizontal, 16)
 
             if recentAchievements.isEmpty {
                 Text(L.PilgrimageHome.noRecentAchievements)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                    .frame(maxWidth: .infinity, alignment: .top)
                     .padding(.horizontal, 24)
+                    .padding(.top, 72)
             } else {
                 VStack(spacing: 0) {
                     ForEach(Array(recentAchievements.enumerated()), id: \.element.spot.id) { index, item in
@@ -698,6 +769,10 @@ private struct SpotPanelHeader: View {
                 .font(.subheadline.weight(.bold))
                 .tracking(0.2)
                 .foregroundStyle(.primary)
+
+            Image(systemName: "chevron.right")
+                .font(.caption.weight(.bold))
+                .foregroundStyle(.secondary)
         }
         .multilineTextAlignment(.center)
     }
@@ -712,25 +787,27 @@ private struct NearbySpotRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            Image(systemName: "mappin.circle.fill")
-                .font(.title2)
-                .foregroundStyle(.indigo)
-                .frame(width: 44)
+            SpotPanelThumbnailView(course: course, spot: spot)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(spot.name)
                     .font(.body)
                     .foregroundStyle(.primary)
+                    .lineLimit(1)
                 Text(course.title)
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                HStack(spacing: 2) {
+                    Image(systemName: "location.fill")
+                        .font(.caption2)
+                    Text(L.PilgrimageHome.distanceFormatted(distance))
+                        .font(.caption2.bold().monospacedDigit())
+                }
+                .foregroundStyle(.indigo)
             }
 
             Spacer()
-
-            Text(L.PilgrimageHome.distanceFormatted(distance))
-                .font(.caption.bold())
-                .foregroundStyle(.indigo)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
@@ -745,41 +822,113 @@ private struct RecentAchievementRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            Image(systemName: "checkmark.circle.fill")
-                .font(.title2)
-                .foregroundStyle(.indigo)
-                .frame(width: 44)
+            SpotPanelThumbnailView(course: course, spot: spot)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(spot.name)
                     .font(.body)
                     .foregroundStyle(.primary)
+                    .lineLimit(1)
                 Text(course.title)
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                if let date = spot.firstCheckedInAt {
+                    HStack(spacing: 2) {
+                        Image(systemName: "calendar")
+                            .font(.caption2)
+                        Text(date.formatted(date: .abbreviated, time: .omitted))
+                            .font(.caption2)
+                    }
+                    .foregroundStyle(.secondary)
+                }
             }
 
             Spacer()
-
-            if let date = spot.firstCheckedInAt {
-                Text(date.formatted(date: .abbreviated, time: .omitted))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
     }
 }
 
-private struct SelectedCourseRoute: Identifiable, Hashable {
+// MARK: - ③ お気に入りスポット行
+
+private struct FavoriteSpotRow: View {
+    let course: Course
+    let spot: CourseSpot
+
+    var body: some View {
+        HStack(spacing: 12) {
+            SpotPanelThumbnailView(course: course, spot: spot)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(spot.name)
+                    .font(.body)
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+                Text(course.title)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
+
+            Spacer()
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+    }
+}
+
+private struct SpotPanelThumbnailView: View {
+    let course: Course
+    let spot: CourseSpot
+
+    var body: some View {
+        Group {
+            if let uiImage = spot.localCoverImagePath.flatMap({ LocalImageStorage.shared.load(from: $0) }) {
+                Image(uiImage: uiImage)
+                    .resizable()
+                    .scaledToFill()
+            } else if let urlStr = spot.coverImageUrl, let url = URL(string: urlStr) {
+                AsyncImage(url: url) { phase in
+                    if case .success(let image) = phase {
+                        image
+                            .resizable()
+                            .scaledToFill()
+                    } else {
+                        placeholder
+                    }
+                }
+            } else {
+                placeholder
+            }
+        }
+        .frame(width: 96, height: 64)
+        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+    }
+
+    private var placeholder: some View {
+        ZStack {
+            Color.indigo.opacity(0.1)
+            Image(systemName: course.isCompleted ? "checkmark.seal.fill" : (course.categories.first?.iconName ?? "map"))
+                .font(.title3)
+                .foregroundStyle(.indigo.opacity(0.5))
+        }
+    }
+}
+
+struct SelectedCourseRoute: Identifiable, Hashable {
     let id: UUID
 }
 
 // MARK: - ナビゲーションルート
 
-private enum PilgrimageHomeRoute: Hashable {
+enum PilgrimageHomeRoute: Hashable {
     case courseList
     /// コース詳細（指定スポットをフォーカス）
     case courseDetail(courseId: UUID, spotId: UUID)
+    /// コース詳細（スポット未指定、サマリーを表示）
+    case courseDetailSummary(courseId: UUID)
+    /// スポット情報パネルの一覧画面
+    case spotPanelList(kind: SpotPanelKind)
 }
