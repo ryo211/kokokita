@@ -788,9 +788,9 @@ private struct SpotListRowView: View {
                             Image(systemName: "location.fill")
                                 .font(.caption2)
                             Text(text)
-                                .font(.caption2.monospacedDigit())
+                                .font(.caption2.bold().monospacedDigit())
                         }
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.indigo)
                         .padding(.top, 1)
                     }
                 }
@@ -802,12 +802,13 @@ private struct SpotListRowView: View {
                     favoriteStore.toggle(spot.id)
                 } label: {
                     Image(systemName: favoriteStore.isFavorite(spot.id) ? "heart.fill" : "heart")
-                        .font(.body)
+                        .font(.body.weight(.semibold))
                         .foregroundStyle(
                             favoriteStore.isFavorite(spot.id)
-                                ? Color(red: 1.0, green: 0.45, blue: 0.65).opacity(0.8)
-                                : Color.secondary.opacity(0.4)
+                                ? Color(red: 1.0, green: 0.42, blue: 0.62)
+                                : Color.secondary.opacity(0.88)
                         )
+                        .shadow(color: Color(uiColor: .systemBackground).opacity(0.9), radius: 1.5, x: 0, y: 0)
                 }
                 .buttonStyle(.plain)
             }
@@ -820,8 +821,93 @@ private struct SpotListRowView: View {
                     .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
-        .background(isSelected ? Color.indigo.opacity(0.07) : Color.clear)
+        .background {
+            SpotRowBackdropView(spot: spot, isSelected: isSelected)
+        }
         .animation(.easeInOut(duration: 0.2), value: isSelected)
+    }
+}
+
+private struct SpotRowBackdropView: View {
+    let spot: CourseSpot
+    let isSelected: Bool
+
+    private var hasImage: Bool {
+        spot.localCoverImagePath != nil || spot.coverImageUrl != nil
+    }
+
+    var body: some View {
+        GeometryReader { geo in
+            ZStack(alignment: .trailing) {
+                if hasImage {
+                    SpotRowBackdropImageView(spot: spot)
+                        .frame(
+                            width: max(geo.size.width * (isSelected ? 0.6 : 0.55), 188),
+                            height: geo.size.height
+                        )
+                        .clipped()
+                        .opacity(isSelected ? 0.56 : 0.44)
+                        .saturation(isSelected ? 1.08 : 1.03)
+                        .contrast(1.1)
+                        .offset(x: 10)
+                        .mask(
+                            LinearGradient(
+                                stops: [
+                                    .init(color: .clear, location: 0),
+                                    .init(color: .white.opacity(0.22), location: 0.14),
+                                    .init(color: .white.opacity(0.58), location: 0.4),
+                                    .init(color: .white, location: 0.78)
+                                ],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                    LinearGradient(
+                        colors: [
+                            Color(uiColor: .systemBackground),
+                            Color(uiColor: .systemBackground).opacity(0.68),
+                            Color(uiColor: .systemBackground).opacity(0.14)
+                        ],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                }
+
+                if isSelected {
+                    Color.indigo.opacity(0.07)
+                }
+            }
+            .frame(width: geo.size.width, height: geo.size.height)
+            .clipped()
+        }
+        .allowsHitTesting(false)
+    }
+}
+
+private struct SpotRowBackdropImageView: View {
+    let spot: CourseSpot
+
+    var body: some View {
+        Group {
+            if let uiImage = spot.localCoverImagePath.flatMap({ LocalImageStorage.shared.load(from: $0) }) {
+                Image(uiImage: uiImage)
+                    .resizable()
+                    .scaledToFill()
+            } else if let urlStr = spot.coverImageUrl, let url = URL(string: urlStr) {
+                AsyncImage(url: url) { phase in
+                    switch phase {
+                    case .success(let image):
+                        image
+                            .resizable()
+                            .scaledToFill()
+                    default:
+                        Color.clear
+                    }
+                }
+            } else {
+                Color.clear
+            }
+        }
     }
 }
 
