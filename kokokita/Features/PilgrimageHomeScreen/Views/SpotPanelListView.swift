@@ -361,7 +361,7 @@ private struct SpotPanelListRow: View {
                             Text(L.PilgrimageHome.distanceFormatted(d))
                                 .font(.caption2.bold().monospacedDigit())
                         }
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.indigo)
                     case .date(let date):
                         if let date {
                             HStack(spacing: 2) {

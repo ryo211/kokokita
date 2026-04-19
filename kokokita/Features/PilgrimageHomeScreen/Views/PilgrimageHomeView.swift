@@ -19,11 +19,15 @@ struct PilgrimageHomeView: View {
     // MARK: - Derived Data
 
     /// お気に入りスポット（最大5件）
-    private var favoriteSpots: [(course: Course, spot: CourseSpot)] {
-        var results: [(course: Course, spot: CourseSpot)] = []
+    private var favoriteSpots: [(course: Course, spot: CourseSpot, distance: Double?)] {
+        var results: [(course: Course, spot: CourseSpot, distance: Double?)] = []
         for course in store.courses {
             for spot in course.spots where favoriteStore.isFavorite(spot.id) {
-                results.append((course, spot))
+                let distance = userLocation.map { location in
+                    let spotLocation = CLLocation(latitude: spot.latitude, longitude: spot.longitude)
+                    return location.distance(from: spotLocation)
+                }
+                results.append((course, spot, distance))
             }
         }
         return Array(results.prefix(5))
@@ -267,7 +271,7 @@ struct PilgrimageHomeView: View {
             .padding(.bottom, 16)
             .background(
                 RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .fill(Color.white.opacity(0.98))
+                    .fill(Color(.systemBackground).opacity(0.70))
                     .shadow(color: .black.opacity(0.1), radius: 18, x: 0, y: 10)
             )
             .overlay {
@@ -331,7 +335,7 @@ struct PilgrimageHomeView: View {
                         }
                     }
                 }
-                .background(Color.white.opacity(0.78))
+                .background(Color.white.opacity(0.56))
                 .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
             }
         }
@@ -364,7 +368,7 @@ struct PilgrimageHomeView: View {
                 VStack(spacing: 0) {
                     ForEach(Array(favoriteSpots.enumerated()), id: \.element.spot.id) { index, item in
                         NavigationLink(value: PilgrimageHomeRoute.courseDetail(courseId: item.course.id, spotId: item.spot.id)) {
-                            FavoriteSpotRow(course: item.course, spot: item.spot)
+                            FavoriteSpotRow(course: item.course, spot: item.spot, distance: item.distance)
                                 .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
@@ -373,7 +377,7 @@ struct PilgrimageHomeView: View {
                         }
                     }
                 }
-                .background(Color.white.opacity(0.78))
+                .background(Color.white.opacity(0.56))
                 .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
             }
         }
@@ -415,7 +419,7 @@ struct PilgrimageHomeView: View {
                         }
                     }
                 }
-                .background(Color.white.opacity(0.78))
+                .background(Color.white.opacity(0.56))
                 .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
             }
         }
@@ -891,6 +895,7 @@ private struct RecentAchievementRow: View {
 private struct FavoriteSpotRow: View {
     let course: Course
     let spot: CourseSpot
+    let distance: Double?
 
     var body: some View {
         HStack(spacing: 12) {
@@ -905,6 +910,15 @@ private struct FavoriteSpotRow: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
+                if let distance {
+                    HStack(spacing: 2) {
+                        Image(systemName: "location.fill")
+                            .font(.caption2)
+                        Text(L.PilgrimageHome.distanceFormatted(distance))
+                            .font(.caption2.bold().monospacedDigit())
+                    }
+                    .foregroundStyle(.indigo)
+                }
             }
 
             Spacer()

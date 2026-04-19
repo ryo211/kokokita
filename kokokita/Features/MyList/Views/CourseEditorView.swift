@@ -42,6 +42,7 @@ struct CourseEditorView: View {
     @State private var editingSpotIndex: Int?
     @State private var showCourseSettings = false
     @State private var selectedSpotIndex: Int? = nil
+    @State private var selectedSpotScreenPoint: CGPoint? = nil
     /// List の editMode を明示的に State で管理（onChange 内の withAnimation でも確実に反映するため）
     @State private var listEditMode: EditMode = .inactive
     /// タイトル入力欄のフォーカス管理
@@ -251,46 +252,70 @@ struct CourseEditorView: View {
     // MARK: - 地図エリア
 
     private var mapArea: some View {
-        Map(position: $cameraPosition) {
-            ForEach(Array(viewModel.spots.enumerated()), id: \.element.id) { index, spot in
-                if spot.hasValidCoordinate, let lat = spot.latitude, let lon = spot.longitude {
-                    Annotation(
-                        "",
-                        coordinate: CLLocationCoordinate2D(latitude: lat, longitude: lon),
-                        anchor: .center
-                    ) {
-                        EditorSpotPinView(
-                            orderNumber: index + 1,
-                            isSelected: selectedSpotIndex == index
-                        )
-                        .onTapGesture { focusSpot(at: index) }
+        MapReader { proxy in
+            Map(position: $cameraPosition) {
+                ForEach(Array(viewModel.spots.enumerated()), id: \.element.id) { index, spot in
+                    if spot.hasValidCoordinate, let lat = spot.latitude, let lon = spot.longitude {
+                        Annotation(
+                            "",
+                            coordinate: CLLocationCoordinate2D(latitude: lat, longitude: lon),
+                            anchor: .center
+                        ) {
+                            EditorSpotPinView(
+                                orderNumber: index + 1,
+                                isSelected: selectedSpotIndex == index
+                            )
+                            .onTapGesture { focusSpot(at: index) }
+                        }
                     }
                 }
             }
-        }
-        .mapStyle(.standard(emphasis: .muted))
-        .mapControls {
-            MapCompass()
-            MapScaleView()
-        }
-        .overlay(alignment: .topTrailing) {
-            // コース設定ボタン: 編集中のみ表示
-            if isEditing {
-                Button {
-                    showCourseSettings = true
-                } label: {
-                    Image(systemName: "slider.horizontal.3")
-                        .font(.system(size: 14, weight: .medium))
-                        .frame(width: 36, height: 36)
-                        .background(.regularMaterial, in: Circle())
-                        .shadow(color: .black.opacity(0.15), radius: 4, x: 0, y: 2)
-                }
-                .buttonStyle(.plain)
-                .padding(12)
-                .transition(.scale(scale: 0.7).combined(with: .opacity))
+            .mapStyle(.standard(emphasis: .muted))
+            .mapControls {
+                MapCompass()
+                MapScaleView()
             }
+            .onChange(of: selectedSpotIndex) { _, _ in
+                selectedSpotScreenPoint = nil
+            }
+            .onChange(of: isEditing) { _, editing in
+                if editing {
+                    selectedSpotScreenPoint = nil
+                } else {
+                    updateSpotScreenPoint(proxy: proxy)
+                }
+            }
+            .onMapCameraChange(frequency: .onEnd) { _ in
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    updateSpotScreenPoint(proxy: proxy)
+                }
+            }
+            .onMapCameraChange(frequency: .continuous) { _ in
+                guard selectedSpotScreenPoint != nil else { return }
+                updateSpotScreenPoint(proxy: proxy)
+            }
+            .overlay {
+                editorLeaderLineOverlay
+            }
+            .overlay(alignment: .topTrailing) {
+                // コース設定ボタン: 編集中のみ表示
+                if isEditing {
+                    Button {
+                        showCourseSettings = true
+                    } label: {
+                        Image(systemName: "slider.horizontal.3")
+                            .font(.system(size: 14, weight: .medium))
+                            .frame(width: 36, height: 36)
+                            .background(.regularMaterial, in: Circle())
+                            .shadow(color: .black.opacity(0.15), radius: 4, x: 0, y: 2)
+                    }
+                    .buttonStyle(.plain)
+                    .padding(12)
+                    .transition(.scale(scale: 0.7).combined(with: .opacity))
+                }
+            }
+            .animation(.spring(response: 0.38, dampingFraction: 0.85), value: isEditing)
         }
-        .animation(.spring(response: 0.38, dampingFraction: 0.85), value: isEditing)
     }
 
     // MARK: - スポットリストエリア
@@ -357,7 +382,7 @@ struct CourseEditorView: View {
     private var spotList: some View {
         List {
             ForEach(Array(viewModel.spots.enumerated()), id: \.element.id) { index, spot in
-                spotRow(spot: spot, index: index)
+                spotRow(spot: spot, index: index, isSelected: selectedSpotIndex == index)
                     .contentShape(Rectangle())
                     .onTapGesture {
                         if isEditing {
@@ -367,6 +392,7 @@ struct CourseEditorView: View {
                         focusSpot(at: index)
                     }
                     .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16))
+                    .listRowBackground(Color.clear)
                     .listRowSeparator(.visible)
             }
             // .onDelete は使わない（スワイプ削除を完全に無効化するため）
@@ -380,7 +406,7 @@ struct CourseEditorView: View {
 
     // MARK: - スポット行
 
-    private func spotRow(spot: EditingSpot, index: Int) -> some View {
+    private func spotRow(spot: EditingSpot, index: Int, isSelected: Bool) -> some View {
         HStack(spacing: 12) {
             // 編集モード時のみ削除ボタンを表示（.onDelete を使わず完全にスワイプ削除を無効化）
             if isEditing {
@@ -415,6 +441,14 @@ struct CourseEditorView: View {
                     .font(.subheadline)
                     .foregroundStyle(spot.name.isEmpty ? .tertiary : .primary)
 
+                if let description = spot.spotDescription,
+                   !description.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    Text(description)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(2)
+                }
+
                 if let addr = spot.address, !addr.isEmpty {
                     Text(addr)
                         .font(.caption)
@@ -428,17 +462,12 @@ struct CourseEditorView: View {
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-
-            // カバー画像サムネイル
-            if let img = spot.coverImage {
-                Image(uiImage: img)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: 36, height: 36)
-                    .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
-            }
         }
+        .padding(.horizontal, 4)
         .padding(.vertical, 10)
+        .background {
+            EditorSpotRowBackdropView(spot: spot, isSelected: isSelected)
+        }
         .animation(.spring(response: 0.38, dampingFraction: 0.85), value: isEditing)
     }
 
@@ -460,6 +489,49 @@ struct CourseEditorView: View {
                     center: CLLocationCoordinate2D(latitude: lat, longitude: lon),
                     span: MKCoordinateSpan(latitudeDelta: 0.02, longitudeDelta: 0.02)
                 ))
+            }
+        }
+    }
+
+    private func updateSpotScreenPoint(proxy: MapProxy) {
+        guard !isEditing,
+              let index = selectedSpotIndex,
+              viewModel.spots.indices.contains(index) else {
+            selectedSpotScreenPoint = nil
+            return
+        }
+
+        let spot = viewModel.spots[index]
+        guard spot.hasValidCoordinate,
+              let lat = spot.latitude,
+              let lon = spot.longitude else {
+            selectedSpotScreenPoint = nil
+            return
+        }
+
+        selectedSpotScreenPoint = proxy.convert(
+            CLLocationCoordinate2D(latitude: lat, longitude: lon),
+            to: .local
+        )
+    }
+
+    @ViewBuilder
+    private var editorLeaderLineOverlay: some View {
+        if !isEditing,
+           let spotPoint = selectedSpotScreenPoint,
+           let index = selectedSpotIndex,
+           viewModel.spots.indices.contains(index) {
+            let spot = viewModel.spots[index]
+            let localImage = spot.coverImage ?? spot.localCoverImagePath.flatMap { LocalImageStorage.shared.load(from: $0) }
+            let remoteURL = spot.coverImageUrl.flatMap(URL.init(string:))
+
+            if localImage != nil || remoteURL != nil {
+                EditorSpotLeaderLineView(
+                    spotPoint: spotPoint,
+                    localImage: localImage,
+                    imageUrl: remoteURL
+                )
+                .transition(.opacity)
             }
         }
     }
@@ -498,6 +570,185 @@ struct CourseEditorView: View {
                 longitudeDelta: max((maxLon - minLon) * 1.5, 0.01)
             )
         ))
+    }
+}
+
+private struct EditorSpotLeaderLineView: View {
+    let spotPoint: CGPoint
+    var localImage: UIImage? = nil
+    var imageUrl: URL? = nil
+
+    private let imageWidth: CGFloat = 110
+    private let imageHeight: CGFloat = 74
+    private let margin: CGFloat = 12
+
+    var body: some View {
+        GeometryReader { geo in
+            let imageCenter = CGPoint(
+                x: geo.size.width - imageWidth / 2 - margin,
+                y: imageHeight / 2 + margin
+            )
+            let lineEnd = CGPoint(
+                x: imageCenter.x - imageWidth / 2,
+                y: imageCenter.y + imageHeight / 2
+            )
+
+            ZStack {
+                Canvas { ctx, _ in
+                    let path: Path = {
+                        var path = Path()
+                        path.move(to: spotPoint)
+                        path.addLine(to: lineEnd)
+                        return path
+                    }()
+
+                    ctx.stroke(
+                        path,
+                        with: .color(.black.opacity(0.25)),
+                        style: StrokeStyle(lineWidth: 4.5, lineCap: .round)
+                    )
+                    ctx.stroke(
+                        path,
+                        with: .color(.white.opacity(0.95)),
+                        style: StrokeStyle(lineWidth: 2.5, lineCap: .round)
+                    )
+                    ctx.fill(
+                        Path(ellipseIn: CGRect(x: spotPoint.x - 4.5, y: spotPoint.y - 4.5, width: 9, height: 9)),
+                        with: .color(.black.opacity(0.25))
+                    )
+                    ctx.fill(
+                        Path(ellipseIn: CGRect(x: spotPoint.x - 3.5, y: spotPoint.y - 3.5, width: 7, height: 7)),
+                        with: .color(.white.opacity(0.95))
+                    )
+                }
+                .allowsHitTesting(false)
+
+                Group {
+                    if let localImage {
+                        Image(uiImage: localImage)
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: imageWidth, height: imageHeight)
+                            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                            .shadow(color: .black.opacity(0.3), radius: 6, x: 0, y: 2)
+                    } else if let imageUrl {
+                        AsyncImage(url: imageUrl) { phase in
+                            switch phase {
+                            case .success(let image):
+                                image
+                                    .resizable()
+                                    .scaledToFill()
+                                    .frame(width: imageWidth, height: imageHeight)
+                                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                                    .shadow(color: .black.opacity(0.3), radius: 6, x: 0, y: 2)
+                            case .empty:
+                                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                    .fill(.regularMaterial)
+                                    .frame(width: imageWidth, height: imageHeight)
+                                    .overlay(ProgressView().controlSize(.small))
+                                    .shadow(color: .black.opacity(0.15), radius: 6, x: 0, y: 2)
+                            case .failure:
+                                EmptyView()
+                            @unknown default:
+                                EmptyView()
+                            }
+                        }
+                    }
+                }
+                .position(imageCenter)
+            }
+            .clipped()
+        }
+    }
+}
+
+private struct EditorSpotRowBackdropView: View {
+    let spot: EditingSpot
+    let isSelected: Bool
+
+    private var hasImage: Bool {
+        spot.coverImage != nil || spot.localCoverImagePath != nil || spot.coverImageUrl != nil
+    }
+
+    var body: some View {
+        GeometryReader { geo in
+            ZStack(alignment: .trailing) {
+                if hasImage {
+                    EditorSpotRowBackdropImageView(spot: spot)
+                        .frame(
+                            width: max(geo.size.width * (isSelected ? 0.6 : 0.55), 188),
+                            height: geo.size.height
+                        )
+                        .clipped()
+                        .opacity(isSelected ? 0.56 : 0.44)
+                        .saturation(isSelected ? 1.08 : 1.03)
+                        .contrast(1.1)
+                        .offset(x: 10)
+                        .mask(
+                            LinearGradient(
+                                stops: [
+                                    .init(color: .clear, location: 0),
+                                    .init(color: .white.opacity(0.22), location: 0.14),
+                                    .init(color: .white.opacity(0.58), location: 0.4),
+                                    .init(color: .white, location: 0.78)
+                                ],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+
+                    LinearGradient(
+                        colors: [
+                            Color(uiColor: .systemBackground),
+                            Color(uiColor: .systemBackground).opacity(0.68),
+                            Color(uiColor: .systemBackground).opacity(0.14)
+                        ],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                }
+
+                if isSelected {
+                    Color.indigo.opacity(0.07)
+                }
+            }
+            .frame(width: geo.size.width, height: geo.size.height)
+            .clipped()
+        }
+        .allowsHitTesting(false)
+    }
+}
+
+private struct EditorSpotRowBackdropImageView: View {
+    let spot: EditingSpot
+
+    var body: some View {
+        Group {
+            if let image = spot.coverImage {
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFill()
+            } else if let path = spot.localCoverImagePath,
+                      let image = LocalImageStorage.shared.load(from: path) {
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFill()
+            } else if let urlString = spot.coverImageUrl,
+                      let url = URL(string: urlString) {
+                AsyncImage(url: url) { phase in
+                    switch phase {
+                    case .success(let image):
+                        image
+                            .resizable()
+                            .scaledToFill()
+                    default:
+                        Color.clear
+                    }
+                }
+            } else {
+                Color.clear
+            }
+        }
     }
 }
 

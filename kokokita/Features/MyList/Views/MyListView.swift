@@ -117,6 +117,7 @@ struct MyListView: View {
         guard let id = entity.id else { return }
         do {
             try repo.delete(id)
+            NotificationCenter.default.post(name: .courseChanged, object: nil)
         } catch {
             Logger.error("コース削除失敗: \(error)")
         }
