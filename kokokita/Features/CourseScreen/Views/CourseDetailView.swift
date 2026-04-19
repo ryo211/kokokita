@@ -1075,8 +1075,8 @@ private struct SpotLeaderLineView: View {
     var imageUrl: URL? = nil
     var onImageTap: () -> Void = {}
 
-    private let imgW: CGFloat = 110
-    private let imgH: CGFloat = 74
+    private let imgW: CGFloat = 132
+    private let imgH: CGFloat = 88
     /// 地図端からのマージン
     private let margin: CGFloat = 12
 

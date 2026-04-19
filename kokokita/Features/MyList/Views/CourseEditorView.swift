@@ -578,8 +578,8 @@ private struct EditorSpotLeaderLineView: View {
     var localImage: UIImage? = nil
     var imageUrl: URL? = nil
 
-    private let imageWidth: CGFloat = 110
-    private let imageHeight: CGFloat = 74
+    private let imageWidth: CGFloat = 132
+    private let imageHeight: CGFloat = 88
     private let margin: CGFloat = 12
 
     var body: some View {
