@@ -278,6 +278,26 @@ struct CourseEditorView: View {
             .onChange(of: selectedSpotIndex) { _, _ in
                 selectedSpotScreenPoint = nil
             }
+            .task(id: selectedSpotIndex) {
+                guard selectedSpotIndex != nil else { return }
+                // Programmatic camera moves do not always emit onEnd, so retry after layout/camera settle.
+                try? await Task.sleep(nanoseconds: 180_000_000)
+                guard !Task.isCancelled else { return }
+                await MainActor.run {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        updateSpotScreenPoint(proxy: proxy)
+                    }
+                }
+                try? await Task.sleep(nanoseconds: 320_000_000)
+                guard !Task.isCancelled else { return }
+                await MainActor.run {
+                    if selectedSpotScreenPoint == nil {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            updateSpotScreenPoint(proxy: proxy)
+                        }
+                    }
+                }
+            }
             .onChange(of: isEditing) { _, editing in
                 if editing {
                     selectedSpotScreenPoint = nil
@@ -870,9 +890,15 @@ private struct CourseSettingsSheet: View {
                     // 達成判定半径
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
-                            Text(L.CourseEditor.recognitionRadius)
-                                .font(.caption.weight(.semibold))
-                                .foregroundStyle(.secondary)
+                            HStack(spacing: 6) {
+                                Text(L.CourseEditor.recognitionRadius)
+                                    .font(.caption.weight(.semibold))
+                                    .foregroundStyle(.secondary)
+                                RecognitionRangeInfoButton(
+                                    title: L.CourseEditor.recognitionRadius,
+                                    message: L.CourseEditor.recognitionRadiusInfo
+                                )
+                            }
                             Spacer()
                             Text(L.CourseEditor.recognitionRadiusValue(Int(viewModel.recognitionRadiusMeters)))
                                 .font(.caption)

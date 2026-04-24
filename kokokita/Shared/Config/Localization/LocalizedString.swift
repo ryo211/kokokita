@@ -175,6 +175,7 @@ enum L {
         static let settingsSection = localized("courseEditor.settingsSection")
         static let coverImage = localized("courseEditor.coverImage")
         static let recognitionRadius = localized("courseEditor.recognitionRadius")
+        static let recognitionRadiusInfo = localized("courseEditor.recognitionRadiusInfo")
         static func recognitionRadiusValue(_ meters: Int) -> String { String(format: localized("courseEditor.recognitionRadiusValue"), meters) }
         static let allowRetroactive = localized("courseEditor.allowRetroactive")
         static let spotsSection = localized("courseEditor.spotsSection")
@@ -197,6 +198,7 @@ enum L {
         static let descriptionPlaceholder = localized("spotEditor.descriptionPlaceholder")
         static let image = localized("spotEditor.image")
         static let recognitionRadius = localized("spotEditor.recognitionRadius")
+        static let recognitionRadiusInfo = localized("spotEditor.recognitionRadiusInfo")
         static let useCourseDefault = localized("spotEditor.useCoursDefault")
         static let addButton = localized("spotEditor.addButton")
         static let saveButton = localized("spotEditor.saveButton")

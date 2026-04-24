@@ -17,8 +17,26 @@ private enum CourseViewLayout: CaseIterable {
     }
 }
 
+private enum CourseSpotPhotoSize: String, CaseIterable {
+    case none
+    case small
+    case medium
+    case large
+
+    var title: String {
+        switch self {
+        case .none: return "なし"
+        case .small: return "小"
+        case .medium: return "中"
+        case .large: return "大"
+        }
+    }
+}
+
 // コース詳細画面（地図＋スポット同期リスト）
 struct CourseDetailView: View {
+    private static let zoomOnSpotFocusKey = "courseDetail.zoomOnSpotFocus"
+    private static let spotPhotoSizeKey = "courseDetail.spotPhotoSize"
     // IDを別途保持することでナビゲーション遷移時のキャプチャに依存しない
     private let courseId: UUID
     var showTitle: Bool = true
@@ -37,6 +55,11 @@ struct CourseDetailView: View {
     @State private var isFetchingLocation = false
     /// 地図とリストの表示レイアウト
     @State private var viewLayout: CourseViewLayout = .split
+    /// スポットフォーカス時に地図をズームするか
+    @AppStorage(Self.zoomOnSpotFocusKey) private var zoomOnSpotFocus = true
+    @AppStorage(Self.spotPhotoSizeKey) private var spotPhotoSizeRaw = CourseSpotPhotoSize.medium.rawValue
+    @State private var showCourseMapSettings = false
+    @State private var visibleMapSpan = MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
     /// フォーカス中スポットのスクリーン座標（リーダーライン描画用）
     @State private var selectedSpotScreenPoint: CGPoint? = nil
     /// ライトボックス表示中の画像 URL
@@ -61,14 +84,26 @@ struct CourseDetailView: View {
            let spot = course.spots.first(where: { $0.id == spotId }) {
             let radius = spot.recognitionRadiusMeters ?? course.recognitionRadiusMeters
             let span = CourseDetailView.spotSpan(recognitionRadius: radius)
+            let savedPhotoSize = CourseSpotPhotoSize(
+                rawValue: UserDefaults.standard.string(forKey: Self.spotPhotoSizeKey) ?? CourseSpotPhotoSize.medium.rawValue
+            ) ?? .medium
+            let center = CourseDetailView.focusCenter(
+                latitude: spot.latitude,
+                longitude: spot.longitude,
+                span: span,
+                photoSize: savedPhotoSize
+            )
+            _visibleMapSpan = State(initialValue: span)
             _cameraPosition = State(initialValue: .region(
                 MKCoordinateRegion(
-                    center: CLLocationCoordinate2D(latitude: spot.latitude, longitude: spot.longitude),
+                    center: center,
                     span: span
                 )
             ))
         } else {
-            _cameraPosition = State(initialValue: .region(CourseDetailView.fitRegion(for: course.spots)))
+            let region = CourseDetailView.fitRegion(for: course.spots)
+            _visibleMapSpan = State(initialValue: region.span)
+            _cameraPosition = State(initialValue: .region(region))
         }
     }
 
@@ -123,6 +158,15 @@ struct CourseDetailView: View {
             // チェックイン通知受信時も即時更新
             reloadCourse()
         }
+        .onChange(of: spotPhotoSizeRaw) { _, _ in
+            guard let spotId = selectedSpotId,
+                  let spot = course.spots.first(where: { $0.id == spotId }),
+                  spot.hasValidCoordinate else { return }
+            let center = focusCenter(for: spot, span: visibleMapSpan)
+            withAnimation(.easeInOut(duration: 0.3)) {
+                cameraPosition = .region(MKCoordinateRegion(center: center, span: visibleMapSpan))
+            }
+        }
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button {
@@ -134,6 +178,12 @@ struct CourseDetailView: View {
         }
         .sheet(isPresented: $showSummary) {
             CourseSummarySheet(course: course)
+        }
+        .sheet(isPresented: $showCourseMapSettings) {
+            CourseMapSettingsSheet(
+                zoomOnSpotFocus: $zoomOnSpotFocus,
+                spotPhotoSizeRaw: $spotPhotoSizeRaw
+            )
         }
         // 遡り判定結果シート（ストアシートとの競合を避けるためここに配置）
         .sheet(item: $pendingRetroactiveResult) { result in
@@ -165,6 +215,10 @@ struct CourseDetailView: View {
             }
         }
         .animation(.easeInOut(duration: 0.2), value: expandedImageUrl != nil)
+    }
+
+    private var spotPhotoSize: CourseSpotPhotoSize {
+        CourseSpotPhotoSize(rawValue: spotPhotoSizeRaw) ?? .medium
     }
 
     // MARK: - 遡り判定
@@ -249,16 +303,42 @@ struct CourseDetailView: View {
                 // → カメラ停止後に onEnd で座標を確定して再表示
                 selectedSpotScreenPoint = nil
             }
-            .onMapCameraChange(frequency: .onEnd) { _ in
+            .task(id: selectedSpotId) {
+                guard selectedSpotId != nil else { return }
+                // Programmatic camera moves do not always emit onEnd, so retry after layout/camera settle.
+                try? await Task.sleep(nanoseconds: 180_000_000)
+                guard !Task.isCancelled else { return }
+                await MainActor.run {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        updateSpotScreenPoint(proxy: proxy)
+                    }
+                }
+                try? await Task.sleep(nanoseconds: 320_000_000)
+                guard !Task.isCancelled else { return }
+                await MainActor.run {
+                    if selectedSpotScreenPoint == nil {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            updateSpotScreenPoint(proxy: proxy)
+                        }
+                    }
+                }
+            }
+            .onMapCameraChange(frequency: .onEnd) { context in
+                visibleMapSpan = context.region.span
                 // カメラ停止後にスポット座標を確定してフェードイン表示
                 withAnimation(.easeInOut(duration: 0.2)) {
                     updateSpotScreenPoint(proxy: proxy)
                 }
             }
-            .onMapCameraChange(frequency: .continuous) { _ in
+            .onMapCameraChange(frequency: .continuous) { context in
+                visibleMapSpan = context.region.span
                 // 画像が表示済みの場合のみリアルタイム追従（手動パン中）
                 guard selectedSpotScreenPoint != nil else { return }
                 updateSpotScreenPoint(proxy: proxy)
+            }
+            .overlay(alignment: .topTrailing) {
+                courseMapSettingsButton
+                    .padding(12)
             }
             .overlay {
                 leaderLineOverlay
@@ -268,6 +348,19 @@ struct CourseDetailView: View {
                     .padding([.trailing, .bottom], 12)
             }
         }
+    }
+
+    private var courseMapSettingsButton: some View {
+        Button {
+            showCourseMapSettings = true
+        } label: {
+            Image(systemName: "slider.horizontal.3")
+                .font(.system(size: 14, weight: .medium))
+                .frame(width: 36, height: 36)
+                .background(.regularMaterial, in: Circle())
+                .shadow(color: .black.opacity(0.15), radius: 4, x: 0, y: 2)
+        }
+        .buttonStyle(.plain)
     }
 
     /// フォーカス中スポットのスクリーン座標を MapProxy で更新する
@@ -285,14 +378,20 @@ struct CourseDetailView: View {
     /// フォーカス中スポットに画像がある場合、スポット位置からリーダーライン付きで表示
     @ViewBuilder
     private var leaderLineOverlay: some View {
-        if let spotPoint = selectedSpotScreenPoint,
+        if spotPhotoSize != .none,
+           let spotPoint = selectedSpotScreenPoint,
            let spot = course.spots.first(where: { $0.id == selectedSpotId }) {
             // ローカル保存画像 → リモートURL の順で優先
             let localImage = spot.localCoverImagePath.flatMap { LocalImageStorage.shared.load(from: $0) }
             let remoteUrl = spot.coverImageUrl.flatMap { URL(string: $0) }
 
             if localImage != nil || remoteUrl != nil {
-                SpotLeaderLineView(spotPoint: spotPoint, localImage: localImage, imageUrl: remoteUrl) {
+                SpotLeaderLineView(
+                    spotPoint: spotPoint,
+                    size: spotPhotoSize,
+                    localImage: localImage,
+                    imageUrl: remoteUrl
+                ) {
                     if let url = remoteUrl {
                         withAnimation(.easeInOut(duration: 0.2)) {
                             expandedImageUrl = url
@@ -456,15 +555,27 @@ struct CourseDetailView: View {
                 // 不正な座標の場合は選択状態だけ更新してカメラ移動はしない
                 guard spot.hasValidCoordinate else { return }
                 let radius = spot.recognitionRadiusMeters ?? course.recognitionRadiusMeters
-                let span = CourseDetailView.spotSpan(recognitionRadius: radius)
+                let span = zoomOnSpotFocus
+                    ? CourseDetailView.spotSpan(recognitionRadius: radius)
+                    : visibleMapSpan
+                let center = focusCenter(for: spot, span: span)
                 cameraPosition = .region(
                     MKCoordinateRegion(
-                        center: CLLocationCoordinate2D(latitude: spot.latitude, longitude: spot.longitude),
+                        center: center,
                         span: span
                     )
                 )
             }
         }
+    }
+
+    private func focusCenter(for spot: CourseSpot, span: MKCoordinateSpan) -> CLLocationCoordinate2D {
+        CourseDetailView.focusCenter(
+            latitude: spot.latitude,
+            longitude: spot.longitude,
+            span: span,
+            photoSize: spotPhotoSize
+        )
     }
 
     // MARK: - 全スポットフィット計算
@@ -476,6 +587,23 @@ struct CourseDetailView: View {
         let diameterDegrees = (recognitionRadius * 2) / 111_000.0
         let delta = max(0.002, min(diameterDegrees * 2.5, 0.3))
         return MKCoordinateSpan(latitudeDelta: delta, longitudeDelta: delta)
+    }
+
+    private static func focusCenter(
+        latitude: Double,
+        longitude: Double,
+        span: MKCoordinateSpan,
+        photoSize: CourseSpotPhotoSize
+    ) -> CLLocationCoordinate2D {
+        guard photoSize == .large else {
+            return CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+        }
+
+        // Large photos occupy the upper half, so place the focused spot around the lower-half center.
+        return CLLocationCoordinate2D(
+            latitude: min(90, latitude + span.latitudeDelta * 0.25),
+            longitude: longitude
+        )
     }
 
     static func fitRegion(for spots: [CourseSpot]) -> MKCoordinateRegion {
@@ -513,6 +641,97 @@ struct CourseDetailView: View {
             center: CLLocationCoordinate2D(latitude: centerLat, longitude: centerLon),
             span: MKCoordinateSpan(latitudeDelta: spanLat, longitudeDelta: spanLon)
         )
+    }
+}
+
+private struct CourseMapSettingsSheet: View {
+    @Binding var zoomOnSpotFocus: Bool
+    @Binding var spotPhotoSizeRaw: String
+    @Environment(\.dismiss) private var dismiss
+
+    private var selectedPhotoSize: CourseSpotPhotoSize {
+        CourseSpotPhotoSize(rawValue: spotPhotoSizeRaw) ?? .medium
+    }
+
+    var body: some View {
+        NavigationStack {
+            VStack(alignment: .leading, spacing: 22) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("スポットフォーカス時のズーム")
+                        .font(.headline)
+                    Text("スポットを選択したときに、地図をスポット中心へ移動しながらズームインするかを切り替えます。")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                HStack(spacing: 0) {
+                    toggleButton(title: "ON", isSelected: zoomOnSpotFocus) {
+                        withAnimation(.easeInOut(duration: 0.18)) {
+                            zoomOnSpotFocus = true
+                        }
+                    }
+
+                    toggleButton(title: "OFF", isSelected: !zoomOnSpotFocus) {
+                        withAnimation(.easeInOut(duration: 0.18)) {
+                            zoomOnSpotFocus = false
+                        }
+                    }
+                }
+                .padding(4)
+                .background(Color.secondary.opacity(0.12), in: Capsule())
+
+                VStack(alignment: .leading, spacing: 10) {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("スポット写真の大きさ")
+                            .font(.headline)
+                        Text("地図上に表示するスポット写真のサイズを選べます。")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+
+                    HStack(spacing: 0) {
+                        ForEach(CourseSpotPhotoSize.allCases, id: \.rawValue) { size in
+                            toggleButton(title: size.title, isSelected: selectedPhotoSize == size) {
+                                withAnimation(.easeInOut(duration: 0.18)) {
+                                    spotPhotoSizeRaw = size.rawValue
+                                }
+                            }
+                        }
+                    }
+                    .padding(4)
+                    .background(Color.secondary.opacity(0.12), in: Capsule())
+                }
+
+                Spacer()
+            }
+            .padding(20)
+            .navigationTitle("地図設定")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(L.Common.done) { dismiss() }
+                        .fontWeight(.semibold)
+                }
+            }
+        }
+        .presentationDetents([.height(340)])
+    }
+
+    private func toggleButton(
+        title: String,
+        isSelected: Bool,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(isSelected ? Color.white : Color.primary)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 9)
+                .background(isSelected ? Color.indigo : Color.clear, in: Capsule())
+        }
+        .buttonStyle(.plain)
     }
 }
 
@@ -846,17 +1065,17 @@ private struct SpotRowBackdropView: View {
                             height: geo.size.height
                         )
                         .clipped()
-                        .opacity(isSelected ? 0.56 : 0.44)
-                        .saturation(isSelected ? 1.08 : 1.03)
-                        .contrast(1.1)
+                        .opacity(isSelected ? 0.62 : 0.50)
+                        .saturation(isSelected ? 1.1 : 1.05)
+                        .contrast(1.12)
                         .offset(x: 10)
                         .mask(
                             LinearGradient(
                                 stops: [
                                     .init(color: .clear, location: 0),
-                                    .init(color: .white.opacity(0.22), location: 0.14),
-                                    .init(color: .white.opacity(0.58), location: 0.4),
-                                    .init(color: .white, location: 0.78)
+                                    .init(color: .white.opacity(0.18), location: 0.12),
+                                    .init(color: .white.opacity(0.50), location: 0.36),
+                                    .init(color: .white, location: 0.76)
                                 ],
                                 startPoint: .leading,
                                 endPoint: .trailing
@@ -865,8 +1084,8 @@ private struct SpotRowBackdropView: View {
                     LinearGradient(
                         colors: [
                             Color(uiColor: .systemBackground),
-                            Color(uiColor: .systemBackground).opacity(0.68),
-                            Color(uiColor: .systemBackground).opacity(0.14)
+                            Color(uiColor: .systemBackground).opacity(0.62),
+                            Color(uiColor: .systemBackground).opacity(0.10)
                         ],
                         startPoint: .leading,
                         endPoint: .trailing
@@ -1069,32 +1288,24 @@ private struct SpotDetailExpandedView: View {
 /// スポットのスクリーン座標から右上方向にリーダーライン（指示棒）を伸ばし、画像を表示する
 private struct SpotLeaderLineView: View {
     let spotPoint: CGPoint
+    let size: CourseSpotPhotoSize
     /// ローカル保存画像（優先）
     var localImage: UIImage? = nil
     /// リモート画像URL（ローカルがない場合にフォールバック）
     var imageUrl: URL? = nil
     var onImageTap: () -> Void = {}
 
-    private let imgW: CGFloat = 132
-    private let imgH: CGFloat = 88
     /// 地図端からのマージン
     private let margin: CGFloat = 12
 
     var body: some View {
         GeometryReader { geo in
-            // 画像を右上固定位置に配置（インフォボタンの下あたり）
-            let imgCenter = CGPoint(
-                x: geo.size.width - imgW / 2 - margin,
-                y: imgH / 2 + margin
-            )
-            // リーダーラインの終点（画像の左下隅）
-            let lineEnd = CGPoint(
-                x: imgCenter.x - imgW / 2,
-                y: imgCenter.y + imgH / 2
-            )
+            let imageSize = imageSize(in: geo.size)
+            let imgCenter = imageCenter(in: geo.size, imageSize: imageSize)
+            let lineEnd = lineEnd(imageCenter: imgCenter, imageSize: imageSize)
 
             ZStack {
-                // リーダーライン（スポット中心 → 画像左下隅）
+                // リーダーライン（スポット中心 → 画像端）
                 Canvas { ctx, _ in
                     let path: Path = {
                         var p = Path()
@@ -1127,7 +1338,7 @@ private struct SpotLeaderLineView: View {
                         Image(uiImage: uiImage)
                             .resizable()
                             .scaledToFill()
-                            .frame(width: imgW, height: imgH)
+                            .frame(width: imageSize.width, height: imageSize.height)
                             .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
                             .shadow(color: .black.opacity(0.3), radius: 6, x: 0, y: 2)
                     } else if let url = imageUrl {
@@ -1137,13 +1348,13 @@ private struct SpotLeaderLineView: View {
                                 image
                                     .resizable()
                                     .scaledToFill()
-                                    .frame(width: imgW, height: imgH)
+                                    .frame(width: imageSize.width, height: imageSize.height)
                                     .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
                                     .shadow(color: .black.opacity(0.3), radius: 6, x: 0, y: 2)
                             case .empty:
                                 RoundedRectangle(cornerRadius: 10, style: .continuous)
                                     .fill(.regularMaterial)
-                                    .frame(width: imgW, height: imgH)
+                                    .frame(width: imageSize.width, height: imageSize.height)
                                     .overlay(ProgressView().controlSize(.small))
                                     .shadow(color: .black.opacity(0.15), radius: 6, x: 0, y: 2)
                             case .failure:
@@ -1159,6 +1370,47 @@ private struct SpotLeaderLineView: View {
             }
             // 地図エリア外への描画を防ぐ
             .clipped()
+        }
+    }
+
+    private func imageSize(in containerSize: CGSize) -> CGSize {
+        switch size {
+        case .none:
+            return .zero
+        case .small:
+            return CGSize(width: 66, height: 44)
+        case .medium:
+            return CGSize(width: 132, height: 88)
+        case .large:
+            let height = max(120, containerSize.height * 0.45)
+            let maxWidth = max(containerSize.width - 32, 0)
+            let minWidth = min(180, maxWidth)
+            let width = min(maxWidth, max(height * 1.62, minWidth))
+            return CGSize(width: width, height: height)
+        }
+    }
+
+    private func imageCenter(in containerSize: CGSize, imageSize: CGSize) -> CGPoint {
+        switch size {
+        case .large:
+            return CGPoint(x: containerSize.width / 2, y: imageSize.height / 2 + margin)
+        case .none, .small, .medium:
+            return CGPoint(
+                x: containerSize.width - imageSize.width / 2 - margin,
+                y: imageSize.height / 2 + margin
+            )
+        }
+    }
+
+    private func lineEnd(imageCenter: CGPoint, imageSize: CGSize) -> CGPoint {
+        switch size {
+        case .large:
+            return CGPoint(x: imageCenter.x, y: imageCenter.y + imageSize.height / 2)
+        case .none, .small, .medium:
+            return CGPoint(
+                x: imageCenter.x - imageSize.width / 2,
+                y: imageCenter.y + imageSize.height / 2
+            )
         }
     }
 }

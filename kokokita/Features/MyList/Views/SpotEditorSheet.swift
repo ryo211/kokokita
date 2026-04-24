@@ -193,7 +193,7 @@ struct SpotEditorSheet: View {
                         .stroke(.indigo.opacity(0.5), lineWidth: 1.5)
 
                     Annotation("", coordinate: coord, anchor: .bottom) {
-                        Image(systemName: "mappin.circle.fill")
+                        Image(systemName: "mappin")
                             .font(.system(size: 32))
                             .foregroundStyle(.indigo)
                             .shadow(radius: 4)
@@ -227,8 +227,8 @@ struct SpotEditorSheet: View {
                 .allowsHitTesting(false)
             }
 
-            // 上部オーバーレイ：検索バー + 写真ボタン
-            HStack(spacing: 8) {
+            // 上部オーバーレイ：検索バー + 位置取得導線
+            VStack(alignment: .leading, spacing: 8) {
                 // 検索バー（タップで検索モードへ）
                 Button {
                     withAnimation(.easeInOut(duration: 0.25)) {
@@ -253,28 +253,33 @@ struct SpotEditorSheet: View {
                 }
                 .buttonStyle(.plain)
 
-                // 取り込みメニュー（写真 / 緯度経度入力）
-                Menu {
+                HStack(spacing: 8) {
                     Button {
                         showPhotoImport = true
                     } label: {
-                        Label(L.SpotEditor.importFromPhoto, systemImage: "photo.on.rectangle")
+                        Label("写真から取り込み", systemImage: "photo.on.rectangle")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.indigo)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 7)
+                            .background(.regularMaterial, in: Capsule())
+                            .shadow(color: .black.opacity(0.08), radius: 3, x: 0, y: 1)
                     }
+                    .buttonStyle(.plain)
+
                     Button {
                         showCoordinateInput = true
                     } label: {
-                        Label(L.SpotEditor.enterCoordinates, systemImage: "location.circle")
+                        Label("緯度経度を入力", systemImage: "location.circle")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.indigo)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 7)
+                            .background(.regularMaterial, in: Capsule())
+                            .shadow(color: .black.opacity(0.08), radius: 3, x: 0, y: 1)
                     }
-                } label: {
-                    Image(systemName: "arrow.down.to.line.circle.fill")
-                        .font(.system(size: 22, weight: .medium))
-                        .frame(width: 38, height: 38)
-                        .background(.regularMaterial, in: Circle())
-                        .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+                    .buttonStyle(.plain)
                 }
-                .menuStyle(.button)
-                .buttonStyle(.plain)
-
             }
             .padding(.horizontal, 12)
             .padding(.top, 10)
@@ -503,9 +508,15 @@ struct SpotEditorSheet: View {
                         // 達成判定半径スライダー
                         VStack(alignment: .leading, spacing: 8) {
                             HStack {
-                                Text(L.SpotEditor.recognitionRadius)
-                                    .font(.caption.weight(.semibold))
-                                    .foregroundStyle(.secondary)
+                                HStack(spacing: 6) {
+                                    Text(L.SpotEditor.recognitionRadius)
+                                        .font(.caption.weight(.semibold))
+                                        .foregroundStyle(.secondary)
+                                    RecognitionRangeInfoButton(
+                                        title: L.SpotEditor.recognitionRadius,
+                                        message: L.SpotEditor.recognitionRadiusInfo
+                                    )
+                                }
                                 Spacer()
                                 Text("\(Int(customRadius))m")
                                     .font(.caption)
@@ -944,4 +955,3 @@ private struct CoordinateInputSheet: View {
         .presentationDetents([.medium])
     }
 }
-

@@ -482,7 +482,8 @@
 "courseEditor.summaryPlaceholder" = "Course description (optional)";
 "courseEditor.settingsSection" = "Course Settings";
 "courseEditor.coverImage" = "Cover Image";
-"courseEditor.recognitionRadius" = "Recognition Radius";
+"courseEditor.recognitionRadius" = "Effective Range";
+"courseEditor.recognitionRadiusInfo" = "Recording within this range will count as visiting a spot. If a spot does not have its own custom setting, this value will be used.";
 "courseEditor.recognitionRadiusValue" = "%dm";
 "courseEditor.allowRetroactive" = "Include retroactive records";
 "courseEditor.spotsSection" = "Spots";
@@ -503,7 +504,8 @@
 "spotEditor.namePlaceholder" = "Enter spot name";
 "spotEditor.descriptionPlaceholder" = "Enter description";
 "spotEditor.image" = "Image";
-"spotEditor.recognitionRadius" = "Recognition Radius";
+"spotEditor.recognitionRadius" = "Effective Range";
+"spotEditor.recognitionRadiusInfo" = "Recording within this range will count as visiting this spot.";
 "spotEditor.useCoursDefault" = "Use course default";
 "spotEditor.addButton" = "Add";
 "spotEditor.saveButton" = "Save";

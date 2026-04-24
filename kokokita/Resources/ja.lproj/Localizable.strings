@@ -484,7 +484,8 @@
 "courseEditor.summaryPlaceholder" = "コースの説明（任意）";
 "courseEditor.settingsSection" = "コース設定";
 "courseEditor.coverImage" = "カバー画像";
-"courseEditor.recognitionRadius" = "達成判定半径";
+"courseEditor.recognitionRadius" = "有効範囲";
+"courseEditor.recognitionRadiusInfo" = "この有効範囲の中で記録すると、そのスポットに行った判定になります。スポットごとに個別設定していない場合は、この値が使われます。";
 "courseEditor.recognitionRadiusValue" = "%dm";
 "courseEditor.allowRetroactive" = "後付け記録を達成に含める";
 "courseEditor.spotsSection" = "スポット";
@@ -505,7 +506,8 @@
 "spotEditor.namePlaceholder" = "スポット名を入力してください";
 "spotEditor.descriptionPlaceholder" = "説明文を入力してください";
 "spotEditor.image" = "画像";
-"spotEditor.recognitionRadius" = "達成判定半径";
+"spotEditor.recognitionRadius" = "有効範囲";
+"spotEditor.recognitionRadiusInfo" = "この有効範囲の中で記録すると、このスポットに行った判定になります。";
 "spotEditor.useCoursDefault" = "コースのデフォルトを使用";
 "spotEditor.addButton" = "追加";
 "spotEditor.saveButton" = "保存";

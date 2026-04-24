@@ -214,7 +214,7 @@ struct ManualEntryScreen: View {
                 if store.hasValidLocation, let lat = store.latitude, let lon = store.longitude {
                     let coord = CLLocationCoordinate2D(latitude: lat, longitude: lon)
                     Annotation("", coordinate: coord, anchor: .bottom) {
-                        Image(systemName: "mappin.circle.fill")
+                        Image(systemName: "mappin")
                             .font(.system(size: 32))
                             .foregroundStyle(.orange)
                             .shadow(radius: 4)
@@ -242,8 +242,8 @@ struct ManualEntryScreen: View {
                 .allowsHitTesting(false)
             }
 
-            // 上部: 検索バー + 取り込みメニュー
-            HStack(spacing: 8) {
+            // 上部: 検索バー + 位置取得導線
+            VStack(alignment: .leading, spacing: 8) {
                 Button {
                     withAnimation(.easeInOut(duration: 0.25)) { isSearchingLocation = true }
                     locationSearchFocused = true
@@ -265,28 +265,33 @@ struct ManualEntryScreen: View {
                 }
                 .buttonStyle(.plain)
 
-                // 取り込みメニュー（写真 / 緯度経度）
-                Menu {
+                HStack(spacing: 8) {
                     Button {
                         showPhotoImport = true
                     } label: {
-                        // 写真取り込みは位置情報と日時の両方を取り込む旨を明示
-                        Label(L.ManualEntry.importFromPhotoWithDateTime, systemImage: "photo.on.rectangle")
+                        Label("写真から取り込み", systemImage: "photo.on.rectangle")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.orange)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 7)
+                            .background(.regularMaterial, in: Capsule())
+                            .shadow(color: .black.opacity(0.08), radius: 3, x: 0, y: 1)
                     }
+                    .buttonStyle(.plain)
+
                     Button {
                         showCoordinateInput = true
                     } label: {
-                        Label(L.SpotEditor.enterCoordinates, systemImage: "location.circle")
+                        Label("緯度経度を入力", systemImage: "location.circle")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.orange)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 7)
+                            .background(.regularMaterial, in: Capsule())
+                            .shadow(color: .black.opacity(0.08), radius: 3, x: 0, y: 1)
                     }
-                } label: {
-                    Image(systemName: "arrow.down.to.line.circle.fill")
-                        .font(.system(size: 22, weight: .medium))
-                        .frame(width: 38, height: 38)
-                        .background(.regularMaterial, in: Circle())
-                        .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+                    .buttonStyle(.plain)
                 }
-                .menuStyle(.button)
-                .buttonStyle(.plain)
             }
             .padding(.horizontal, 12)
             .padding(.top, 10)
