@@ -29,9 +29,6 @@ final class CourseRetroactiveRecognitionService {
     func recognize(for courseId: UUID) throws -> RetroactiveResult? {
         guard var course = try courseRepo.fetch(id: courseId) else { return nil }
 
-        // allowRetroactive == false のコースは遡り判定対象外
-        guard course.allowRetroactive else { return nil }
-
         // 証明付き訪問記録（isManualEntry == false）を全件取得
         let proofVisits = try fetchProofVisits()
         guard !proofVisits.isEmpty else { return nil }

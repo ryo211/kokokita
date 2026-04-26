@@ -44,7 +44,6 @@ final class CourseEditorViewModel {
     var title: String = ""
     var summary: String = ""
     var recognitionRadiusMeters: Double = 150
-    var allowRetroactive: Bool = false
     var isEnabled: Bool = true
     var categories: [CourseCategory] = [.userCreated]
     var coverImage: UIImage?
@@ -91,7 +90,6 @@ final class CourseEditorViewModel {
             title = course.title
             summary = course.summary ?? ""
             recognitionRadiusMeters = course.recognitionRadiusMeters
-            allowRetroactive = course.allowRetroactive
             isEnabled = course.isEnabled
             categories = course.categories
             localCoverImagePath = course.localCoverImagePath
@@ -117,7 +115,6 @@ final class CourseEditorViewModel {
         return title != original.title ||
                summary != (original.summary ?? "") ||
                recognitionRadiusMeters != original.recognitionRadiusMeters ||
-               allowRetroactive != original.allowRetroactive ||
                spots.count != original.spots.count ||
                coverImage != nil
     }
@@ -258,7 +255,7 @@ final class CourseEditorViewModel {
             recognitionRadiusMeters: recognitionRadiusMeters,
             everEnabled: originalCourse?.everEnabled ?? false,
             isEnabled: isEnabled,
-            allowRetroactive: allowRetroactive,
+            allowRetroactive: originalCourse?.allowRetroactive ?? true,
             detailUrl: nil,
             coverImageUrl: coverImageUrl,
             localCoverImagePath: coverPath,
@@ -281,7 +278,6 @@ final class CourseEditorViewModel {
         title = original.title
         summary = original.summary ?? ""
         recognitionRadiusMeters = original.recognitionRadiusMeters
-        allowRetroactive = original.allowRetroactive
         isEnabled = original.isEnabled
         categories = original.categories
         localCoverImagePath = original.localCoverImagePath

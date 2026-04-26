@@ -913,14 +913,6 @@ private struct CourseSettingsSheet: View {
                     .padding(.horizontal, 20)
 
                     Divider().padding(.horizontal, 20)
-
-                    // 後付け記録
-                    Toggle(L.CourseEditor.allowRetroactive, isOn: $viewModel.allowRetroactive)
-                        .tint(.indigo)
-                        .padding(.horizontal, 20)
-                        .padding(.vertical, 14)
-
-                    Divider().padding(.horizontal, 20)
                 }
             }
             .navigationTitle(L.CourseEditor.settingsSection)

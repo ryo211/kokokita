@@ -26,7 +26,6 @@
 |---|---|---|---|
 | `isUserCreated` | Bool | false | ユーザー作成コースかどうか（既存フィールドの確認・追加） |
 | `isEnabled` | Bool | true | コース一覧への表示・達成判定の有効/無効 |
-| `allowRetroactive` | Bool | false | 後付け記録を達成判定に含めるか |
 | `localCoverImagePath` | String? | nil | 端末内カバー画像パス |
 
 ### 既存エンティティ `Spot` に追加するフィールド
@@ -249,7 +248,6 @@ CourseEditorView(mode: .edit(course: existingCourse))
 | カバー画像 | `PhotosPicker` + プレビュー表示 | 選択画像をFileManagerに保存しパスを記録 |
 | コース説明 | 複数行 `TextField` | `summary` に対応 |
 | 達成判定半径 | `Slider`（50m〜1000m） + 数値表示 | `recognitionRadiusMeters` のデフォルト値 |
-| 後付け記録を有効にする | `Toggle` | `allowRetroactive` |
 
 ### スポット一覧
 
@@ -437,9 +435,7 @@ let predicate = NSPredicate(
 既存の巡礼達成判定（GPS認識でスポットをチェック済みにする処理）に以下の条件を追加する。
 
 - コースの `isEnabled == false` のコースは判定対象外
-- コースの `allowRetroactive == false` のとき、後付け記録はそのコースの達成にカウントしない
-
-> 既存のバンドル・ダウンロードコースは `allowRetroactive` のデフォルトを既存挙動に合わせること（`false` を推奨）。
+- コース追加時の遡り判定は `allowRetroactive` に依存せず常に実行対象とする
 
 ---
 
