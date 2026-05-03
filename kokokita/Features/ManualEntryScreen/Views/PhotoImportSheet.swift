@@ -12,6 +12,11 @@ struct PhotoImportSheet: View {
     @Binding var addressLine: String?
     @Binding var timestamp: Date
 
+    /// true の場合、取り込んだ日時を結果に表示し説明文にも日時を含める（後付け記録用）
+    var showsTimestamp: Bool = false
+    /// テーマカラー（後付け記録: .orange / スポット作成: .indigo）
+    var tintColor: Color = .indigo
+
     // 写真追加のコールバック
     let onPhotoAdded: (UIImage) -> Void
 
@@ -27,14 +32,14 @@ struct PhotoImportSheet: View {
     private let geocoder = CLGeocoder()
 
     private var hasExtractedData: Bool {
-        extractedCoordinate != nil || extractedTimestamp != nil
+        extractedCoordinate != nil
     }
 
     var body: some View {
         NavigationStack {
             VStack(spacing: 24) {
-                // 説明テキスト
-                Text(L.LocationPicker.photoImportDescription)
+                // 説明テキスト（後付け記録用は日時も取り込む旨を表示）
+                Text(showsTimestamp ? L.ManualEntry.photoImportHint : L.LocationPicker.photoImportDescription)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -55,14 +60,14 @@ struct PhotoImportSheet: View {
                             .clipShape(RoundedRectangle(cornerRadius: 12))
                             .overlay(
                                 RoundedRectangle(cornerRadius: 12)
-                                    .stroke(Color.orange, lineWidth: 2)
+                                    .stroke(tintColor, lineWidth: 2)
                             )
                     } else {
                         // 未選択時のプレースホルダー
                         VStack(spacing: 12) {
                             Image(systemName: "photo.on.rectangle.angled")
                                 .font(.system(size: 48))
-                                .foregroundStyle(.orange)
+                                .foregroundStyle(tintColor)
 
                             Text(L.ManualEntry.importFromPhoto)
                                 .font(.headline)
@@ -88,7 +93,7 @@ struct PhotoImportSheet: View {
                 if let error = errorMessage {
                     Text(error)
                         .font(.caption)
-                        .foregroundStyle(.orange)
+                        .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal)
                 }
@@ -105,7 +110,7 @@ struct PhotoImportSheet: View {
                             .foregroundStyle(.white)
                             .frame(maxWidth: .infinity)
                             .padding()
-                            .background(Color.orange)
+                            .background(tintColor)
                             .clipShape(RoundedRectangle(cornerRadius: 12))
                     }
                     .padding(.horizontal)
@@ -127,59 +132,58 @@ struct PhotoImportSheet: View {
 
     private var extractedDataView: some View {
         VStack(alignment: .leading, spacing: 12) {
-            // 日時情報
-            if let timestamp = extractedTimestamp {
-                HStack {
-                    Image(systemName: "calendar")
-                        .foregroundStyle(.orange)
-                    VStack(alignment: .leading) {
-                        Text(L.ManualEntry.dateTime)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                        Text(timestamp.formatted(date: .long, time: .shortened))
-                            .font(.subheadline)
-                    }
-                    Spacer()
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundStyle(.green)
-                }
-            } else {
-                HStack {
-                    Image(systemName: "calendar.badge.exclamationmark")
-                        .foregroundStyle(.secondary)
-                    Text(L.ManualEntry.noDateInPhoto)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                    Spacer()
-                }
-            }
-
-            Divider()
-
-            // 位置情報
+            // 位置情報（住所または座標を表示）
             if let coord = extractedCoordinate {
-                HStack {
+                HStack(alignment: .top) {
                     Image(systemName: "mappin.circle.fill")
-                        .foregroundStyle(.orange)
-                    VStack(alignment: .leading) {
+                        .foregroundStyle(tintColor)
+                        .font(.title3)
+                    VStack(alignment: .leading, spacing: 3) {
                         Text(L.ManualEntry.setLocation)
                             .font(.caption)
                             .foregroundStyle(.secondary)
-                        Text(String(format: "%.5f, %.5f", coord.latitude, coord.longitude))
+                        if let addr = addressLine, !addr.isEmpty {
+                            Text(addr)
+                                .font(.subheadline)
+                        } else {
+                            Text(String(format: "%.5f, %.5f", coord.latitude, coord.longitude))
+                                .font(.subheadline.monospacedDigit())
+                        }
+                    }
+                    Spacer()
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundStyle(tintColor)
+                }
+            }
+
+            // 日時（後付け記録モードのみ表示）
+            if showsTimestamp, let ts = extractedTimestamp {
+                Divider()
+                HStack(alignment: .top) {
+                    Image(systemName: "calendar.circle.fill")
+                        .foregroundStyle(tintColor)
+                        .font(.title3)
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(L.ManualEntry.setDateTime)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Text(ts.formatted(.dateTime.year().month().day().hour().minute()))
                             .font(.subheadline)
                     }
                     Spacer()
                     Image(systemName: "checkmark.circle.fill")
-                        .foregroundStyle(.green)
+                        .foregroundStyle(tintColor)
                 }
-            } else {
-                HStack {
-                    Image(systemName: "mappin.slash")
+            } else if showsTimestamp && extractedTimestamp == nil && extractedCoordinate != nil {
+                // 位置情報はあるが日時がない場合の注記
+                Divider()
+                HStack(spacing: 6) {
+                    Image(systemName: "calendar.badge.exclamationmark")
                         .foregroundStyle(.secondary)
-                    Text(L.ManualEntry.noLocationInPhoto)
                         .font(.subheadline)
+                    Text(L.ManualEntry.noDateInPhoto)
+                        .font(.caption)
                         .foregroundStyle(.secondary)
-                    Spacer()
                 }
             }
         }
@@ -220,13 +224,9 @@ struct PhotoImportSheet: View {
                 await reverseGeocode(coordinate: coord)
             }
 
-            // 両方取得できなかった場合のエラーメッセージ
-            if extractedCoordinate == nil && extractedTimestamp == nil {
-                errorMessage = L.ManualEntry.noLocationInPhoto + "\n" + L.ManualEntry.noDateInPhoto
-            } else if extractedCoordinate == nil {
+            // 位置情報が取得できなかった場合のエラーメッセージ
+            if extractedCoordinate == nil {
                 errorMessage = L.ManualEntry.noLocationInPhoto
-            } else if extractedTimestamp == nil {
-                errorMessage = L.ManualEntry.noDateInPhoto
             }
 
             photoSelection = nil

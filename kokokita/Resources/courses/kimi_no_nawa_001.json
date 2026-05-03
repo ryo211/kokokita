@@ -5,11 +5,13 @@
   "summary": "映画『君の名は』に登場するスポットを巡るコースです。全9件収録。",
   "source": "bundled",
   "isUserCreated": false,
-  "version": 1,
-  "recognitionRadiusMeters": 100.0,
+  "version": 2,
+  "recognitionRadiusMeters": 100,
   "detailUrl": null,
   "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/course/kimi_no_nawa_001.jpg",
-  "categories": ["anime"],
+  "categories": [
+    "anime"
+  ],
   "sections": [
     {
       "sectionId": "sec-tokyo",
@@ -27,7 +29,8 @@
           "spotDescription": "瀧に入れ替わった三葉が東京の街並みに感動するシーン",
           "orderIndex": 0,
           "recognitionRadiusMeters": null,
-          "googlePlaceId": "ChIJQ6yrc9CMGGARH6diq4aOJwo"
+          "googlePlaceId": "ChIJQ6yrc9CMGGARH6diq4aOJwo",
+          "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/kimi-no-nawa-001.jpg"
         },
         {
           "spotId": "kimi-no-nawa-002",
@@ -38,7 +41,8 @@
           "spotDescription": "瀧と奥寺先輩がデートした美術館",
           "orderIndex": 1,
           "recognitionRadiusMeters": null,
-          "googlePlaceId": "ChIJP-vO9nuLGGARGJ2q8uryJUA"
+          "googlePlaceId": "ChIJP-vO9nuLGGARGJ2q8uryJUA",
+          "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/kimi-no-nawa-002.jpg"
         },
         {
           "spotId": "kimi-no-nawa-003",
@@ -49,7 +53,8 @@
           "spotDescription": "瀧が奥寺先輩とのデート後に三葉に電話をかけようとした場所",
           "orderIndex": 2,
           "recognitionRadiusMeters": null,
-          "googlePlaceId": "ChIJMw4RpZGMGGARlE8pOtLzrVU"
+          "googlePlaceId": "ChIJMw4RpZGMGGARlE8pOtLzrVU",
+          "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/kimi-no-nawa-003.jpg"
         },
         {
           "spotId": "kimi-no-nawa-004",
@@ -81,7 +86,8 @@
           "spotDescription": "宮水神社のモデルとされている神社",
           "orderIndex": 0,
           "recognitionRadiusMeters": null,
-          "googlePlaceId": "ChIJ_bxu79ygAmARZMuDzC9_KR8"
+          "googlePlaceId": "ChIJ_bxu79ygAmARZMuDzC9_KR8",
+          "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/kimi-no-nawa-005.jpg"
         },
         {
           "spotId": "kimi-no-nawa-006",
@@ -91,8 +97,9 @@
           "longitude": 137.1896028,
           "spotDescription": "瀧が奥寺先輩・司と共に糸守町を探しに訪れた駅",
           "orderIndex": 1,
-          "recognitionRadiusMeters": 300.0,
-          "googlePlaceId": "ChIJX1oW4-WgAmARiYsUBi2FUBA"
+          "recognitionRadiusMeters": 300,
+          "googlePlaceId": "ChIJX1oW4-WgAmARiYsUBi2FUBA",
+          "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/kimi-no-nawa-006.jpg"
         },
         {
           "spotId": "kimi-no-nawa-007",
@@ -103,7 +110,8 @@
           "spotDescription": "瀧、奥寺先輩、司が糸守町の隕石落下について調べた図書館",
           "orderIndex": 2,
           "recognitionRadiusMeters": null,
-          "googlePlaceId": "ChIJwU5GLu6gAmARpAEl1lggBCQ"
+          "googlePlaceId": "ChIJwU5GLu6gAmARpAEl1lggBCQ",
+          "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/kimi-no-nawa-007.jpg"
         },
         {
           "spotId": "kimi-no-nawa-008",
@@ -114,7 +122,8 @@
           "spotDescription": "瀧、奥寺先輩、司が糸守町を探している時に登場したバス停",
           "orderIndex": 3,
           "recognitionRadiusMeters": null,
-          "googlePlaceId": "ChIJ_8jJh3YM-F8RocTh4zpBRUs"
+          "googlePlaceId": "ChIJ_8jJh3YM-F8RocTh4zpBRUs",
+          "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/kimi-no-nawa-008.jpg"
         }
       ]
     },
@@ -133,8 +142,9 @@
           "longitude": 138.1225291,
           "spotDescription": "糸守湖のモデルとされている諏訪湖を一望できる公園",
           "orderIndex": 0,
-          "recognitionRadiusMeters": 500.0,
-          "googlePlaceId": "ChIJgy1ZVFJUHGARrmB2toTQHvA"
+          "recognitionRadiusMeters": 500,
+          "googlePlaceId": "ChIJgy1ZVFJUHGARrmB2toTQHvA",
+          "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/kimi-no-nawa-009.jpg"
         }
       ]
     }

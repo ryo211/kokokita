@@ -9,4 +9,6 @@ extension Notification.Name {
     static let courseChanged = Notification.Name("courseChanged")
     /// 新規コースがダウンロードされたことを通知（object: UUID = コースID）
     static let courseDownloaded = Notification.Name("courseDownloaded")
+    /// 自作コースが有効化されたことを通知（object: UUID = コースID）
+    static let courseEnabled = Notification.Name("courseEnabled")
 }

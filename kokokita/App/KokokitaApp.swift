@@ -12,13 +12,15 @@ struct KokokitaApp: App {
     }
 
     @State private var uiState = AppUIState()
+    @State private var spotFavoriteStore = SpotFavoriteStore()
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
-    
+
     var body: some Scene {
         WindowGroup {
             RootView()
                 .environment(uiState)
                 .environment(\.managedObjectContext, CoreDataStack.shared.context)
+                .environment(\.spotFavoriteStore, spotFavoriteStore)
         }
     }
 }

@@ -5,11 +5,13 @@
   "summary": "漫画『SLAM DUNK』、映画『THE FIRST SLAM DUNK』に登場する場所を巡るコースです。全12件収録。",
   "source": "bundled",
   "isUserCreated": false,
-  "version": 1,
-  "recognitionRadiusMeters": 100.0,
+  "version": 2,
+  "recognitionRadiusMeters": 100,
   "detailUrl": null,
   "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/course/slam_dunk_001.jpg",
-  "categories": ["anime"],
+  "categories": [
+    "anime"
+  ],
   "sections": [
     {
       "sectionId": "sec-kanagawa",
@@ -29,7 +31,6 @@
           "recognitionRadiusMeters": null,
           "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/slam-dunk-001.jpg",
           "googlePlaceId": "ChIJIRZ85hZPGGARffzavFo4QRk"
-
         },
         {
           "spotId": "slam-dunk-002",
@@ -39,7 +40,7 @@
           "longitude": 139.5338945,
           "spotDescription": "新装再編版2巻の表紙絵",
           "orderIndex": 1,
-          "recognitionRadiusMeters": 300.0,
+          "recognitionRadiusMeters": 300,
           "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/slam-dunk-002.jpg",
           "googlePlaceId": "ChIJVdr6u0pFGGARmhYH0dhHHik"
         },
@@ -52,7 +53,8 @@
           "spotDescription": "インターハイ県予選決勝リーグ、海南戦の舞台",
           "orderIndex": 2,
           "recognitionRadiusMeters": null,
-          "googlePlaceId": "ChIJRUh7rN9TGGARnTRVz3kC4eY"
+          "googlePlaceId": "ChIJRUh7rN9TGGARnTRVz3kC4eY",
+          "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/slam-dunk-003.jpg"
         },
         {
           "spotId": "slam-dunk-004",
@@ -73,7 +75,7 @@
           "longitude": 139.461266,
           "spotDescription": "花道と流川が居た原作ラストシーンの場所",
           "orderIndex": 4,
-          "recognitionRadiusMeters": 300.0,
+          "recognitionRadiusMeters": 300,
           "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/slam-dunk-005.jpg",
           "googlePlaceId": "ChIJMSwmRkJOGGARItkqZHT5tqI"
         }
@@ -106,7 +108,8 @@
           "spotDescription": "広島インターハイの開会式の会場のモデルで、豊玉高校と一触即発となった現場",
           "orderIndex": 1,
           "recognitionRadiusMeters": null,
-          "googlePlaceId": "ChIJ2e7VfDo1RTUR-YeCDwT4eCQ"
+          "googlePlaceId": "ChIJ2e7VfDo1RTUR-YeCDwT4eCQ",
+          "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/slam-dunk-007.jpg"
         },
         {
           "spotId": "slam-dunk-008",
@@ -128,7 +131,8 @@
           "spotDescription": "安西先生と豊玉の北野監督が居たお好み焼き屋さん",
           "orderIndex": 3,
           "recognitionRadiusMeters": null,
-          "googlePlaceId": "ChIJ8wsenQ-iWjUR1opIxHCTeBM"
+          "googlePlaceId": "ChIJ8wsenQ-iWjUR1opIxHCTeBM",
+          "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/slam-dunk-009.jpg"
         }
       ]
     },
@@ -147,7 +151,7 @@
           "longitude": 127.7371875,
           "spotDescription": "リョータとソータの「秘密基地」がある海岸のモデル",
           "orderIndex": 0,
-          "recognitionRadiusMeters": 300.0,
+          "recognitionRadiusMeters": 300,
           "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/slam-dunk-010.jpg",
           "googlePlaceId": "ChIJW0H1ZuMT5TQR8AgxVEpcOLE"
         },
@@ -171,7 +175,7 @@
           "longitude": 139.433326,
           "spotDescription": "インターハイから帰ったリョータを母・カオルが迎えるシーン",
           "orderIndex": 2,
-          "recognitionRadiusMeters": 300.0,
+          "recognitionRadiusMeters": 300,
           "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/slam-dunk-012.jpg",
           "googlePlaceId": "ChIJtcax_eBNGGARtjIzbtG-nAo"
         }

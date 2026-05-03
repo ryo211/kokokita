@@ -5,11 +5,13 @@
   "summary": "日本三景を巡るコースです。全3件収録。",
   "source": "bundled",
   "isUserCreated": false,
-  "version": 1,
-  "recognitionRadiusMeters": 1000.0,
+  "version": 2,
+  "recognitionRadiusMeters": 1000,
   "detailUrl": null,
   "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/course/nihonsankei_001.jpg",
-  "categories": ["nature"],
+  "categories": [
+    "nature"
+  ],
   "spots": [
     {
       "spotId": "nihonsankei-001",
@@ -20,7 +22,8 @@
       "spotDescription": "260余りの島々が浮かぶ多島美が特徴の太平洋の絶景。",
       "orderIndex": 0,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJHZOGqwSciV8RmYQoravaI2c"
+      "googlePlaceId": "ChIJHZOGqwSciV8RmYQoravaI2c",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/nihonsankei-001.jpg"
     },
     {
       "spotId": "nihonsankei-002",
@@ -31,7 +34,8 @@
       "spotDescription": "長さ 3.6 km の砂洲。美しい景観、砂浜、数千本もの松林で有名。",
       "orderIndex": 1,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJl-LBxy2X_18RgWzksvPOYbo"
+      "googlePlaceId": "ChIJl-LBxy2X_18RgWzksvPOYbo",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/nihonsankei-002.jpg"
     },
     {
       "spotId": "nihonsankei-003",

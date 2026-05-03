@@ -23,7 +23,7 @@ final class CourseRecognitionService {
     /// 指定座標に対して有効コース全件を判定し、ヒットしたコース×スポットを返す
     /// - 条件A: isManualEntry == false（後付け記録は対象外）
     /// - チェックイン済みスポットも再認識対象（再訪問を正しく記録するため）
-    /// - 同一コース内複数該当 → 最短距離のみ採用
+    /// - 同一コース内複数該当 → 該当スポットをすべて採用
     /// - 複数コース該当 → 全件返す
     func recognize(latitude: Double, longitude: Double, isManualEntry: Bool) throws -> [RecognitionResult] {
         guard !isManualEntry else { return [] }
@@ -33,13 +33,20 @@ final class CourseRecognitionService {
         var results: [RecognitionResult] = []
 
         for course in courses {
+            // isEnabled == false のコースは判定対象外
+            guard course.isEnabled else { continue }
             // 全スポット対象（チェックイン済みでも再認識する）
             guard !course.spots.isEmpty else { continue }
 
-            // BBox プレフィルタ（±0.003度 ≒ 約330m）
+            // 認識半径に応じた BBox プレフィルタ
+            let maxRadius = course.spots
+                .map { $0.recognitionRadiusMeters ?? course.recognitionRadiusMeters }
+                .max() ?? course.recognitionRadiusMeters
+            let latDelta = latitudeDelta(forMeters: maxRadius)
+            let lonDelta = longitudeDelta(forMeters: maxRadius, at: latitude)
             let filtered = course.spots.filter { spot in
-                abs(spot.latitude - latitude) <= 0.003 &&
-                abs(spot.longitude - longitude) <= 0.003
+                abs(spot.latitude - latitude) <= latDelta &&
+                abs(spot.longitude - longitude) <= lonDelta
             }
             guard !filtered.isEmpty else { continue }
 
@@ -53,16 +60,24 @@ final class CourseRecognitionService {
             }
             guard !candidates.isEmpty else { continue }
 
-            // 同一コース内で最短距離のスポットのみ採用
-            if let (bestSpot, bestDist) = candidates.min(by: { $0.1 < $1.1 }) {
+            for (spot, dist) in candidates.sorted(by: { $0.1 < $1.1 }) {
                 results.append(RecognitionResult(
                     course: course,
-                    spot: bestSpot,
-                    distanceMeters: bestDist
+                    spot: spot,
+                    distanceMeters: dist
                 ))
             }
         }
 
         return results
+    }
+
+    private func latitudeDelta(forMeters meters: Double) -> CLLocationDegrees {
+        meters / 111_000.0
+    }
+
+    private func longitudeDelta(forMeters meters: Double, at latitude: Double) -> CLLocationDegrees {
+        let cosLat = max(cos(latitude * .pi / 180.0), 0.01)
+        return meters / (111_000.0 * cosLat)
     }
 }

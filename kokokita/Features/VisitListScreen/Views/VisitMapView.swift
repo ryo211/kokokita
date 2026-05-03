@@ -10,6 +10,8 @@ struct SheetHeightPreferenceKey: PreferenceKey {
 }
 
 struct VisitMapView: View {
+    private static let zoomOnVisitFocusKey = "visitList.map.zoomOnVisitFocus"
+
     let items: [VisitAggregate]
     let labelMap: [UUID: String]
     let groupMap: [UUID: String]
@@ -25,6 +27,8 @@ struct VisitMapView: View {
     @State private var showCurrentLocation = false
     @State private var currentLocation: CLLocationCoordinate2D?
     @State private var currentMapRegion: MKCoordinateRegion?
+    @State private var showMapSettings = false
+    @AppStorage(Self.zoomOnVisitFocusKey) private var zoomOnVisitFocus = true
 
     // 選択されたアイテムを最後に配置するようソート
     private var sortedItems: [VisitAggregate] {
@@ -73,11 +77,14 @@ struct VisitMapView: View {
                 currentMapRegion = context.region
             }
 
-            // 現在地ボタン
+            // 右上ボタン群
             VStack {
                 HStack {
                     Spacer()
-                    currentLocationButton
+                    VStack(spacing: 10) {
+                        mapSettingsButton
+                        currentLocationButton
+                    }
                         .padding(.trailing, 16)
                         .padding(.top, 16)
                 }
@@ -122,6 +129,9 @@ struct VisitMapView: View {
             guard let newId else { return }
             focusOnItem(id: newId, animated: true)
         }
+        .sheet(isPresented: $showMapSettings) {
+            VisitMapSettingsSheet(zoomOnVisitFocus: $zoomOnVisitFocus)
+        }
     }
 
     /// 訪問記録の先頭ラベル色を取得（名前順でソートして最初のラベルの色）
@@ -137,11 +147,23 @@ struct VisitMapView: View {
     private func focusOnItem(id: UUID, animated: Bool) {
         guard let agg = items.first(where: { $0.id == id }),
               agg.visit.latitude != 0 || agg.visit.longitude != 0 else { return }
-        let region = MKCoordinateRegion(
-            center: CLLocationCoordinate2D(latitude: agg.visit.latitude, longitude: agg.visit.longitude),
-            latitudinalMeters: 500,
-            longitudinalMeters: 500
-        )
+        let center = CLLocationCoordinate2D(latitude: agg.visit.latitude, longitude: agg.visit.longitude)
+        let region: MKCoordinateRegion
+        if zoomOnVisitFocus {
+            region = MKCoordinateRegion(
+                center: center,
+                latitudinalMeters: 500,
+                longitudinalMeters: 500
+            )
+        } else if let currentMapRegion {
+            region = MKCoordinateRegion(center: center, span: currentMapRegion.span)
+        } else {
+            region = MKCoordinateRegion(
+                center: center,
+                latitudinalMeters: 1000,
+                longitudinalMeters: 1000
+            )
+        }
         if animated {
             withAnimation(.easeInOut(duration: 0.3)) {
                 cameraPosition = .region(region)
@@ -183,6 +205,51 @@ struct VisitMapView: View {
             let paddedRect = rect.insetBy(dx: -rect.size.width * 0.1, dy: -rect.size.height * 0.1)
             cameraPosition = .rect(paddedRect)
         }
+    }
+
+    // MARK: - Current Location Button (Liquid Glass)
+    private var mapSettingsButton: some View {
+        Button {
+            showMapSettings = true
+        } label: {
+            Circle()
+                .fill(.ultraThinMaterial)
+                .overlay {
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    Color.white.opacity(0.12),
+                                    Color.white.opacity(0.03)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                }
+                .overlay {
+                    Circle()
+                        .strokeBorder(
+                            LinearGradient(
+                                colors: [
+                                    Color.white.opacity(0.2),
+                                    Color.white.opacity(0.08)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 0.5
+                        )
+                }
+                .frame(width: 44, height: 44)
+                .shadow(color: Color.black.opacity(0.08), radius: 6, x: 0, y: 2)
+                .overlay {
+                    Image(systemName: "slider.horizontal.3")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundStyle(.blue)
+                }
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Current Location Button (Liquid Glass)
@@ -318,6 +385,70 @@ struct VisitMapView: View {
         } catch {
             Logger.error("Failed to get current location", error: error)
         }
+    }
+}
+
+private struct VisitMapSettingsSheet: View {
+    @Binding var zoomOnVisitFocus: Bool
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            VStack(alignment: .leading, spacing: 22) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("記録フォーカス時のズーム")
+                        .font(.headline)
+                    Text("地図上の記録を選択したときに、その記録を中心に表示しながらズームインするかを切り替えます。")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                HStack(spacing: 0) {
+                    toggleButton(title: "ON", isSelected: zoomOnVisitFocus) {
+                        withAnimation(.easeInOut(duration: 0.18)) {
+                            zoomOnVisitFocus = true
+                        }
+                    }
+
+                    toggleButton(title: "OFF", isSelected: !zoomOnVisitFocus) {
+                        withAnimation(.easeInOut(duration: 0.18)) {
+                            zoomOnVisitFocus = false
+                        }
+                    }
+                }
+                .padding(4)
+                .background(Color.secondary.opacity(0.12), in: Capsule())
+
+                Spacer()
+            }
+            .padding(20)
+            .navigationTitle("地図設定")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(L.Common.done) { dismiss() }
+                        .fontWeight(.semibold)
+                }
+            }
+        }
+        .presentationDetents([.height(220)])
+    }
+
+    private func toggleButton(
+        title: String,
+        isSelected: Bool,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(isSelected ? Color.white : Color.primary)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 9)
+                .background(isSelected ? Color.indigo : Color.clear, in: Capsule())
+        }
+        .buttonStyle(.plain)
     }
 }
 

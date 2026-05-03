@@ -6,6 +6,7 @@ enum CourseCategory: String, CaseIterable, Codable {
     case nature            = "nature"
     case artEntertainment  = "art_entertainment"
     case anime             = "anime"
+    case userCreated       = "user_created"
 
     var displayName: String {
         switch self {
@@ -13,6 +14,7 @@ enum CourseCategory: String, CaseIterable, Codable {
         case .nature:           return L.Course.categoryNature
         case .artEntertainment: return L.Course.categoryArtEntertainment
         case .anime:            return L.Course.categoryAnime
+        case .userCreated:      return L.Course.categoryUserCreated
         }
     }
 
@@ -23,6 +25,7 @@ enum CourseCategory: String, CaseIterable, Codable {
         case .nature:           return "leaf"
         case .artEntertainment: return "theatermasks"
         case .anime:            return "sparkles"
+        case .userCreated:      return "person.crop.square"
         }
     }
 }
