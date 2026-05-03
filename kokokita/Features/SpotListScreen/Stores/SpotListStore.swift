@@ -37,7 +37,7 @@ final class SpotListStore {
     /// フィルター適用後の表示対象スポット総数（距離制限なし）
     var totalFilteredSpotCount: Int {
         allCourses
-            .filter { !excludedCourseIds.contains($0.id) }
+            .filter { !excludedCourseIds.contains($0.id) && (!$0.isUserCreated || $0.isEnabled) }
             .flatMap { $0.spots.filter { $0.hasValidCoordinate } }
             .count
     }
@@ -75,8 +75,9 @@ final class SpotListStore {
     private func reloadCourses() async {
         do {
             let all = try repo.fetchAll()
-            // 有効なコースのみ対象（自作コースは isEnabled == true のみ）
-            courses = all.filter { !$0.isUserCreated || $0.isEnabled }
+            // バンドルコースはすべて対象、自作コースは有効/無効問わずすべて含める
+            // （スポット計算時に isEnabled == false の自作コースは除外する）
+            courses = all
             recalculateNearbySpots()
         } catch {
             Logger.error("SpotListStore: コース読み込みエラー", error: error)
@@ -94,7 +95,9 @@ final class SpotListStore {
         }
         let fromLocation = CLLocation(latitude: coord.latitude, longitude: coord.longitude)
         var results: [(course: Course, spot: CourseSpot, distance: Double)] = []
-        for course in courses where !excludedCourseIds.contains(course.id) {
+        for course in courses
+            where !excludedCourseIds.contains(course.id)
+               && (!course.isUserCreated || course.isEnabled) {
             for spot in course.spots where spot.hasValidCoordinate
                                        && (!favoritesOnly || favoriteSpotIds.contains(spot.id)) {
                 let spotLocation = CLLocation(latitude: spot.latitude, longitude: spot.longitude)
