@@ -1,69 +1,51 @@
 import SwiftUI
 
-// コース一覧画面
+// コース一覧画面（カテゴリグリッド）
 // navigationDestination は呼び出し元の NavigationStack ルートに配置すること
 struct CourseListView: View {
     @Bindable var store: CourseListStore
-    @State private var selectedCategory: CourseCategory? = nil
     @State private var showCourseStore = false
     @State private var storeSheetStore = CourseStoreSheetStore()
 
-    private var filteredCourses: [Course] {
-        guard let cat = selectedCategory else { return store.courses }
-        return store.courses.filter { $0.categories.contains(cat) }
+    // カテゴリに属するコースを返す
+    private func courses(for category: CourseCategory) -> [Course] {
+        store.courses.filter { $0.categories.contains(category) }
+    }
+
+    // コースが1件以上存在するカテゴリのみ表示
+    private var availableCategories: [CourseCategory] {
+        CourseCategory.allCases.filter { !courses(for: $0).isEmpty }
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            // コースがある場合のみカテゴリフィルターバーを表示
-            if !store.courses.isEmpty {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 8) {
-                        CategoryFilterChip(label: L.Home.filterAll, isSelected: selectedCategory == nil) {
-                            selectedCategory = nil
+        ScrollView {
+            if store.courses.isEmpty {
+                ContentUnavailableView(
+                    L.Course.emptyTitle,
+                    systemImage: "plus.circle",
+                    description: Text(L.Course.emptyDescription)
+                )
+                .padding(.top, 60)
+            } else {
+                LazyVGrid(
+                    columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)],
+                    spacing: 12
+                ) {
+                    ForEach(availableCategories, id: \.rawValue) { category in
+                        // NavigationLink で push することでネイティブスワイプバックが使える
+                        NavigationLink(value: category) {
+                            CategoryGridCard(
+                                category: category,
+                                courses: courses(for: category)
+                            )
                         }
-                        ForEach(CourseCategory.allCases, id: \.rawValue) { category in
-                            CategoryFilterChip(
-                                icon: category.iconName,
-                                label: category.displayName,
-                                isSelected: selectedCategory == category
-                            ) {
-                                selectedCategory = selectedCategory == category ? nil : category
-                            }
-                        }
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 10)
-                }
-                Divider()
-            }
-
-            List {
-                if filteredCourses.isEmpty {
-                    ContentUnavailableView(
-                        L.Course.emptyTitle,
-                        systemImage: "plus.circle",
-                        description: Text(L.Course.emptyDescription)
-                    )
-                    .listRowBackground(Color.clear)
-                    .listRowSeparator(.hidden)
-                } else {
-                    ForEach(filteredCourses) { course in
-                        let isNew = store.newlyAddedCourseIds.contains(course.id)
-                        NavigationLink(value: course.id) {
-                            CourseRowView(course: course, isNew: isNew)
-                        }
-                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                            Button(role: .destructive) {
-                                Task { await store.delete(course.id) }
-                            } label: {
-                                Label(L.Common.delete, systemImage: "trash")
-                            }
-                        }
+                        .buttonStyle(.plain)
                     }
                 }
+                .padding(.horizontal, 16)
+                .padding(.top, 16)
+                .padding(.bottom, 8)
             }
-            .listStyle(.plain)
         }
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -109,33 +91,107 @@ struct CourseListView: View {
     }
 }
 
-// カテゴリフィルターチップ
-private struct CategoryFilterChip: View {
-    var icon: String? = nil
-    let label: String
-    let isSelected: Bool
-    let action: () -> Void
+// MARK: - カテゴリグリッドカード
+
+private struct CategoryGridCard: View {
+    let category: CourseCategory
+    let courses: [Course]
+
+    // カバー画像があるコースを代表として優先選択
+    private var representativeCourse: Course? {
+        courses.first(where: { $0.coverImageUrl != nil || $0.localCoverImagePath != nil })
+        ?? courses.first
+    }
 
     var body: some View {
-        Button(action: action) {
-            HStack(spacing: 4) {
-                if let icon {
-                    Image(systemName: icon)
+        ZStack(alignment: .bottomLeading) {
+            // 背景画像レイヤー
+            backgroundLayer
+
+            // 共通グラデーションオーバーレイ（画像あり・なし共通で見た目を揃える）
+            LinearGradient(
+                colors: [Color.black.opacity(0.08), Color.black.opacity(0.60)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+
+            // テキストコンテンツ（下部）
+            VStack(alignment: .leading, spacing: 5) {
+                HStack(spacing: 5) {
+                    Image(systemName: category.iconName)
+                        .font(.caption.weight(.semibold))
+                    Text(category.displayName)
+                        .font(.subheadline.bold())
                 }
-                Text(label)
+                .foregroundStyle(.white)
+
+                // コース名（最大2件、3件以上は省略行を追加）
+                VStack(alignment: .leading, spacing: 2) {
+                    ForEach(courses.prefix(2)) { course in
+                        Text(course.title)
+                            .font(.caption2)
+                            .foregroundStyle(.white.opacity(0.80))
+                            .lineLimit(1)
+                    }
+                    if courses.count > 2 {
+                        Text("ほか\(courses.count - 2)コース")
+                            .font(.caption2)
+                            .foregroundStyle(.white.opacity(0.55))
+                    }
+                }
             }
-            .font(.subheadline.weight(isSelected ? .semibold : .regular))
-            .foregroundStyle(isSelected ? Color.white : Color.primary)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
-            .background(isSelected ? Color.indigo : Color.secondary.opacity(0.12), in: Capsule())
+            .padding(12)
         }
-        .buttonStyle(.plain)
+        .frame(height: 148)
+        .frame(maxWidth: .infinity)
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+
+    // 画像レイヤー（ローカル → リモート → プレースホルダーの順）
+    // scaledToFill はレイアウトサイズを超えて報告してしまうため
+    // Color.clear.overlay { image }.clipped() パターンで確実に封じる
+    @ViewBuilder
+    private var backgroundLayer: some View {
+        if let path = representativeCourse?.localCoverImagePath,
+           let uiImage = LocalImageStorage.shared.load(from: path) {
+            Color.clear.overlay {
+                Image(uiImage: uiImage)
+                    .resizable()
+                    .scaledToFill()
+            }
+            .clipped()
+        } else if let urlStr = representativeCourse?.coverImageUrl,
+                  let url = URL(string: urlStr) {
+            AsyncImage(url: url) { phase in
+                if case .success(let image) = phase {
+                    Color.clear.overlay {
+                        image.resizable().scaledToFill()
+                    }
+                    .clipped()
+                } else {
+                    placeholderBackground
+                }
+            }
+        } else {
+            placeholderBackground
+        }
+    }
+
+    // 画像なしプレースホルダー
+    // 中明度グレー + カテゴリアイコン（薄く）で、グラデーション後に画像カードと同系の見た目になる
+    private var placeholderBackground: some View {
+        ZStack {
+            Color(white: 0.68)
+            Image(systemName: category.iconName)
+                .font(.system(size: 52, weight: .thin))
+                .foregroundStyle(Color.white.opacity(0.45))
+        }
     }
 }
 
-// コース行ビュー
-private struct CourseRowView: View {
+// MARK: - コース行ビュー
+
+struct CourseRowView: View {
     let course: Course
     var isNew: Bool = false
 
@@ -214,8 +270,9 @@ private struct CourseRowView: View {
     }
 }
 
-// カテゴリタグ（カプセル形状）
-private struct CourseCategoryTag: View {
+// MARK: - カテゴリタグ（カプセル形状）
+
+struct CourseCategoryTag: View {
     let category: CourseCategory
 
     var body: some View {
@@ -231,8 +288,9 @@ private struct CourseCategoryTag: View {
     }
 }
 
-// タグを折り返すフローレイアウト
-private struct FlowLayout: Layout {
+// MARK: - タグを折り返すフローレイアウト
+
+struct FlowLayout: Layout {
     var spacing: CGFloat = 6
 
     func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
