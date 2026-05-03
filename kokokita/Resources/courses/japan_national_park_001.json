@@ -5,11 +5,13 @@
   "summary": "日本の全ての国立公園を巡るコースです。全35件収録。",
   "source": "bundled",
   "isUserCreated": false,
-  "version": 1,
-  "recognitionRadiusMeters": 5000.0,
+  "version": 2,
+  "recognitionRadiusMeters": 7500,
   "detailUrl": null,
   "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/course/japan_national_park_001.jpg",
-  "categories": ["nature"],
+  "categories": [
+    "nature"
+  ],
   "spots": [
     {
       "spotId": "national-park-001",
@@ -20,7 +22,8 @@
       "spotDescription": "火山、高層湿原、高山植物がある離島の国立公園。",
       "orderIndex": 0,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJ8-Cfss_FD18RbzJShBRRvJs"
+      "googlePlaceId": "ChIJ8-Cfss_FD18RbzJShBRRvJs",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/national-park-001.jpg"
     },
     {
       "spotId": "national-park-002",
@@ -38,12 +41,13 @@
       "spotId": "national-park-003",
       "name": "阿寒摩周国立公園",
       "address": "〒085-0467 北海道釧路市 阿寒町阿寒湖温泉１丁目１−１",
-      "latitude": 43.5374975,
-      "longitude": 144.281085,
+      "latitude": 43.43517629999999,
+      "longitude": 144.101031,
       "spotDescription": "火山、森林、湖、天然温泉、アイヌ民族の集落がある山岳公園。",
       "orderIndex": 2,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJl5TwA7F9bV8R6ZaZHzGdUZw"
+      "googlePlaceId": "ChIJl5TwA7F9bV8R6ZaZHzGdUZw",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/national-park-003.jpg"
     },
     {
       "spotId": "national-park-004",
@@ -54,7 +58,8 @@
       "spotDescription": "湿地帯、ヨシ原、釧路川がある大きな自然公園。タンチョウなどの野生動物が生息する。",
       "orderIndex": 3,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJpzfUyFJrcl8Rk0UBez1GFNU"
+      "googlePlaceId": "ChIJpzfUyFJrcl8Rk0UBez1GFNU",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/national-park-004.jpg"
     },
     {
       "spotId": "national-park-005",
@@ -65,7 +70,8 @@
       "spotDescription": "広さ 2,267 km² の山岳公園。16 の山頂、さまざまな登山道、野生動物、高山植物が特色。",
       "orderIndex": 4,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJSaUC9jgpDV8R_GQHLcGo2qA"
+      "googlePlaceId": "ChIJSaUC9jgpDV8R_GQHLcGo2qA",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/national-park-005.jpg"
     },
     {
       "spotId": "national-park-006",
@@ -76,7 +82,8 @@
       "spotDescription": "カルデラ湖、活火山、温泉リゾート、野生動物など自然とレクリエーションが楽しめるエリア。",
       "orderIndex": 5,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJpfBcQYCxCl8RZujHqC9BdQU"
+      "googlePlaceId": "ChIJpfBcQYCxCl8RZujHqC9BdQU",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/national-park-006.jpg"
     },
     {
       "spotId": "national-park-007",
@@ -87,18 +94,20 @@
       "spotDescription": null,
       "orderIndex": 6,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJLx5KQgAXdF8RaIZ-Pu8TWL0"
+      "googlePlaceId": "ChIJLx5KQgAXdF8RaIZ-Pu8TWL0",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/national-park-007.jpg"
     },
     {
       "spotId": "national-park-008",
       "name": "十和田八幡平国立公園",
       "address": "〒018-5501 青森県十和田市奥瀬",
-      "latitude": 40.5545129,
-      "longitude": 140.8867515,
+      "latitude": 40.5314454,
+      "longitude": 140.9700974,
       "spotDescription": "ハイキングで人気の高い、美しい景色が広がる国立公園。火山、火口湖、温泉がある。",
       "orderIndex": 7,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJdS2FJUhshV8RBzVYFZ4meBU"
+      "googlePlaceId": "ChIJdS2FJUhshV8RBzVYFZ4meBU",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/national-park-008.jpg"
     },
     {
       "spotId": "national-park-009",
@@ -109,29 +118,32 @@
       "spotDescription": "美しい岬にある公園。鋸歯状の崖や岩島、潮吹穴、龍の松がある。",
       "orderIndex": 8,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJTaSdOUPtiF8RKjfQOffPyLc"
+      "googlePlaceId": "ChIJTaSdOUPtiF8RKjfQOffPyLc",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/national-park-009.jpg"
     },
     {
       "spotId": "national-park-010",
       "name": "磐梯朝日国立公園(五色沼湖沼群)",
       "address": "〒966-0501 福島県耶麻郡北塩原村檜原剣ケ峯",
-      "latitude": 37.2705839,
-      "longitude": 139.4847646,
+      "latitude": 37.6508749,
+      "longitude": 140.0732012,
       "spotDescription": "山々が連なる広大な国立公園で、さまざまなレベルの登山、スキー、自然の中のハイキングを楽しめる。",
       "orderIndex": 9,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": ""
+      "googlePlaceId": "",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/national-park-010.jpg"
     },
     {
       "spotId": "national-park-011",
       "name": "日光国立公園",
       "address": "〒321-1662 栃木県日光市湯本",
-      "latitude": 36.8936293,
-      "longitude": 139.6344196,
+      "latitude": 36.8097104,
+      "longitude": 139.416105,
       "spotDescription": "火山や湖、沼、滝、湿原を巡る美しいハイキング コースがある国立公園。",
       "orderIndex": 10,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJI_dSQzCzH2ARkpZzNs8sD4k"
+      "googlePlaceId": "ChIJI_dSQzCzH2ARkpZzNs8sD4k",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/national-park-011.jpg"
     },
     {
       "spotId": "national-park-012",
@@ -142,7 +154,8 @@
       "spotDescription": "山岳湿地を通り抜けるハイキングが楽しめるスポット。春の花と秋の紅葉で人気がある。",
       "orderIndex": 11,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJlw3AIrYzHmARyZTdRxI95UU"
+      "googlePlaceId": "ChIJlw3AIrYzHmARyZTdRxI95UU",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/national-park-012.jpg"
     },
     {
       "spotId": "national-park-013",
@@ -153,7 +166,8 @@
       "spotDescription": "火山、溶岩原、火口湖などの荒々しい風景が広がり、ツキノワグマやイヌワシが生息する。",
       "orderIndex": 12,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJa3GKNMPvHWARLOuqpyYeNuI"
+      "googlePlaceId": "ChIJa3GKNMPvHWARLOuqpyYeNuI",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/national-park-013.jpg"
     },
     {
       "spotId": "national-park-014",
@@ -164,18 +178,20 @@
       "spotDescription": "小規模の自然保護区。山々が連なり、温泉や湖もある。キャンプ、ハイキング、カヤックの人気スポット。",
       "orderIndex": 13,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJQThKrto79l8RnOFMcdw8bv4"
+      "googlePlaceId": "ChIJQThKrto79l8RnOFMcdw8bv4",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/national-park-014.jpg"
     },
     {
       "spotId": "national-park-015",
       "name": "秩父多摩甲斐国立公園",
       "address": "〒404-0021 山梨県甲州市 塩山一ノ瀬高橋",
-      "latitude": 35.90075,
-      "longitude": 138.7817843,
+      "latitude": 35.8295795,
+      "longitude": 138.8196226,
       "spotDescription": "森林に覆われた山々が広がり、登山道が多い広大な自然公園。",
       "orderIndex": 14,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJ_6b882ytHmARqlR3ZuWrKPE"
+      "googlePlaceId": "ChIJ_6b882ytHmARqlR3ZuWrKPE",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/national-park-015.jpg"
     },
     {
       "spotId": "national-park-016",
@@ -186,18 +202,20 @@
       "spotDescription": null,
       "orderIndex": 15,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJBwWKbWjF8GARBQBd_cCwHc8"
+      "googlePlaceId": "ChIJBwWKbWjF8GARBQBd_cCwHc8",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/national-park-016.jpg"
     },
     {
       "spotId": "national-park-017",
       "name": "富士箱根伊豆国立公園",
       "address": "元箱根, 箱根町, 足柄下郡, Kanagawa 250-0522",
-      "latitude": 35.4253794,
-      "longitude": 138.6790007,
+      "latitude": 35.2029896,
+      "longitude": 139.0315924,
       "spotDescription": "富士山、伊豆諸島、富士五湖を含む保護区域の集まり。",
       "orderIndex": 16,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJi0MFcKifGWARo7dIQgUCg_U"
+      "googlePlaceId": "ChIJi0MFcKifGWARo7dIQgUCg_U",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/national-park-017.jpg"
     },
     {
       "spotId": "national-park-018",
@@ -208,7 +226,8 @@
       "spotDescription": "深い渓谷と花畑のある緑豊かな山地。ツキノワグマやアカギツネなどの野生動物が生息している。",
       "orderIndex": 17,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJ4w-g5hp7HGARA7r0ABIqhsQ"
+      "googlePlaceId": "ChIJ4w-g5hp7HGARA7r0ABIqhsQ",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/national-park-018.jpg"
     },
     {
       "spotId": "national-park-019",
@@ -219,7 +238,8 @@
       "spotDescription": "四季折々の野の花で知られる高層湿原を、自然散策やロープウェイで楽しめる。",
       "orderIndex": 18,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJI8GGuT_L918RG7Osb4wXTY4"
+      "googlePlaceId": "ChIJI8GGuT_L918RG7Osb4wXTY4",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/national-park-019.jpg"
     },
     {
       "spotId": "national-park-020",
@@ -230,18 +250,20 @@
       "spotDescription": "伝統的な山村集落、登山道、原生林、温泉などがある広大な公園。",
       "orderIndex": 19,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJ_QtBjsR9-F8R4K99jDKRNiA"
+      "googlePlaceId": "ChIJ_QtBjsR9-F8R4K99jDKRNiA",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/national-park-020.jpg"
     },
     {
       "spotId": "national-park-021",
       "name": "伊勢志摩国立公園(伊勢神宮)",
       "address": "〒516-0023 三重県伊勢市宇治館町１",
       "latitude": 34.4550157,
-      "longitude": 136.7226102,
+      "longitude": 136.7251851,
       "spotDescription": "海岸沿いの保護地域。ミサゴ、カメ、鵜などが生息する崖、洞窟、入り江が有名。",
       "orderIndex": 20,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": ""
+      "googlePlaceId": "",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/national-park-021.jpg"
     },
     {
       "spotId": "national-park-022",
@@ -252,7 +274,8 @@
       "spotDescription": "絵に描いたように美しい渓谷、山、神社、岸壁、浜辺、温泉がある公園。",
       "orderIndex": 21,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJVeHfDGTKB2ARsE6QZPswOCA"
+      "googlePlaceId": "ChIJVeHfDGTKB2ARsE6QZPswOCA",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/national-park-022.jpg"
     },
     {
       "spotId": "national-park-023",
@@ -263,29 +286,32 @@
       "spotDescription": null,
       "orderIndex": 22,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJcbhic9jS_18R6JR6F7EBEr4"
+      "googlePlaceId": "ChIJcbhic9jS_18R6JR6F7EBEr4",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/national-park-023.jpg"
     },
     {
       "spotId": "national-park-024",
       "name": "瀬戸内海国立公園(厳島神社)",
       "address": "〒739-0588 広島県廿日市市宮島町１−１",
-      "latitude": 34.2959896,
-      "longitude": 127.4418988,
+      "latitude": 34.29598960000001,
+      "longitude": 132.3198285,
       "spotDescription": "1934 年に日本で初めて国立公園に指定された区域。日本最大の広さがあり、約 3,000 の島々が点在する。",
       "orderIndex": 23,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": ""
+      "googlePlaceId": "",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/national-park-024.jpg"
     },
     {
       "spotId": "national-park-025",
       "name": "大山隠岐国立公園",
       "address": "〒689-3318 鳥取県西伯郡大山町",
-      "latitude": 35.3283123,
-      "longitude": 133.5870861,
+      "latitude": 35.3796267,
+      "longitude": 133.5462744,
       "spotDescription": "火山、平地、隠岐諸島、トレイル、博物館などがある広大な自然保護区。",
       "orderIndex": 24,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJRQym3O1hVjURhjDX2HEJ2ZY"
+      "googlePlaceId": "ChIJRQym3O1hVjURhjDX2HEJ2ZY",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/national-park-025.jpg"
     },
     {
       "spotId": "national-park-026",
@@ -296,7 +322,8 @@
       "spotDescription": "113.45 平方キロメートルの広大な公園。渓谷や森林エリアのほか、スキューバ ダイビングやシュノーケリングが楽しめる海岸もある。",
       "orderIndex": 25,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJ-67oUgP-RTURUuo2vb5Z5dI"
+      "googlePlaceId": "ChIJ-67oUgP-RTURUuo2vb5Z5dI",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/national-park-026.jpg"
     },
     {
       "spotId": "national-park-027",
@@ -307,7 +334,8 @@
       "spotDescription": "400 を超える島々からなる広大な海洋公園。多くの動植物が生息し、ハイキング トレイルや展望台もある。",
       "orderIndex": 26,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJbxh_HBSVajURMboyVtSCzdw"
+      "googlePlaceId": "ChIJbxh_HBSVajURMboyVtSCzdw",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/national-park-027.jpg"
     },
     {
       "spotId": "national-park-028",
@@ -318,18 +346,20 @@
       "spotDescription": "広大な国立公園。活火山、天草諸島、ビジター センターがある。",
       "orderIndex": 27,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJIfPx0VUMQDURvm4u3HPg-I0"
+      "googlePlaceId": "ChIJIfPx0VUMQDURvm4u3HPg-I0",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/national-park-028.jpg"
     },
     {
       "spotId": "national-park-029",
       "name": "阿蘇くじゅう国立公園",
       "address": "〒869-2225 熊本県阿蘇市黒川１１８０",
-      "latitude": 32.919054,
-      "longitude": 131.0658942,
+      "latitude": 32.9352984,
+      "longitude": 131.0676049,
       "spotDescription": "山岳地帯にある広さ 280 平方マイルの国立公園。大きなカルデラ、草原、湿原、温泉がある。",
       "orderIndex": 28,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJSzwyDuwnQTURtuGmS8PNYr8"
+      "googlePlaceId": "ChIJSzwyDuwnQTURtuGmS8PNYr8",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/national-park-029.jpg"
     },
     {
       "spotId": "national-park-030",
@@ -340,7 +370,8 @@
       "spotDescription": "火山、ハイキング コース、天然温泉がある景色の良い国立公園。",
       "orderIndex": 29,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJiT0q4QUaPzURSnc2bMltNjE"
+      "googlePlaceId": "ChIJiT0q4QUaPzURSnc2bMltNjE",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/national-park-030.jpg"
     },
     {
       "spotId": "national-park-031",
@@ -351,7 +382,8 @@
       "spotDescription": "神聖な山や、島々の入り江の景色を楽しめる小道がある。珍しいマカクザルやウミガメが生息している。",
       "orderIndex": 30,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJA8gQJwojPTURK5yL8KkXvfE"
+      "googlePlaceId": "ChIJA8gQJwojPTURK5yL8KkXvfE",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/national-park-031.jpg"
     },
     {
       "spotId": "national-park-032",
@@ -362,7 +394,8 @@
       "spotDescription": null,
       "orderIndex": 31,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJAQAAACTKHzURaPNX7_laRWY"
+      "googlePlaceId": "ChIJAQAAACTKHzURaPNX7_laRWY",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/national-park-032.jpg"
     },
     {
       "spotId": "national-park-033",
@@ -373,7 +406,8 @@
       "spotDescription": "いくつかの村落と周辺海域から成る、森林地帯にある国立公園。",
       "orderIndex": 32,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJr9YEe9lD5DQRE6wG8EeV8qU"
+      "googlePlaceId": "ChIJr9YEe9lD5DQRE6wG8EeV8qU",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/national-park-033.jpg"
     },
     {
       "spotId": "national-park-034",
@@ -384,18 +418,20 @@
       "spotDescription": "30 以上の小島がある国立公園。シュノーケリング、ホエール ウォッチング、スキューバ ダイビングで人気。",
       "orderIndex": 33,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJKdyhuThT5TQRCUo_opr74Xk"
+      "googlePlaceId": "ChIJKdyhuThT5TQRCUo_opr74Xk",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/national-park-034.jpg"
     },
     {
       "spotId": "national-park-035",
       "name": "西表石垣国立公園",
       "address": "〒907-1432 沖縄県八重山郡竹富町古見",
-      "latitude": 24.3491735,
-      "longitude": 123.8655654,
+      "latitude": 24.3416803,
+      "longitude": 123.8969328,
       "spotDescription": "豊かな自然に恵まれた国立公園。常緑樹林、マングローブ林、ターコイズ ブルーの海、サンゴ礁がある。",
       "orderIndex": 34,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJT47yF5B-YDQRfl0RvLwcU20"
+      "googlePlaceId": "ChIJT47yF5B-YDQRfl0RvLwcU20",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/national-park-035.jpg"
     }
   ]
 }

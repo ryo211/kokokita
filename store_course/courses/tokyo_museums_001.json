@@ -5,11 +5,13 @@
   "summary": "東京の有名美術館を巡るコースです。全19館収録。",
   "source": "bundled",
   "isUserCreated": false,
-  "version": 1,
-  "recognitionRadiusMeters": 200.0,
+  "version": 2,
+  "recognitionRadiusMeters": 200,
   "detailUrl": null,
   "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/course/course-major-museum-tokyo-001.jpg",
-  "categories": ["art_entertainment"],
+  "categories": [
+    "art_entertainment"
+  ],
   "spots": [
     {
       "spotId": "museum-tokyo-001",
@@ -20,7 +22,8 @@
       "spotDescription": "日本とアジア諸国の芸術作品や古美術を専門とする国立博物館の複合施設。",
       "orderIndex": 0,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJEX3XFIOOGGAR3XdJvRjWLyM"
+      "googlePlaceId": "ChIJEX3XFIOOGGAR3XdJvRjWLyM",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/museum-tokyo-001.jpg"
     },
     {
       "spotId": "museum-tokyo-002",
@@ -31,7 +34,8 @@
       "spotDescription": "絵画、彫刻、写真を展示する美術館。6 つの展示ホール、カフェ、レストランがある。",
       "orderIndex": 1,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJb_o7HiiMGGARUKu8uO7fGIQ"
+      "googlePlaceId": "ChIJb_o7HiiMGGARUKu8uO7fGIQ",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/museum-tokyo-002.jpg"
     },
     {
       "spotId": "museum-tokyo-003",
@@ -54,7 +58,8 @@
       "spotDescription": "1959 年開館の国立西洋美術館。ルノワール、ゴッホ、ピカソ、モネの作品を所蔵。",
       "orderIndex": 3,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJf8xB-pyOGGARizzhlNTcI7s"
+      "googlePlaceId": "ChIJf8xB-pyOGGARizzhlNTcI7s",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/museum-tokyo-004.jpg"
     },
     {
       "spotId": "museum-tokyo-005",
@@ -65,7 +70,8 @@
       "spotDescription": "1969 年に改装された明治時代（1868 年）以降の芸術作品を所蔵する美術館。",
       "orderIndex": 4,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJL0kSfg2MGGARKv5KX53ZZ2Y"
+      "googlePlaceId": "ChIJL0kSfg2MGGARKv5KX53ZZ2Y",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/museum-tokyo-005.jpg"
     },
     {
       "spotId": "museum-tokyo-006",
@@ -76,7 +82,8 @@
       "spotDescription": "国内外のアーティストの常設展と企画展を行う。1990 年代に建てられた建物はランドマークになっている。",
       "orderIndex": 5,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJq6rq_BuJGGARh1qAooLX-as"
+      "googlePlaceId": "ChIJq6rq_BuJGGARh1qAooLX-as",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/museum-tokyo-006.jpg"
     },
     {
       "spotId": "museum-tokyo-007",
@@ -109,7 +116,8 @@
       "spotDescription": "現代日本のデザインを企画展で紹介するモダンなギャラリー。ミュージアム ショップを併設。",
       "orderIndex": 8,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJV4H0Nn-LGGAR2g7_9Kourf4"
+      "googlePlaceId": "ChIJV4H0Nn-LGGAR2g7_9Kourf4",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/museum-tokyo-009.jpg"
     },
     {
       "spotId": "museum-tokyo-010",
@@ -120,7 +128,8 @@
       "spotDescription": "1993 年に開館した大型の博物館。江戸時代の資料の展示や特別展を開催。",
       "orderIndex": 9,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJOWXu4TSJGGAR07vEEi8fZAw"
+      "googlePlaceId": "ChIJOWXu4TSJGGAR07vEEi8fZAw",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/museum-tokyo-010.jpg"
     },
     {
       "spotId": "museum-tokyo-011",
@@ -131,7 +140,8 @@
       "spotDescription": "アン王女様式の厳かな美術館。西洋美術の企画展を行い、カフェ、庭園もある。",
       "orderIndex": 10,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJuyY-ZfqLGGAREYR9A10IXPQ"
+      "googlePlaceId": "ChIJuyY-ZfqLGGAREYR9A10IXPQ",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/museum-tokyo-011.jpg"
     },
     {
       "spotId": "museum-tokyo-012",
@@ -142,7 +152,8 @@
       "spotDescription": "前近代の日本と東アジアのさまざまな美術品を所蔵する美術館。カフェとギフトショップも併設。",
       "orderIndex": 11,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJxU48-2OLGGARHMtB5RAhytA"
+      "googlePlaceId": "ChIJxU48-2OLGGARHMtB5RAhytA",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/museum-tokyo-012.jpg"
     },
     {
       "spotId": "museum-tokyo-013",
@@ -219,7 +230,8 @@
       "spotDescription": "葛飾北斎の生涯と芸術を紹介する現代風の美術館。イベントも開催される。",
       "orderIndex": 18,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJgRjTtzOJGGARqoKBtB8BAno"
+      "googlePlaceId": "ChIJgRjTtzOJGGARqoKBtB8BAno",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/museum-tokyo-019.jpg"
     }
   ]
 }

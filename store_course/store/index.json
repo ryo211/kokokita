@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-03-21T14:40:47Z",
+  "generatedAt": "2026-04-05T13:38:16Z",
   "courses": [
     {
       "id": "course-world-heritage-japan-001",
@@ -11,9 +11,9 @@
       ],
       "version": 1,
       "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/course/course-world-heritage-japan-001.jpg",
-      "spotCount": 28,
+      "spotCount": 27,
       "jsonPath": "courses/world_heritage_japan_001.json",
-      "updatedAt": "2026-03-12T16:17:08Z"
+      "updatedAt": "2026-04-05T13:38:16Z"
     },
     {
       "id": "course-100-famous-castles-japan-001",
@@ -105,6 +105,32 @@
       "spotCount": 9,
       "jsonPath": "courses/kimi_no_nawa_001.json",
       "updatedAt": "2026-03-21T14:40:47Z"
+    },
+    {
+      "id": "course-jujutsu-kaisen-001",
+      "title": "『呪術廻戦』の聖地",
+      "summary": "芥見下々による漫画・アニメ『呪術廻戦』の舞台となった全国各地のスポットを巡るコースです。渋谷事変の舞台となった渋谷エリア、釘崎が初登場した原宿、五条悟ゆかりの仙台、そして両面宿儺伝説が残る岐阜まで、作品の名シーンを現実で体感できます。全13件収録。",
+      "categories": [
+        "anime"
+      ],
+      "version": 1,
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/course/course-jujutsu-kaisen-001.jpg",
+      "spotCount": 13,
+      "jsonPath": "courses/course-jujutsu-kaisen-001.json",
+      "updatedAt": "2026-04-05T13:38:16Z"
+    },
+    {
+      "id": "course-spirited-away-japan-001",
+      "title": "『千と千尋の神隠し』の聖地",
+      "summary": "スタジオジブリの名作『千と千尋の神隠し』の世界観を体感できる、全国各地のモデルスポットを巡るコースです。公式が認めた場所からファンに愛され続ける聖地まで、千尋が迷い込んだ不思議な世界の面影を探しに行きましょう。全7件収録。",
+      "categories": [
+        "anime"
+      ],
+      "version": 1,
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/course/course-spirited-away-japan-001.jpg",
+      "spotCount": 7,
+      "jsonPath": "courses/course-spirited-away-japan-001.json",
+      "updatedAt": "2026-04-05T13:38:16Z"
     }
   ]
 }

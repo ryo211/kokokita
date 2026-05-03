@@ -46,13 +46,21 @@ final class CourseStoreSheetStore {
 
     // MARK: - 新着判定
 
-    /// 新着 = 最終閲覧日時より後に更新 かつ 未取得（追加済みコースは除外）
+    /// 未取得、または更新可能だが未更新のコース
+    private func isPendingAcquisition(_ summary: StoreCourseSummary) -> Bool {
+        switch downloadStatuses[summary.id] ?? .notDownloaded {
+        case .notDownloaded, .updateAvailable:
+            return true
+        case .downloading, .downloaded:
+            return false
+        }
+    }
+
+    /// 新着 = 最終閲覧日時より後に更新 かつ 未取得または未更新
     func isNew(_ summary: StoreCourseSummary) -> Bool {
         guard let updatedAt = summary.updatedAt else { return false }
         guard updatedAt > lastVisitedStoreAt else { return false }
-        // 既に取得済み（バンドルコース含む）は新着扱いしない
-        if case .notDownloaded = downloadStatuses[summary.id] ?? .notDownloaded { return true }
-        return false
+        return isPendingAcquisition(summary)
     }
 
     /// 未取得の新着コースが1件以上ある場合 true（+ ボタンバッジ用）
@@ -89,10 +97,7 @@ final class CourseStoreSheetStore {
         case .newArrivals:
             result = result.filter { isNew($0) }
         case .available:
-            result = result.filter {
-                if case .notDownloaded = downloadStatuses[$0.id] ?? .notDownloaded { return true }
-                return false
-            }
+            result = result.filter { isPendingAcquisition($0) }
         case .installed:
             result = result.filter {
                 switch downloadStatuses[$0.id] ?? .notDownloaded {

@@ -22,6 +22,8 @@
 "common.clear" = "クリア";
 "common.share" = "共有";
 "common.copy" = "コピー";
+"common.showOptions" = "詳細設定";
+"common.hideOptions" = "詳細設定を閉じる";
 
 // MARK: - Visit Edit
 "visit.edit.titlePlaceholder" = "タイトル";
@@ -357,6 +359,7 @@
 "course.category.nature" = "自然";
 "course.category.art_entertainment" = "アート・エンタメ";
 "course.category.anime" = "アニメ・漫画";
+"course.category.user_created" = "自作コース";
 "course.newBadge" = "NEW";
 "course.achieved" = "達成";
 "course.notVisited" = "未訪問";
@@ -391,13 +394,20 @@
 "pilgrimageHome.coursesTitle" = "コース一覧";
 "pilgrimageHome.seeAll" = "すべて見る";
 "pilgrimageHome.progressFormat" = "%d/%d スポット";
-"pilgrimageHome.nearbyTitle" = "近くの巡礼スポット";
+"pilgrimageHome.nearbyTitle" = "近くのスポット";
 "pilgrimageHome.nearbyRefresh" = "更新";
 "pilgrimageHome.noNearbySpots" = "近くにスポットはありません";
 "pilgrimageHome.locationUnavailable" = "現在地を取得できませんでした";
-"pilgrimageHome.recentTitle" = "最近達成した巡礼スポット";
+"pilgrimageHome.recentTitle" = "最近行ったスポット";
 "pilgrimageHome.noRecentAchievements" = "まだ達成がありません";
 "pilgrimageHome.distanceMeter" = "%dm";
+
+// MARK: - Spot Panel List
+"spotPanelList.displayLimitSuffix" = "件";
+"spotPanelList.displayLimitAll" = "全件";
+"spotPanelList.favoritesTitle" = "お気に入りスポット";
+"spotPanelList.noFavorites" = "お気に入りに登録されたスポットはありません\nコース詳細のハートアイコンからお気に入りに追加できます";
+"spotPanelList.noFavoritesShort" = "お気に入りスポットはありません";
 
 // MARK: - CheckIn Result
 "checkIn.resultTitle" = "聖地巡礼達成！";
@@ -412,6 +422,8 @@
 "manualEntry.editTitle" = "後付け記録を編集";
 "manualEntry.badge" = "後付け";
 "manualEntry.importFromPhoto" = "写真から取り込み";
+"manualEntry.importFromPhotoWithDateTime" = "写真から取り込む（位置情報・日時）";
+"manualEntry.importedFromPhotoLabel" = "写真から取り込んだ日時";
 "manualEntry.searchLocation" = "場所を検索";
 "manualEntry.tapOnMap" = "地図から選択";
 "manualEntry.dateTime" = "日時";
@@ -447,7 +459,7 @@
 "locationPicker.nearbySpots" = "周辺のスポット";
 "locationPicker.searchPlaceholder" = "場所名や住所を入力（例：東京スカイツリー）";
 "locationPicker.noResults" = "該当する場所が見つかりませんでした";
-"locationPicker.photoImportDescription" = "写真から日時と位置情報を取り込みます";
+"locationPicker.photoImportDescription" = "写真から位置情報を取り込みます";
 
 // MARK: - Record Type Badge
 "recordBadge.explanationTitle" = "記録の種類について";
@@ -455,3 +467,70 @@
 "recordBadge.verifiedDescription" = "その時、その場所にいたことが証明されている記録です。アプリがその場で位置情報を取得して作成されました。";
 "recordBadge.manualTitle" = "後付け記録";
 "recordBadge.manualDescription" = "後から手動で追加した記録です。実際に訪れたかどうかの証明はありません。";
+
+// MARK: - My List（マイリスト）
+"myList.title" = "コースを作る";
+"myList.emptyTitle" = "まだコースがありません";
+"myList.emptyDescription" = "+ 新しいコースを作成する";
+"myList.newCourseButton" = "新規コース作成";
+"myList.deleteConfirmTitle" = "コースを削除";
+"myList.deleteConfirmMessage" = "このコースとスポットをすべて削除します。この操作は取り消せません。";
+"myList.spotsCount" = "%d件のスポット";
+
+// MARK: - Course Editor（コース作成・編集）
+"courseEditor.createTitle" = "新しいコース";
+"courseEditor.editTitle" = "コースを編集";
+"courseEditor.titlePlaceholder" = "コースタイトル";
+"courseEditor.summaryPlaceholder" = "コースの説明（任意）";
+"courseEditor.settingsSection" = "コース設定";
+"courseEditor.coverImage" = "カバー画像";
+"courseEditor.recognitionRadius" = "このコースのデフォルト有効範囲";
+"courseEditor.recognitionRadiusInfo" = "この有効範囲の中で記録すると、そのスポットに行った判定になります。スポットごとに個別設定していない場合は、この値が使われます。";
+"courseEditor.recognitionRadiusValue" = "%dm";
+"courseEditor.allowRetroactive" = "後付け記録を達成に含める";
+"courseEditor.spotsSection" = "スポット";
+"courseEditor.addSpot" = "+ スポットを追加";
+"courseEditor.unsavedChangesTitle" = "変更を破棄しますか？";
+"courseEditor.unsavedChangesMessage" = "保存されていない変更は失われます。";
+"courseEditor.discard" = "破棄";
+"courseEditor.noTitleWarning" = "タイトルを入力してください";
+"courseEditor.noSpotsMessage" = "スポットを追加してください";
+"courseEditor.unnamedSpot" = "（名称未設定）";
+"courseEditor.cancelChangesMessage" = "編集を終了すると、変更は破棄されます。";
+
+// MARK: - Spot Editor（スポット作成・編集）
+"spotEditor.createTitle" = "スポットを追加";
+"spotEditor.editTitle" = "スポットを編集";
+"spotEditor.nameLabel" = "スポット名";
+"spotEditor.descriptionLabel" = "説明文";
+"spotEditor.namePlaceholder" = "スポット名を入力してください";
+"spotEditor.descriptionPlaceholder" = "説明文を入力してください";
+"spotEditor.image" = "画像";
+"spotEditor.recognitionRadius" = "有効範囲";
+"spotEditor.recognitionRadiusInfo" = "この有効範囲の中で記録すると、このスポットに行った判定になります。";
+"spotEditor.useCoursDefault" = "コースのデフォルトを使用";
+"spotEditor.addButton" = "追加";
+"spotEditor.saveButton" = "保存";
+"spotEditor.noCoordinateWarning" = "座標が設定されていないため、GPS認識の対象外になります。";
+"spotEditor.modeSearch" = "場所名検索";
+"spotEditor.modeMap" = "地図選択";
+"spotEditor.modePhoto" = "写真から";
+"spotEditor.modeRecord" = "記録から";
+"spotEditor.noExifLocation" = "この写真には位置情報が含まれていません";
+"spotEditor.selectLocation" = "この場所を選択";
+"spotEditor.searchPlaceholder" = "場所名や住所を入力";
+"spotEditor.detailsSettings" = "詳細設定";
+"spotEditor.nameRequired" = "スポット名を入力してください";
+"spotEditor.locationRequired" = "場所を選択してください";
+"spotEditor.importFromPhoto" = "写真から位置を取得";
+"spotEditor.nearbyPlaces" = "周辺の場所";
+"spotEditor.noLocationSelected" = "場所を選択してください";
+"spotEditor.importButton" = "取り込み";
+"spotEditor.enterCoordinates" = "緯度経度を入力";
+"spotEditor.coordinateInputTitle" = "座標を入力";
+"spotEditor.latitude" = "緯度";
+"spotEditor.longitude" = "経度";
+
+// MARK: - Tab Bar（追加分）
+"tab.myList" = "マイリスト";
+"tab.create" = "作る";
