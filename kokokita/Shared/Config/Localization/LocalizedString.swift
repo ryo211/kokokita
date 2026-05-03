@@ -473,6 +473,8 @@ enum L {
         static let categoryHistoryCulture  = localized("course.category.history_culture")
         static let categoryNature          = localized("course.category.nature")
         static let categoryArtEntertainment = localized("course.category.art_entertainment")
+        static let categoryMovieDrama      = localized("course.category.movie_drama")
+        static let categoryTravelSightseeing = localized("course.category.travel_sightseeing")
         static let categoryAnime           = localized("course.category.anime")
         static let categoryUserCreated     = localized("course.category.user_created")
         static let newBadge = localized("course.newBadge")

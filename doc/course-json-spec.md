@@ -114,6 +114,8 @@
 | `"history_culture"` | 歴史・文化 |
 | `"nature"` | 自然 |
 | `"art_entertainment"` | アート・エンタメ |
+| `"movie_drama"` | 映画・ドラマ |
+| `"travel_sightseeing"` | 旅行・観光 |
 | `"anime"` | アニメ・漫画 |
 
 ---

@@ -980,12 +980,6 @@ private struct SpotListRowView: View {
                         Text(spot.name)
                             .font(.body)
 
-                        if spot.coverImageUrl != nil || spot.localCoverImagePath != nil {
-                            Image(systemName: "camera")
-                                .font(.caption)
-                                .foregroundStyle(Color.secondary)
-                        }
-
                         if spot.isCheckedIn {
                             Image(systemName: "checkmark.circle.fill")
                                 .font(.body)

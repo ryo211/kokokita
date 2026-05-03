@@ -811,16 +811,10 @@ private struct SpotListRowView: View {
                     }
                     .buttonStyle(.plain)
 
-                    // スポット名・カメラアイコン・チェック済みアイコン
+                    // スポット名・チェック済みアイコン
                     HStack(spacing: 6) {
                         Text(spot.name)
                             .font(.body)
-
-                        if spot.coverImageUrl != nil || spot.localCoverImagePath != nil {
-                            Image(systemName: "camera")
-                                .font(.caption)
-                                .foregroundStyle(Color.secondary)
-                        }
 
                         if spot.isCheckedIn {
                             Image(systemName: "checkmark.circle.fill")
