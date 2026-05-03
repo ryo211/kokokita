@@ -534,3 +534,9 @@
 // MARK: - Tab Bar（追加分）
 "tab.myList" = "マイリスト";
 "tab.create" = "作る";
+"tab.spotList" = "スポット";
+
+// MARK: - SpotList（スポット一覧）
+"spotList.title" = "スポット";
+"spotList.locationUnavailable" = "現在地が取得できません";
+"spotList.noSpots" = "近くのスポットがありません\n巡礼コースを有効にしてください";

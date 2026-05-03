@@ -153,6 +153,7 @@ enum L {
         static let modeRecord = localized("tab.modeRecord")
         static let myList = localized("tab.myList")
         static let create = localized("tab.create")
+        static let spotList = localized("tab.spotList")
     }
 
     // MARK: - My List（マイリスト）
@@ -597,6 +598,13 @@ enum L {
                 ? String(format: "%.1fkm", meters / 1000)
                 : "\(Int(meters))m"
         }
+    }
+
+    // MARK: - SpotList（スポット一覧画面）
+    enum SpotList {
+        static let title = localized("spotList.title")
+        static let locationUnavailable = localized("spotList.locationUnavailable")
+        static let noSpots = localized("spotList.noSpots")
     }
 
     // MARK: - Spot Panel List

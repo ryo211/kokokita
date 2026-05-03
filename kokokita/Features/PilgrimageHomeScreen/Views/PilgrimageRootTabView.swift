@@ -36,6 +36,10 @@ struct PilgrimageRootTabView: View {
                         .opacity(tab == .map ? 1 : 0)
                         .zIndex(tab == .map ? 1 : 0)
 
+                    SpotListScreen()
+                        .opacity(tab == .spotList ? 1 : 0)
+                        .zIndex(tab == .spotList ? 1 : 0)
+
                     NavigationStack {
                         MyListView()
                     }
@@ -138,6 +142,7 @@ struct PilgrimageRootTabView: View {
 enum PilgrimageTab: Hashable {
     case home
     case map
+    case spotList
     case myList
 }
 
@@ -209,6 +214,7 @@ private struct PilgrimageBottomBar: View {
     private let tabItems: [(PilgrimageTab, String, String)] = [
         (.home, "house.fill", L.Tab.home),
         (.map, "map", L.Tab.course),
+        (.spotList, "mappin.and.ellipse", L.Tab.spotList),
         (.myList, "plus.square.on.square", L.Tab.create),
     ]
 
