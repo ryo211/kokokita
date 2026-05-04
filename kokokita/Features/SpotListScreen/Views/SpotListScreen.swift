@@ -160,15 +160,6 @@ struct SpotListScreen: View {
                     .padding(.bottom, 12)
             }
 
-            // 表示件数ボタン（非検索時のみ・右上に表示）
-            if !isSearching {
-                HStack {
-                    Spacer()
-                    spotCountButton
-                }
-                .padding(.horizontal, 12)
-                .padding(.top, 12)
-            }
         }
     }
 
@@ -245,7 +236,7 @@ struct SpotListScreen: View {
         }
     }
 
-    // 表示件数ドロップダウンボタン（地図右上）
+    // 表示件数ドロップダウンボタン（レイアウトバー右）
     private var spotCountButton: some View {
         Menu {
             ForEach([10, 20, 30, 50], id: \.self) { n in
@@ -542,28 +533,8 @@ struct SpotListScreen: View {
 
             Spacer()
 
-            // 右: レイアウト切替ボタン
-            HStack(spacing: 2) {
-                ForEach(SpotListLayout.allCases, id: \.self) { layout in
-                    Button {
-                        withAnimation(.easeInOut(duration: 0.3)) {
-                            viewLayout = layout
-                        }
-                    } label: {
-                        Image(systemName: layout.icon)
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundStyle(viewLayout == layout ? Color.indigo : Color.secondary)
-                            .frame(width: 28, height: 28)
-                            .background(
-                                viewLayout == layout
-                                    ? Color.indigo.opacity(0.12)
-                                    : Color.clear,
-                                in: RoundedRectangle(cornerRadius: 6)
-                            )
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
+            // 右: 表示件数設定
+            spotCountButton
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
