@@ -160,10 +160,10 @@ struct SpotListScreen: View {
                     .padding(.bottom, 12)
             }
 
-            // 検索バー + 表示件数ボタン（非検索時のみ表示）
+            // 表示件数ボタン（非検索時のみ・右上に表示）
             if !isSearching {
-                HStack(alignment: .center, spacing: 8) {
-                    searchBarButton
+                HStack {
+                    Spacer()
                     spotCountButton
                 }
                 .padding(.horizontal, 12)
@@ -245,34 +245,7 @@ struct SpotListScreen: View {
         }
     }
 
-    // 検索バーボタン（タップで検索モードに入る）
-    private var searchBarButton: some View {
-        Button {
-            withAnimation(.easeInOut(duration: 0.25)) {
-                isSearching = true
-            }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                searchFocused = true
-            }
-        } label: {
-            HStack(spacing: 8) {
-                Image(systemName: "magnifyingglass")
-                    .foregroundStyle(.secondary)
-                Text(L.SpotEditor.searchPlaceholder)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-                Spacer()
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 10)
-            .background(.regularMaterial)
-            .clipShape(Capsule())
-            .shadow(color: Color.black.opacity(0.15), radius: 4, x: 0, y: 2)
-        }
-        .buttonStyle(.plain)
-    }
-
-    // 表示件数ドロップダウンボタン（地図右上・検索バー横）
+    // 表示件数ドロップダウンボタン（地図右上）
     private var spotCountButton: some View {
         Menu {
             ForEach([10, 20, 30, 50], id: \.self) { n in
@@ -515,7 +488,29 @@ struct SpotListScreen: View {
 
     private var layoutStrip: some View {
         HStack(alignment: .center, spacing: 8) {
-            // 左: 選択地点の住所カード + "から近いスポット"
+            // 虫眼鏡アイコン（タップで検索モードへ）
+            Button {
+                withAnimation(.easeInOut(duration: 0.25)) {
+                    isSearching = true
+                }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    searchFocused = true
+                }
+            } label: {
+                Image(systemName: "magnifyingglass")
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundStyle(.indigo)
+                    .frame(width: 32, height: 32)
+                    .background(.regularMaterial, in: Circle())
+                    .overlay {
+                        Circle()
+                            .strokeBorder(Color.indigo.opacity(0.25), lineWidth: 0.8)
+                    }
+                    .shadow(color: .black.opacity(0.08), radius: 3, x: 0, y: 1)
+            }
+            .buttonStyle(.plain)
+
+            // 選択地点の住所カード + "から近いスポット"
             VStack(alignment: .leading, spacing: 3) {
                 HStack(spacing: 4) {
                     Image(systemName: "location.fill")
