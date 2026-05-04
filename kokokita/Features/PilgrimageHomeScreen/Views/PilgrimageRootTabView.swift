@@ -228,7 +228,7 @@ private struct PilgrimageBottomBar: View {
             HStack(spacing: 8) {
                 // ккокита（記録）ボタン（左端）
                 Button(action: onRecord) {
-                    VStack(spacing: 4) {
+                    VStack(spacing: 2) {
                         ZStack {
                             Circle()
                                 .fill(
@@ -245,7 +245,7 @@ private struct PilgrimageBottomBar: View {
                                 .scaledToFit()
                                 .frame(width: 20, height: 20)
                         }
-                        .frame(height: 34)
+                        .frame(height: 34, alignment: .bottom)
                         Text(L.App.name)
                             .font(.caption2.bold())
                             .foregroundStyle(Color.indigo)
@@ -269,10 +269,10 @@ private struct PilgrimageBottomBar: View {
                 Button {
                     onModeSwitch()
                 } label: {
-                    VStack(spacing: 4) {
+                    VStack(spacing: 2) {
                         Image(systemName: "mappin.circle")
                             .font(.title3)
-                            .frame(height: 34)
+                            .frame(height: 34, alignment: .bottom)
                         Text(L.Tab.modeRecord)
                             .font(.caption2)
                     }
@@ -369,11 +369,11 @@ private struct CustomTabBar: View {
                             onSelect(tabId)
                         } label: {
                             ZStack {
-                                VStack(spacing: 4) {
+                                VStack(spacing: 2) {
                                     Image(systemName: icon)
                                         .font(.title3)
                                         .fontWeight(current == tabId ? .semibold : .regular)
-                                        .frame(height: 34)
+                                        .frame(height: 34, alignment: .bottom)
                                     Text(title)
                                         .font(.caption2)
                                         .fontWeight(current == tabId ? .semibold : .regular)

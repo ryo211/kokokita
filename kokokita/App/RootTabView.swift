@@ -174,7 +174,7 @@ private struct CustomBottomBar: View {
             HStack(spacing: 8) {
                 // ккокита（記録）ボタン（左端）
                 Button(action: onCenterTap) {
-                    VStack(spacing: 4) {
+                    VStack(spacing: 2) {
                         ZStack {
                             Circle()
                                 .fill(
@@ -191,7 +191,7 @@ private struct CustomBottomBar: View {
                                 .scaledToFit()
                                 .frame(width: 20, height: 20)
                         }
-                        .frame(height: 34)
+                        .frame(height: 34, alignment: .bottom)
                         Text(L.App.name)
                             .font(.caption2.bold())
                             .foregroundStyle(Color.accentColor)
@@ -216,10 +216,10 @@ private struct CustomBottomBar: View {
                 Button {
                     onModeSwitch()
                 } label: {
-                    VStack(spacing: 4) {
+                    VStack(spacing: 2) {
                         Image(systemName: "figure.walk")
                             .font(.title3)
-                            .frame(height: 34)
+                            .frame(height: 34, alignment: .bottom)
                         Text(L.Tab.modePilgrimage)
                             .font(.caption2)
                     }
