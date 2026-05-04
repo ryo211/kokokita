@@ -118,11 +118,10 @@ struct SliderTabBar<Tab: Hashable>: View {
         Button {
             onSelect(tab)
         } label: {
-            VStack(spacing: 2) {
+            VStack(spacing: 3) {
                 Image(systemName: icon)
                     .font(.title3)
                     .fontWeight(current == tab ? .semibold : .regular)
-                    .frame(height: 34, alignment: .bottom)
                 Text(title)
                     .font(.caption2)
                     .fontWeight(current == tab ? .semibold : .regular)
