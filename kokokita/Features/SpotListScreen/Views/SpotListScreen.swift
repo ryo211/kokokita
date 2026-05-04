@@ -281,28 +281,36 @@ struct SpotListScreen: View {
                 } else if store.nearbySpots.isEmpty {
                     emptyView
                 } else {
-                    ScrollView {
-                        LazyVStack(spacing: 0) {
-                            ForEach(Array(store.nearbySpots.enumerated()), id: \.element.spot.id) { index, item in
-                                SpotListRowView(
-                                    spot: item.spot,
-                                    course: item.course,
-                                    orderNumber: index + 1,
-                                    isSelected: selectedSpotId == item.spot.id,
-                                    distance: item.distance,
-                                    onCourseTap: { courseDetailRoute = CourseRoute(course: item.course, initialSpotId: item.spot.id) }
-                                )
-                                .contentShape(Rectangle())
-                                .onTapGesture {
-                                    withAnimation(.easeInOut(duration: 0.2)) {
-                                        selectedSpotId = selectedSpotId == item.spot.id ? nil : item.spot.id
+                    ScrollViewReader { proxy in
+                        ScrollView {
+                            LazyVStack(spacing: 0) {
+                                ForEach(Array(store.nearbySpots.enumerated()), id: \.element.spot.id) { index, item in
+                                    SpotListRowView(
+                                        spot: item.spot,
+                                        course: item.course,
+                                        orderNumber: index + 1,
+                                        isSelected: selectedSpotId == item.spot.id,
+                                        distance: item.distance,
+                                        onCourseTap: { courseDetailRoute = CourseRoute(course: item.course, initialSpotId: item.spot.id) }
+                                    )
+                                    .id(item.spot.id)
+                                    .contentShape(Rectangle())
+                                    .onTapGesture {
+                                        withAnimation(.easeInOut(duration: 0.2)) {
+                                            selectedSpotId = selectedSpotId == item.spot.id ? nil : item.spot.id
+                                        }
+                                        fitAllPoints()
                                     }
-                                    fitAllPoints()
+                                    if index < store.nearbySpots.count - 1 {
+                                        Divider()
+                                            .padding(.leading, 60)
+                                    }
                                 }
-                                if index < store.nearbySpots.count - 1 {
-                                    Divider()
-                                        .padding(.leading, 60)
-                                }
+                            }
+                        }
+                        .onChange(of: selectedSpotId) { _, newId in
+                            if let id = newId {
+                                withAnimation { proxy.scrollTo(id, anchor: .top) }
                             }
                         }
                     }
