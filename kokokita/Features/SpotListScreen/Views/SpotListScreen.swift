@@ -89,7 +89,7 @@ struct SpotListScreen: View {
                 if store.favoritesOnly { store.recalculateNearbySpots() }
             }
             .navigationDestination(item: $courseDetailRoute) { route in
-                CourseDetailView(course: route.course)
+                CourseDetailView(course: route.course, initialSelectedSpotId: route.initialSpotId)
             }
             .toolbar(.hidden, for: .navigationBar)
         }
@@ -290,7 +290,7 @@ struct SpotListScreen: View {
                                     orderNumber: index + 1,
                                     isSelected: selectedSpotId == item.spot.id,
                                     distance: item.distance,
-                                    onCourseTap: { courseDetailRoute = CourseRoute(course: item.course) }
+                                    onCourseTap: { courseDetailRoute = CourseRoute(course: item.course, initialSpotId: item.spot.id) }
                                 )
                                 .contentShape(Rectangle())
                                 .onTapGesture {
@@ -1221,6 +1221,8 @@ private struct SpotFilterPanel: View {
 /// Course は Hashable でないため、id のみで同一性を判断するラッパー
 private struct CourseRoute: Identifiable, Hashable {
     let course: Course
+    /// 遷移先でフォーカスするスポットのID
+    let initialSpotId: UUID?
     var id: UUID { course.id }
     func hash(into hasher: inout Hasher) { hasher.combine(id) }
     static func == (lhs: Self, rhs: Self) -> Bool { lhs.id == rhs.id }
