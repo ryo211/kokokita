@@ -174,7 +174,7 @@ private struct CustomBottomBar: View {
             HStack(spacing: 8) {
                 // ккокита（記録）ボタン（左端）
                 Button(action: onCenterTap) {
-                    VStack(spacing: 2) {
+                    VStack(spacing: 4) {
                         ZStack {
                             Circle()
                                 .fill(
@@ -184,13 +184,14 @@ private struct CustomBottomBar: View {
                                         endPoint: .bottomTrailing
                                     )
                                 )
-                                .frame(width: 38, height: 38)
+                                .frame(width: 34, height: 34)
                                 .shadow(color: Color.accentColor.opacity(0.35), radius: 6, x: 0, y: 2)
                             Image("kokokita_irodori_white")
                                 .resizable()
                                 .scaledToFit()
-                                .frame(width: 22, height: 22)
+                                .frame(width: 20, height: 20)
                         }
+                        .frame(height: 34)
                         Text(L.App.name)
                             .font(.caption2.bold())
                             .foregroundStyle(Color.accentColor)
@@ -218,6 +219,7 @@ private struct CustomBottomBar: View {
                     VStack(spacing: 4) {
                         Image(systemName: "figure.walk")
                             .font(.title3)
+                            .frame(height: 34)
                         Text(L.Tab.modePilgrimage)
                             .font(.caption2)
                     }

@@ -122,6 +122,7 @@ struct SliderTabBar<Tab: Hashable>: View {
                 Image(systemName: icon)
                     .font(.title3)
                     .fontWeight(current == tab ? .semibold : .regular)
+                    .frame(height: 34)
                 Text(title)
                     .font(.caption2)
                     .fontWeight(current == tab ? .semibold : .regular)
