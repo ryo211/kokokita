@@ -56,8 +56,8 @@ struct CourseDetailView: View {
     /// 地図とリストの表示レイアウト
     @State private var viewLayout: CourseViewLayout = .split
     /// スポットフォーカス時に地図をズームするか
-    @AppStorage(Self.zoomOnSpotFocusKey) private var zoomOnSpotFocus = true
-    @AppStorage(Self.spotPhotoSizeKey) private var spotPhotoSizeRaw = CourseSpotPhotoSize.medium.rawValue
+    @AppStorage(Self.zoomOnSpotFocusKey) private var zoomOnSpotFocus = false
+    @AppStorage(Self.spotPhotoSizeKey) private var spotPhotoSizeRaw = CourseSpotPhotoSize.large.rawValue
     @State private var showCourseMapSettings = false
     @State private var visibleMapSpan = MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
     /// フォーカス中スポットのスクリーン座標（リーダーライン描画用）
@@ -85,8 +85,8 @@ struct CourseDetailView: View {
             let radius = spot.recognitionRadiusMeters ?? course.recognitionRadiusMeters
             let span = CourseDetailView.spotSpan(recognitionRadius: radius)
             let savedPhotoSize = CourseSpotPhotoSize(
-                rawValue: UserDefaults.standard.string(forKey: Self.spotPhotoSizeKey) ?? CourseSpotPhotoSize.medium.rawValue
-            ) ?? .medium
+                rawValue: UserDefaults.standard.string(forKey: Self.spotPhotoSizeKey) ?? CourseSpotPhotoSize.large.rawValue
+            ) ?? .large
             let center = CourseDetailView.focusCenter(
                 latitude: spot.latitude,
                 longitude: spot.longitude,
@@ -218,7 +218,7 @@ struct CourseDetailView: View {
     }
 
     private var spotPhotoSize: CourseSpotPhotoSize {
-        CourseSpotPhotoSize(rawValue: spotPhotoSizeRaw) ?? .medium
+        CourseSpotPhotoSize(rawValue: spotPhotoSizeRaw) ?? .large
     }
 
     // MARK: - 遡り判定
@@ -650,7 +650,7 @@ private struct CourseMapSettingsSheet: View {
     @Environment(\.dismiss) private var dismiss
 
     private var selectedPhotoSize: CourseSpotPhotoSize {
-        CourseSpotPhotoSize(rawValue: spotPhotoSizeRaw) ?? .medium
+        CourseSpotPhotoSize(rawValue: spotPhotoSizeRaw) ?? .large
     }
 
     var body: some View {
