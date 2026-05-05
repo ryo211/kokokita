@@ -17,7 +17,7 @@ private enum CourseViewLayout: CaseIterable {
     }
 }
 
-private enum CourseSpotPhotoSize: String, CaseIterable {
+enum CourseSpotPhotoSize: String, CaseIterable {
     case none
     case small
     case medium
@@ -644,7 +644,7 @@ struct CourseDetailView: View {
     }
 }
 
-private struct CourseMapSettingsSheet: View {
+struct CourseMapSettingsSheet: View {
     @Binding var zoomOnSpotFocus: Bool
     @Binding var spotPhotoSizeRaw: String
     @Environment(\.dismiss) private var dismiss
@@ -1280,7 +1280,7 @@ private struct SpotDetailExpandedView: View {
 // MARK: - スポット画像リーダーラインビュー
 
 /// スポットのスクリーン座標から右上方向にリーダーライン（指示棒）を伸ばし、画像を表示する
-private struct SpotLeaderLineView: View {
+struct SpotLeaderLineView: View {
     let spotPoint: CGPoint
     let size: CourseSpotPhotoSize
     /// ローカル保存画像（優先）

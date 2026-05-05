@@ -20,6 +20,10 @@ private enum SpotListLayout: CaseIterable {
 // スポット一覧画面
 // 地図上の任意地点（デフォルト: 現在地）から近い順の巡礼スポットを表示する
 struct SpotListScreen: View {
+    // MARK: - AppStorage キー
+    private static let zoomOnSpotFocusKey = "spotList.zoomOnSpotFocus"
+    private static let spotPhotoSizeKey = "spotList.spotPhotoSize"
+
     @State private var store = SpotListStore()
     @State private var cameraPosition: MapCameraPosition = .automatic
     @State private var selectedSpotId: UUID?
@@ -43,7 +47,26 @@ struct SpotListScreen: View {
     @State private var isSearchLoading = false
     @FocusState private var searchFocused: Bool
 
+    // フォーカス機能
+    /// スポットフォーカス時に地図をズームするか
+    @AppStorage("spotList.zoomOnSpotFocus") private var zoomOnSpotFocus = true
+    /// スポット写真サイズ（raw値）
+    @AppStorage("spotList.spotPhotoSize") private var spotPhotoSizeRaw = CourseSpotPhotoSize.medium.rawValue
+    /// 現在の地図表示スパン（カメラ変化時に追跡）
+    @State private var visibleMapSpan = MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
+    /// フォーカス中スポットのスクリーン座標（リーダーライン描画用）
+    @State private var selectedSpotScreenPoint: CGPoint? = nil
+    /// 地図設定シートの表示フラグ
+    @State private var showMapSettings = false
+    /// ライトボックス表示中の画像 URL
+    @State private var expandedImageUrl: URL? = nil
+
     @Environment(\.spotFavoriteStore) private var favoriteStore
+
+    /// 現在のスポット写真サイズ
+    private var spotPhotoSize: CourseSpotPhotoSize {
+        CourseSpotPhotoSize(rawValue: spotPhotoSizeRaw) ?? .medium
+    }
 
     var body: some View {
         NavigationStack {
@@ -92,6 +115,53 @@ struct SpotListScreen: View {
                 CourseDetailView(course: route.course, initialSelectedSpotId: route.initialSpotId)
             }
             .toolbar(.hidden, for: .navigationBar)
+            // 写真サイズ変更時: フォーカス中スポットのカメラ中心を再調整
+            .onChange(of: spotPhotoSizeRaw) { _, _ in
+                guard let spotId = selectedSpotId,
+                      let item = store.nearbySpots.first(where: { $0.spot.id == spotId }),
+                      item.spot.hasValidCoordinate else { return }
+                let center = focusCenter(
+                    latitude: item.spot.latitude,
+                    longitude: item.spot.longitude,
+                    span: visibleMapSpan
+                )
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    cameraPosition = .region(MKCoordinateRegion(center: center, span: visibleMapSpan))
+                }
+            }
+            // 地図設定シート
+            .sheet(isPresented: $showMapSettings) {
+                CourseMapSettingsSheet(
+                    zoomOnSpotFocus: $zoomOnSpotFocus,
+                    spotPhotoSizeRaw: $spotPhotoSizeRaw
+                )
+            }
+            // スポット画像ライトボックス（タップで閉じる）
+            .overlay {
+                if let url = expandedImageUrl {
+                    ZStack {
+                        Color.black.opacity(0.65)
+                            .ignoresSafeArea()
+                        AsyncImage(url: url) { phase in
+                            if case .success(let image) = phase {
+                                image
+                                    .resizable()
+                                    .scaledToFit()
+                                    .padding(32)
+                                    .shadow(color: .black.opacity(0.35), radius: 24, x: 0, y: 8)
+                            }
+                        }
+                    }
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            expandedImageUrl = nil
+                        }
+                    }
+                    .transition(.opacity.combined(with: .scale(scale: 0.92)))
+                }
+            }
+            .animation(.easeInOut(duration: 0.2), value: expandedImageUrl != nil)
         }
     }
 
@@ -99,68 +169,213 @@ struct SpotListScreen: View {
 
     private var mapSection: some View {
         ZStack(alignment: .top) {
-            Map(position: $cameraPosition, interactionModes: [.pan, .zoom, .pitch]) {
-                // スポットピン（近い順に番号付き）
-                ForEach(Array(store.nearbySpots.enumerated()), id: \.element.spot.id) { index, item in
-                    if item.spot.hasValidCoordinate {
-                        let coord = CLLocationCoordinate2D(
-                            latitude: item.spot.latitude,
-                            longitude: item.spot.longitude
-                        )
-                        Annotation("", coordinate: coord, anchor: .center) {
-                            SpotPinView(
-                                orderNumber: index + 1,
-                                isCheckedIn: item.spot.isCheckedIn,
-                                isSelected: selectedSpotId == item.spot.id
+            MapReader { proxy in
+                Map(position: $cameraPosition, interactionModes: [.pan, .zoom, .pitch]) {
+                    // スポットピン（近い順に番号付き）
+                    ForEach(Array(store.nearbySpots.enumerated()), id: \.element.spot.id) { index, item in
+                        if item.spot.hasValidCoordinate {
+                            let coord = CLLocationCoordinate2D(
+                                latitude: item.spot.latitude,
+                                longitude: item.spot.longitude
                             )
-                            .onTapGesture {
-                                withAnimation(.easeInOut(duration: 0.2)) {
-                                    selectedSpotId = selectedSpotId == item.spot.id ? nil : item.spot.id
+                            Annotation("", coordinate: coord, anchor: .center) {
+                                SpotPinView(
+                                    orderNumber: index + 1,
+                                    isCheckedIn: item.spot.isCheckedIn,
+                                    isSelected: selectedSpotId == item.spot.id
+                                )
+                                .onTapGesture {
+                                    focusOrUnfocus(item: item)
                                 }
-                                fitAllPoints()
+                            }
+
+                            // 選択中スポットの認識範囲サークル
+                            if selectedSpotId == item.spot.id {
+                                MapCircle(
+                                    center: coord,
+                                    radius: item.spot.recognitionRadiusMeters ?? item.course.recognitionRadiusMeters
+                                )
+                                .foregroundStyle(Color.indigo.opacity(0.08))
+                                .stroke(Color.indigo.opacity(0.5), lineWidth: 1.5)
                             }
                         }
+                    }
 
-                        // 選択中スポットの認識範囲サークル
-                        if selectedSpotId == item.spot.id {
-                            MapCircle(
-                                center: coord,
-                                radius: item.spot.recognitionRadiusMeters ?? item.course.recognitionRadiusMeters
-                            )
-                            .foregroundStyle(Color.indigo.opacity(0.08))
-                            .stroke(Color.indigo.opacity(0.5), lineWidth: 1.5)
+                    // 確定済み選択地点ピン
+                    if let coord = store.selectedCoordinate {
+                        Annotation("", coordinate: coord, anchor: .bottom) {
+                            selectedPinView
                         }
                     }
                 }
-
-                // 確定済み選択地点ピン
-                if let coord = store.selectedCoordinate {
-                    Annotation("", coordinate: coord, anchor: .bottom) {
-                        selectedPinView
+                .mapStyle(.standard(emphasis: .muted))
+                .mapControls {
+                    MapCompass()
+                    MapScaleView()
+                }
+                // スポット変更時: リーダーラインをいったん非表示（カメラ停止後に再表示）
+                .onChange(of: selectedSpotId) { _, _ in
+                    selectedSpotScreenPoint = nil
+                }
+                // selectedSpotId 変化後 180ms 待ってスクリーン座標を確定（カメラアニメーション考慮）
+                .task(id: selectedSpotId) {
+                    guard selectedSpotId != nil else { return }
+                    try? await Task.sleep(nanoseconds: 180_000_000)
+                    guard !Task.isCancelled else { return }
+                    await MainActor.run {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            updateSpotScreenPoint(proxy: proxy)
+                        }
+                    }
+                    try? await Task.sleep(nanoseconds: 320_000_000)
+                    guard !Task.isCancelled else { return }
+                    await MainActor.run {
+                        if selectedSpotScreenPoint == nil {
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                updateSpotScreenPoint(proxy: proxy)
+                            }
+                        }
                     }
                 }
+                // カメラ停止時: スポット座標を確定してフェードイン表示
+                .onMapCameraChange(frequency: .onEnd) { ctx in
+                    visibleMapSpan = ctx.region.span
+                    mapCenterCoordinate = ctx.region.center
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        updateSpotScreenPoint(proxy: proxy)
+                    }
+                }
+                // カメラ連続変化時: 画像表示中のみリアルタイム追従
+                .onMapCameraChange(frequency: .continuous) { ctx in
+                    visibleMapSpan = ctx.region.span
+                    mapCenterCoordinate = ctx.region.center
+                    guard selectedSpotScreenPoint != nil else { return }
+                    updateSpotScreenPoint(proxy: proxy)
+                }
+                // 照準（地図中心＝「この場所を選択」の対象を示す）
+                .overlay(alignment: .center) {
+                    crosshairView
+                }
+                // 地図設定ボタン（右上）
+                .overlay(alignment: .topTrailing) {
+                    mapSettingsButton
+                        .padding(12)
+                }
+                // 「この場所を選択」ボタン（右下）
+                .overlay(alignment: .bottomTrailing) {
+                    selectLocationButton
+                        .padding(.horizontal, 12)
+                        .padding(.bottom, 12)
+                }
+                // リーダーライン＋スポット画像
+                .overlay {
+                    leaderLineOverlay
+                }
             }
-            .mapStyle(.standard(emphasis: .muted))
-            .mapControls {
-                MapCompass()
-                MapScaleView()
-            }
-            // 地図のスクロール・ズームに合わせて中心座標を追跡
-            .onMapCameraChange { ctx in
-                mapCenterCoordinate = ctx.region.center
-            }
-            // 照準（地図中心＝「この場所を選択」の対象を示す）
-            .overlay(alignment: .center) {
-                crosshairView
-            }
-            // 「この場所を選択」ボタン（右下）
-            .overlay(alignment: .bottomTrailing) {
-                selectLocationButton
-                    .padding(.horizontal, 12)
-                    .padding(.bottom, 12)
-            }
-
         }
+    }
+
+    // MARK: - フォーカス同期
+
+    /// スポットをタップしたときのフォーカス切替処理
+    private func focusOrUnfocus(item: (course: Course, spot: CourseSpot, distance: Double)) {
+        let spot = item.spot
+        withAnimation(.easeInOut(duration: 0.3)) {
+            if selectedSpotId == spot.id {
+                // 同じスポット再タップ → 選択解除＋全スポット表示
+                selectedSpotId = nil
+                selectedSpotScreenPoint = nil
+                fitAllPoints()
+            } else {
+                selectedSpotId = spot.id
+                selectedSpotScreenPoint = nil
+                guard spot.hasValidCoordinate else { return }
+                let radius = spot.recognitionRadiusMeters ?? item.course.recognitionRadiusMeters
+                let span = zoomOnSpotFocus
+                    ? spotSpan(recognitionRadius: radius)
+                    : visibleMapSpan
+                let center = focusCenter(
+                    latitude: spot.latitude,
+                    longitude: spot.longitude,
+                    span: span
+                )
+                cameraPosition = .region(MKCoordinateRegion(center: center, span: span))
+            }
+        }
+    }
+
+    /// recognitionRadius に応じたズームスパンを計算する（CourseDetailView と同じロジック）
+    private func spotSpan(recognitionRadius: Double) -> MKCoordinateSpan {
+        let diameterDegrees = (recognitionRadius * 2) / 111_000.0
+        let delta = max(0.002, min(diameterDegrees * 2.5, 0.3))
+        return MKCoordinateSpan(latitudeDelta: delta, longitudeDelta: delta)
+    }
+
+    /// フォーカス中心座標を計算する（large サイズ時は画像分を考慮して少し上にオフセット）
+    private func focusCenter(latitude: Double, longitude: Double, span: MKCoordinateSpan) -> CLLocationCoordinate2D {
+        guard spotPhotoSize == .large else {
+            return CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+        }
+        return CLLocationCoordinate2D(
+            latitude: min(90, latitude + span.latitudeDelta * 0.25),
+            longitude: longitude
+        )
+    }
+
+    /// フォーカス中スポットのスクリーン座標を MapProxy で更新する
+    private func updateSpotScreenPoint(proxy: MapProxy) {
+        guard let spotId = selectedSpotId,
+              let item = store.nearbySpots.first(where: { $0.spot.id == spotId }),
+              item.spot.hasValidCoordinate else {
+            selectedSpotScreenPoint = nil
+            return
+        }
+        let coord = CLLocationCoordinate2D(latitude: item.spot.latitude, longitude: item.spot.longitude)
+        selectedSpotScreenPoint = proxy.convert(coord, to: .local)
+    }
+
+    // MARK: - リーダーライン＋スポット画像オーバーレイ
+
+    /// フォーカス中スポットに画像がある場合、スポット位置からリーダーライン付きで表示
+    @ViewBuilder
+    private var leaderLineOverlay: some View {
+        if spotPhotoSize != .none,
+           let spotPoint = selectedSpotScreenPoint,
+           let item = store.nearbySpots.first(where: { $0.spot.id == selectedSpotId }) {
+            let spot = item.spot
+            let localImage = spot.localCoverImagePath.flatMap { LocalImageStorage.shared.load(from: $0) }
+            let remoteUrl = spot.coverImageUrl.flatMap { URL(string: $0) }
+            if localImage != nil || remoteUrl != nil {
+                SpotLeaderLineView(
+                    spotPoint: spotPoint,
+                    size: spotPhotoSize,
+                    localImage: localImage,
+                    imageUrl: remoteUrl
+                ) {
+                    if let url = remoteUrl {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            expandedImageUrl = url
+                        }
+                    }
+                }
+                .transition(.opacity)
+            }
+        }
+    }
+
+    // MARK: - 地図設定ボタン（右上）
+
+    private var mapSettingsButton: some View {
+        Button {
+            showMapSettings = true
+        } label: {
+            Image(systemName: "slider.horizontal.3")
+                .font(.system(size: 14, weight: .medium))
+                .frame(width: 36, height: 36)
+                .background(.regularMaterial, in: Circle())
+                .shadow(color: .black.opacity(0.15), radius: 4, x: 0, y: 2)
+        }
+        .buttonStyle(.plain)
     }
 
     // 確定済み選択地点ピン（スポット追加画面と同じデザイン）
@@ -296,10 +511,7 @@ struct SpotListScreen: View {
                                     .id(item.spot.id)
                                     .contentShape(Rectangle())
                                     .onTapGesture {
-                                        withAnimation(.easeInOut(duration: 0.2)) {
-                                            selectedSpotId = selectedSpotId == item.spot.id ? nil : item.spot.id
-                                        }
-                                        fitAllPoints()
+                                        focusOrUnfocus(item: item)
                                     }
                                     if index < store.nearbySpots.count - 1 {
                                         Divider()
