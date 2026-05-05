@@ -49,7 +49,7 @@ struct SpotListScreen: View {
 
     // フォーカス機能
     /// スポットフォーカス時に地図をズームするか
-    @AppStorage("spotList.zoomOnSpotFocus") private var zoomOnSpotFocus = true
+    @AppStorage("spotList.zoomOnSpotFocus") private var zoomOnSpotFocus = false
     /// スポット写真サイズ（raw値）
     @AppStorage("spotList.spotPhotoSize") private var spotPhotoSizeRaw = CourseSpotPhotoSize.medium.rawValue
     /// 現在の地図表示スパン（カメラ変化時に追跡）
