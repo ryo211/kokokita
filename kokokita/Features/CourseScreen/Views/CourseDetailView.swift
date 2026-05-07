@@ -17,7 +17,7 @@ private enum CourseViewLayout: CaseIterable {
     }
 }
 
-private enum CourseSpotPhotoSize: String, CaseIterable {
+enum CourseSpotPhotoSize: String, CaseIterable {
     case none
     case small
     case medium
@@ -56,8 +56,8 @@ struct CourseDetailView: View {
     /// 地図とリストの表示レイアウト
     @State private var viewLayout: CourseViewLayout = .split
     /// スポットフォーカス時に地図をズームするか
-    @AppStorage(Self.zoomOnSpotFocusKey) private var zoomOnSpotFocus = true
-    @AppStorage(Self.spotPhotoSizeKey) private var spotPhotoSizeRaw = CourseSpotPhotoSize.medium.rawValue
+    @AppStorage(Self.zoomOnSpotFocusKey) private var zoomOnSpotFocus = false
+    @AppStorage(Self.spotPhotoSizeKey) private var spotPhotoSizeRaw = CourseSpotPhotoSize.large.rawValue
     @State private var showCourseMapSettings = false
     @State private var visibleMapSpan = MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
     /// フォーカス中スポットのスクリーン座標（リーダーライン描画用）
@@ -85,8 +85,8 @@ struct CourseDetailView: View {
             let radius = spot.recognitionRadiusMeters ?? course.recognitionRadiusMeters
             let span = CourseDetailView.spotSpan(recognitionRadius: radius)
             let savedPhotoSize = CourseSpotPhotoSize(
-                rawValue: UserDefaults.standard.string(forKey: Self.spotPhotoSizeKey) ?? CourseSpotPhotoSize.medium.rawValue
-            ) ?? .medium
+                rawValue: UserDefaults.standard.string(forKey: Self.spotPhotoSizeKey) ?? CourseSpotPhotoSize.large.rawValue
+            ) ?? .large
             let center = CourseDetailView.focusCenter(
                 latitude: spot.latitude,
                 longitude: spot.longitude,
@@ -218,7 +218,7 @@ struct CourseDetailView: View {
     }
 
     private var spotPhotoSize: CourseSpotPhotoSize {
-        CourseSpotPhotoSize(rawValue: spotPhotoSizeRaw) ?? .medium
+        CourseSpotPhotoSize(rawValue: spotPhotoSizeRaw) ?? .large
     }
 
     // MARK: - 遡り判定
@@ -644,13 +644,13 @@ struct CourseDetailView: View {
     }
 }
 
-private struct CourseMapSettingsSheet: View {
+struct CourseMapSettingsSheet: View {
     @Binding var zoomOnSpotFocus: Bool
     @Binding var spotPhotoSizeRaw: String
     @Environment(\.dismiss) private var dismiss
 
     private var selectedPhotoSize: CourseSpotPhotoSize {
-        CourseSpotPhotoSize(rawValue: spotPhotoSizeRaw) ?? .medium
+        CourseSpotPhotoSize(rawValue: spotPhotoSizeRaw) ?? .large
     }
 
     var body: some View {
@@ -980,12 +980,6 @@ private struct SpotListRowView: View {
                         Text(spot.name)
                             .font(.body)
 
-                        if spot.coverImageUrl != nil || spot.localCoverImagePath != nil {
-                            Image(systemName: "camera")
-                                .font(.caption)
-                                .foregroundStyle(Color.secondary)
-                        }
-
                         if spot.isCheckedIn {
                             Image(systemName: "checkmark.circle.fill")
                                 .font(.body)
@@ -1286,7 +1280,7 @@ private struct SpotDetailExpandedView: View {
 // MARK: - スポット画像リーダーラインビュー
 
 /// スポットのスクリーン座標から右上方向にリーダーライン（指示棒）を伸ばし、画像を表示する
-private struct SpotLeaderLineView: View {
+struct SpotLeaderLineView: View {
     let spotPoint: CGPoint
     let size: CourseSpotPhotoSize
     /// ローカル保存画像（優先）

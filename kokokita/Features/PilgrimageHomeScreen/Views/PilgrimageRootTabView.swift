@@ -36,6 +36,10 @@ struct PilgrimageRootTabView: View {
                         .opacity(tab == .map ? 1 : 0)
                         .zIndex(tab == .map ? 1 : 0)
 
+                    SpotListScreen()
+                        .opacity(tab == .spotList ? 1 : 0)
+                        .zIndex(tab == .spotList ? 1 : 0)
+
                     NavigationStack {
                         MyListView()
                     }
@@ -138,6 +142,7 @@ struct PilgrimageRootTabView: View {
 enum PilgrimageTab: Hashable {
     case home
     case map
+    case spotList
     case myList
 }
 
@@ -209,6 +214,7 @@ private struct PilgrimageBottomBar: View {
     private let tabItems: [(PilgrimageTab, String, String)] = [
         (.home, "house.fill", L.Tab.home),
         (.map, "map", L.Tab.course),
+        (.spotList, "mappin.and.ellipse", L.Tab.spotList),
         (.myList, "plus.square.on.square", L.Tab.create),
     ]
 
@@ -222,7 +228,7 @@ private struct PilgrimageBottomBar: View {
             HStack(spacing: 8) {
                 // ккокита（記録）ボタン（左端）
                 Button(action: onRecord) {
-                    VStack(spacing: 2) {
+                    VStack(spacing: 3) {
                         ZStack {
                             Circle()
                                 .fill(
@@ -232,12 +238,12 @@ private struct PilgrimageBottomBar: View {
                                         endPoint: .bottomTrailing
                                     )
                                 )
-                                .frame(width: 38, height: 38)
+                                .frame(width: 28, height: 28)
                                 .shadow(color: Color.indigo.opacity(0.35), radius: 6, x: 0, y: 2)
                             Image("kokokita_irodori_white")
                                 .resizable()
                                 .scaledToFit()
-                                .frame(width: 22, height: 22)
+                                .frame(width: 17, height: 17)
                         }
                         Text(L.App.name)
                             .font(.caption2.bold())
@@ -262,7 +268,7 @@ private struct PilgrimageBottomBar: View {
                 Button {
                     onModeSwitch()
                 } label: {
-                    VStack(spacing: 4) {
+                    VStack(spacing: 3) {
                         Image(systemName: "mappin.circle")
                             .font(.title3)
                         Text(L.Tab.modeRecord)
@@ -361,7 +367,7 @@ private struct CustomTabBar: View {
                             onSelect(tabId)
                         } label: {
                             ZStack {
-                                VStack(spacing: 4) {
+                                VStack(spacing: 3) {
                                     Image(systemName: icon)
                                         .font(.title3)
                                         .fontWeight(current == tabId ? .semibold : .regular)

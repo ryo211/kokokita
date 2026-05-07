@@ -153,6 +153,7 @@ enum L {
         static let modeRecord = localized("tab.modeRecord")
         static let myList = localized("tab.myList")
         static let create = localized("tab.create")
+        static let spotList = localized("tab.spotList")
     }
 
     // MARK: - My List（マイリスト）
@@ -472,6 +473,8 @@ enum L {
         static let categoryHistoryCulture  = localized("course.category.history_culture")
         static let categoryNature          = localized("course.category.nature")
         static let categoryArtEntertainment = localized("course.category.art_entertainment")
+        static let categoryMovieDrama      = localized("course.category.movie_drama")
+        static let categoryTravelSightseeing = localized("course.category.travel_sightseeing")
         static let categoryAnime           = localized("course.category.anime")
         static let categoryUserCreated     = localized("course.category.user_created")
         static let newBadge = localized("course.newBadge")
@@ -597,6 +600,13 @@ enum L {
                 ? String(format: "%.1fkm", meters / 1000)
                 : "\(Int(meters))m"
         }
+    }
+
+    // MARK: - SpotList（スポット一覧画面）
+    enum SpotList {
+        static let title = localized("spotList.title")
+        static let locationUnavailable = localized("spotList.locationUnavailable")
+        static let noSpots = localized("spotList.noSpots")
     }
 
     // MARK: - Spot Panel List

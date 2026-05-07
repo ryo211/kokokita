@@ -358,6 +358,8 @@
 "course.category.history_culture" = "歴史・文化";
 "course.category.nature" = "自然";
 "course.category.art_entertainment" = "アート・エンタメ";
+"course.category.movie_drama" = "映画・ドラマ";
+"course.category.travel_sightseeing" = "旅行・観光";
 "course.category.anime" = "アニメ・漫画";
 "course.category.user_created" = "自作コース";
 "course.newBadge" = "NEW";
@@ -534,3 +536,9 @@
 // MARK: - Tab Bar（追加分）
 "tab.myList" = "マイリスト";
 "tab.create" = "作る";
+"tab.spotList" = "スポット";
+
+// MARK: - SpotList（スポット一覧）
+"spotList.title" = "スポット";
+"spotList.locationUnavailable" = "現在地が取得できません";
+"spotList.noSpots" = "近くのスポットがありません\n巡礼コースを有効にしてください";

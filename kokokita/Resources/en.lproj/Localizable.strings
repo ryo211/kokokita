@@ -532,3 +532,9 @@
 // MARK: - Tab Bar (additions)
 "tab.myList" = "My List";
 "tab.create" = "Create";
+"tab.spotList" = "Spots";
+
+// MARK: - SpotList
+"spotList.title" = "Spots";
+"spotList.locationUnavailable" = "Location unavailable";
+"spotList.noSpots" = "No nearby spots\nPlease enable a pilgrimage course";
