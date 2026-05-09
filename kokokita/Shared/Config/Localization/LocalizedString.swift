@@ -622,6 +622,8 @@ enum L {
     enum CheckIn {
         static let resultTitle = localized("checkIn.resultTitle")
         static let resultSubtitle = localized("checkIn.resultSubtitle")
+        static let stampAcquired = localized("checkIn.stampAcquired")
+        static let courseAllClear = localized("checkIn.courseAllClear")
         static let distanceFormat = localized("checkIn.distanceFormat")
         static let retroactiveTitle = localized("checkIn.retroactiveTitle")
         static let retroactiveSubtitle = localized("checkIn.retroactiveSubtitle")

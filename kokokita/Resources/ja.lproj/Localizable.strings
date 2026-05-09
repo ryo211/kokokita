@@ -412,8 +412,10 @@
 "spotPanelList.noFavoritesShort" = "お気に入りスポットはありません";
 
 // MARK: - CheckIn Result
-"checkIn.resultTitle" = "聖地巡礼達成！";
+"checkIn.resultTitle" = "聖地巡礼達成 ✓";
 "checkIn.resultSubtitle" = "聖地巡礼スポットに到達しました";
+"checkIn.stampAcquired" = "スタンプを獲得しました";
+"checkIn.courseAllClear" = "コース全制覇";
 "checkIn.distanceFormat" = "約%dm";
 "checkIn.retroactiveTitle" = "過去の記録から巡礼スポット達成認定！";
 "checkIn.retroactiveSubtitle" = "以前に訪れた記録がこのコースのスポットと一致しました";

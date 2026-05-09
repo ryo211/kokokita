@@ -829,14 +829,22 @@ private struct NearbySpotRow: View {
             SpotPanelThumbnailView(course: course, spot: spot)
 
             VStack(alignment: .leading, spacing: 2) {
+                HStack(spacing: 4) {
+                    Image(systemName: "map.fill")
+                        .font(.system(size: 10))
+                    Text(course.title)
+                        .font(.caption)
+                        .lineLimit(1)
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 9, weight: .semibold))
+                }
+                .foregroundStyle(.indigo.opacity(0.75))
+
                 Text(spot.name)
                     .font(.body)
                     .foregroundStyle(.primary)
                     .lineLimit(1)
-                Text(course.title)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
+
                 HStack(spacing: 2) {
                     Image(systemName: "location.fill")
                         .font(.caption2)
@@ -864,14 +872,22 @@ private struct RecentAchievementRow: View {
             SpotPanelThumbnailView(course: course, spot: spot)
 
             VStack(alignment: .leading, spacing: 2) {
+                HStack(spacing: 4) {
+                    Image(systemName: "map.fill")
+                        .font(.system(size: 10))
+                    Text(course.title)
+                        .font(.caption)
+                        .lineLimit(1)
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 9, weight: .semibold))
+                }
+                .foregroundStyle(.indigo.opacity(0.75))
+
                 Text(spot.name)
                     .font(.body)
                     .foregroundStyle(.primary)
                     .lineLimit(1)
-                Text(course.title)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
+
                 if let date = spot.firstCheckedInAt {
                     HStack(spacing: 2) {
                         Image(systemName: "calendar")
@@ -902,14 +918,22 @@ private struct FavoriteSpotRow: View {
             SpotPanelThumbnailView(course: course, spot: spot)
 
             VStack(alignment: .leading, spacing: 2) {
+                HStack(spacing: 4) {
+                    Image(systemName: "map.fill")
+                        .font(.system(size: 10))
+                    Text(course.title)
+                        .font(.caption)
+                        .lineLimit(1)
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 9, weight: .semibold))
+                }
+                .foregroundStyle(.indigo.opacity(0.75))
+
                 Text(spot.name)
                     .font(.body)
                     .foregroundStyle(.primary)
                     .lineLimit(1)
-                Text(course.title)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
+
                 if let distance {
                     HStack(spacing: 2) {
                         Image(systemName: "location.fill")

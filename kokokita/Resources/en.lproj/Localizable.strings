@@ -408,8 +408,10 @@
 "spotPanelList.noFavoritesShort" = "No favorites yet";
 
 // MARK: - CheckIn Result
-"checkIn.resultTitle" = "Checked In!";
+"checkIn.resultTitle" = "Checked In ✓";
 "checkIn.resultSubtitle" = "You reached a course spot";
+"checkIn.stampAcquired" = "Stamp acquired";
+"checkIn.courseAllClear" = "Course Complete";
 "checkIn.distanceFormat" = "~%dm away";
 "checkIn.retroactiveTitle" = "Check-in Recognized from Past Records!";
 "checkIn.retroactiveSubtitle" = "Your past visits matched spots in this course";
