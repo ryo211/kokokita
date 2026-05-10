@@ -2,8 +2,8 @@ import SwiftUI
 
 enum TaxonomyTab: String, CaseIterable {
     case label
-    case group
     case member
+    case group
 
     var title: String {
         switch self {
@@ -16,7 +16,7 @@ enum TaxonomyTab: String, CaseIterable {
     var icon: String {
         switch self {
         case .label: return "tag"
-        case .group: return "folder"
+        case .group: return "airplane"
         case .member: return "person"
         }
     }

@@ -1312,7 +1312,7 @@ private struct SpotFilterPanel: View {
                                             .foregroundStyle(.indigo)
                                             .frame(width: 20)
                                     } else {
-                                        Image(systemName: "folder")
+                                        Image(systemName: "airplane")
                                             .font(.subheadline)
                                             .foregroundStyle(.secondary)
                                             .frame(width: 20)

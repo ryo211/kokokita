@@ -28,16 +28,6 @@ struct CheckInResultSheet: View {
                     .padding(.bottom, 36)
                 }
             }
-            .background(
-                LinearGradient(
-                    colors: [
-                        Color(.systemBackground),
-                        Color(.secondarySystemBackground)
-                    ],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-            )
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button(L.Common.close) {
@@ -50,29 +40,24 @@ struct CheckInResultSheet: View {
         .iPadSheetSize(iPhoneDetents: [.medium, .large])
     }
 
-    // ヘッダー：大きなハンコを背景に、テキストを重ねる
+    // ヘッダー：チェックマーク＋テキスト（ハンコはシート全体の背景に配置）
     private var sheetHeader: some View {
-        ZStack {
-            // デカデカとしたハンコを薄く敷く
-            Image("kokokita_hanko")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 210, height: 210)
-                .rotationEffect(.degrees(-10))
-                .opacity(0.1)
+        VStack(spacing: 10) {
+            Image(systemName: "checkmark.seal.fill")
+                .font(.system(size: 64))
+                .foregroundStyle(.indigo)
+                .symbolEffect(.bounce, value: true)
 
-            VStack(spacing: 6) {
-                Text(L.CheckIn.resultTitle)
-                    .font(.title2.bold())
-                    .foregroundStyle(Color.indigo)
+            Text(L.CheckIn.resultTitle)
+                .font(.title2.bold())
+                .foregroundStyle(.primary)
 
-                Text(L.CheckIn.stampAcquired)
-                    .font(.subheadline)
-                    .foregroundStyle(Color.indigo.opacity(0.65))
-            }
+            Text(L.CheckIn.stampAcquired)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity)
-        .frame(height: 140)
+        .padding(.vertical, 24)
     }
 }
 
@@ -179,6 +164,15 @@ private struct StampedCheckInCard: View {
                     .font(.caption2.bold().monospacedDigit())
             }
             .foregroundStyle(.indigo)
+
+            // 達成日時
+            HStack(spacing: 2) {
+                Image(systemName: "clock")
+                    .font(.caption2)
+                Text(result.achievedAt, format: .dateTime.year().month().day().hour().minute())
+                    .font(.caption2.monospacedDigit())
+            }
+            .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }

@@ -121,7 +121,7 @@ enum ChipKind {
     var systemImage: String? {
         switch self {
         case .label:       return "tag"
-        case .group:       return "folder"
+        case .group:       return "airplane"
         case .member:      return "person"
         case .category:    return "building.2"
         case .keyword:     return "magnifyingglass"

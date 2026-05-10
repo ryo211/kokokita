@@ -609,6 +609,12 @@ enum L {
         static let noSpots = localized("spotList.noSpots")
     }
 
+    // MARK: - TaxonomyList（タクソノミー一覧ソート）
+    enum TaxonomyList {
+        static let sortNewest = localized("taxonomyList.sortNewest")
+        static let sortCount  = localized("taxonomyList.sortCount")
+    }
+
     // MARK: - Spot Panel List
     enum SpotPanelList {
         static let displayLimitSuffix = localized("spotPanelList.displayLimitSuffix")

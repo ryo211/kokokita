@@ -30,19 +30,19 @@
 "visit.edit.memoPlaceholder" = "Memo";
 "visit.edit.editSection" = "Edit";
 "visit.edit.basicInfoSection" = "Basic Information";
-"visit.edit.taxonomySection" = "Labels, Groups & Members";
+"visit.edit.taxonomySection" = "Labels, Trips & Members";
 "visit.edit.saveButton" = "Save";
 "visit.edit.locationAcquiring" = "Getting current location…";
 "visit.edit.kokokamo" = "Nearby";
 "visit.edit.selectLabel" = "Select Labels";
-"visit.edit.selectGroup" = "Select Group";
+"visit.edit.selectGroup" = "Select Trip";
 "visit.edit.selectMember" = "Select Members";
 "visit.edit.createNew" = "Create New…";
 "visit.edit.labelName" = "Label Name";
-"visit.edit.groupName" = "Group Name";
+"visit.edit.groupName" = "Trip Name";
 "visit.edit.createAndSelect" = "Create and Select";
 "visit.edit.newLabel" = "New Label";
-"visit.edit.newGroup" = "New Group";
+"visit.edit.newGroup" = "New Trip";
 "visit.edit.clearSelection" = "Clear Selection";
 "visit.edit.recordDateTime" = "Record Date/Time";
 "visit.edit.copyFromOtherVisit" = "Copy from Another Visit";
@@ -57,7 +57,7 @@
 "home.noVisits" = "No visits recorded";
 "home.filter.all" = "All";
 "home.filter.label" = "Label";
-"home.filter.group" = "Group";
+"home.filter.group" = "Trip";
 "home.filter.period" = "Period";
 "home.search.placeholder" = "Search";
 "home.deleteConfirmTitle" = "Delete this record?";
@@ -77,7 +77,7 @@
 "detail.coordinates" = "Coordinates";
 "detail.timestamp" = "Visited";
 "detail.labels" = "Labels";
-"detail.group" = "Group";
+"detail.group" = "Trip";
 "detail.memo" = "Memo";
 "detail.facility" = "Facility Info";
 "detail.deleteConfirmTitle" = "Delete this record?";
@@ -85,12 +85,12 @@
 "detail.deleteVisitTitle" = "Delete Record";
 "detail.deleteVisitMessage" = "Delete this record?";
 "detail.nearbyPastRecords" = "Nearby Records";
-"detail.sameGroupRecords" = "Records in This Group";
+"detail.sameGroupRecords" = "Records in This Trip";
 
 // MARK: - Menu
 "menu.title" = "Menu";
 "menu.labels" = "Manage Labels";
-"menu.groups" = "Manage Groups";
+"menu.groups" = "Manage Trips";
 "menu.settings" = "Settings";
 "menu.about" = "About";
 "menu.resetAll" = "Reset All";
@@ -163,18 +163,18 @@
 "labelColor.brown" = "Brown";
 
 // MARK: - Group Management
-"group.title" = "Groups";
-"group.namePlaceholder" = "Group Name";
-"group.createTitle" = "New Group";
-"group.selectTitle" = "Select Group";
-"group.emptyMessage" = "No groups";
+"group.title" = "Trips";
+"group.namePlaceholder" = "Trip Name";
+"group.createTitle" = "New Trip";
+"group.selectTitle" = "Select Trip";
+"group.emptyMessage" = "No trips";
 "group.emptyDescription" = "Tap + above to create.";
 "group.deleteConfirm" = "Delete this group";
 "group.createAccessibility" = "Create new group";
 "group.deleteReallyConfirm" = "Are you sure?";
 "group.deleteFooter" = "Deleting a group does not delete the records themselves.";
 "group.duplicateName" = "A group with the same name already exists.";
-"group.detailTitle" = "Group Details";
+"group.detailTitle" = "Trip Details";
 "group.deleteIrreversible" = "This action cannot be undone.";
 "group.relatedVisitsHeader" = "Records with this group";
 
@@ -197,7 +197,7 @@
 // MARK: - Settings
 "settings.title" = "Menu";
 "settings.editLabels" = "Labels";
-"settings.editGroups" = "Groups";
+"settings.editGroups" = "Trips";
 "settings.editMembers" = "Members";
 "settings.dataMigration" = "Data Migration";
 "settings.resetAll" = "Reset (Delete All)";
@@ -246,7 +246,7 @@
 "filter.title" = "Search";
 "filter.sectionKeyword" = "Keyword";
 "filter.sectionLabel" = "Labels";
-"filter.sectionGroup" = "Group";
+"filter.sectionGroup" = "Trip";
 "filter.sectionMember" = "Members";
 "filter.sectionPeriod" = "Period";
 "filter.sectionCategory" = "Facility Category";
@@ -540,3 +540,7 @@
 "spotList.title" = "Spots";
 "spotList.locationUnavailable" = "Location unavailable";
 "spotList.noSpots" = "No nearby spots\nPlease enable a pilgrimage course";
+
+// MARK: - TaxonomyList (sort)
+"taxonomyList.sortNewest" = "Newest first";
+"taxonomyList.sortCount" = "Most visits";
