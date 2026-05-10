@@ -767,7 +767,7 @@ struct ManualEntryScreen: View {
             // 未選択時：選択ボタン + 追加ボタンを表示
             HStack(spacing: UIConstants.Spacing.medium) {
                 Button { groupPickerShown = true } label: {
-                    Label(L.VisitEdit.selectGroup, systemImage: "folder")
+                    Label(L.VisitEdit.selectGroup, systemImage: "airplane")
                         .foregroundStyle(ChipKind.defaultTint)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }

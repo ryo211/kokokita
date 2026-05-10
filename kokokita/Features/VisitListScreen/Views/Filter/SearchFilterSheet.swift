@@ -234,7 +234,7 @@ struct SearchFilterSheet: View {
             if store.groupFilters.isEmpty {
                 // 未選択時：アイコン + 選択ボタン + 追加ボタンを表示
                 HStack(alignment: .center, spacing: UIConstants.Spacing.extraLarge) {
-                    Image(systemName: "folder")
+                    Image(systemName: "airplane")
                         .foregroundStyle(ChipKind.defaultTint)
                         .imageScale(.medium)
                         .frame(height: 28, alignment: .center)
@@ -262,7 +262,7 @@ struct SearchFilterSheet: View {
                     showGroupPicker = true
                 } label: {
                     HStack(alignment: .center, spacing: UIConstants.Spacing.extraLarge) {
-                        Image(systemName: "folder")
+                        Image(systemName: "airplane")
                             .foregroundStyle(ChipKind.defaultTint)
                             .imageScale(.medium)
                             .frame(height: 28, alignment: .center)

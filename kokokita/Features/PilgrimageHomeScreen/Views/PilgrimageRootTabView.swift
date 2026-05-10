@@ -228,28 +228,10 @@ private struct PilgrimageBottomBar: View {
             HStack(spacing: 8) {
                 // ккокита（記録）ボタン（左端）
                 Button(action: onRecord) {
-                    VStack(spacing: 3) {
-                        ZStack {
-                            Circle()
-                                .fill(
-                                    LinearGradient(
-                                        colors: [Color.indigo.opacity(0.95), Color.indigo.opacity(0.75)],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                )
-                                .frame(width: 28, height: 28)
-                                .shadow(color: Color.indigo.opacity(0.35), radius: 6, x: 0, y: 2)
-                            Image("kokokita_irodori_white")
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 17, height: 17)
-                        }
-                        Text(L.App.name)
-                            .font(.caption2.bold())
-                            .foregroundStyle(Color.indigo)
-                    }
-                    .frame(width: 52, height: 52)
+                    Image("kokokita_indigo")
+                        .resizable()
+                        .scaledToFit()
+                    .frame(width: 60, height: 60)
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(L.Tab.kokokita)

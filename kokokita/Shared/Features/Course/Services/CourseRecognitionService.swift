@@ -16,6 +16,8 @@ final class CourseRecognitionService {
         let spot: CourseSpot
         /// 判定時の距離（メートル）
         let distanceMeters: Double
+        /// 達成日時
+        let achievedAt: Date
     }
 
     // MARK: - 判定
@@ -31,6 +33,7 @@ final class CourseRecognitionService {
         let courses = try repo.fetchAll()
         let location = CLLocation(latitude: latitude, longitude: longitude)
         var results: [RecognitionResult] = []
+        let now = Date()
 
         for course in courses {
             // isEnabled == false のコースは判定対象外
@@ -64,7 +67,8 @@ final class CourseRecognitionService {
                 results.append(RecognitionResult(
                     course: course,
                     spot: spot,
-                    distanceMeters: dist
+                    distanceMeters: dist,
+                    achievedAt: now
                 ))
             }
         }

@@ -27,6 +27,7 @@ struct MemberDetailView: View {
     @State private var showVisitDeleteConfirm = false
     @State private var pendingDeleteVisitId: UUID? = nil
     @State private var selectedVisit: VisitSelection? = nil
+    @State private var focusedVisitId: UUID? = nil
     private let repo = AppContainer.shared.repo
 
     init(member: MemberTag, onFinish: @escaping (_ updated: MemberTag?, _ deleted: Bool) -> Void) {
@@ -42,6 +43,16 @@ struct MemberDetailView: View {
                 nameSection
                     .padding(.horizontal)
                     .padding(.vertical, 16)
+
+                if !relatedVisits.isEmpty {
+                    TaxonomyDetailMapView(
+                        visits: relatedVisits,
+                        labelMap: labelMap,
+                        labelColorMap: labelColorMap,
+                        focusedVisitId: $focusedVisitId
+                    )
+                    .containerRelativeFrame(.vertical, count: 10, span: 3, spacing: 0)
+                }
 
                 if !relatedVisits.isEmpty {
                     HStack {
@@ -61,29 +72,37 @@ struct MemberDetailView: View {
 
             // スクロール可能な部分：関連する記録のリストのみ
             if !relatedVisits.isEmpty {
-                List {
-                    ForEach(relatedVisits, id: \.id) { visit in
-                        visitRowView(for: visit)
+                ScrollViewReader { proxy in
+                    List {
+                        ForEach(relatedVisits, id: \.id) { visit in
+                            visitRowView(for: visit)
+                                .id(visit.id)
+                        }
                     }
-                }
-                .listStyle(.plain)
-                .navigationDestination(item: $selectedVisit) { selection in
-                    if let visit = relatedVisits.first(where: { $0.id == selection.id }) {
-                        VisitDetailScreen(
-                            data: toDetailData(visit),
-                            visitId: selection.id,
-                            onBack: {},
-                            onEdit: { editingTarget = visit },
-                            onShare: {},
-                            onDelete: {
-                                pendingDeleteVisitId = selection.id
-                                showVisitDeleteConfirm = true
-                            },
-                            onUpdate: {
-                                loadRelatedVisits()
-                            },
-                            onMapTap: { ui.mapFocusVisitId = selection.id }
-                        )
+                    .listStyle(.plain)
+                    .navigationDestination(item: $selectedVisit) { selection in
+                        if let visit = relatedVisits.first(where: { $0.id == selection.id }) {
+                            VisitDetailScreen(
+                                data: toDetailData(visit),
+                                visitId: selection.id,
+                                onBack: {},
+                                onEdit: { editingTarget = visit },
+                                onShare: {},
+                                onDelete: {
+                                    pendingDeleteVisitId = selection.id
+                                    showVisitDeleteConfirm = true
+                                },
+                                onUpdate: {
+                                    loadRelatedVisits()
+                                },
+                                onMapTap: { ui.mapFocusVisitId = selection.id }
+                            )
+                        }
+                    }
+                    .onChange(of: focusedVisitId) { _, newId in
+                        if let newId {
+                            withAnimation { proxy.scrollTo(newId, anchor: .center) }
+                        }
                     }
                 }
             } else {
@@ -248,11 +267,26 @@ struct MemberDetailView: View {
 
     @ViewBuilder
     private func visitRowView(for visit: VisitAggregate) -> some View {
-        Button {
-            selectedVisit = VisitSelection(id: visit.id)
-        } label: {
+        let isFocused = focusedVisitId == visit.id
+        HStack(spacing: 0) {
             VisitRow(agg: visit, nameResolver: nameResolver, compact: true, labelColorMap: labelColorMap)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    focusedVisitId = (focusedVisitId == visit.id ? nil : visit.id)
+                }
+            Button {
+                selectedVisit = VisitSelection(id: visit.id)
+            } label: {
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(Color(.tertiaryLabel))
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
         }
+        .listRowBackground(isFocused ? Color.blue.opacity(0.1) : nil)
     }
 
     private func nameResolver(_ labelIds: [UUID], _ groupId: UUID?, _ memberIds: [UUID]) -> (labels: [String], group: String?, members: [String]) {
