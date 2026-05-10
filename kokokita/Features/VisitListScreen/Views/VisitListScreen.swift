@@ -22,6 +22,7 @@ struct VisitListScreen: View {
     @State private var displayMode: VisitListDisplayMode = .list
     @State private var selectedMapItemId: UUID? = nil
     @State private var detailSheetItemId: UUID? = nil
+    @State private var mapPushDetailId: UUID? = nil
     @State private var mapSheetHeight: CGFloat = 0
     @State private var selectedDate: Date? = nil
     @State private var calendarSelectedVisitId: UUID? = nil
@@ -370,6 +371,33 @@ struct VisitListScreen: View {
                 )
             }
         }
+        .navigationDestination(isPresented: Binding(
+            get: { mapPushDetailId != nil },
+            set: { if !$0 { mapPushDetailId = nil } }
+        )) {
+            if let agg = mapPushDetailId.flatMap({ id in store.items.first(where: { $0.id == id }) }) {
+                VisitDetailScreen(
+                    data: toDetailData(agg),
+                    visitId: agg.id,
+                    onBack: {},
+                    onEdit: { editingTarget = agg },
+                    onShare: {},
+                    onDelete: {
+                        withAnimation {
+                            store.delete(id: agg.id)
+                        }
+                        mapPushDetailId = nil
+                    },
+                    onUpdate: {
+                        Task { store.reload() }
+                    },
+                    onMapTap: {
+                        mapPushDetailId = nil
+                        selectedMapItemId = agg.id
+                    }
+                )
+            }
+        }
     }
     
     private var detailSheetBinding: Binding<VisitAggregate?> {
@@ -468,8 +496,7 @@ struct VisitListScreen: View {
             selectedItemId: $selectedMapItemId,
             sheetHeight: $mapSheetHeight,
             onShowDetail: { id in
-                selectedMapItemId = nil
-                detailSheetItemId = id
+                mapPushDetailId = id
             }
         )
     }
