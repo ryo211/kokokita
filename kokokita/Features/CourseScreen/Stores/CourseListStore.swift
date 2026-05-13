@@ -88,6 +88,7 @@ final class CourseListStore {
                     allowRetroactive: course.allowRetroactive,
                     detailUrl: course.detailUrl,
                     coverImageUrl: course.coverImageUrl,
+                    imageCredit: course.imageCredit,
                     localCoverImagePath: course.localCoverImagePath,
                     createdAt: course.createdAt,
                     updatedAt: Date(),

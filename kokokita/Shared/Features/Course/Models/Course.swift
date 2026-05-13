@@ -20,6 +20,8 @@ struct Course: Identifiable, Equatable {
     let allowRetroactive: Bool
     let detailUrl: String?
     let coverImageUrl: String?
+    /// カバー画像のクレジット表記（Wikimedia Commons 等の帰属表示用）
+    let imageCredit: String?
     /// 端末内カバー画像パス（ユーザー作成コース用）
     let localCoverImagePath: String?
     let createdAt: Date
