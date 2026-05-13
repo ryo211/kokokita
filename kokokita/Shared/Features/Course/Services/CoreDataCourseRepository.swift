@@ -114,6 +114,7 @@ final class CoreDataCourseRepository: CourseRepository {
         entity.allowRetroactive = NSNumber(value: course.allowRetroactive)
         entity.detailUrl = course.detailUrl
         entity.coverImageUrl = course.coverImageUrl
+        entity.imageCredit = course.imageCredit
         entity.localCoverImagePath = course.localCoverImagePath
         entity.categories = course.categories.isEmpty ? nil : course.categories.map(\.rawValue).joined(separator: ",")
         entity.createdAt = course.createdAt
@@ -189,6 +190,7 @@ final class CoreDataCourseRepository: CourseRepository {
             e.longitude = spot.longitude
             e.spotDescription = spot.spotDescription
             e.coverImageUrl = spot.coverImageUrl
+            e.imageCredit = spot.imageCredit
             e.localCoverImagePath = spot.localCoverImagePath
             e.orderIndex = Int32(spot.orderIndex)
             e.recognitionRadiusMeters = spot.recognitionRadiusMeters.map { NSNumber(value: $0) }
@@ -221,6 +223,7 @@ final class CoreDataCourseRepository: CourseRepository {
             allowRetroactive: entity.allowRetroactive?.boolValue ?? false,
             detailUrl: entity.detailUrl,
             coverImageUrl: entity.coverImageUrl,
+            imageCredit: entity.imageCredit,
             localCoverImagePath: entity.localCoverImagePath,
             createdAt: entity.createdAt ?? Date(),
             updatedAt: entity.updatedAt ?? Date(),
@@ -294,6 +297,7 @@ final class CoreDataCourseRepository: CourseRepository {
             longitude: s.longitude,
             spotDescription: s.spotDescription,
             coverImageUrl: s.coverImageUrl,
+            imageCredit: s.imageCredit,
             localCoverImagePath: s.localCoverImagePath,
             orderIndex: Int(s.orderIndex),
             recognitionRadiusMeters: s.recognitionRadiusMeters?.doubleValue,

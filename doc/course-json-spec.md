@@ -52,6 +52,7 @@
 | `recognitionRadiusMeters` | double | ✅ | GPS認識半径のデフォルト値（メートル） |
 | `detailUrl` | string? | | コース詳細ページの URL |
 | `coverImageUrl` | string? | | カバー画像の URL |
+| `imageCredit` | string? | | カバー画像のクレジット表記（例: `"© Kakidai / CC BY-SA 4.0 / Wikimedia Commons"`）。null・空文字・省略時は表示しない |
 | `categories` | string[]? | | カテゴリ（[カテゴリ一覧](#categories)を参照） |
 | `sections` | SectionJSON[]? | ※1 | セクション形式（新フォーマット） |
 | `spots` | SpotJSON[]? | ※1 | スポット直下形式（後方互換フォーマット） |
@@ -86,6 +87,7 @@
 | `longitude` | double? | | 経度。`null` の場合は GPS 認識の対象外 |
 | `spotDescription` | string? | | スポット説明 |
 | `coverImageUrl` | string? | | スポット固有のカバー画像 URL |
+| `imageCredit` | string? | | 画像のクレジット表記（例: `"© Kakidai / CC BY-SA 4.0 / Wikimedia Commons"`）。null・空文字・省略時は表示しない |
 | `orderIndex` | int | ✅ | 表示順（0始まり） |
 | `recognitionRadiusMeters` | double? | | 個別の GPS 認識半径。`null` の場合はコースのデフォルト値を使用 |
 
@@ -142,7 +144,8 @@
       "latitude": 34.6148,
       "longitude": 135.7345,
       "spotDescription": "世界最古の木造建築群。",
-      "coverImageUrl": null,
+      "coverImageUrl": "https://example.com/images/horyuji.jpg",
+      "imageCredit": "© Kakidai / CC BY-SA 4.0 / Wikimedia Commons",
       "orderIndex": 0,
       "recognitionRadiusMeters": null,
       "address": "奈良県生駒郡斑鳩町法隆寺山内1-1"
