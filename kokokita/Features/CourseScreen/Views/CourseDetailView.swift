@@ -1449,45 +1449,21 @@ private struct CourseSummarySheet: View {
                 VStack(alignment: .leading, spacing: 0) {
                     // カバー画像（ローカル優先、なければリモートURL）
                     if let uiImage = course.localCoverImagePath.flatMap({ LocalImageStorage.shared.load(from: $0) }) {
-                        ZStack(alignment: .bottomTrailing) {
-                            Image(uiImage: uiImage)
-                                .resizable()
-                                .scaledToFill()
-                                .frame(maxWidth: .infinity)
-                                .frame(height: 200)
-                                .clipped()
-                            // 画像クレジット（右下）
-                            if let credit = course.imageCredit, !credit.isEmpty {
-                                Text(credit)
-                                    .font(.caption2)
-                                    .foregroundStyle(.white.opacity(0.85))
-                                    .shadow(color: .black.opacity(0.8), radius: 3, x: 0, y: 1)
-                                    .padding(.horizontal, 6)
-                                    .padding(.vertical, 3)
-                                    .padding([.trailing, .bottom], 8)
-                            }
-                        }
+                        Image(uiImage: uiImage)
+                            .resizable()
+                            .scaledToFill()
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 200)
+                            .clipped()
                     } else if let urlStr = course.coverImageUrl, let url = URL(string: urlStr) {
                         AsyncImage(url: url) { phase in
                             if case .success(let image) = phase {
-                                ZStack(alignment: .bottomTrailing) {
-                                    image
-                                        .resizable()
-                                        .scaledToFill()
-                                        .frame(maxWidth: .infinity)
-                                        .frame(height: 200)
-                                        .clipped()
-                                    // 画像クレジット（右下）
-                                    if let credit = course.imageCredit, !credit.isEmpty {
-                                        Text(credit)
-                                            .font(.caption2)
-                                            .foregroundStyle(.white.opacity(0.85))
-                                            .shadow(color: .black.opacity(0.8), radius: 3, x: 0, y: 1)
-                                            .padding(.horizontal, 6)
-                                            .padding(.vertical, 3)
-                                            .padding([.trailing, .bottom], 8)
-                                    }
-                                }
+                                image
+                                    .resizable()
+                                    .scaledToFill()
+                                    .frame(maxWidth: .infinity)
+                                    .frame(height: 200)
+                                    .clipped()
                             } else {
                                 Color.indigo.opacity(0.15)
                                     .frame(height: 200)
@@ -1500,6 +1476,14 @@ private struct CourseSummarySheet: View {
                         if let summary = course.summary {
                             Text(summary)
                                 .font(.body)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+
+                        // 画像クレジット（説明文末尾）
+                        if let credit = course.imageCredit, !credit.isEmpty {
+                            Text(credit)
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                         }
 
