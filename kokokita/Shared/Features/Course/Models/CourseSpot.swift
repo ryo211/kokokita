@@ -13,6 +13,8 @@ struct CourseSpot: Identifiable, Equatable {
     let spotDescription: String?
     /// スポット固有のカバー画像 URL（nil の場合は画像なし）
     let coverImageUrl: String?
+    /// 画像のクレジット表記（Wikimedia Commons 等の帰属表示用）
+    let imageCredit: String?
     /// 端末内スポット画像パス（ユーザー作成スポット用）
     let localCoverImagePath: String?
     /// コース内での表示順（0始まり）

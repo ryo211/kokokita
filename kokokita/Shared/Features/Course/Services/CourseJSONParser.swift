@@ -17,6 +17,8 @@ enum CourseJSONParser {
         let recognitionRadiusMeters: Double
         let detailUrl: String?
         let coverImageUrl: String?
+        /// カバー画像のクレジット表記（Wikimedia Commons 等の帰属表示用）
+        let imageCredit: String?
         /// カテゴリ（rawValue 文字列の配列）
         let categories: [String]?
         /// セクション形式（新フォーマット）
@@ -43,6 +45,8 @@ enum CourseJSONParser {
         let longitude: Double?
         let spotDescription: String?
         let coverImageUrl: String?
+        /// 画像のクレジット表記（Wikimedia Commons 等の帰属表示用）
+        let imageCredit: String?
         let orderIndex: Int
         let recognitionRadiusMeters: Double?
     }
@@ -71,6 +75,7 @@ enum CourseJSONParser {
             allowRetroactive: existing?.allowRetroactive ?? false,
             detailUrl: json.detailUrl,
             coverImageUrl: json.coverImageUrl,
+            imageCredit: json.imageCredit.flatMap { $0.isEmpty ? nil : $0 },
             localCoverImagePath: existing?.localCoverImagePath,
             createdAt: existing?.createdAt ?? Date(),
             updatedAt: Date(),
@@ -123,6 +128,7 @@ enum CourseJSONParser {
                 longitude: s.longitude ?? 0,
                 spotDescription: s.spotDescription,
                 coverImageUrl: s.coverImageUrl,
+                imageCredit: s.imageCredit,
                 localCoverImagePath: existingSpot?.localCoverImagePath,
                 orderIndex: s.orderIndex,
                 recognitionRadiusMeters: s.recognitionRadiusMeters,

@@ -64,6 +64,8 @@ struct CourseDetailView: View {
     @State private var selectedSpotScreenPoint: CGPoint? = nil
     /// ライトボックス表示中の画像 URL
     @State private var expandedImageUrl: URL? = nil
+    /// ライトボックス表示中の画像クレジット（nil の場合は非表示）
+    @State private var expandedImageCredit: String? = nil
     /// 進捗バースワイプの二重発火防止フラグ
     @State private var progressSwipeConsumed = false
 
@@ -205,10 +207,24 @@ struct CourseDetailView: View {
                         }
                     }
                 }
+                .overlay(alignment: .bottomTrailing) {
+                    // 画像クレジット（画像外の右下）
+                    if let credit = expandedImageCredit {
+                        Text(credit)
+                            .font(.caption2)
+                            .foregroundStyle(.white.opacity(0.85))
+                            .shadow(color: .black.opacity(0.8), radius: 3, x: 0, y: 1)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .padding(.trailing, 16)
+                            .padding(.bottom, 16)
+                    }
+                }
                 .contentShape(Rectangle())
                 .onTapGesture {
                     withAnimation(.easeInOut(duration: 0.2)) {
                         expandedImageUrl = nil
+                        expandedImageCredit = nil
                     }
                 }
                 .transition(.opacity.combined(with: .scale(scale: 0.92)))
@@ -395,6 +411,7 @@ struct CourseDetailView: View {
                     if let url = remoteUrl {
                         withAnimation(.easeInOut(duration: 0.2)) {
                             expandedImageUrl = url
+                            expandedImageCredit = spot.imageCredit.flatMap { $0.isEmpty ? nil : $0 }
                         }
                     }
                 }
@@ -1459,6 +1476,14 @@ private struct CourseSummarySheet: View {
                         if let summary = course.summary {
                             Text(summary)
                                 .font(.body)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+
+                        // 画像クレジット（説明文末尾）
+                        if let credit = course.imageCredit, !credit.isEmpty {
+                            Text(credit)
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                         }
 
