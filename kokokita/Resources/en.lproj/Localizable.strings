@@ -393,10 +393,12 @@
 "pilgrimageHome.seeAll" = "See All";
 "pilgrimageHome.progressFormat" = "%d/%d Spots";
 "pilgrimageHome.nearbyTitle" = "Nearby Spots";
+"pilgrimageHome.nearbyTabShort" = "Nearby";
 "pilgrimageHome.nearbyRefresh" = "Refresh";
 "pilgrimageHome.noNearbySpots" = "No spots nearby";
 "pilgrimageHome.locationUnavailable" = "Location unavailable";
-"pilgrimageHome.recentTitle" = "Recent Achievements";
+"pilgrimageHome.recentTitle" = "Visited Spots";
+"pilgrimageHome.recentTabShort" = "Visited";
 "pilgrimageHome.noRecentAchievements" = "No achievements yet";
 "pilgrimageHome.distanceMeter" = "%dm";
 
@@ -404,6 +406,7 @@
 "spotPanelList.displayLimitSuffix" = " items";
 "spotPanelList.displayLimitAll" = "All";
 "spotPanelList.favoritesTitle" = "Favorite Spots";
+"spotPanelList.favoritesTabShort" = "Favorites";
 "spotPanelList.noFavorites" = "No favorite spots yet\nTap the heart icon in a course to add favorites";
 "spotPanelList.noFavoritesShort" = "No favorites yet";
 

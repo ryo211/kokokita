@@ -397,10 +397,12 @@
 "pilgrimageHome.seeAll" = "すべて見る";
 "pilgrimageHome.progressFormat" = "%d/%d スポット";
 "pilgrimageHome.nearbyTitle" = "近くのスポット";
+"pilgrimageHome.nearbyTabShort" = "近く";
 "pilgrimageHome.nearbyRefresh" = "更新";
 "pilgrimageHome.noNearbySpots" = "近くにスポットはありません";
 "pilgrimageHome.locationUnavailable" = "現在地を取得できませんでした";
-"pilgrimageHome.recentTitle" = "最近行ったスポット";
+"pilgrimageHome.recentTitle" = "行ったスポット";
+"pilgrimageHome.recentTabShort" = "行った";
 "pilgrimageHome.noRecentAchievements" = "まだ達成がありません";
 "pilgrimageHome.distanceMeter" = "%dm";
 
@@ -408,6 +410,7 @@
 "spotPanelList.displayLimitSuffix" = "件";
 "spotPanelList.displayLimitAll" = "全件";
 "spotPanelList.favoritesTitle" = "お気に入りスポット";
+"spotPanelList.favoritesTabShort" = "お気に入り";
 "spotPanelList.noFavorites" = "お気に入りに登録されたスポットはありません\nコース詳細のハートアイコンからお気に入りに追加できます";
 "spotPanelList.noFavoritesShort" = "お気に入りスポットはありません";
 

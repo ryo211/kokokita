@@ -588,10 +588,12 @@ enum L {
         static let coursesTitle = localized("pilgrimageHome.coursesTitle")
         static let seeAll = localized("pilgrimageHome.seeAll")
         static let nearbyTitle = localized("pilgrimageHome.nearbyTitle")
+        static let nearbyTabShort = localized("pilgrimageHome.nearbyTabShort")
         static let nearbyRefresh = localized("pilgrimageHome.nearbyRefresh")
         static let noNearbySpots = localized("pilgrimageHome.noNearbySpots")
         static let locationUnavailable = localized("pilgrimageHome.locationUnavailable")
         static let recentTitle = localized("pilgrimageHome.recentTitle")
+        static let recentTabShort = localized("pilgrimageHome.recentTabShort")
         static let noRecentAchievements = localized("pilgrimageHome.noRecentAchievements")
         static func progressFormat(_ checked: Int, _ total: Int) -> String { String(format: localized("pilgrimageHome.progressFormat"), checked, total) }
         static func distanceMeter(_ meters: Int) -> String { String(format: localized("pilgrimageHome.distanceMeter"), meters) }
@@ -620,6 +622,7 @@ enum L {
         static let displayLimitSuffix = localized("spotPanelList.displayLimitSuffix")
         static let displayLimitAll    = localized("spotPanelList.displayLimitAll")
         static let favoritesTitle     = localized("spotPanelList.favoritesTitle")
+        static let favoritesTabShort  = localized("spotPanelList.favoritesTabShort")
         static let noFavorites        = localized("spotPanelList.noFavorites")
         static let noFavoritesShort   = localized("spotPanelList.noFavoritesShort")
     }
