@@ -244,7 +244,6 @@ struct PilgrimageHomeView: View {
         // タブとコンテンツを VStack(spacing: 0) で繋げ、同一カードとして描画
         VStack(spacing: 0) {
             SpotFolderTabBar(selectedIndex: $selectedSpotPanelIndex)
-                .padding(.horizontal, 16)
 
             TabView(selection: $selectedSpotPanelIndex) {
                 nearbySection
@@ -268,7 +267,6 @@ struct PilgrimageHomeView: View {
                 Text(userLocation == nil ? L.PilgrimageHome.locationUnavailable : L.PilgrimageHome.noNearbySpots)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
-                    .padding(.horizontal, 16)
                     .padding(.top, 16)
             } else {
                 VStack(spacing: 0) {
@@ -292,28 +290,24 @@ struct PilgrimageHomeView: View {
                 ))
                 .overlay(
                     SpotCardBorderShape(cornerRadius: 14)
-                        .stroke(Color.indigo.opacity(0.12), lineWidth: 1.2)
+                        .stroke(Color.indigo.opacity(0.22), lineWidth: 1.2)
                 )
-                .padding(.horizontal, 16)
-            }
 
-            Spacer()
-
-            HStack {
-                Spacer()
-                NavigationLink(value: PilgrimageHomeRoute.spotPanelList(kind: .nearby)) {
-                    HStack(spacing: 3) {
-                        Text(L.PilgrimageHome.seeAll)
-                            .font(.system(size: 13, weight: .medium))
-                        Image(systemName: "chevron.right")
-                            .font(.system(size: 11, weight: .semibold))
+                HStack {
+                    Spacer()
+                    NavigationLink(value: PilgrimageHomeRoute.spotPanelList(kind: .nearby)) {
+                        HStack(spacing: 3) {
+                            Text(L.PilgrimageHome.seeAll)
+                                .font(.system(size: 13, weight: .medium))
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 11, weight: .semibold))
+                        }
+                        .foregroundStyle(.indigo)
                     }
-                    .foregroundStyle(.indigo)
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
+                .padding(.top, 8)
             }
-            .padding(.horizontal, 16)
-            .padding(.bottom, 14)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
@@ -327,7 +321,6 @@ struct PilgrimageHomeView: View {
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .center)
-                    .padding(.horizontal, 24)
                     .padding(.top, 16)
             } else {
                 VStack(spacing: 0) {
@@ -351,28 +344,24 @@ struct PilgrimageHomeView: View {
                 ))
                 .overlay(
                     SpotCardBorderShape(cornerRadius: 14)
-                        .stroke(Color.indigo.opacity(0.12), lineWidth: 1.2)
+                        .stroke(Color.indigo.opacity(0.22), lineWidth: 1.2)
                 )
-                .padding(.horizontal, 16)
-            }
 
-            Spacer()
-
-            HStack {
-                Spacer()
-                NavigationLink(value: PilgrimageHomeRoute.spotPanelList(kind: .favorites)) {
-                    HStack(spacing: 3) {
-                        Text(L.PilgrimageHome.seeAll)
-                            .font(.system(size: 13, weight: .medium))
-                        Image(systemName: "chevron.right")
-                            .font(.system(size: 11, weight: .semibold))
+                HStack {
+                    Spacer()
+                    NavigationLink(value: PilgrimageHomeRoute.spotPanelList(kind: .favorites)) {
+                        HStack(spacing: 3) {
+                            Text(L.PilgrimageHome.seeAll)
+                                .font(.system(size: 13, weight: .medium))
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 11, weight: .semibold))
+                        }
+                        .foregroundStyle(.indigo)
                     }
-                    .foregroundStyle(.indigo)
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
+                .padding(.top, 8)
             }
-            .padding(.horizontal, 16)
-            .padding(.bottom, 14)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
@@ -386,7 +375,6 @@ struct PilgrimageHomeView: View {
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .center)
-                    .padding(.horizontal, 24)
                     .padding(.top, 16)
             } else {
                 VStack(spacing: 0) {
@@ -410,28 +398,24 @@ struct PilgrimageHomeView: View {
                 ))
                 .overlay(
                     SpotCardBorderShape(cornerRadius: 14)
-                        .stroke(Color.indigo.opacity(0.12), lineWidth: 1.2)
+                        .stroke(Color.indigo.opacity(0.22), lineWidth: 1.2)
                 )
-                .padding(.horizontal, 16)
-            }
 
-            Spacer()
-
-            HStack {
-                Spacer()
-                NavigationLink(value: PilgrimageHomeRoute.spotPanelList(kind: .recentAchievements)) {
-                    HStack(spacing: 3) {
-                        Text(L.PilgrimageHome.seeAll)
-                            .font(.system(size: 13, weight: .medium))
-                        Image(systemName: "chevron.right")
-                            .font(.system(size: 11, weight: .semibold))
+                HStack {
+                    Spacer()
+                    NavigationLink(value: PilgrimageHomeRoute.spotPanelList(kind: .recentAchievements)) {
+                        HStack(spacing: 3) {
+                            Text(L.PilgrimageHome.seeAll)
+                                .font(.system(size: 13, weight: .medium))
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 11, weight: .semibold))
+                        }
+                        .foregroundStyle(.indigo)
                     }
-                    .foregroundStyle(.indigo)
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
+                .padding(.top, 8)
             }
-            .padding(.horizontal, 16)
-            .padding(.bottom, 14)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
@@ -867,9 +851,11 @@ private struct SpotFolderTabBar: View {
     private let inactiveBackground = Color(.systemGray5).opacity(0.85)
 
     var body: some View {
-        HStack(alignment: .bottom, spacing: 3) {
+        // spacing: 0 にして、タブ間に明示的なseparatorビューを挿入する
+        HStack(alignment: .bottom, spacing: 0) {
             ForEach(tabs.indices, id: \.self) { i in
                 let isSelected = selectedIndex == i
+
                 Button {
                     withAnimation(.spring(response: 0.36, dampingFraction: 0.74)) {
                         selectedIndex = i
@@ -888,22 +874,44 @@ private struct SpotFolderTabBar: View {
                     .frame(height: isSelected ? Self.selectedHeight : unselectedHeight)
                     .background(
                         FolderTabShape()
-                            .fill(isSelected ? Color.clear : inactiveBackground)
+                            .fill(isSelected ? Color.white.opacity(0.45) : inactiveBackground)
                     )
-                    .overlay(
-                        FolderTabShape()
-                            .stroke(
-                                isSelected ? Color.indigo.opacity(0.12) : Color.white.opacity(0.50),
-                                lineWidth: 1.2
-                            )
-                    )
+                    // 選択タブのみ上3辺に枠
+                    .overlay {
+                        if isSelected {
+                            FolderTabShape()
+                                .stroke(Color.indigo.opacity(0.12), lineWidth: 1.2)
+                        }
+                    }
                     .shadow(
                         color: isSelected ? .clear : .black.opacity(0.04),
                         radius: 2, x: 0, y: 1
                     )
                 }
                 .buttonStyle(.plain)
+                // 非選択タブのみ下辺に枠線。frame を selectedHeight 固定にして
+                // separator と同じY底辺（HStack底辺）に揃えることで重複を防ぐ
+                .frame(maxWidth: .infinity)
+                .frame(height: Self.selectedHeight, alignment: .bottom)
+                .overlay(alignment: .bottom) {
+                    if !isSelected {
+                        Rectangle()
+                            .frame(height: 1.2)
+                            .foregroundStyle(Color.indigo.opacity(0.12))
+                    }
+                }
                 .animation(.spring(response: 0.36, dampingFraction: 0.74), value: selectedIndex)
+
+                // タブ間のseparator（最後のタブを除く）：下辺のみ線を引く
+                if i < tabs.count - 1 {
+                    Color.clear
+                        .frame(width: 3)
+                        .overlay(alignment: .bottom) {
+                            Rectangle()
+                                .frame(height: 1.2)
+                                .foregroundStyle(Color.indigo.opacity(0.12))
+                        }
+                }
             }
         }
         .frame(height: Self.selectedHeight)
