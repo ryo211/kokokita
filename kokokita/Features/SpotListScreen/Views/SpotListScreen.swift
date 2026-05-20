@@ -18,8 +18,20 @@ private enum SpotListLayout: CaseIterable {
 }
 
 // スポット一覧画面
-// 地図上の任意地点（デフォルト: 現在地）から近い順の巡礼スポットを表示する
+// 近くのスポット / お気に入り / 行ったスポット の3モードを切り替えられる地図ベースのスポット一覧
 struct SpotListScreen: View {
+    // MARK: - 設定
+
+    /// 初期表示モード（タブからの起動はデフォルト、ホーム「全てを見る」から指定）
+    let initialMode: SpotListMode
+    /// NavigationStack 内に埋め込まれる場合 true（ホームからの遷移用）
+    let isEmbedded: Bool
+
+    init(initialMode: SpotListMode = .nearby, isEmbedded: Bool = false) {
+        self.initialMode = initialMode
+        self.isEmbedded = isEmbedded
+    }
+
     // MARK: - AppStorage キー
     private static let zoomOnSpotFocusKey = "spotList.zoomOnSpotFocus"
     private static let spotPhotoSizeKey = "spotList.spotPhotoSize"
@@ -35,6 +47,8 @@ struct SpotListScreen: View {
     @State private var courseDetailRoute: CourseRoute?
     /// 絞り込みパネル表示フラグ
     @State private var showFilter = false
+    /// スポット一覧スライド方向（新コンテンツの挿入 edge）
+    @State private var listTransitionEdge: Edge = .trailing
     /// 地図・一覧のレイアウト
     @State private var viewLayout: SpotListLayout = .split
     /// スワイプ二重発火防止フラグ
@@ -48,17 +62,11 @@ struct SpotListScreen: View {
     @FocusState private var searchFocused: Bool
 
     // フォーカス機能
-    /// スポットフォーカス時に地図をズームするか
     @AppStorage("spotList.zoomOnSpotFocus") private var zoomOnSpotFocus = false
-    /// スポット写真サイズ（raw値）
     @AppStorage("spotList.spotPhotoSize") private var spotPhotoSizeRaw = CourseSpotPhotoSize.medium.rawValue
-    /// 現在の地図表示スパン（カメラ変化時に追跡）
     @State private var visibleMapSpan = MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
-    /// フォーカス中スポットのスクリーン座標（リーダーライン描画用）
     @State private var selectedSpotScreenPoint: CGPoint? = nil
-    /// 地図設定シートの表示フラグ
     @State private var showMapSettings = false
-    /// ライトボックス表示中の画像 URL
     @State private var expandedImageUrl: URL? = nil
 
     @Environment(\.spotFavoriteStore) private var favoriteStore
@@ -68,101 +76,112 @@ struct SpotListScreen: View {
         CourseSpotPhotoSize(rawValue: spotPhotoSizeRaw) ?? .medium
     }
 
+    /// 地点選択が有効かどうか（近くのスポットモード、または距離ソート時）
+    private var isLocationSelectionActive: Bool {
+        store.listMode == .nearby || store.sortType == .distance
+    }
+
     var body: some View {
-        NavigationStack {
-            GeometryReader { geo in
-                ZStack(alignment: .top) {
-                    VStack(spacing: 0) {
-                        // 地図（mapOnly: 全画面 / split: 50% / listOnly: 非表示）
-                        if viewLayout == .mapOnly {
-                            mapSection
-                        } else if viewLayout == .split {
-                            mapSection
-                                .frame(height: geo.size.height * 0.5)
-                        }
-
-                        // レイアウト切替バー（常時表示）
-                        layoutStrip
-
-                        Divider()
-
-                        // 一覧（mapOnly: 非表示 / split・listOnly: 表示）
-                        if viewLayout != .mapOnly {
-                            spotListSection
-                        }
-                    }
-
-                    // 検索オーバーレイ（検索中のみ表示）
-                    if isSearching {
-                        searchOverlay
-                            .transition(.move(edge: .top).combined(with: .opacity))
-                    }
-                }
-                .animation(.easeInOut(duration: 0.25), value: isSearching)
-                .animation(.easeInOut(duration: 0.3), value: viewLayout)
+        if isEmbedded {
+            mainContent
+                .navigationTitle(store.listMode.title)
+                .navigationBarTitleDisplayMode(.inline)
+        } else {
+            NavigationStack {
+                mainContent
+                    .toolbar(.hidden, for: .navigationBar)
             }
-            .task {
-                store.favoriteSpotIds = favoriteStore.favoriteSpotIds
-                await store.load()
-                initializeCamera()
-            }
-            // お気に入り変更をストアに反映
-            .onChange(of: favoriteStore.favoriteSpotIds) { _, ids in
-                store.favoriteSpotIds = ids
-                if store.favoritesOnly { store.recalculateNearbySpots() }
-            }
-            .navigationDestination(item: $courseDetailRoute) { route in
-                CourseDetailView(course: route.course, initialSelectedSpotId: route.initialSpotId)
-            }
-            .toolbar(.hidden, for: .navigationBar)
-            // 写真サイズ変更時: フォーカス中スポットのカメラ中心を再調整
-            .onChange(of: spotPhotoSizeRaw) { _, _ in
-                guard let spotId = selectedSpotId,
-                      let item = store.nearbySpots.first(where: { $0.spot.id == spotId }),
-                      item.spot.hasValidCoordinate else { return }
-                let center = focusCenter(
-                    latitude: item.spot.latitude,
-                    longitude: item.spot.longitude,
-                    span: visibleMapSpan
-                )
-                withAnimation(.easeInOut(duration: 0.3)) {
-                    cameraPosition = .region(MKCoordinateRegion(center: center, span: visibleMapSpan))
-                }
-            }
-            // 地図設定シート
-            .sheet(isPresented: $showMapSettings) {
-                CourseMapSettingsSheet(
-                    zoomOnSpotFocus: $zoomOnSpotFocus,
-                    spotPhotoSizeRaw: $spotPhotoSizeRaw
-                )
-            }
-            // スポット画像ライトボックス（タップで閉じる）
-            .overlay {
-                if let url = expandedImageUrl {
-                    ZStack {
-                        Color.black.opacity(0.65)
-                            .ignoresSafeArea()
-                        AsyncImage(url: url) { phase in
-                            if case .success(let image) = phase {
-                                image
-                                    .resizable()
-                                    .scaledToFit()
-                                    .padding(32)
-                                    .shadow(color: .black.opacity(0.35), radius: 24, x: 0, y: 8)
-                            }
-                        }
-                    }
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        withAnimation(.easeInOut(duration: 0.2)) {
-                            expandedImageUrl = nil
-                        }
-                    }
-                    .transition(.opacity.combined(with: .scale(scale: 0.92)))
-                }
-            }
-            .animation(.easeInOut(duration: 0.2), value: expandedImageUrl != nil)
         }
+    }
+
+    // MARK: - メインコンテンツ
+
+    private var mainContent: some View {
+        GeometryReader { geo in
+            ZStack(alignment: .top) {
+                VStack(spacing: 0) {
+                    // 地図
+                    if viewLayout == .mapOnly {
+                        mapSection
+                    } else if viewLayout == .split {
+                        mapSection
+                            .frame(height: geo.size.height * 0.5)
+                    }
+
+                    // レイアウト切替バー（常時表示）
+                    layoutStrip
+
+                    Divider()
+
+                    // 一覧
+                    if viewLayout != .mapOnly {
+                        spotListSection
+                    }
+                }
+
+                // 検索オーバーレイ
+                if isSearching {
+                    searchOverlay
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                }
+            }
+            .animation(.easeInOut(duration: 0.25), value: isSearching)
+            .animation(.easeInOut(duration: 0.3), value: viewLayout)
+        }
+        .task {
+            store.listMode = initialMode
+            store.favoriteSpotIds = favoriteStore.favoriteSpotIds
+            await store.load()
+            initializeCamera()
+        }
+        .onChange(of: favoriteStore.favoriteSpotIds) { _, ids in
+            store.favoriteSpotIds = ids
+            store.recalculateNearbySpots()
+        }
+        .navigationDestination(item: $courseDetailRoute) { route in
+            CourseDetailView(course: route.course, initialSelectedSpotId: route.initialSpotId)
+        }
+        .onChange(of: spotPhotoSizeRaw) { _, _ in
+            guard let spotId = selectedSpotId,
+                  let item = store.nearbySpots.first(where: { $0.spot.id == spotId }),
+                  item.spot.hasValidCoordinate else { return }
+            let center = focusCenter(
+                latitude: item.spot.latitude,
+                longitude: item.spot.longitude,
+                span: visibleMapSpan
+            )
+            withAnimation(.easeInOut(duration: 0.3)) {
+                cameraPosition = .region(MKCoordinateRegion(center: center, span: visibleMapSpan))
+            }
+        }
+        .sheet(isPresented: $showMapSettings) {
+            CourseMapSettingsSheet(
+                zoomOnSpotFocus: $zoomOnSpotFocus,
+                spotPhotoSizeRaw: $spotPhotoSizeRaw
+            )
+        }
+        .overlay {
+            if let url = expandedImageUrl {
+                ZStack {
+                    Color.black.opacity(0.65).ignoresSafeArea()
+                    AsyncImage(url: url) { phase in
+                        if case .success(let image) = phase {
+                            image
+                                .resizable()
+                                .scaledToFit()
+                                .padding(32)
+                                .shadow(color: .black.opacity(0.35), radius: 24, x: 0, y: 8)
+                        }
+                    }
+                }
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    withAnimation(.easeInOut(duration: 0.2)) { expandedImageUrl = nil }
+                }
+                .transition(.opacity.combined(with: .scale(scale: 0.92)))
+            }
+        }
+        .animation(.easeInOut(duration: 0.2), value: expandedImageUrl != nil)
     }
 
     // MARK: - 地図セクション
@@ -171,7 +190,7 @@ struct SpotListScreen: View {
         ZStack(alignment: .top) {
             MapReader { proxy in
                 Map(position: $cameraPosition, interactionModes: [.pan, .zoom, .pitch]) {
-                    // スポットピン（近い順に番号付き）
+                    // スポットピン
                     ForEach(Array(store.nearbySpots.enumerated()), id: \.element.spot.id) { index, item in
                         if item.spot.hasValidCoordinate {
                             let coord = CLLocationCoordinate2D(
@@ -184,12 +203,8 @@ struct SpotListScreen: View {
                                     isCheckedIn: item.spot.isCheckedIn,
                                     isSelected: selectedSpotId == item.spot.id
                                 )
-                                .onTapGesture {
-                                    focusOrUnfocus(item: item)
-                                }
+                                .onTapGesture { focusOrUnfocus(item: item) }
                             }
-
-                            // 選択中スポットの認識範囲サークル
                             if selectedSpotId == item.spot.id {
                                 MapCircle(
                                     center: coord,
@@ -201,8 +216,8 @@ struct SpotListScreen: View {
                         }
                     }
 
-                    // 確定済み選択地点ピン
-                    if let coord = store.selectedCoordinate {
+                    // 確定済み選択地点ピン（地点選択が有効なモードのみ）
+                    if isLocationSelectionActive, let coord = store.selectedCoordinate {
                         Annotation("", coordinate: coord, anchor: .bottom) {
                             selectedPinView
                         }
@@ -213,76 +228,101 @@ struct SpotListScreen: View {
                     MapCompass()
                     MapScaleView()
                 }
-                // スポット変更時: リーダーラインをいったん非表示（カメラ停止後に再表示）
-                .onChange(of: selectedSpotId) { _, _ in
-                    selectedSpotScreenPoint = nil
-                }
-                // selectedSpotId 変化後 180ms 待ってスクリーン座標を確定（カメラアニメーション考慮）
+                .onChange(of: selectedSpotId) { _, _ in selectedSpotScreenPoint = nil }
                 .task(id: selectedSpotId) {
                     guard selectedSpotId != nil else { return }
                     try? await Task.sleep(nanoseconds: 180_000_000)
                     guard !Task.isCancelled else { return }
                     await MainActor.run {
-                        withAnimation(.easeInOut(duration: 0.2)) {
-                            updateSpotScreenPoint(proxy: proxy)
-                        }
+                        withAnimation(.easeInOut(duration: 0.2)) { updateSpotScreenPoint(proxy: proxy) }
                     }
                     try? await Task.sleep(nanoseconds: 320_000_000)
                     guard !Task.isCancelled else { return }
                     await MainActor.run {
                         if selectedSpotScreenPoint == nil {
-                            withAnimation(.easeInOut(duration: 0.2)) {
-                                updateSpotScreenPoint(proxy: proxy)
-                            }
+                            withAnimation(.easeInOut(duration: 0.2)) { updateSpotScreenPoint(proxy: proxy) }
                         }
                     }
                 }
-                // カメラ停止時: スポット座標を確定してフェードイン表示
                 .onMapCameraChange(frequency: .onEnd) { ctx in
                     visibleMapSpan = ctx.region.span
                     mapCenterCoordinate = ctx.region.center
-                    withAnimation(.easeInOut(duration: 0.2)) {
-                        updateSpotScreenPoint(proxy: proxy)
-                    }
+                    withAnimation(.easeInOut(duration: 0.2)) { updateSpotScreenPoint(proxy: proxy) }
                 }
-                // カメラ連続変化時: 画像表示中のみリアルタイム追従
                 .onMapCameraChange(frequency: .continuous) { ctx in
                     visibleMapSpan = ctx.region.span
                     mapCenterCoordinate = ctx.region.center
                     guard selectedSpotScreenPoint != nil else { return }
                     updateSpotScreenPoint(proxy: proxy)
                 }
-                // 照準（地図中心＝「この場所を選択」の対象を示す）
+                // 照準（地点選択が有効なモードのみ）
                 .overlay(alignment: .center) {
-                    crosshairView
+                    if isLocationSelectionActive {
+                        crosshairView
+                    }
                 }
                 // 地図設定ボタン（右上）
                 .overlay(alignment: .topTrailing) {
-                    mapSettingsButton
-                        .padding(12)
+                    mapSettingsButton.padding(12)
                 }
-                // 「この場所を選択」ボタン（右下）
+                // モード切替タブ（左上）
+                .overlay(alignment: .topLeading) {
+                    spotModeTabsView
+                        .padding(.top, 12)
+                }
+                // 「この場所を選択」ボタン（右下・地点選択が有効なモードのみ）
                 .overlay(alignment: .bottomTrailing) {
-                    selectLocationButton
-                        .padding(.horizontal, 12)
-                        .padding(.bottom, 12)
+                    if isLocationSelectionActive {
+                        selectLocationButton
+                            .padding(.horizontal, 12)
+                            .padding(.bottom, 12)
+                    }
                 }
                 // リーダーライン＋スポット画像
-                .overlay {
-                    leaderLineOverlay
-                }
+                .overlay { leaderLineOverlay }
             }
         }
     }
 
+    // MARK: - モード切替タブ（左側付箋UI）
+
+    private var spotModeTabsView: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            ForEach(Array(SpotListMode.allCases.enumerated()), id: \.element) { index, mode in
+                let isSelected = store.listMode == mode
+                SpotModeTabButton(mode: mode, isSelected: isSelected) {
+                    switchMode(to: mode)
+                }
+                .zIndex(isSelected ? 10 : Double(SpotListMode.allCases.count - index))
+            }
+        }
+    }
+
+    private func switchMode(to mode: SpotListMode) {
+        guard store.listMode != mode else { return }
+        // タブボタン押下: インデックスの大小でスライド方向を決定
+        let allModes = SpotListMode.allCases
+        if let currentIdx = allModes.firstIndex(of: store.listMode),
+           let newIdx = allModes.firstIndex(of: mode) {
+            listTransitionEdge = newIdx > currentIdx ? .trailing : .leading
+        }
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.75)) {
+            selectedSpotId = nil
+            selectedSpotScreenPoint = nil
+            showFilter = false
+            store.listMode = mode
+            store.sortType = .added
+            store.recalculateNearbySpots()
+        }
+        fitAllPoints()
+    }
+
     // MARK: - フォーカス同期
 
-    /// スポットをタップしたときのフォーカス切替処理
     private func focusOrUnfocus(item: (course: Course, spot: CourseSpot, distance: Double)) {
         let spot = item.spot
         withAnimation(.easeInOut(duration: 0.3)) {
             if selectedSpotId == spot.id {
-                // 同じスポット再タップ → 選択解除＋全スポット表示
                 selectedSpotId = nil
                 selectedSpotScreenPoint = nil
                 fitAllPoints()
@@ -291,27 +331,19 @@ struct SpotListScreen: View {
                 selectedSpotScreenPoint = nil
                 guard spot.hasValidCoordinate else { return }
                 let radius = spot.recognitionRadiusMeters ?? item.course.recognitionRadiusMeters
-                let span = zoomOnSpotFocus
-                    ? spotSpan(recognitionRadius: radius)
-                    : visibleMapSpan
-                let center = focusCenter(
-                    latitude: spot.latitude,
-                    longitude: spot.longitude,
-                    span: span
-                )
+                let span = zoomOnSpotFocus ? spotSpan(recognitionRadius: radius) : visibleMapSpan
+                let center = focusCenter(latitude: spot.latitude, longitude: spot.longitude, span: span)
                 cameraPosition = .region(MKCoordinateRegion(center: center, span: span))
             }
         }
     }
 
-    /// recognitionRadius に応じたズームスパンを計算する（CourseDetailView と同じロジック）
     private func spotSpan(recognitionRadius: Double) -> MKCoordinateSpan {
         let diameterDegrees = (recognitionRadius * 2) / 111_000.0
         let delta = max(0.002, min(diameterDegrees * 2.5, 0.3))
         return MKCoordinateSpan(latitudeDelta: delta, longitudeDelta: delta)
     }
 
-    /// フォーカス中心座標を計算する（large サイズ時は画像分を考慮して少し上にオフセット）
     private func focusCenter(latitude: Double, longitude: Double, span: MKCoordinateSpan) -> CLLocationCoordinate2D {
         guard spotPhotoSize == .large else {
             return CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
@@ -322,7 +354,6 @@ struct SpotListScreen: View {
         )
     }
 
-    /// フォーカス中スポットのスクリーン座標を MapProxy で更新する
     private func updateSpotScreenPoint(proxy: MapProxy) {
         guard let spotId = selectedSpotId,
               let item = store.nearbySpots.first(where: { $0.spot.id == spotId }),
@@ -336,7 +367,6 @@ struct SpotListScreen: View {
 
     // MARK: - リーダーライン＋スポット画像オーバーレイ
 
-    /// フォーカス中スポットに画像がある場合、スポット位置からリーダーライン付きで表示
     @ViewBuilder
     private var leaderLineOverlay: some View {
         if spotPhotoSize != .none,
@@ -353,9 +383,7 @@ struct SpotListScreen: View {
                     imageUrl: remoteUrl
                 ) {
                     if let url = remoteUrl {
-                        withAnimation(.easeInOut(duration: 0.2)) {
-                            expandedImageUrl = url
-                        }
+                        withAnimation(.easeInOut(duration: 0.2)) { expandedImageUrl = url }
                     }
                 }
                 .transition(.opacity)
@@ -363,12 +391,10 @@ struct SpotListScreen: View {
         }
     }
 
-    // MARK: - 地図設定ボタン（右上）
+    // MARK: - 地図設定ボタン
 
     private var mapSettingsButton: some View {
-        Button {
-            showMapSettings = true
-        } label: {
+        Button { showMapSettings = true } label: {
             Image(systemName: "slider.horizontal.3")
                 .font(.system(size: 14, weight: .medium))
                 .frame(width: 36, height: 36)
@@ -378,7 +404,6 @@ struct SpotListScreen: View {
         .buttonStyle(.plain)
     }
 
-    // 確定済み選択地点ピン（スポット追加画面と同じデザイン）
     private var selectedPinView: some View {
         Image(systemName: "mappin")
             .font(.system(size: 32))
@@ -386,46 +411,19 @@ struct SpotListScreen: View {
             .shadow(radius: 4)
     }
 
-    // 照準（常時表示・「この場所を選択」の対象を示す）
     private var crosshairView: some View {
         ZStack {
-            Rectangle()
-                .fill(Color.indigo.opacity(0.6))
-                .frame(width: 18, height: 1.5)
-            Rectangle()
-                .fill(Color.indigo.opacity(0.6))
-                .frame(width: 1.5, height: 18)
-            Circle()
-                .fill(Color.indigo.opacity(0.8))
-                .frame(width: 4, height: 4)
+            Rectangle().fill(Color.indigo.opacity(0.6)).frame(width: 18, height: 1.5)
+            Rectangle().fill(Color.indigo.opacity(0.6)).frame(width: 1.5, height: 18)
+            Circle().fill(Color.indigo.opacity(0.8)).frame(width: 4, height: 4)
         }
         .allowsHitTesting(false)
-    }
-
-    // 住所カード（左下・緯度経度なし）
-    private func addressCard(_ address: String) -> some View {
-        Text(address)
-            .font(.caption2.weight(.medium))
-            .foregroundStyle(.primary)
-            .lineLimit(2)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 7)
-            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .strokeBorder(Color.primary.opacity(0.08), lineWidth: 0.5)
-            )
-            .shadow(color: .black.opacity(0.12), radius: 6, x: 0, y: 2)
-            .frame(maxWidth: 220, alignment: .leading)
     }
 
     // 右下ボタン群（現在地 + この場所を選択）
     private var selectLocationButton: some View {
         HStack(spacing: 8) {
-            // 現在地ボタン
-            Button {
-                moveToCurrentLocation()
-            } label: {
+            Button { moveToCurrentLocation() } label: {
                 Image(systemName: "location.fill")
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(.indigo)
@@ -435,10 +433,7 @@ struct SpotListScreen: View {
             }
             .buttonStyle(.plain)
 
-            // この場所を選択ボタン
-            Button {
-                selectMapCenter()
-            } label: {
+            Button { selectMapCenter() } label: {
                 Text(L.SpotEditor.selectLocation)
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(.white)
@@ -451,7 +446,7 @@ struct SpotListScreen: View {
         }
     }
 
-    // 表示件数ドロップダウンボタン（レイアウトバー右）
+    // 表示件数ドロップダウン（近くのスポットモード用）
     private var spotCountButton: some View {
         Menu {
             ForEach([10, 20, 30, 50], id: \.self) { n in
@@ -484,15 +479,51 @@ struct SpotListScreen: View {
         .buttonStyle(.plain)
     }
 
+    // ソートタイプ選択（お気に入り・行ったモード用）
+    private var sortTypeSelector: some View {
+        HStack(spacing: 4) {
+            sortChip(label: L.SpotList.sortTypeAdded, isSelected: store.sortType == .added) {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    store.sortType = .added
+                    store.recalculateNearbySpots()
+                    fitAllPoints()
+                }
+            }
+            sortChip(label: L.Course.sortDistance, isSelected: store.sortType == .distance) {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    store.sortType = .distance
+                    if store.selectedCoordinate == nil { moveToCurrentLocation() }
+                    store.recalculateNearbySpots()
+                    fitAllPoints()
+                }
+            }
+        }
+    }
+
+    private func sortChip(label: String, isSelected: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(label)
+                .font(.caption.weight(isSelected ? .semibold : .medium))
+                .foregroundStyle(isSelected ? Color.white : Color.primary)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 7)
+                .background(
+                    isSelected ? AnyShapeStyle(Color.indigo) : AnyShapeStyle(Color.secondary.opacity(0.12)),
+                    in: Capsule()
+                )
+        }
+        .buttonStyle(.plain)
+        .animation(.easeInOut(duration: 0.15), value: isSelected)
+    }
+
     // MARK: - スポット一覧セクション
 
     private var spotListSection: some View {
         ZStack(alignment: .bottom) {
-            // スポット一覧本体
+            // リスト本体: モード変更時にカードスライドアニメーション
             Group {
                 if store.isLoading {
-                    ProgressView()
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else if store.nearbySpots.isEmpty {
                     emptyView
                 } else {
@@ -505,17 +536,14 @@ struct SpotListScreen: View {
                                         course: item.course,
                                         orderNumber: index + 1,
                                         isSelected: selectedSpotId == item.spot.id,
-                                        distance: item.distance,
+                                        distance: isLocationSelectionActive ? item.distance : nil,
                                         onCourseTap: { courseDetailRoute = CourseRoute(course: item.course, initialSpotId: item.spot.id) }
                                     )
                                     .id(item.spot.id)
                                     .contentShape(Rectangle())
-                                    .onTapGesture {
-                                        focusOrUnfocus(item: item)
-                                    }
+                                    .onTapGesture { focusOrUnfocus(item: item) }
                                     if index < store.nearbySpots.count - 1 {
-                                        Divider()
-                                            .padding(.leading, 60)
+                                        Divider().padding(.leading, 60)
                                     }
                                 }
                             }
@@ -528,8 +556,14 @@ struct SpotListScreen: View {
                     }
                 }
             }
+            // モード切替でスライドアニメーション
+            .id(store.listMode)
+            .transition(.asymmetric(
+                insertion: .move(edge: listTransitionEdge),
+                removal: .move(edge: listTransitionEdge == .trailing ? .leading : .trailing)
+            ))
 
-            // 絞り込みボタン（右下固定）
+            // 絞り込みボタン（全モード共通）
             if !showFilter {
                 HStack {
                     Spacer()
@@ -539,25 +573,40 @@ struct SpotListScreen: View {
                 }
             }
 
-            // 絞り込みパネル（下からスライドイン）
             if showFilter {
                 SpotFilterPanel(store: store) {
-                    withAnimation(.spring(duration: 0.35, bounce: 0.05)) {
-                        showFilter = false
-                    }
+                    withAnimation(.spring(duration: 0.35, bounce: 0.05)) { showFilter = false }
                 }
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
+        .animation(.easeInOut(duration: 0.28), value: store.listMode)
         .animation(.spring(duration: 0.35, bounce: 0.05), value: showFilter)
         .clipped()
+        // 横スワイプでモード循環切り替え（縦スクロールとは独立して動作）
+        .simultaneousGesture(
+            DragGesture(minimumDistance: 40, coordinateSpace: .local)
+                .onEnded { value in
+                    guard abs(value.translation.width) > abs(value.translation.height) * 1.5,
+                          abs(value.translation.width) > 40 else { return }
+                    let allModes = SpotListMode.allCases
+                    guard let currentIndex = allModes.firstIndex(of: store.listMode) else { return }
+                    if value.translation.width < 0 {
+                        // 左スワイプ → 次のモード（新コンテンツは右から）
+                        listTransitionEdge = .trailing
+                        switchMode(to: allModes[(currentIndex + 1) % allModes.count])
+                    } else {
+                        // 右スワイプ → 前のモード（新コンテンツは左から）
+                        listTransitionEdge = .leading
+                        switchMode(to: allModes[(currentIndex - 1 + allModes.count) % allModes.count])
+                    }
+                }
+        )
     }
 
     private var filterButton: some View {
         Button {
-            withAnimation(.spring(duration: 0.35, bounce: 0.05)) {
-                showFilter = true
-            }
+            withAnimation(.spring(duration: 0.35, bounce: 0.05)) { showFilter = true }
         } label: {
             Image(systemName: "slider.horizontal.3")
                 .font(.subheadline.weight(.semibold))
@@ -566,15 +615,9 @@ struct SpotListScreen: View {
                 .background(Color.indigo, in: Circle())
                 .shadow(color: Color.indigo.opacity(0.45), radius: 8, x: 0, y: 4)
                 .overlay(alignment: .topTrailing) {
-                    // フィルター適用中バッジ
                     if !store.excludedCourseIds.isEmpty {
-                        Circle()
-                            .fill(Color.white)
-                            .frame(width: 10, height: 10)
-                            .overlay {
-                                Circle().fill(Color.indigo.opacity(0.7))
-                                    .frame(width: 7, height: 7)
-                            }
+                        Circle().fill(Color.white).frame(width: 10, height: 10)
+                            .overlay { Circle().fill(Color.indigo.opacity(0.7)).frame(width: 7, height: 7) }
                             .offset(x: 2, y: -2)
                     }
                 }
@@ -582,15 +625,12 @@ struct SpotListScreen: View {
         .buttonStyle(.plain)
     }
 
-    // 空状態ビュー
     private var emptyView: some View {
         VStack(spacing: 12) {
             Image(systemName: "mappin.slash")
                 .font(.largeTitle)
                 .foregroundStyle(.secondary)
-            Text(store.selectedCoordinate == nil
-                 ? L.SpotList.locationUnavailable
-                 : L.SpotList.noSpots)
+            Text(emptyMessage)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
@@ -599,15 +639,29 @@ struct SpotListScreen: View {
         .padding()
     }
 
+    private var emptyMessage: String {
+        switch store.listMode {
+        case .nearby:
+            return store.selectedCoordinate == nil ? L.SpotList.locationUnavailable : L.SpotList.noSpots
+        case .favorites:
+            if store.sortType == .distance && store.selectedCoordinate == nil {
+                return L.SpotList.locationUnavailable
+            }
+            return L.SpotList.noFavorites
+        case .visited:
+            if store.sortType == .distance && store.selectedCoordinate == nil {
+                return L.SpotList.locationUnavailable
+            }
+            return L.SpotList.noVisited
+        }
+    }
+
     // MARK: - 検索オーバーレイ
 
     private var searchOverlay: some View {
         VStack(spacing: 0) {
-            // アクティブ検索バー
             HStack(spacing: 10) {
-                Button {
-                    exitSearch()
-                } label: {
+                Button { exitSearch() } label: {
                     Image(systemName: "chevron.left")
                         .font(.system(size: 17, weight: .semibold))
                         .foregroundStyle(.primary)
@@ -626,14 +680,12 @@ struct SpotListScreen: View {
                             guard !q.isEmpty else { return }
                             Task { await performSearch(query: q) }
                         }
-
                     if !searchText.isEmpty {
                         Button {
                             searchText = ""
                             searchResults = []
                         } label: {
-                            Image(systemName: "xmark.circle.fill")
-                                .foregroundStyle(.secondary)
+                            Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
                         }
                         .buttonStyle(.plain)
                     }
@@ -645,13 +697,10 @@ struct SpotListScreen: View {
 
             Divider()
 
-            // 検索結果 or ローディング
             if isSearchLoading {
                 HStack(spacing: 8) {
                     ProgressView().scaleEffect(0.8)
-                    Text(L.Common.loading)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                    Text(L.Common.loading).font(.caption).foregroundStyle(.secondary)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(Color(.systemBackground))
@@ -659,22 +708,13 @@ struct SpotListScreen: View {
                 ScrollView {
                     LazyVStack(spacing: 0) {
                         ForEach(searchResults, id: \.self) { item in
-                            Button {
-                                selectFromSearch(item)
-                            } label: {
+                            Button { selectFromSearch(item) } label: {
                                 HStack(spacing: 12) {
-                                    Image(systemName: "mappin.circle")
-                                        .foregroundStyle(.indigo)
-                                        .font(.title3)
-                                        .frame(width: 32)
+                                    Image(systemName: "mappin.circle").foregroundStyle(.indigo).font(.title3).frame(width: 32)
                                     VStack(alignment: .leading, spacing: 2) {
-                                        Text(item.name ?? "")
-                                            .font(.subheadline)
-                                            .foregroundStyle(.primary)
+                                        Text(item.name ?? "").font(.subheadline).foregroundStyle(.primary)
                                         if let addr = item.placemark.thoroughfare {
-                                            Text(addr)
-                                                .font(.caption)
-                                                .foregroundStyle(.secondary)
+                                            Text(addr).font(.caption).foregroundStyle(.secondary)
                                         }
                                     }
                                     Spacer()
@@ -699,67 +739,25 @@ struct SpotListScreen: View {
 
     private var layoutStrip: some View {
         HStack(alignment: .center, spacing: 8) {
-            // 虫眼鏡アイコン（タップで検索モードへ）
-            Button {
-                withAnimation(.easeInOut(duration: 0.25)) {
-                    isSearching = true
-                }
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                    searchFocused = true
-                }
-            } label: {
-                Image(systemName: "magnifyingglass")
-                    .font(.system(size: 15, weight: .medium))
-                    .foregroundStyle(.indigo)
-                    .frame(width: 32, height: 32)
-                    .background(.regularMaterial, in: Circle())
-                    .overlay {
-                        Circle()
-                            .strokeBorder(Color.indigo.opacity(0.25), lineWidth: 0.8)
-                    }
-                    .shadow(color: .black.opacity(0.08), radius: 3, x: 0, y: 1)
-            }
-            .buttonStyle(.plain)
-
-            // 選択地点の住所カード + "から近いスポット"
-            VStack(alignment: .leading, spacing: 3) {
-                HStack(spacing: 4) {
-                    Image(systemName: "location.fill")
-                        .font(.caption2.weight(.semibold))
-                        .foregroundStyle(.indigo)
-                    Text(selectedAddress ?? store.selectedLocationName ?? "現在地")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(.primary)
-                        .lineLimit(1)
-                }
-                .padding(.horizontal, 8)
-                .padding(.vertical, 5)
-                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
-                .overlay {
-                    RoundedRectangle(cornerRadius: 8, style: .continuous)
-                        .strokeBorder(Color.indigo.opacity(0.25), lineWidth: 0.8)
-                }
-                .shadow(color: .black.opacity(0.08), radius: 3, x: 0, y: 1)
-                // 住所が変わったらフェードで更新
-                .id(selectedAddress ?? store.selectedLocationName ?? "")
-                .transition(.opacity.combined(with: .scale(scale: 0.97)))
-                .animation(.easeInOut(duration: 0.25), value: selectedAddress)
-
-                Text("から近いスポット")
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-                    .padding(.leading, 4)
+            // 左側: モードに応じたコンテンツ
+            if isLocationSelectionActive {
+                locationAreaContent
+            } else {
+                totalCountContent
             }
 
             Spacer()
 
-            // 右: 表示件数設定
-            spotCountButton
+            // 右側: 近くのスポットは件数設定、その他はソートタイプ選択
+            if store.listMode == .nearby {
+                spotCountButton
+            } else {
+                sortTypeSelector
+            }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
         .contentShape(Rectangle())
-        // 上下スワイプでレイアウト切替
         .gesture(
             DragGesture(minimumDistance: 5, coordinateSpace: .local)
                 .onChanged { value in
@@ -776,7 +774,75 @@ struct SpotListScreen: View {
         )
     }
 
-    /// isUp=true: 一覧拡大方向 / isUp=false: 地図拡大方向
+    // 住所カード（近くのスポットモード or 近い順ソート時）
+    @ViewBuilder
+    private var locationAreaContent: some View {
+        // 虫眼鏡アイコン（場所検索）
+        Button {
+            withAnimation(.easeInOut(duration: 0.25)) { isSearching = true }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { searchFocused = true }
+        } label: {
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 15, weight: .medium))
+                .foregroundStyle(.indigo)
+                .frame(width: 32, height: 32)
+                .background(.regularMaterial, in: Circle())
+                .overlay { Circle().strokeBorder(Color.indigo.opacity(0.25), lineWidth: 0.8) }
+                .shadow(color: .black.opacity(0.08), radius: 3, x: 0, y: 1)
+        }
+        .buttonStyle(.plain)
+
+        // 住所カード + サブタイトル
+        VStack(alignment: .leading, spacing: 3) {
+            HStack(spacing: 4) {
+                Image(systemName: "location.fill")
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(.indigo)
+                Text(selectedAddress ?? store.selectedLocationName ?? "現在地")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+            }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 5)
+            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .strokeBorder(Color.indigo.opacity(0.25), lineWidth: 0.8)
+            }
+            .shadow(color: .black.opacity(0.08), radius: 3, x: 0, y: 1)
+            .id(selectedAddress ?? store.selectedLocationName ?? "")
+            .transition(.opacity.combined(with: .scale(scale: 0.97)))
+            .animation(.easeInOut(duration: 0.25), value: selectedAddress)
+
+            Text(store.listMode == .nearby ? L.SpotList.nearbySubtitle : L.SpotList.distanceSubtitle)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .padding(.leading, 4)
+        }
+    }
+
+    // 全件数表示（追加順ソート時）
+    private var totalCountContent: some View {
+        HStack(spacing: 6) {
+            Image(systemName: store.listMode.systemImage)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.indigo)
+            Text(L.SpotList.totalCount(store.nearbySpots.count))
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.primary)
+                .monospacedDigit()
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 7)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .strokeBorder(Color.indigo.opacity(0.2), lineWidth: 0.8)
+        }
+        .shadow(color: .black.opacity(0.08), radius: 3, x: 0, y: 1)
+    }
+
     private func switchLayout(_ isUp: Bool) {
         withAnimation(.easeInOut(duration: 0.3)) {
             if isUp {
@@ -797,7 +863,6 @@ struct SpotListScreen: View {
 
     // MARK: - ヘルパー
 
-    /// 現在地を選択地点として確定する
     private func moveToCurrentLocation() {
         guard let coord = CLLocationManager().location?.coordinate else { return }
         store.updateSelectedLocation(coord, name: nil)
@@ -812,7 +877,6 @@ struct SpotListScreen: View {
         Task { await reverseGeocode(coordinate: coord) }
     }
 
-    /// 地図中心を選択地点として確定する
     private func selectMapCenter() {
         let coord = mapCenterCoordinate
         store.updateSelectedLocation(coord, name: nil)
@@ -821,7 +885,6 @@ struct SpotListScreen: View {
         Task { await reverseGeocode(coordinate: coord) }
     }
 
-    /// 場所検索結果から地点を選択する（自動確定）
     private func selectFromSearch(_ item: MKMapItem) {
         exitSearch()
         let coord = item.placemark.coordinate
@@ -837,17 +900,13 @@ struct SpotListScreen: View {
         Task { await reverseGeocode(coordinate: coord) }
     }
 
-    /// 検索モードを終了する
     private func exitSearch() {
         searchFocused = false
-        withAnimation(.easeInOut(duration: 0.25)) {
-            isSearching = false
-        }
+        withAnimation(.easeInOut(duration: 0.25)) { isSearching = false }
         searchText = ""
         searchResults = []
     }
 
-    /// MKLocalSearch で場所を検索する
     private func performSearch(query: String) async {
         isSearchLoading = true
         defer { isSearchLoading = false }
@@ -860,15 +919,13 @@ struct SpotListScreen: View {
         }
     }
 
-    /// 起動時: カメラをフィットし、初期選択地点の住所を取得する
     private func initializeCamera() {
         fitAllPoints()
-        if let coord = store.selectedCoordinate {
+        if let coord = store.selectedCoordinate, isLocationSelectionActive {
             Task { await reverseGeocode(coordinate: coord) }
         }
     }
 
-    /// 逆ジオコーディングで住所を取得する
     private func reverseGeocode(coordinate: CLLocationCoordinate2D) async {
         let geocoder = CLGeocoder()
         let location = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
@@ -883,35 +940,43 @@ struct SpotListScreen: View {
         if let subThoroughfare = pm.subThoroughfare { parts.append(subThoroughfare) }
 
         let result = parts.joined()
-        if !result.isEmpty {
-            selectedAddress = result
-        }
+        if !result.isEmpty { selectedAddress = result }
     }
 
-    /// 選択地点を中心に、全スポットが収まるようにズームを調整する
+    /// 全スポットが収まるようにカメラをフィット（モードに応じて中心を算出）
     private func fitAllPoints() {
-        guard let center = store.selectedCoordinate else { return }
-
-        // スポットがない場合はデフォルトスパンで選択地点を表示
-        guard !store.nearbySpots.isEmpty else {
-            withAnimation {
-                cameraPosition = .region(MKCoordinateRegion(
-                    center: center,
-                    span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
-                ))
+        let spots = store.nearbySpots
+        guard !spots.isEmpty else {
+            if let center = store.selectedCoordinate {
+                withAnimation {
+                    cameraPosition = .region(MKCoordinateRegion(
+                        center: center,
+                        span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
+                    ))
+                }
             }
             return
         }
 
-        // 選択地点から各スポットまでの緯度・経度差の最大値を求める
+        // 地点選択が有効かつ座標がある場合はその座標を中心に、そうでなければスポット群の重心を使用
+        let center: CLLocationCoordinate2D
+        if isLocationSelectionActive, let coord = store.selectedCoordinate {
+            center = coord
+        } else {
+            let validSpots = spots.filter { $0.spot.hasValidCoordinate }
+            guard !validSpots.isEmpty else { return }
+            let avgLat = validSpots.map { $0.spot.latitude }.reduce(0, +) / Double(validSpots.count)
+            let avgLon = validSpots.map { $0.spot.longitude }.reduce(0, +) / Double(validSpots.count)
+            center = CLLocationCoordinate2D(latitude: avgLat, longitude: avgLon)
+        }
+
         var maxLatDelta: CLLocationDegrees = 0.005
         var maxLonDelta: CLLocationDegrees = 0.005
-        for item in store.nearbySpots where item.spot.hasValidCoordinate {
+        for item in spots where item.spot.hasValidCoordinate {
             maxLatDelta = max(maxLatDelta, abs(item.spot.latitude  - center.latitude))
             maxLonDelta = max(maxLonDelta, abs(item.spot.longitude - center.longitude))
         }
 
-        // 選択地点を中心に、全スポットが余裕を持って収まるスパン（× 2.4）
         let spanLat = max(maxLatDelta * 2.4, 0.01)
         let spanLon = max(maxLonDelta * 2.4, 0.01)
 
@@ -922,10 +987,94 @@ struct SpotListScreen: View {
             ))
         }
     }
-
 }
 
-// MARK: - スポットピンビュー（CourseDetailView と同じ実装）
+// MARK: - モード切替タブボタン（左側付箋スタイル）
+
+private struct SpotModeTabButton: View {
+    let mode: SpotListMode
+    let isSelected: Bool
+    let action: () -> Void
+
+    private let selectedWidth: CGFloat = 104
+    private let unselectedWidth: CGFloat = 80
+    /// 全 SF Symbol を同じ幅で並べてテキスト開始位置を揃える
+    private let iconWidth: CGFloat = 14
+    /// 全モード・選択状態で統一フォントサイズ（minimumScaleFactor を使わない）
+    private let fontSize: CGFloat = 11
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 5) {
+                Image(systemName: mode.systemImage)
+                    .font(.system(size: fontSize, weight: .semibold))
+                    .frame(width: iconWidth, alignment: .center)
+                Text(mode.shortTitle)
+                    .font(.system(size: fontSize, weight: isSelected ? .semibold : .medium))
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+            }
+            .foregroundStyle(isSelected ? Color.white : Color.primary.opacity(0.7))
+            .padding(.horizontal, 10)
+            .padding(.vertical, 8)
+            .frame(width: isSelected ? selectedWidth : unselectedWidth, alignment: .leading)
+            .background {
+                if isSelected {
+                    SpotModeTabShape().fill(Color.indigo)
+                } else {
+                    SpotModeTabShape().fill(.regularMaterial)
+                }
+            }
+            .overlay {
+                SpotModeTabShape()
+                    .stroke(
+                        isSelected ? Color.indigo.opacity(0.0) : Color.white.opacity(0.5),
+                        lineWidth: 0.8
+                    )
+            }
+            .shadow(
+                color: isSelected ? Color.indigo.opacity(0.35) : Color.black.opacity(0.15),
+                radius: isSelected ? 6 : 3,
+                x: 2, y: 2
+            )
+        }
+        .buttonStyle(.plain)
+        .animation(.spring(response: 0.28, dampingFraction: 0.72), value: isSelected)
+    }
+}
+
+// 左側フラット・右側角丸の付箋シェイプ
+private struct SpotModeTabShape: Shape {
+    var cornerRadius: CGFloat = 10
+
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        let r = min(cornerRadius, rect.height / 2)
+
+        path.move(to: CGPoint(x: 0, y: 0))
+        path.addLine(to: CGPoint(x: rect.maxX - r, y: 0))
+        path.addArc(
+            center: CGPoint(x: rect.maxX - r, y: r),
+            radius: r,
+            startAngle: .degrees(-90),
+            endAngle: .degrees(0),
+            clockwise: false
+        )
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY - r))
+        path.addArc(
+            center: CGPoint(x: rect.maxX - r, y: rect.maxY - r),
+            radius: r,
+            startAngle: .degrees(0),
+            endAngle: .degrees(90),
+            clockwise: false
+        )
+        path.addLine(to: CGPoint(x: 0, y: rect.maxY))
+        path.closeSubpath()
+        return path
+    }
+}
+
+// MARK: - スポットピンビュー
 
 private struct SpotPinView: View {
     let orderNumber: Int
@@ -952,7 +1101,7 @@ private struct SpotPinView: View {
     }
 }
 
-// MARK: - スポット行ビュー（CourseDetailView と同じ作り・コース名付き）
+// MARK: - スポット行ビュー
 
 private struct SpotListRowView: View {
     let spot: CourseSpot
@@ -971,9 +1120,7 @@ private struct SpotListRowView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // メイン行
             HStack(spacing: 12) {
-                // 番号バッジ（距離順の順位）
                 ZStack {
                     Circle()
                         .fill(spot.isCheckedIn ? Color.indigo : Color(uiColor: .systemGray4))
@@ -984,24 +1131,17 @@ private struct SpotListRowView: View {
                 }
 
                 VStack(alignment: .leading, spacing: 2) {
-                    // コース名（リンク）- スポット名の上に表示
                     Button(action: onCourseTap) {
                         HStack(spacing: 2) {
-                            Text(course.title)
-                                .font(.caption)
-                                .lineLimit(1)
-                            Image(systemName: "chevron.right")
-                                .font(.system(size: 9, weight: .semibold))
+                            Text(course.title).font(.caption).lineLimit(1)
+                            Image(systemName: "chevron.right").font(.system(size: 9, weight: .semibold))
                         }
                         .foregroundStyle(.indigo)
                     }
                     .buttonStyle(.plain)
 
-                    // スポット名・チェック済みアイコン
                     HStack(spacing: 6) {
-                        Text(spot.name)
-                            .font(.body)
-
+                        Text(spot.name).font(.body)
                         if spot.isCheckedIn {
                             Image(systemName: "checkmark.circle.fill")
                                 .font(.body)
@@ -1009,13 +1149,10 @@ private struct SpotListRowView: View {
                         }
                     }
 
-                    // 選択地点からの距離
                     if let text = distanceText {
                         HStack(spacing: 2) {
-                            Image(systemName: "location.fill")
-                                .font(.caption2)
-                            Text(text)
-                                .font(.caption2.bold().monospacedDigit())
+                            Image(systemName: "location.fill").font(.caption2)
+                            Text(text).font(.caption2.bold().monospacedDigit())
                         }
                         .foregroundStyle(.indigo)
                         .padding(.top, 1)
@@ -1024,7 +1161,6 @@ private struct SpotListRowView: View {
 
                 Spacer()
 
-                // ハートボタン（お気に入り）
                 Button {
                     favoriteStore.toggle(spot.id)
                 } label: {
@@ -1042,20 +1178,17 @@ private struct SpotListRowView: View {
             .padding(.horizontal, 16)
             .padding(.vertical, 10)
 
-            // 展開詳細（選択時のみ）
             if isSelected {
                 SpotRowExpandedView(spot: spot)
                     .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
-        .background {
-            SpotRowBackdropView(spot: spot, isSelected: isSelected)
-        }
+        .background { SpotRowBackdropView(spot: spot, isSelected: isSelected) }
         .animation(.easeInOut(duration: 0.2), value: isSelected)
     }
 }
 
-// MARK: - 展開詳細ビュー（住所・訪問日）
+// MARK: - 展開詳細ビュー
 
 private struct SpotRowExpandedView: View {
     let spot: CourseSpot
@@ -1065,12 +1198,8 @@ private struct SpotRowExpandedView: View {
             let iconWidth: CGFloat = 14
 
             HStack(alignment: .top, spacing: 6) {
-                Image(systemName: "mappin.circle")
-                    .font(.caption)
-                    .frame(width: iconWidth)
-                Text(spot.address ?? L.Course.noAddress)
-                    .font(.caption)
-                    .fixedSize(horizontal: false, vertical: true)
+                Image(systemName: "mappin.circle").font(.caption).frame(width: iconWidth)
+                Text(spot.address ?? L.Course.noAddress).font(.caption).fixedSize(horizontal: false, vertical: true)
             }
             .foregroundStyle(spot.address != nil ? Color.secondary : Color.secondary.opacity(0.5))
             .padding(.leading, 60)
@@ -1078,9 +1207,7 @@ private struct SpotRowExpandedView: View {
 
             if let date = spot.firstCheckedInAt {
                 HStack(alignment: .top, spacing: 6) {
-                    Image(systemName: "calendar.circle")
-                        .font(.caption)
-                        .frame(width: iconWidth)
+                    Image(systemName: "calendar.circle").font(.caption).frame(width: iconWidth)
                     Text(L.Course.visitedOn(date.formatted(date: .long, time: .omitted)))
                         .font(.caption)
                         .fixedSize(horizontal: false, vertical: true)
@@ -1090,11 +1217,8 @@ private struct SpotRowExpandedView: View {
                 .padding(.trailing, 16)
             } else {
                 HStack(alignment: .top, spacing: 6) {
-                    Image(systemName: "calendar.circle")
-                        .font(.caption)
-                        .frame(width: iconWidth)
-                    Text(L.Course.notVisited)
-                        .font(.caption)
+                    Image(systemName: "calendar.circle").font(.caption).frame(width: iconWidth)
+                    Text(L.Course.notVisited).font(.caption)
                 }
                 .foregroundStyle(Color.secondary)
                 .padding(.leading, 60)
@@ -1106,15 +1230,13 @@ private struct SpotRowExpandedView: View {
     }
 }
 
-// MARK: - スポット行背景ビュー（CourseDetailView と同じ実装）
+// MARK: - スポット行背景ビュー
 
 private struct SpotRowBackdropView: View {
     let spot: CourseSpot
     let isSelected: Bool
 
-    private var hasImage: Bool {
-        spot.localCoverImagePath != nil || spot.coverImageUrl != nil
-    }
+    private var hasImage: Bool { spot.localCoverImagePath != nil || spot.coverImageUrl != nil }
 
     var body: some View {
         GeometryReader { geo in
@@ -1152,10 +1274,7 @@ private struct SpotRowBackdropView: View {
                         endPoint: .trailing
                     )
                 }
-
-                if isSelected {
-                    Color.indigo.opacity(0.07)
-                }
+                if isSelected { Color.indigo.opacity(0.07) }
             }
             .frame(width: geo.size.width, height: geo.size.height)
             .clipped()
@@ -1164,22 +1283,18 @@ private struct SpotRowBackdropView: View {
     }
 }
 
-// MARK: - 絞り込みパネル
+// MARK: - 絞り込みパネル（近くのスポットモード専用）
 
 private struct SpotFilterPanel: View {
     let store: SpotListStore
     let onDismiss: () -> Void
 
     @State private var expandedKeys: Set<String> = []
-    @Environment(\.spotFavoriteStore) private var favoriteStore
 
-    private let limitOptions = [10, 20, 30, 50]
-
-    // カテゴリ別コース分類（first category で分類）
     private var sections: [(key: String, category: CourseCategory?, courses: [Course])] {
         var categoryOf: [String: CourseCategory?] = [:]
         var coursesByKey: [String: [Course]] = [:]
-        for course in store.allCourses {
+        for course in store.relevantCourses {
             let cat = course.categories.first
             let key = cat?.rawValue ?? "__other__"
             categoryOf[key] = cat
@@ -1187,17 +1302,12 @@ private struct SpotFilterPanel: View {
         }
         var result: [(String, CourseCategory?, [Course])] = []
         for cat in CourseCategory.allCases {
-            if let cs = coursesByKey[cat.rawValue] {
-                result.append((cat.rawValue, cat, cs))
-            }
+            if let cs = coursesByKey[cat.rawValue] { result.append((cat.rawValue, cat, cs)) }
         }
-        if let cs = coursesByKey["__other__"] {
-            result.append(("__other__", nil, cs))
-        }
+        if let cs = coursesByKey["__other__"] { result.append(("__other__", nil, cs)) }
         return result
     }
 
-    /// チェック状態: true=全選択 / nil=一部除外 / false=全除外
     private func categoryState(courses: [Course]) -> Bool? {
         let excludedCount = courses.filter { store.excludedCourseIds.contains($0.id) }.count
         if excludedCount == 0 { return true }
@@ -1208,27 +1318,20 @@ private struct SpotFilterPanel: View {
     private func toggleCategory(courses: [Course]) {
         let state = categoryState(courses: courses)
         for c in courses {
-            if state == true {
-                store.excludedCourseIds.insert(c.id)
-            } else {
-                store.excludedCourseIds.remove(c.id)
-            }
+            if state == true { store.excludedCourseIds.insert(c.id) }
+            else { store.excludedCourseIds.remove(c.id) }
         }
         store.recalculateNearbySpots()
     }
 
     private func toggleCourse(_ course: Course) {
-        if store.excludedCourseIds.contains(course.id) {
-            store.excludedCourseIds.remove(course.id)
-        } else {
-            store.excludedCourseIds.insert(course.id)
-        }
+        if store.excludedCourseIds.contains(course.id) { store.excludedCourseIds.remove(course.id) }
+        else { store.excludedCourseIds.insert(course.id) }
         store.recalculateNearbySpots()
     }
 
     var body: some View {
         VStack(spacing: 0) {
-            // ドラッグハンドル（下スワイプで閉じる）
             Capsule()
                 .fill(Color.secondary.opacity(0.35))
                 .frame(width: 36, height: 4)
@@ -1238,12 +1341,9 @@ private struct SpotFilterPanel: View {
                 .contentShape(Rectangle())
                 .gesture(
                     DragGesture(minimumDistance: 10)
-                        .onChanged { value in
-                            if value.translation.height > 30 { onDismiss() }
-                        }
+                        .onChanged { value in if value.translation.height > 30 { onDismiss() } }
                 )
 
-            // タイトル行
             HStack(alignment: .bottom) {
                 VStack(alignment: .leading, spacing: 2) {
                     Label("絞り込み", systemImage: "slider.horizontal.3")
@@ -1268,7 +1368,6 @@ private struct SpotFilterPanel: View {
 
             Divider()
 
-            // コースで絞り込む ラベル
             HStack {
                 Text("コースで絞り込む")
                     .font(.caption.weight(.semibold))
@@ -1279,43 +1378,28 @@ private struct SpotFilterPanel: View {
             .padding(.top, 10)
             .padding(.bottom, 4)
 
-            // カテゴリ一覧
             ScrollView {
                 LazyVStack(spacing: 0) {
                     ForEach(sections, id: \.key) { section in
-                        // カテゴリ行
                         HStack(spacing: 12) {
-                            // チェックボックス（独立ボタン）
                             Button {
-                                withAnimation(.easeInOut(duration: 0.15)) {
-                                    toggleCategory(courses: section.courses)
-                                }
+                                withAnimation(.easeInOut(duration: 0.15)) { toggleCategory(courses: section.courses) }
                             } label: {
                                 checkboxIcon(state: categoryState(courses: section.courses))
                             }
                             .buttonStyle(.plain)
 
-                            // 展開ボタン（残り領域）
                             Button {
                                 withAnimation(.easeInOut(duration: 0.2)) {
-                                    if expandedKeys.contains(section.key) {
-                                        expandedKeys.remove(section.key)
-                                    } else {
-                                        expandedKeys.insert(section.key)
-                                    }
+                                    if expandedKeys.contains(section.key) { expandedKeys.remove(section.key) }
+                                    else { expandedKeys.insert(section.key) }
                                 }
                             } label: {
                                 HStack(spacing: 8) {
                                     if let cat = section.category {
-                                        Image(systemName: cat.iconName)
-                                            .font(.subheadline)
-                                            .foregroundStyle(.indigo)
-                                            .frame(width: 20)
+                                        Image(systemName: cat.iconName).font(.subheadline).foregroundStyle(.indigo).frame(width: 20)
                                     } else {
-                                        Image(systemName: "airplane")
-                                            .font(.subheadline)
-                                            .foregroundStyle(.secondary)
-                                            .frame(width: 20)
+                                        Image(systemName: "airplane").font(.subheadline).foregroundStyle(.secondary).frame(width: 20)
                                     }
                                     VStack(alignment: .leading, spacing: 1) {
                                         Text(section.category?.displayName ?? "その他")
@@ -1338,15 +1422,12 @@ private struct SpotFilterPanel: View {
                         .padding(.horizontal, 16)
                         .padding(.vertical, 12)
 
-                        // コース行（展開時のみ）
                         if expandedKeys.contains(section.key) {
                             ForEach(section.courses) { course in
                                 HStack(spacing: 12) {
-                                    Color.clear.frame(width: 24) // インデント
+                                    Color.clear.frame(width: 24)
                                     Button {
-                                        withAnimation(.easeInOut(duration: 0.15)) {
-                                            toggleCourse(course)
-                                        }
+                                        withAnimation(.easeInOut(duration: 0.15)) { toggleCourse(course) }
                                     } label: {
                                         checkboxIcon(state: !store.excludedCourseIds.contains(course.id))
                                     }
@@ -1355,11 +1436,7 @@ private struct SpotFilterPanel: View {
                                     VStack(alignment: .leading, spacing: 1) {
                                         Text(course.title)
                                             .font(.subheadline)
-                                            .foregroundStyle(
-                                                store.excludedCourseIds.contains(course.id)
-                                                    ? Color.secondary
-                                                    : Color.primary
-                                            )
+                                            .foregroundStyle(store.excludedCourseIds.contains(course.id) ? Color.secondary : Color.primary)
                                             .lineLimit(2)
                                         Text("(\(course.spots.count)スポット)")
                                             .font(.caption2)
@@ -1373,7 +1450,6 @@ private struct SpotFilterPanel: View {
                                 .transition(.opacity.combined(with: .move(edge: .top)))
                             }
                         }
-
                         Divider()
                     }
                 }
@@ -1383,11 +1459,7 @@ private struct SpotFilterPanel: View {
         .background {
             RoundedRectangle(cornerRadius: 20, style: .continuous)
                 .fill(.ultraThinMaterial)
-                .overlay {
-                    // 白みを強調するオーバーレイ
-                    RoundedRectangle(cornerRadius: 20, style: .continuous)
-                        .fill(Color.white.opacity(0.55))
-                }
+                .overlay { RoundedRectangle(cornerRadius: 20, style: .continuous).fill(Color.white.opacity(0.55)) }
                 .overlay {
                     RoundedRectangle(cornerRadius: 20, style: .continuous)
                         .strokeBorder(
@@ -1422,14 +1494,9 @@ private struct SpotFilterPanel: View {
                 )
                 .frame(width: 20, height: 20)
             if state == true {
-                Image(systemName: "checkmark")
-                    .font(.system(size: 11, weight: .bold))
-                    .foregroundStyle(.white)
+                Image(systemName: "checkmark").font(.system(size: 11, weight: .bold)).foregroundStyle(.white)
             } else if state == nil {
-                // 一部除外（インデタミネート）
-                Rectangle()
-                    .fill(Color.indigo)
-                    .frame(width: 10, height: 2)
+                Rectangle().fill(Color.indigo).frame(width: 10, height: 2)
             }
         }
         .animation(.easeInOut(duration: 0.15), value: state)
@@ -1438,17 +1505,15 @@ private struct SpotFilterPanel: View {
 
 // MARK: - コース詳細ナビゲーションルート
 
-/// Course は Hashable でないため、id のみで同一性を判断するラッパー
 private struct CourseRoute: Identifiable, Hashable {
     let course: Course
-    /// 遷移先でフォーカスするスポットのID
     let initialSpotId: UUID?
     var id: UUID { course.id }
     func hash(into hasher: inout Hasher) { hasher.combine(id) }
     static func == (lhs: Self, rhs: Self) -> Bool { lhs.id == rhs.id }
 }
 
-// MARK: - スポット行背景画像ビュー（CourseDetailView と同じ実装）
+// MARK: - スポット行背景画像ビュー
 
 private struct SpotRowBackdropImageView: View {
     let spot: CourseSpot
@@ -1456,18 +1521,12 @@ private struct SpotRowBackdropImageView: View {
     var body: some View {
         Group {
             if let uiImage = spot.localCoverImagePath.flatMap({ LocalImageStorage.shared.load(from: $0) }) {
-                Image(uiImage: uiImage)
-                    .resizable()
-                    .scaledToFill()
+                Image(uiImage: uiImage).resizable().scaledToFill()
             } else if let urlStr = spot.coverImageUrl, let url = URL(string: urlStr) {
                 AsyncImage(url: url) { phase in
                     switch phase {
-                    case .success(let image):
-                        image
-                            .resizable()
-                            .scaledToFill()
-                    default:
-                        Color.clear
+                    case .success(let image): image.resizable().scaledToFill()
+                    default: Color.clear
                     }
                 }
             } else {

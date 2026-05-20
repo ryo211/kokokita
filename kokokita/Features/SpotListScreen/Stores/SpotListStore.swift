@@ -2,26 +2,65 @@ import Foundation
 import Observation
 import CoreLocation
 
+// スポット一覧の表示モード
+enum SpotListMode: CaseIterable, Hashable {
+    case nearby      // 近くのスポット（有効コースの全スポット・距離順）
+    case favorites   // お気に入りスポット
+    case visited     // 行ったスポット（達成済み）
+
+    var title: String {
+        switch self {
+        case .nearby:    return L.SpotList.modeNearby
+        case .favorites: return L.SpotList.modeFavorites
+        case .visited:   return L.SpotList.modeVisited
+        }
+    }
+
+    var shortTitle: String {
+        switch self {
+        case .nearby:    return L.SpotList.modeNearbyShort
+        case .favorites: return L.SpotList.modeFavoritesShort
+        case .visited:   return L.SpotList.modeVisitedShort
+        }
+    }
+
+    var systemImage: String {
+        switch self {
+        case .nearby:    return "location.north.line.fill"
+        case .favorites: return "heart.fill"
+        case .visited:   return "checkmark.seal.fill"
+        }
+    }
+}
+
+// お気に入り・行ったモード用のソートタイプ
+enum SpotListSortType: Hashable {
+    case added    // 追加順
+    case distance // 近い順
+}
+
 // スポット一覧画面の状態管理
-// 有効な巡礼コースに含まれるスポットを、任意の選択地点から近い順に提供する
+// 有効な巡礼コースに含まれるスポットを、選択モード・ソートに応じて提供する
 @MainActor
 @Observable
 final class SpotListStore {
 
     // MARK: - 状態
 
+    /// 表示モード
+    var listMode: SpotListMode = .nearby
+    /// ソートタイプ（お気に入り・行ったモード用）
+    var sortType: SpotListSortType = .added
     /// 選択地点（nil の場合は現在地を取得中）
     var selectedCoordinate: CLLocationCoordinate2D?
     /// 選択地点の名称（場所検索で選択した場合に設定）
     var selectedLocationName: String?
-    /// 近い順のスポット一覧（course・spot・距離のタプル）
+    /// 表示スポット一覧（course・spot・距離のタプル）
     var nearbySpots: [(course: Course, spot: CourseSpot, distance: Double)] = []
-    /// 表示件数（後続機能の件数設定・絞り込みで拡張予定）
+    /// 表示件数（近くのスポットモード用）
     var displayLimit: Int = 10
     /// フィルターで除外するコースID（空 = すべて表示）
     var excludedCourseIds: Set<UUID> = []
-    /// お気に入りスポットのみ表示
-    var favoritesOnly: Bool = false
     /// お気に入りID（View から同期）
     var favoriteSpotIds: Set<UUID> = []
     var isLoading = false
@@ -31,16 +70,39 @@ final class SpotListStore {
 
     private var courses: [Course] = []
 
-    /// フィルターパネル用: 全有効コース一覧
-    var allCourses: [Course] { courses }
+    /// フィルターパネル用: 現在のモードに関連するコース一覧
+    /// 近く=全有効コース、お気に入り=お気に入りスポットを持つコース、行った=達成スポットを持つコース
+    var relevantCourses: [Course] {
+        let active = courses.filter { !$0.isUserCreated || $0.isEnabled }
+        switch listMode {
+        case .nearby:
+            return active
+        case .favorites:
+            return active.filter { course in
+                course.spots.contains { favoriteSpotIds.contains($0.id) }
+            }
+        case .visited:
+            return active.filter { course in
+                course.spots.contains { $0.isCheckedIn }
+            }
+        }
+    }
 
-    /// フィルター適用後の表示対象スポット総数（距離制限なし）
+    /// フィルター適用後の表示対象スポット総数（絞り込みパネルの件数表示用）
     var totalFilteredSpotCount: Int {
-        allCourses
-            .filter { !excludedCourseIds.contains($0.id) && (!$0.isUserCreated || $0.isEnabled) }
-            .flatMap { $0.spots.filter { $0.hasValidCoordinate } }
+        relevantCourses
+            .filter { !excludedCourseIds.contains($0.id) }
+            .flatMap { course -> [CourseSpot] in
+                let valid = course.spots.filter { $0.hasValidCoordinate }
+                switch listMode {
+                case .nearby:    return valid
+                case .favorites: return valid.filter { favoriteSpotIds.contains($0.id) }
+                case .visited:   return valid.filter { $0.isCheckedIn }
+                }
+            }
             .count
     }
+
     private let repo: CourseRepository
     private var observers: [NSObjectProtocol] = []
 
@@ -75,8 +137,6 @@ final class SpotListStore {
     private func reloadCourses() async {
         do {
             let all = try repo.fetchAll()
-            // バンドルコースはすべて対象、自作コースは有効/無効問わずすべて含める
-            // （スポット計算時に isEnabled == false の自作コースは除外する）
             courses = all
             recalculateNearbySpots()
         } catch {
@@ -85,10 +145,21 @@ final class SpotListStore {
         }
     }
 
-    // MARK: - 距離計算
+    // MARK: - スポット計算（モード・ソート対応）
 
-    /// 選択地点からの距離を計算してスポット一覧を更新する
     func recalculateNearbySpots() {
+        switch listMode {
+        case .nearby:
+            recalculateNearby()
+        case .favorites:
+            recalculateFavorites()
+        case .visited:
+            recalculateVisited()
+        }
+    }
+
+    /// 近くのスポットモード: 有効コースの全スポットを距離昇順、表示件数で制限
+    private func recalculateNearby() {
         guard let coord = selectedCoordinate else {
             nearbySpots = []
             return
@@ -98,13 +169,60 @@ final class SpotListStore {
         for course in courses
             where !excludedCourseIds.contains(course.id)
                && (!course.isUserCreated || course.isEnabled) {
-            for spot in course.spots where spot.hasValidCoordinate
-                                       && (!favoritesOnly || favoriteSpotIds.contains(spot.id)) {
+            for spot in course.spots where spot.hasValidCoordinate {
                 let spotLocation = CLLocation(latitude: spot.latitude, longitude: spot.longitude)
                 results.append((course, spot, fromLocation.distance(from: spotLocation)))
             }
         }
         nearbySpots = Array(results.sorted { $0.distance < $1.distance }.prefix(displayLimit))
+    }
+
+    /// お気に入りモード: お気に入りスポットを追加順または距離順で全件表示
+    private func recalculateFavorites() {
+        let fromLocation = selectedCoordinate.map { CLLocation(latitude: $0.latitude, longitude: $0.longitude) }
+        var results: [(course: Course, spot: CourseSpot, distance: Double)] = []
+
+        for course in courses where !excludedCourseIds.contains(course.id) && (!course.isUserCreated || course.isEnabled) {
+            for spot in course.spots where spot.hasValidCoordinate && favoriteSpotIds.contains(spot.id) {
+                let distance = fromLocation.map {
+                    CLLocation(latitude: spot.latitude, longitude: spot.longitude).distance(from: $0)
+                } ?? 0
+                results.append((course, spot, distance))
+            }
+        }
+
+        switch sortType {
+        case .added:
+            // コース・スポット順（ロード順 = 追加順に準じる）
+            nearbySpots = results
+        case .distance:
+            nearbySpots = results.sorted { $0.distance < $1.distance }
+        }
+    }
+
+    /// 行ったスポットモード: 達成済みスポットを追加順（チェックイン日時降順）または距離順で全件表示
+    private func recalculateVisited() {
+        let fromLocation = selectedCoordinate.map { CLLocation(latitude: $0.latitude, longitude: $0.longitude) }
+        var results: [(course: Course, spot: CourseSpot, distance: Double)] = []
+
+        for course in courses where !excludedCourseIds.contains(course.id) && (!course.isUserCreated || course.isEnabled) {
+            for spot in course.spots where spot.hasValidCoordinate && spot.isCheckedIn {
+                let distance = fromLocation.map {
+                    CLLocation(latitude: spot.latitude, longitude: spot.longitude).distance(from: $0)
+                } ?? 0
+                results.append((course, spot, distance))
+            }
+        }
+
+        switch sortType {
+        case .added:
+            // チェックイン日時の降順（最近行ったスポットを上に）
+            nearbySpots = results.sorted {
+                ($0.spot.firstCheckedInAt ?? .distantPast) > ($1.spot.firstCheckedInAt ?? .distantPast)
+            }
+        case .distance:
+            nearbySpots = results.sorted { $0.distance < $1.distance }
+        }
     }
 
     // MARK: - 地点選択

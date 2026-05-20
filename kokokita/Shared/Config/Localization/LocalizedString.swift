@@ -609,6 +609,18 @@ enum L {
         static let title = localized("spotList.title")
         static let locationUnavailable = localized("spotList.locationUnavailable")
         static let noSpots = localized("spotList.noSpots")
+        static let modeNearby = localized("spotList.mode.nearby")
+        static let modeNearbyShort = localized("spotList.mode.nearby.short")
+        static let modeFavorites = localized("spotList.mode.favorites")
+        static let modeFavoritesShort = localized("spotList.mode.favorites.short")
+        static let modeVisited = localized("spotList.mode.visited")
+        static let modeVisitedShort = localized("spotList.mode.visited.short")
+        static let noFavorites = localized("spotList.noFavorites")
+        static let noVisited = localized("spotList.noVisited")
+        static let sortTypeAdded = localized("spotList.sortType.added")
+        static let nearbySubtitle = localized("spotList.nearbySubtitle")
+        static let distanceSubtitle = localized("spotList.distanceSubtitle")
+        static func totalCount(_ count: Int) -> String { String(format: localized("spotList.totalCount"), count) }
     }
 
     // MARK: - TaxonomyList（タクソノミー一覧ソート）

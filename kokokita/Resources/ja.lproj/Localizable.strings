@@ -547,6 +547,18 @@
 "spotList.title" = "スポット";
 "spotList.locationUnavailable" = "現在地が取得できません";
 "spotList.noSpots" = "近くのスポットがありません\n巡礼コースを有効にしてください";
+"spotList.mode.nearby" = "近くのスポット";
+"spotList.mode.nearby.short" = "近く";
+"spotList.mode.favorites" = "お気に入り";
+"spotList.mode.favorites.short" = "お気に入り";
+"spotList.mode.visited" = "行ったスポット";
+"spotList.mode.visited.short" = "行った";
+"spotList.noFavorites" = "お気に入りのスポットがありません";
+"spotList.noVisited" = "行ったスポットはありません";
+"spotList.sortType.added" = "追加順";
+"spotList.nearbySubtitle" = "から近いスポット";
+"spotList.distanceSubtitle" = "から近い順";
+"spotList.totalCount" = "全%d件";
 
 // MARK: - TaxonomyList（ソート）
 "taxonomyList.sortNewest" = "新しい順";

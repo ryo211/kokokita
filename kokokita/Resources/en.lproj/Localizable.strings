@@ -543,6 +543,18 @@
 "spotList.title" = "Spots";
 "spotList.locationUnavailable" = "Location unavailable";
 "spotList.noSpots" = "No nearby spots\nPlease enable a pilgrimage course";
+"spotList.mode.nearby" = "Nearby Spots";
+"spotList.mode.nearby.short" = "Nearby";
+"spotList.mode.favorites" = "Favorites";
+"spotList.mode.favorites.short" = "Fav";
+"spotList.mode.visited" = "Visited Spots";
+"spotList.mode.visited.short" = "Visited";
+"spotList.noFavorites" = "No favorite spots";
+"spotList.noVisited" = "No visited spots yet";
+"spotList.sortType.added" = "Added";
+"spotList.nearbySubtitle" = "Nearest from";
+"spotList.distanceSubtitle" = "Nearest from";
+"spotList.totalCount" = "Total %d";
 
 // MARK: - TaxonomyList (sort)
 "taxonomyList.sortNewest" = "Newest first";

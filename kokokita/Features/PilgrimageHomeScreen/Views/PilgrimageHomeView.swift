@@ -169,7 +169,7 @@ struct PilgrimageHomeView: View {
                         CourseDetailView(course: course, showSummaryOnAppear: true)
                     }
                 case .spotPanelList(let kind):
-                    SpotPanelListView(kind: kind, store: store, userLocation: userLocation)
+                    SpotListScreen(initialMode: kind.spotListMode, isEmbedded: true)
                 }
             }
             // コース詳細への遷移（CourseListView が非ルートのためここで処理）
