@@ -1235,8 +1235,28 @@ private struct SpotRowExpandedView: View {
 private struct SpotRowBackdropView: View {
     let spot: CourseSpot
     let isSelected: Bool
+    @Environment(\.colorScheme) private var colorScheme
 
     private var hasImage: Bool { spot.localCoverImagePath != nil || spot.coverImageUrl != nil }
+
+    private var imageOpacity: Double {
+        if colorScheme == .dark {
+            return isSelected ? 0.82 : 0.72
+        }
+        return isSelected ? 0.62 : 0.50
+    }
+
+    private var trailingBackgroundOpacity: Double {
+        colorScheme == .dark ? 0.02 : 0.10
+    }
+
+    private var midBackgroundOpacity: Double {
+        colorScheme == .dark ? 0.42 : 0.62
+    }
+
+    private var selectedTintOpacity: Double {
+        colorScheme == .dark ? 0.11 : 0.07
+    }
 
     var body: some View {
         GeometryReader { geo in
@@ -1248,9 +1268,9 @@ private struct SpotRowBackdropView: View {
                             height: geo.size.height
                         )
                         .clipped()
-                        .opacity(isSelected ? 0.62 : 0.50)
-                        .saturation(isSelected ? 1.1 : 1.05)
-                        .contrast(1.12)
+                        .opacity(imageOpacity)
+                        .saturation(colorScheme == .dark ? (isSelected ? 1.16 : 1.1) : (isSelected ? 1.1 : 1.05))
+                        .contrast(colorScheme == .dark ? 1.05 : 1.12)
                         .offset(x: 10)
                         .mask(
                             LinearGradient(
@@ -1267,14 +1287,14 @@ private struct SpotRowBackdropView: View {
                     LinearGradient(
                         colors: [
                             Color(uiColor: .systemBackground),
-                            Color(uiColor: .systemBackground).opacity(0.62),
-                            Color(uiColor: .systemBackground).opacity(0.10)
+                            Color(uiColor: .systemBackground).opacity(midBackgroundOpacity),
+                            Color(uiColor: .systemBackground).opacity(trailingBackgroundOpacity)
                         ],
                         startPoint: .leading,
                         endPoint: .trailing
                     )
                 }
-                if isSelected { Color.indigo.opacity(0.07) }
+                if isSelected { Color.indigo.opacity(selectedTintOpacity) }
             }
             .frame(width: geo.size.width, height: geo.size.height)
             .clipped()
@@ -1290,6 +1310,39 @@ private struct SpotFilterPanel: View {
     let onDismiss: () -> Void
 
     @State private var expandedKeys: Set<String> = []
+    @Environment(\.colorScheme) private var colorScheme
+
+    private var panelOverlayColor: Color {
+        colorScheme == .dark
+            ? Color(.secondarySystemBackground).opacity(0.94)
+            : Color.white.opacity(0.55)
+    }
+
+    private var panelBorderGradient: LinearGradient {
+        LinearGradient(
+            colors: colorScheme == .dark
+                ? [
+                    Color.white.opacity(0.18),
+                    Color.white.opacity(0.06)
+                ]
+                : [
+                    Color.white.opacity(0.9),
+                    Color.white.opacity(0.4)
+                ],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+    }
+
+    private var expandedCourseBackground: Color {
+        colorScheme == .dark
+            ? Color.white.opacity(0.045)
+            : Color.primary.opacity(0.03)
+    }
+
+    private var panelShadowColor: Color {
+        colorScheme == .dark ? .black.opacity(0.45) : .black.opacity(0.22)
+    }
 
     private var sections: [(key: String, category: CourseCategory?, courses: [Course])] {
         var categoryOf: [String: CourseCategory?] = [:]
@@ -1446,7 +1499,7 @@ private struct SpotFilterPanel: View {
                                 }
                                 .padding(.horizontal, 16)
                                 .padding(.vertical, 10)
-                                .background(Color.primary.opacity(0.03))
+                                .background(expandedCourseBackground)
                                 .transition(.opacity.combined(with: .move(edge: .top)))
                             }
                         }
@@ -1458,21 +1511,17 @@ private struct SpotFilterPanel: View {
         }
         .background {
             RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(.ultraThinMaterial)
-                .overlay { RoundedRectangle(cornerRadius: 20, style: .continuous).fill(Color.white.opacity(0.55)) }
+                .fill(colorScheme == .dark ? .regularMaterial : .ultraThinMaterial)
+                .overlay { RoundedRectangle(cornerRadius: 20, style: .continuous).fill(panelOverlayColor) }
                 .overlay {
                     RoundedRectangle(cornerRadius: 20, style: .continuous)
                         .strokeBorder(
-                            LinearGradient(
-                                colors: [Color.white.opacity(0.9), Color.white.opacity(0.4)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
+                            panelBorderGradient,
                             lineWidth: 0.8
                         )
                 }
         }
-        .shadow(color: .black.opacity(0.22), radius: 28, x: 0, y: -8)
+        .shadow(color: panelShadowColor, radius: 28, x: 0, y: -8)
         .ignoresSafeArea(edges: .bottom)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }

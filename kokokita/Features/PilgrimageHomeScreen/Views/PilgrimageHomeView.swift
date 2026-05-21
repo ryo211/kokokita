@@ -15,6 +15,7 @@ struct PilgrimageHomeView: View {
     @State private var selectedSpotPanelIndex = 0
 
     @Environment(\.spotFavoriteStore) private var favoriteStore
+    @Environment(\.colorScheme) private var colorScheme
 
     // MARK: - Derived Data
 
@@ -59,6 +60,18 @@ struct PilgrimageHomeView: View {
                 .sorted { ($0.spot.firstCheckedInAt ?? .distantPast) > ($1.spot.firstCheckedInAt ?? .distantPast) }
                 .prefix(5)
         )
+    }
+
+    private var spotPanelCardBackground: Color {
+        SpotPanelPalette.cardBackground(for: colorScheme)
+    }
+
+    private var spotPanelBorderColor: Color {
+        SpotPanelPalette.border(for: colorScheme)
+    }
+
+    private var spotPanelAccentColor: Color {
+        SpotPanelPalette.accent(for: colorScheme)
     }
 
     // MARK: - Body
@@ -215,7 +228,7 @@ struct PilgrimageHomeView: View {
             VStack(spacing: 0) {
                 // ① コース一覧
                 courseScrollSection
-                    .padding(.bottom, 28)
+                    .padding(.bottom, 18)
 
                 // ② スポット情報パネル
                 spotPanelsSection
@@ -281,7 +294,7 @@ struct PilgrimageHomeView: View {
                         }
                     }
                 }
-                .background(Color.white.opacity(0.45))
+                .background(spotPanelCardBackground)
                 .clipShape(UnevenRoundedRectangle(
                     topLeadingRadius: 0,
                     bottomLeadingRadius: 14,
@@ -290,7 +303,7 @@ struct PilgrimageHomeView: View {
                 ))
                 .overlay(
                     SpotCardBorderShape(cornerRadius: 14)
-                        .stroke(Color.indigo.opacity(0.22), lineWidth: 1.2)
+                        .stroke(spotPanelBorderColor, lineWidth: 1.2)
                 )
 
                 HStack {
@@ -302,7 +315,7 @@ struct PilgrimageHomeView: View {
                             Image(systemName: "chevron.right")
                                 .font(.system(size: 11, weight: .semibold))
                         }
-                        .foregroundStyle(.indigo)
+                        .foregroundStyle(spotPanelAccentColor)
                     }
                     .buttonStyle(.plain)
                 }
@@ -335,7 +348,7 @@ struct PilgrimageHomeView: View {
                         }
                     }
                 }
-                .background(Color.white.opacity(0.45))
+                .background(spotPanelCardBackground)
                 .clipShape(UnevenRoundedRectangle(
                     topLeadingRadius: 0,
                     bottomLeadingRadius: 14,
@@ -344,7 +357,7 @@ struct PilgrimageHomeView: View {
                 ))
                 .overlay(
                     SpotCardBorderShape(cornerRadius: 14)
-                        .stroke(Color.indigo.opacity(0.22), lineWidth: 1.2)
+                        .stroke(spotPanelBorderColor, lineWidth: 1.2)
                 )
 
                 HStack {
@@ -356,7 +369,7 @@ struct PilgrimageHomeView: View {
                             Image(systemName: "chevron.right")
                                 .font(.system(size: 11, weight: .semibold))
                         }
-                        .foregroundStyle(.indigo)
+                        .foregroundStyle(spotPanelAccentColor)
                     }
                     .buttonStyle(.plain)
                 }
@@ -389,7 +402,7 @@ struct PilgrimageHomeView: View {
                         }
                     }
                 }
-                .background(Color.white.opacity(0.45))
+                .background(spotPanelCardBackground)
                 .clipShape(UnevenRoundedRectangle(
                     topLeadingRadius: 0,
                     bottomLeadingRadius: 14,
@@ -398,7 +411,7 @@ struct PilgrimageHomeView: View {
                 ))
                 .overlay(
                     SpotCardBorderShape(cornerRadius: 14)
-                        .stroke(Color.indigo.opacity(0.22), lineWidth: 1.2)
+                        .stroke(spotPanelBorderColor, lineWidth: 1.2)
                 )
 
                 HStack {
@@ -410,7 +423,7 @@ struct PilgrimageHomeView: View {
                             Image(systemName: "chevron.right")
                                 .font(.system(size: 11, weight: .semibold))
                         }
-                        .foregroundStyle(.indigo)
+                        .foregroundStyle(spotPanelAccentColor)
                     }
                     .buttonStyle(.plain)
                 }
@@ -827,10 +840,52 @@ private struct SpotCardBorderShape: Shape {
     }
 }
 
+private struct BottomBorderLineShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        path.move(to: CGPoint(x: rect.minX, y: rect.maxY))
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
+        return path
+    }
+}
+
+private enum SpotPanelPalette {
+    static func cardBackground(for colorScheme: ColorScheme) -> Color {
+        colorScheme == .dark
+            ? Color(.secondarySystemBackground).opacity(0.9)
+            : Color.white.opacity(0.45)
+    }
+
+    static func selectedTabBackground(for colorScheme: ColorScheme) -> Color {
+        cardBackground(for: colorScheme)
+    }
+
+    static func inactiveTabBackground(for colorScheme: ColorScheme) -> Color {
+        colorScheme == .dark
+            ? Color(.tertiarySystemBackground).opacity(0.96)
+            : Color(.systemGray5).opacity(0.85)
+    }
+
+    static func accent(for colorScheme: ColorScheme) -> Color {
+        colorScheme == .dark
+            ? Color(red: 0.72, green: 0.68, blue: 1.0)
+            : .indigo
+    }
+
+    static func secondaryAccent(for colorScheme: ColorScheme) -> Color {
+        accent(for: colorScheme).opacity(colorScheme == .dark ? 0.88 : 0.75)
+    }
+
+    static func border(for colorScheme: ColorScheme) -> Color {
+        accent(for: colorScheme).opacity(colorScheme == .dark ? 0.34 : 0.22)
+    }
+}
+
 // MARK: - スポットパネル 付箋タブバー
 
 private struct SpotFolderTabBar: View {
     @Binding var selectedIndex: Int
+    @Environment(\.colorScheme) private var colorScheme
 
     static let selectedHeight: CGFloat = 42
     private let unselectedHeight: CGFloat = 34
@@ -847,8 +902,28 @@ private struct SpotFolderTabBar: View {
         TabItem(shortLabel: L.PilgrimageHome.recentTabShort,   fullLabel: L.PilgrimageHome.recentTitle,   icon: "checkmark.seal.fill"),
     ]
 
-    // 選択タブは transparent（カード背景と一体化）、非選択タブは暗い付箋色
-    private let inactiveBackground = Color(.systemGray5).opacity(0.85)
+    // 選択タブはカード背景と一体化、非選択タブは控えめな付箋色
+    private let borderWidth: CGFloat = 1.2
+
+    private var inactiveBackground: Color {
+        SpotPanelPalette.inactiveTabBackground(for: colorScheme)
+    }
+
+    private var selectedBackground: Color {
+        SpotPanelPalette.selectedTabBackground(for: colorScheme)
+    }
+
+    private var accentColor: Color {
+        SpotPanelPalette.accent(for: colorScheme)
+    }
+
+    private var inactiveForeground: Color {
+        colorScheme == .dark ? Color(.secondaryLabel) : Color(.systemGray)
+    }
+
+    private var borderColor: Color {
+        SpotPanelPalette.border(for: colorScheme)
+    }
 
     var body: some View {
         // spacing: 0 にして、タブ間に明示的なseparatorビューを挿入する
@@ -869,18 +944,18 @@ private struct SpotFolderTabBar: View {
                             .lineLimit(1)
                             .minimumScaleFactor(0.78)
                     }
-                    .foregroundStyle(isSelected ? Color.indigo : Color(.systemGray))
+                    .foregroundStyle(isSelected ? accentColor : inactiveForeground)
                     .frame(maxWidth: .infinity)
                     .frame(height: isSelected ? Self.selectedHeight : unselectedHeight)
                     .background(
                         FolderTabShape()
-                            .fill(isSelected ? Color.white.opacity(0.45) : inactiveBackground)
+                            .fill(isSelected ? selectedBackground : inactiveBackground)
                     )
                     // 選択タブのみ上3辺に枠
                     .overlay {
                         if isSelected {
                             FolderTabShape()
-                                .stroke(Color.indigo.opacity(0.12), lineWidth: 1.2)
+                                .stroke(borderColor, lineWidth: borderWidth)
                         }
                     }
                     .shadow(
@@ -889,27 +964,24 @@ private struct SpotFolderTabBar: View {
                     )
                 }
                 .buttonStyle(.plain)
-                // 非選択タブのみ下辺に枠線。frame を selectedHeight 固定にして
-                // separator と同じY底辺（HStack底辺）に揃えることで重複を防ぐ
+                // 非選択タブの下面はカード本体と同じ枠線で閉じる。
                 .frame(maxWidth: .infinity)
                 .frame(height: Self.selectedHeight, alignment: .bottom)
                 .overlay(alignment: .bottom) {
                     if !isSelected {
-                        Rectangle()
-                            .frame(height: 1.2)
-                            .foregroundStyle(Color.indigo.opacity(0.12))
+                        BottomBorderLineShape()
+                            .stroke(borderColor, lineWidth: borderWidth)
                     }
                 }
                 .animation(.spring(response: 0.36, dampingFraction: 0.74), value: selectedIndex)
 
-                // タブ間のseparator（最後のタブを除く）：下辺のみ線を引く
+                // タブ間の隙間もカード本体と同じ枠線でつなぐ。
                 if i < tabs.count - 1 {
                     Color.clear
                         .frame(width: 3)
                         .overlay(alignment: .bottom) {
-                            Rectangle()
-                                .frame(height: 1.2)
-                                .foregroundStyle(Color.indigo.opacity(0.12))
+                            BottomBorderLineShape()
+                                .stroke(borderColor, lineWidth: borderWidth)
                         }
                 }
             }
@@ -924,6 +996,15 @@ private struct NearbySpotRow: View {
     let course: Course
     let spot: CourseSpot
     let distance: Double
+    @Environment(\.colorScheme) private var colorScheme
+
+    private var accentColor: Color {
+        SpotPanelPalette.accent(for: colorScheme)
+    }
+
+    private var secondaryAccentColor: Color {
+        SpotPanelPalette.secondaryAccent(for: colorScheme)
+    }
 
     var body: some View {
         HStack(spacing: 12) {
@@ -939,7 +1020,7 @@ private struct NearbySpotRow: View {
                     Image(systemName: "chevron.right")
                         .font(.system(size: 9, weight: .semibold))
                 }
-                .foregroundStyle(.indigo.opacity(0.75))
+                .foregroundStyle(secondaryAccentColor)
 
                 Text(spot.name)
                     .font(.body)
@@ -952,7 +1033,7 @@ private struct NearbySpotRow: View {
                     Text(L.PilgrimageHome.distanceFormatted(distance))
                         .font(.caption2.bold().monospacedDigit())
                 }
-                .foregroundStyle(.indigo)
+                .foregroundStyle(accentColor)
             }
 
             Spacer()
@@ -967,6 +1048,11 @@ private struct NearbySpotRow: View {
 private struct RecentAchievementRow: View {
     let course: Course
     let spot: CourseSpot
+    @Environment(\.colorScheme) private var colorScheme
+
+    private var secondaryAccentColor: Color {
+        SpotPanelPalette.secondaryAccent(for: colorScheme)
+    }
 
     var body: some View {
         HStack(spacing: 12) {
@@ -982,7 +1068,7 @@ private struct RecentAchievementRow: View {
                     Image(systemName: "chevron.right")
                         .font(.system(size: 9, weight: .semibold))
                 }
-                .foregroundStyle(.indigo.opacity(0.75))
+                .foregroundStyle(secondaryAccentColor)
 
                 Text(spot.name)
                     .font(.body)
@@ -1013,6 +1099,15 @@ private struct FavoriteSpotRow: View {
     let course: Course
     let spot: CourseSpot
     let distance: Double?
+    @Environment(\.colorScheme) private var colorScheme
+
+    private var accentColor: Color {
+        SpotPanelPalette.accent(for: colorScheme)
+    }
+
+    private var secondaryAccentColor: Color {
+        SpotPanelPalette.secondaryAccent(for: colorScheme)
+    }
 
     var body: some View {
         HStack(spacing: 12) {
@@ -1028,7 +1123,7 @@ private struct FavoriteSpotRow: View {
                     Image(systemName: "chevron.right")
                         .font(.system(size: 9, weight: .semibold))
                 }
-                .foregroundStyle(.indigo.opacity(0.75))
+                .foregroundStyle(secondaryAccentColor)
 
                 Text(spot.name)
                     .font(.body)
@@ -1042,7 +1137,7 @@ private struct FavoriteSpotRow: View {
                         Text(L.PilgrimageHome.distanceFormatted(distance))
                             .font(.caption2.bold().monospacedDigit())
                     }
-                    .foregroundStyle(.indigo)
+                    .foregroundStyle(accentColor)
                 }
             }
 
