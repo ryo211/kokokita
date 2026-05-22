@@ -13,15 +13,71 @@ struct CourseScreen: View {
     var body: some View {
         NavigationStack {
             CourseListView(store: store)
+                // カテゴリ選択 → フィルター済みコース一覧（ネイティブ push でスワイプバック対応）
+                .navigationDestination(for: CourseCategory.self) { category in
+                    CategoryCourseListView(category: category, store: store)
+                }
+                // コース詳細
                 .navigationDestination(for: UUID.self) { courseId in
                     if let course = store.courses.first(where: { $0.id == courseId }) {
-                        // courseListStore を渡し、詳細を開いたタイミングで遡り判定シートを表示
                         CourseDetailView(course: course, courseListStore: store, showSummaryOnAppear: true)
                     }
                 }
         }
         .onReceive(NotificationCenter.default.publisher(for: .courseChanged)) { _ in
             Task { await store.load() }
+        }
+    }
+}
+
+// MARK: - カテゴリ別コース一覧
+
+private struct CategoryCourseListView: View {
+    let category: CourseCategory
+    @Bindable var store: CourseListStore
+
+    private var filteredCourses: [Course] {
+        store.courses.filter { $0.categories.contains(category) }
+    }
+
+    var body: some View {
+        List {
+            if filteredCourses.isEmpty {
+                ContentUnavailableView(
+                    L.Course.emptyTitle,
+                    systemImage: "plus.circle",
+                    description: Text(L.Course.emptyDescription)
+                )
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
+            } else {
+                ForEach(filteredCourses) { course in
+                    let isNew = store.newlyAddedCourseIds.contains(course.id)
+                    NavigationLink(value: course.id) {
+                        CourseRowView(course: course, isNew: isNew)
+                    }
+                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                        Button(role: .destructive) {
+                            Task { await store.delete(course.id) }
+                        } label: {
+                            Label(L.Common.delete, systemImage: "trash")
+                        }
+                    }
+                }
+            }
+        }
+        .listStyle(.plain)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                HStack(spacing: 6) {
+                    Image(systemName: category.iconName)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.indigo)
+                    Text(category.displayName)
+                        .font(.headline)
+                }
+            }
         }
     }
 }

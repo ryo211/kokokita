@@ -10,7 +10,7 @@ struct GroupBadge: View {
 
     var body: some View {
         HStack(spacing: compact ? 3 : 4) {
-            Image(systemName: "folder.fill")
+            Image(systemName: "airplane")
                 .font(compact ? .caption2.bold() : .caption.bold())
             Text(name)
                 .font(compact ? .caption2.bold() : .caption.bold())

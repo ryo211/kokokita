@@ -1,7 +1,7 @@
 {
   "images" : [
     {
-      "filename" : "kokita_irodori_blue_icon.png",
+      "filename" : "kokokita-app-icon-clearBlueDeep.png",
       "idiom" : "universal",
       "platform" : "ios",
       "size" : "1024x1024"
@@ -13,6 +13,7 @@
           "value" : "dark"
         }
       ],
+      "filename" : "kokokita-app-icon-dark-clearBlueDeep.png",
       "idiom" : "universal",
       "platform" : "ios",
       "size" : "1024x1024"
@@ -24,6 +25,7 @@
           "value" : "tinted"
         }
       ],
+      "filename" : "kokokita-app-icon-tinted-clearBlueAqua.png",
       "idiom" : "universal",
       "platform" : "ios",
       "size" : "1024x1024"

@@ -153,6 +153,7 @@ enum L {
         static let modeRecord = localized("tab.modeRecord")
         static let myList = localized("tab.myList")
         static let create = localized("tab.create")
+        static let spotList = localized("tab.spotList")
     }
 
     // MARK: - My List（マイリスト）
@@ -472,6 +473,8 @@ enum L {
         static let categoryHistoryCulture  = localized("course.category.history_culture")
         static let categoryNature          = localized("course.category.nature")
         static let categoryArtEntertainment = localized("course.category.art_entertainment")
+        static let categoryMovieDrama      = localized("course.category.movie_drama")
+        static let categoryTravelSightseeing = localized("course.category.travel_sightseeing")
         static let categoryAnime           = localized("course.category.anime")
         static let categoryUserCreated     = localized("course.category.user_created")
         static let newBadge = localized("course.newBadge")
@@ -585,10 +588,12 @@ enum L {
         static let coursesTitle = localized("pilgrimageHome.coursesTitle")
         static let seeAll = localized("pilgrimageHome.seeAll")
         static let nearbyTitle = localized("pilgrimageHome.nearbyTitle")
+        static let nearbyTabShort = localized("pilgrimageHome.nearbyTabShort")
         static let nearbyRefresh = localized("pilgrimageHome.nearbyRefresh")
         static let noNearbySpots = localized("pilgrimageHome.noNearbySpots")
         static let locationUnavailable = localized("pilgrimageHome.locationUnavailable")
         static let recentTitle = localized("pilgrimageHome.recentTitle")
+        static let recentTabShort = localized("pilgrimageHome.recentTabShort")
         static let noRecentAchievements = localized("pilgrimageHome.noRecentAchievements")
         static func progressFormat(_ checked: Int, _ total: Int) -> String { String(format: localized("pilgrimageHome.progressFormat"), checked, total) }
         static func distanceMeter(_ meters: Int) -> String { String(format: localized("pilgrimageHome.distanceMeter"), meters) }
@@ -599,11 +604,37 @@ enum L {
         }
     }
 
+    // MARK: - SpotList（スポット一覧画面）
+    enum SpotList {
+        static let title = localized("spotList.title")
+        static let locationUnavailable = localized("spotList.locationUnavailable")
+        static let noSpots = localized("spotList.noSpots")
+        static let modeNearby = localized("spotList.mode.nearby")
+        static let modeNearbyShort = localized("spotList.mode.nearby.short")
+        static let modeFavorites = localized("spotList.mode.favorites")
+        static let modeFavoritesShort = localized("spotList.mode.favorites.short")
+        static let modeVisited = localized("spotList.mode.visited")
+        static let modeVisitedShort = localized("spotList.mode.visited.short")
+        static let noFavorites = localized("spotList.noFavorites")
+        static let noVisited = localized("spotList.noVisited")
+        static let sortTypeAdded = localized("spotList.sortType.added")
+        static let nearbySubtitle = localized("spotList.nearbySubtitle")
+        static let distanceSubtitle = localized("spotList.distanceSubtitle")
+        static func totalCount(_ count: Int) -> String { String(format: localized("spotList.totalCount"), count) }
+    }
+
+    // MARK: - TaxonomyList（タクソノミー一覧ソート）
+    enum TaxonomyList {
+        static let sortNewest = localized("taxonomyList.sortNewest")
+        static let sortCount  = localized("taxonomyList.sortCount")
+    }
+
     // MARK: - Spot Panel List
     enum SpotPanelList {
         static let displayLimitSuffix = localized("spotPanelList.displayLimitSuffix")
         static let displayLimitAll    = localized("spotPanelList.displayLimitAll")
         static let favoritesTitle     = localized("spotPanelList.favoritesTitle")
+        static let favoritesTabShort  = localized("spotPanelList.favoritesTabShort")
         static let noFavorites        = localized("spotPanelList.noFavorites")
         static let noFavoritesShort   = localized("spotPanelList.noFavoritesShort")
     }
@@ -612,6 +643,8 @@ enum L {
     enum CheckIn {
         static let resultTitle = localized("checkIn.resultTitle")
         static let resultSubtitle = localized("checkIn.resultSubtitle")
+        static let stampAcquired = localized("checkIn.stampAcquired")
+        static let courseAllClear = localized("checkIn.courseAllClear")
         static let distanceFormat = localized("checkIn.distanceFormat")
         static let retroactiveTitle = localized("checkIn.retroactiveTitle")
         static let retroactiveSubtitle = localized("checkIn.retroactiveSubtitle")

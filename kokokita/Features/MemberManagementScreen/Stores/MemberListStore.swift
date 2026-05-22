@@ -9,6 +9,7 @@ final class MemberListStore {
 
     var items: [MemberTag] = []
     var visitCounts: [UUID: Int] = [:] // 各メンバーに関連する訪問記録の件数
+    var lastVisitDates: [UUID: Date] = [:] // 各メンバーの最新訪問日
     var loading = false
     var alert: String?
 
@@ -52,8 +53,9 @@ final class MemberListStore {
             let rows = try repository.allMembers()
             items = filterAndSort(rows)
 
-            // 各メンバーの訪問記録数を取得
+            // 各メンバーの訪問記録数・最新訪問日を取得
             var counts: [UUID: Int] = [:]
+            var latestDates: [UUID: Date] = [:]
             for member in items {
                 let visits = try visitRepository.fetchAll(
                     filterLabel: nil,
@@ -64,8 +66,22 @@ final class MemberListStore {
                     dateToExclusive: nil
                 )
                 counts[member.id] = visits.count
+                if let latest = visits.map({ $0.visit.timestampUTC }).max() {
+                    latestDates[member.id] = latest
+                }
             }
             visitCounts = counts
+            lastVisitDates = latestDates
+
+            // 最新訪問日が新しい順にソート（記録なしは末尾）
+            items.sort {
+                switch (latestDates[$0.id], latestDates[$1.id]) {
+                case let (l?, r?): return l > r
+                case (_?, nil):   return true
+                case (nil, _?):   return false
+                default:          return $0.name.localizedCompare($1.name) == .orderedAscending
+                }
+            }
         } catch {
             alert = error.localizedDescription
         }

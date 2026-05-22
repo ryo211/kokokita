@@ -30,19 +30,19 @@
 "visit.edit.memoPlaceholder" = "メモ";
 "visit.edit.editSection" = "編集";
 "visit.edit.basicInfoSection" = "基本情報";
-"visit.edit.taxonomySection" = "ラベル・グループ・メンバー";
+"visit.edit.taxonomySection" = "ラベル・旅行・メンバー";
 "visit.edit.saveButton" = "保存";
 "visit.edit.locationAcquiring" = "現在地を取得しています…";
 "visit.edit.kokokamo" = "ココカモ";
 "visit.edit.selectLabel" = "ラベルを選択";
-"visit.edit.selectGroup" = "グループを選択";
+"visit.edit.selectGroup" = "旅行を選択";
 "visit.edit.selectMember" = "メンバーを選択";
 "visit.edit.createNew" = "新規作成…";
 "visit.edit.labelName" = "ラベル名";
-"visit.edit.groupName" = "グループ名";
+"visit.edit.groupName" = "旅行名";
 "visit.edit.createAndSelect" = "作成して選択";
 "visit.edit.newLabel" = "ラベル新規作成";
-"visit.edit.newGroup" = "グループ新規作成";
+"visit.edit.newGroup" = "旅行新規作成";
 "visit.edit.clearSelection" = "未選択にする";
 "visit.edit.recordDateTime" = "記録日時";
 "visit.edit.copyFromOtherVisit" = "過去の記録からコピー";
@@ -57,7 +57,7 @@
 "home.noVisits" = "訪問記録がありません";
 "home.filter.all" = "すべて";
 "home.filter.label" = "ラベル";
-"home.filter.group" = "グループ";
+"home.filter.group" = "旅行";
 "home.filter.period" = "期間";
 "home.search.placeholder" = "検索";
 "home.deleteConfirmTitle" = "この記録を削除しますか？";
@@ -77,7 +77,7 @@
 "detail.coordinates" = "座標";
 "detail.timestamp" = "訪問日時";
 "detail.labels" = "ラベル";
-"detail.group" = "グループ";
+"detail.group" = "旅行";
 "detail.memo" = "メモ";
 "detail.facility" = "施設情報";
 "detail.deleteConfirmTitle" = "この記録を削除しますか？";
@@ -85,12 +85,12 @@
 "detail.deleteVisitTitle" = "記録を削除";
 "detail.deleteVisitMessage" = "この記録を削除しますか？";
 "detail.nearbyPastRecords" = "近くの記録";
-"detail.sameGroupRecords" = "同じグループの記録";
+"detail.sameGroupRecords" = "同じ旅行の記録";
 
 // MARK: - Menu
 "menu.title" = "メニュー";
 "menu.labels" = "ラベル管理";
-"menu.groups" = "グループ管理";
+"menu.groups" = "旅行管理";
 "menu.settings" = "設定";
 "menu.about" = "このアプリについて";
 "menu.resetAll" = "すべてリセット";
@@ -171,20 +171,20 @@
 "labelColor.brown" = "ブラウン";
 
 // MARK: - Group Management
-"group.title" = "グループ";
-"group.namePlaceholder" = "グループ名";
-"group.createTitle" = "グループ新規作成";
-"group.selectTitle" = "グループを選択";
-"group.emptyMessage" = "グループはありません";
+"group.title" = "旅行";
+"group.namePlaceholder" = "旅行名";
+"group.createTitle" = "旅行新規作成";
+"group.selectTitle" = "旅行を選択";
+"group.emptyMessage" = "旅行はありません";
 "group.emptyDescription" = "右上の+から作成できます。";
-"group.deleteConfirm" = "このグループを削除";
-"group.createAccessibility" = "グループを新規作成";
+"group.deleteConfirm" = "この旅行を削除";
+"group.createAccessibility" = "旅行を新規作成";
 "group.deleteReallyConfirm" = "本当に削除しますか？";
-"group.deleteFooter" = "グループを削除しても、記録自体は削除されません。";
-"group.duplicateName" = "同じ名前のグループが既にあります。";
-"group.detailTitle" = "グループ詳細";
+"group.deleteFooter" = "旅行を削除しても、記録自体は削除されません。";
+"group.duplicateName" = "同じ名前の旅行が既にあります。";
+"group.detailTitle" = "旅行詳細";
 "group.deleteIrreversible" = "この操作は取り消せません。";
-"group.relatedVisitsHeader" = "このグループの記録";
+"group.relatedVisitsHeader" = "この旅行の記録";
 
 // MARK: - Member Management
 "member.title" = "メンバー";
@@ -205,7 +205,7 @@
 // MARK: - Settings
 "settings.title" = "メニュー";
 "settings.editLabels" = "ラベル";
-"settings.editGroups" = "グループ";
+"settings.editGroups" = "旅行";
 "settings.editMembers" = "メンバー";
 "settings.dataMigration" = "データ移行";
 "settings.resetAll" = "初期化（全削除）";
@@ -254,7 +254,7 @@
 "filter.title" = "検索";
 "filter.sectionKeyword" = "キーワード";
 "filter.sectionLabel" = "ラベル";
-"filter.sectionGroup" = "グループ";
+"filter.sectionGroup" = "旅行";
 "filter.sectionMember" = "メンバー";
 "filter.sectionPeriod" = "期間";
 "filter.sectionCategory" = "施設カテゴリ";
@@ -358,6 +358,8 @@
 "course.category.history_culture" = "歴史・文化";
 "course.category.nature" = "自然";
 "course.category.art_entertainment" = "アート・エンタメ";
+"course.category.movie_drama" = "映画・ドラマ";
+"course.category.travel_sightseeing" = "旅行・観光";
 "course.category.anime" = "アニメ・漫画";
 "course.category.user_created" = "自作コース";
 "course.newBadge" = "NEW";
@@ -395,10 +397,12 @@
 "pilgrimageHome.seeAll" = "すべて見る";
 "pilgrimageHome.progressFormat" = "%d/%d スポット";
 "pilgrimageHome.nearbyTitle" = "近くのスポット";
+"pilgrimageHome.nearbyTabShort" = "近く";
 "pilgrimageHome.nearbyRefresh" = "更新";
 "pilgrimageHome.noNearbySpots" = "近くにスポットはありません";
 "pilgrimageHome.locationUnavailable" = "現在地を取得できませんでした";
-"pilgrimageHome.recentTitle" = "最近行ったスポット";
+"pilgrimageHome.recentTitle" = "行ったスポット";
+"pilgrimageHome.recentTabShort" = "行った";
 "pilgrimageHome.noRecentAchievements" = "まだ達成がありません";
 "pilgrimageHome.distanceMeter" = "%dm";
 
@@ -406,12 +410,15 @@
 "spotPanelList.displayLimitSuffix" = "件";
 "spotPanelList.displayLimitAll" = "全件";
 "spotPanelList.favoritesTitle" = "お気に入りスポット";
+"spotPanelList.favoritesTabShort" = "お気に入り";
 "spotPanelList.noFavorites" = "お気に入りに登録されたスポットはありません\nコース詳細のハートアイコンからお気に入りに追加できます";
 "spotPanelList.noFavoritesShort" = "お気に入りスポットはありません";
 
 // MARK: - CheckIn Result
 "checkIn.resultTitle" = "聖地巡礼達成！";
 "checkIn.resultSubtitle" = "聖地巡礼スポットに到達しました";
+"checkIn.stampAcquired" = "スタンプを獲得しました";
+"checkIn.courseAllClear" = "コース全制覇";
 "checkIn.distanceFormat" = "約%dm";
 "checkIn.retroactiveTitle" = "過去の記録から巡礼スポット達成認定！";
 "checkIn.retroactiveSubtitle" = "以前に訪れた記録がこのコースのスポットと一致しました";
@@ -534,3 +541,25 @@
 // MARK: - Tab Bar（追加分）
 "tab.myList" = "マイリスト";
 "tab.create" = "作る";
+"tab.spotList" = "スポット";
+
+// MARK: - SpotList（スポット一覧）
+"spotList.title" = "スポット";
+"spotList.locationUnavailable" = "現在地が取得できません";
+"spotList.noSpots" = "近くのスポットがありません\n巡礼コースを有効にしてください";
+"spotList.mode.nearby" = "近くのスポット";
+"spotList.mode.nearby.short" = "近く";
+"spotList.mode.favorites" = "お気に入り";
+"spotList.mode.favorites.short" = "お気に入り";
+"spotList.mode.visited" = "行ったスポット";
+"spotList.mode.visited.short" = "行った";
+"spotList.noFavorites" = "お気に入りのスポットがありません";
+"spotList.noVisited" = "行ったスポットはありません";
+"spotList.sortType.added" = "追加順";
+"spotList.nearbySubtitle" = "から近いスポット";
+"spotList.distanceSubtitle" = "から近い順";
+"spotList.totalCount" = "全%d件";
+
+// MARK: - TaxonomyList（ソート）
+"taxonomyList.sortNewest" = "新しい順";
+"taxonomyList.sortCount" = "多い順";

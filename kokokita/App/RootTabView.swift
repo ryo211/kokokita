@@ -163,42 +163,35 @@ private struct CustomBottomBar: View {
     let onSelect: (RootTab) -> Void
     let onCenterTap: () -> Void
     let onModeSwitch: () -> Void
+    @Environment(\.colorScheme) private var colorScheme
+
+    private var footerOverlayColor: Color {
+        colorScheme == .dark
+            ? Color(.systemBackground).opacity(0.72)
+            : Color.clear
+    }
+
+    private var modeSwitchColor: Color {
+        colorScheme == .dark
+            ? Color(red: 0.74, green: 0.70, blue: 1.0)
+            : Color.indigo
+    }
 
     var body: some View {
         ZStack {
             Rectangle()
-                .fill(.ultraThinMaterial)
+                .fill(colorScheme == .dark ? .regularMaterial : .ultraThinMaterial)
                 .frame(height: UIConstants.Size.tabBarHeight)
+                .overlay(footerOverlayColor)
                 .overlay(Divider(), alignment: .top)
 
             HStack(spacing: 8) {
                 // ккокита（記録）ボタン（左端）
-                Button(action: onCenterTap) {
-                    VStack(spacing: 2) {
-                        ZStack {
-                            Circle()
-                                .fill(
-                                    LinearGradient(
-                                        colors: [Color.accentColor.opacity(0.95), Color.accentColor.opacity(0.75)],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                )
-                                .frame(width: 38, height: 38)
-                                .shadow(color: Color.accentColor.opacity(0.35), radius: 6, x: 0, y: 2)
-                            Image("kokokita_irodori_white")
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 22, height: 22)
-                        }
-                        Text(L.App.name)
-                            .font(.caption2.bold())
-                            .foregroundStyle(Color.accentColor)
-                    }
-                    .frame(width: 52, height: 52)
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel(L.Tab.kokokita)
+                KokokitaTabActionButton(
+                    imageName: "kokokita_irodori_blue_v2",
+                    tintColor: .accentColor,
+                    action: onCenterTap
+                )
 
                 // スライディングタブバー（記録モードの3タブ）
                 SliderTabBar(
@@ -215,364 +208,22 @@ private struct CustomBottomBar: View {
                 Button {
                     onModeSwitch()
                 } label: {
-                    VStack(spacing: 4) {
+                    VStack(spacing: 3) {
                         Image(systemName: "figure.walk")
                             .font(.title3)
                         Text(L.Tab.modePilgrimage)
                             .font(.caption2)
                     }
-                    .foregroundStyle(Color.indigo.opacity(0.7))
+                    .foregroundStyle(modeSwitchColor.opacity(colorScheme == .dark ? 0.92 : 0.7))
                     .frame(width: 52, height: 52)
                     .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .strokeBorder(Color.indigo.opacity(0.45), lineWidth: 1.5))
+                        .strokeBorder(modeSwitchColor.opacity(colorScheme == .dark ? 0.62 : 0.45), lineWidth: 1.5))
                 }
                 .buttonStyle(.plain)
             }
             .padding(.horizontal, UIConstants.Spacing.extraLarge + 8)
             .padding(.bottom, UIConstants.Spacing.medium)
         }
-    }
-}
-
-// MARK: - Others Tab Bar (4タブ + 中央ボタン、スライディングインジケーター)
-
-fileprivate struct OthersTabBar: View {
-    let current: RootTab
-    let onSelect: (RootTab) -> Void
-    let onCenterTap: () -> Void
-
-    var body: some View {
-        HStack(spacing: 12) {
-            // 左側の2タブグループ
-            leftTabGroup
-
-            Spacer()
-
-            // 中央: ココキタボタン
-            centerButton
-
-            Spacer()
-
-            // 右側の2タブグループ
-            rightTabGroup
-        }
-        .padding(.horizontal, UIConstants.Spacing.extraLarge + 8)
-        .padding(.bottom, UIConstants.Spacing.medium)
-    }
-
-    // 左側タブグループ (Home, Records)
-    private var leftTabGroup: some View {
-        GeometryReader { geometry in
-            ZStack(alignment: .leading) {
-                // 固定背景コンテナ
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .fill(.ultraThinMaterial)
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 20, style: .continuous)
-                            .fill(
-                                LinearGradient(
-                                    colors: [
-                                        Color.white.opacity(0.12),
-                                        Color.white.opacity(0.04)
-                                    ],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                    }
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 20, style: .continuous)
-                            .strokeBorder(
-                                LinearGradient(
-                                    colors: [
-                                        Color.white.opacity(0.2),
-                                        Color.white.opacity(0.08)
-                                    ],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
-                                lineWidth: 0.5
-                            )
-                    }
-                    .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 3)
-
-                // スライディングインジケーター
-                let tabWidth = (geometry.size.width - 12) / 2
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(.ultraThinMaterial)
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .fill(
-                                LinearGradient(
-                                    colors: [
-                                        Color.accentColor.opacity(0.15),
-                                        Color.accentColor.opacity(0.08)
-                                    ],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                    }
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .fill(
-                                LinearGradient(
-                                    colors: [
-                                        Color.white.opacity(0.2),
-                                        Color.clear
-                                    ],
-                                    startPoint: .top,
-                                    endPoint: .bottom
-                                )
-                            )
-                    }
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .strokeBorder(
-                                LinearGradient(
-                                    colors: [
-                                        Color.accentColor.opacity(0.3),
-                                        Color.accentColor.opacity(0.15)
-                                    ],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
-                                lineWidth: 1
-                            )
-                    }
-                    .frame(width: tabWidth, height: geometry.size.height - 12)
-                    .shadow(color: Color.black.opacity(0.08), radius: 6, x: 0, y: 2)
-                    .offset(x: current == .home ? 6 : tabWidth + 6)
-                    .animation(.interpolatingSpring(stiffness: 150, damping: 18), value: current)
-
-                // ボタンラベル
-                HStack(spacing: 0) {
-                    tabButton(icon: "house.fill", title: L.Tab.home, tab: .home, width: tabWidth)
-                    tabButton(icon: "list.bullet", title: L.Tab.records, tab: .records, width: tabWidth)
-                }
-                .padding(6)
-            }
-        }
-        .frame(width: 160, height: 64)
-    }
-
-    // 右側タブグループ (Course, Menu)
-    private var rightTabGroup: some View {
-        GeometryReader { geometry in
-            ZStack(alignment: .leading) {
-                // 固定背景コンテナ
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .fill(.ultraThinMaterial)
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 20, style: .continuous)
-                            .fill(
-                                LinearGradient(
-                                    colors: [
-                                        Color.white.opacity(0.12),
-                                        Color.white.opacity(0.04)
-                                    ],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                    }
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 20, style: .continuous)
-                            .strokeBorder(
-                                LinearGradient(
-                                    colors: [
-                                        Color.white.opacity(0.2),
-                                        Color.white.opacity(0.08)
-                                    ],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
-                                lineWidth: 0.5
-                            )
-                    }
-                    .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 3)
-
-                // スライディングインジケーター
-                let tabWidth = (geometry.size.width - 12) / 2
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(.ultraThinMaterial)
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .fill(
-                                LinearGradient(
-                                    colors: [
-                                        Color.accentColor.opacity(0.15),
-                                        Color.accentColor.opacity(0.08)
-                                    ],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                    }
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .fill(
-                                LinearGradient(
-                                    colors: [
-                                        Color.white.opacity(0.2),
-                                        Color.clear
-                                    ],
-                                    startPoint: .top,
-                                    endPoint: .bottom
-                                )
-                            )
-                    }
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .strokeBorder(
-                                LinearGradient(
-                                    colors: [
-                                        Color.accentColor.opacity(0.3),
-                                        Color.accentColor.opacity(0.15)
-                                    ],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
-                                lineWidth: 1
-                            )
-                    }
-                    .frame(width: tabWidth, height: geometry.size.height - 12)
-                    .shadow(color: Color.black.opacity(0.08), radius: 6, x: 0, y: 2)
-                    .offset(x: 6)
-                    .animation(.interpolatingSpring(stiffness: 150, damping: 18), value: current)
-
-                // ボタンラベル
-                HStack(spacing: 0) {
-                    tabButton(icon: "ellipsis.circle.fill", title: L.Tab.menu, tab: .menu, width: tabWidth)
-                }
-                .padding(6)
-            }
-        }
-        .frame(width: 160, height: 64)
-    }
-
-    private var centerButton: some View {
-        Button(action: onCenterTap) {
-            ZStack {
-                Circle()
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                Color.accentColor.opacity(0.95),
-                                Color.accentColor.opacity(0.75)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .overlay {
-                        Circle()
-                            .fill(
-                                LinearGradient(
-                                    colors: [
-                                        Color.white.opacity(0.25),
-                                        Color.clear
-                                    ],
-                                    startPoint: .top,
-                                    endPoint: .bottom
-                                )
-                            )
-                    }
-                    .frame(width: UIConstants.Size.centerButtonSize,
-                           height: UIConstants.Size.centerButtonSize)
-                    .shadow(color: Color.accentColor.opacity(0.35), radius: 8, x: 0, y: 2)
-                    .shadow(color: Color.accentColor.opacity(0.15), radius: 3, x: 0, y: 1)
-
-                VStack(spacing: 0) {
-                    Image("kokokita_irodori_white")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 42, height: 42)
-                        .accessibilityHidden(true)
-                    Text(L.App.name)
-                        .font(.caption2.weight(.bold))
-                        .foregroundStyle(.white)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.7)
-                        .offset(y: -2)
-                }
-                .padding(.vertical, 6)
-                .padding(.horizontal, 8)
-            }
-            .padding(.horizontal, UIConstants.Spacing.medium - 2)
-        }
-        .accessibilityLabel(L.Tab.kokokita)
-    }
-
-    private func tabButton(icon: String, title: String, tab: RootTab, width: CGFloat) -> some View {
-        Button {
-            onSelect(tab)
-        } label: {
-            VStack(spacing: 4) {
-                Image(systemName: icon)
-                    .font(.title3)
-                    .fontWeight(current == tab ? .semibold : .regular)
-                Text(title)
-                    .font(.caption2)
-                    .fontWeight(current == tab ? .semibold : .regular)
-            }
-            .foregroundStyle(current == tab ? Color.accentColor : Color.primary.opacity(0.5))
-            .frame(width: width)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-    }
-}
-
-// MARK: - Floating Kokokita Button (右下固定配置)
-
-fileprivate struct FloatingKokokitaButton: View {
-    let onTap: () -> Void
-
-    var body: some View {
-        Button(action: onTap) {
-            ZStack {
-                Circle()
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                Color.accentColor.opacity(0.95),
-                                Color.accentColor.opacity(0.75)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .overlay {
-                        Circle()
-                            .fill(
-                                LinearGradient(
-                                    colors: [
-                                        Color.white.opacity(0.25),
-                                        Color.clear
-                                    ],
-                                    startPoint: .top,
-                                    endPoint: .bottom
-                                )
-                            )
-                    }
-                    .frame(width: 64, height: 64)
-                    .shadow(color: Color.accentColor.opacity(0.35), radius: 12, x: 0, y: 4)
-                    .shadow(color: Color.accentColor.opacity(0.15), radius: 6, x: 0, y: 2)
-
-                VStack(spacing: 2) {
-                    Image("kokokita_irodori_white")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 32, height: 32)
-                    Text(L.App.name)
-                        .font(.caption2.weight(.bold))
-                        .foregroundStyle(.white)
-                }
-            }
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(L.Tab.kokokita)
     }
 }
 

@@ -8,7 +8,11 @@ final class GroupListStore {
     // MARK: - State
 
     var items: [GroupTag] = []
-    var visitCounts: [UUID: Int] = [:] // 各グループに関連する訪問記録の件数
+    var visitCounts: [UUID: Int] = [:]
+    /// 各旅行の（最古記録日, 最新記録日）
+    var dateRanges: [UUID: (earliest: Date, latest: Date)] = [:]
+    /// 各旅行に関連する記録に紐づくメンバー名一覧（名前昇順）
+    var tripMembers: [UUID: [String]] = [:]
     var loading = false
     var alert: String?
 
@@ -52,8 +56,14 @@ final class GroupListStore {
             let rows = try repository.allGroups()
             items = filterAndSort(rows)
 
-            // 各グループの訪問記録数を取得
+            // メンバー名解決用マップ（全件を一度だけ取得）
+            let allMembers = try repository.allMembers()
+            let memberNameMap = Dictionary(uniqueKeysWithValues: allMembers.map { ($0.id, $0.name) })
+
+            // 各グループの訪問記録数・日付範囲・同行メンバーを取得
             var counts: [UUID: Int] = [:]
+            var ranges: [UUID: (earliest: Date, latest: Date)] = [:]
+            var members: [UUID: [String]] = [:]
             for group in items {
                 let visits = try visitRepository.fetchAll(
                     filterLabel: nil,
@@ -64,8 +74,30 @@ final class GroupListStore {
                     dateToExclusive: nil
                 )
                 counts[group.id] = visits.count
+                let dates = visits.map { $0.visit.timestampUTC }
+                if let earliest = dates.min(), let latest = dates.max() {
+                    ranges[group.id] = (earliest: earliest, latest: latest)
+                }
+                // 全記録からメンバーIDを収集して重複排除・名前解決
+                let memberIds = Set(visits.flatMap { $0.details.memberIds })
+                let names = memberIds.compactMap { memberNameMap[$0] }.sorted()
+                if !names.isEmpty {
+                    members[group.id] = names
+                }
             }
             visitCounts = counts
+            dateRanges = ranges
+            tripMembers = members
+
+            // 最新訪問日が新しい順にソート（記録なしは末尾）
+            items.sort {
+                switch (ranges[$0.id]?.latest, ranges[$1.id]?.latest) {
+                case let (l?, r?): return l > r
+                case (_?, nil):   return true
+                case (nil, _?):   return false
+                default:          return $0.name.localizedCompare($1.name) == .orderedAscending
+                }
+            }
         } catch {
             alert = error.localizedDescription
         }

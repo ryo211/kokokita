@@ -5,8 +5,8 @@
   "summary": "日本全国の主要水族館を巡るコースです。全49館収録。 参考：公益社団法人日本動物園水族館協会（JAZA）",
   "source": "bundled",
   "isUserCreated": false,
-  "version": 1,
-  "recognitionRadiusMeters": 500.0,
+  "version": 3,
+  "recognitionRadiusMeters": 500,
   "detailUrl": null,
   "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/course/course-major-aquariums-japan-001.jpg",
   "categories": [
@@ -22,7 +22,8 @@
       "spotDescription": "多様な海の生き物を展示する水族館。ペンギン、イルカ、アザラシなどのショーのほか、各種催し物も開催。",
       "orderIndex": 0,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJhSqlPAUeC18RURQ2LaIFswE"
+      "googlePlaceId": "ChIJhSqlPAUeC18RURQ2LaIFswE",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/aq-jp-001.jpg"
     },
     {
       "spotId": "aq-jp-002",
@@ -33,7 +34,8 @@
       "spotDescription": "海水魚、アザラシ、ペンギンに会える都市型水族館。生き物たちとのふれあいタイムがあり、ショーも開催。",
       "orderIndex": 1,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJQQqA3GErC18RWHPodrXm7HE"
+      "googlePlaceId": "ChIJQQqA3GErC18RWHPodrXm7HE",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/aq-jp-002.jpg"
     },
     {
       "spotId": "aq-jp-003",
@@ -44,7 +46,8 @@
       "spotDescription": "海の生き物に会える水族館。水底トンネル、ペンギンのパレード、イルカのショーも見られる。",
       "orderIndex": 2,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJL-GVrHdkdV8RhNUr32_nD3U"
+      "googlePlaceId": "ChIJL-GVrHdkdV8RhNUr32_nD3U",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/aq-jp-003.jpg"
     },
     {
       "spotId": "aq-jp-004",
@@ -55,7 +58,8 @@
       "spotDescription": "千歳川の川岸にある小さくモダンな水族館。サケなどの淡水魚が見られる。",
       "orderIndex": 3,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJeYWnJFLfdF8RdY5PEshZrYQ"
+      "googlePlaceId": "ChIJeYWnJFLfdF8RdY5PEshZrYQ",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/aq-jp-004.jpg"
     },
     {
       "spotId": "aq-jp-005",
@@ -88,7 +92,8 @@
       "spotDescription": "ライトアップした水槽で、色とりどりに輝く多種多様なクラゲを展示。アシカショーの施設やヒトデに触れるタッチプールもある。",
       "orderIndex": 6,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJEeZzlGsXjF8RdxWTWpasRk0"
+      "googlePlaceId": "ChIJEeZzlGsXjF8RdxWTWpasRk0",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/aq-jp-007.jpg"
     },
     {
       "spotId": "aq-jp-008",
@@ -99,7 +104,8 @@
       "spotDescription": "港にある水族館。魚の種類が多く、三角形のトンネルやギフトショップがある。体験型ワークショップも開催。",
       "orderIndex": 7,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJhz0hkSAOIWARoJsSrjdEJpw"
+      "googlePlaceId": "ChIJhz0hkSAOIWARoJsSrjdEJpw",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/aq-jp-008.jpg"
     },
     {
       "spotId": "aq-jp-009",
@@ -121,7 +127,8 @@
       "spotDescription": "大型水族館。イルカショー、魚のトンネル、ペンギンやアシカも見られる。",
       "orderIndex": 9,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJgcnOweDJ9F8R3wOwnTD7Sb0"
+      "googlePlaceId": "ChIJgcnOweDJ9F8R3wOwnTD7Sb0",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/aq-jp-010.jpg"
     },
     {
       "spotId": "aq-jp-011",
@@ -132,7 +139,8 @@
       "spotDescription": "イルカのパフォーマンスを楽しめる水族博物館。シロイルカ、ペンギン、多種多様な魚も見ることができる。",
       "orderIndex": 10,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJERnhuG549l8RvXtmepwiWBM"
+      "googlePlaceId": "ChIJERnhuG549l8RvXtmepwiWBM",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/aq-jp-011.jpg"
     },
     {
       "spotId": "aq-jp-012",
@@ -143,7 +151,8 @@
       "spotDescription": "カメや熱帯魚を見られる 2 階建ての水族館。屋外のペンギン広場からは海を一望できる。",
       "orderIndex": 11,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJUYHs60v69F8RZjUqtxmGl6k"
+      "googlePlaceId": "ChIJUYHs60v69F8RZjUqtxmGl6k",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/aq-jp-012.jpg"
     },
     {
       "spotId": "aq-jp-013",
@@ -154,7 +163,8 @@
       "spotDescription": "アマゾン川の展示や、子どもたちがヒトデやサメに触れられるタッチング水槽がある大型水族館。",
       "orderIndex": 12,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJXbztWprQIWARn12O35zP7KQ"
+      "googlePlaceId": "ChIJXbztWprQIWARn12O35zP7KQ",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/aq-jp-013.jpg"
     },
     {
       "spotId": "aq-jp-014",
@@ -165,7 +175,8 @@
       "spotDescription": "水族館とスタジアムを併設した海洋テーマパーク。クジラ、イルカ、アシカのショーを開催。",
       "orderIndex": 13,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJhc6dSJdTPWARF6Kvf3gGDg8"
+      "googlePlaceId": "ChIJhc6dSJdTPWARF6Kvf3gGDg8",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/aq-jp-014.jpg"
     },
     {
       "spotId": "aq-jp-015",
@@ -176,7 +187,8 @@
       "spotDescription": "荒川に生息する淡水魚と両生類を中心とした素朴な水族館。",
       "orderIndex": 14,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJ5TXkrZwzH2ARTUJYQpVUnUo"
+      "googlePlaceId": "ChIJ5TXkrZwzH2ARTUJYQpVUnUo",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/aq-jp-015.jpg"
     },
     {
       "spotId": "aq-jp-016",
@@ -187,7 +199,8 @@
       "spotDescription": "さまざまな海の生き物を展示する高層水族館。天空のガラス水槽がある。",
       "orderIndex": 15,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJhT_wQW-NGGARyeOCR2L-W-I"
+      "googlePlaceId": "ChIJhT_wQW-NGGARyeOCR2L-W-I",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/aq-jp-016.jpg"
     },
     {
       "spotId": "aq-jp-017",
@@ -198,7 +211,8 @@
       "spotDescription": "広々とした水族館。サメ、トビエイ、ペンギンなど、世界中の海洋生物を飼育。",
       "orderIndex": 16,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJ65T4s099GGARKhT05Ix6YuI"
+      "googlePlaceId": "ChIJ65T4s099GGARKhT05Ix6YuI",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/aq-jp-017.jpg"
     },
     {
       "spotId": "aq-jp-018",
@@ -209,7 +223,8 @@
       "spotDescription": "トンネル水槽での海洋生物の展示やアニマルショーが楽しめる、自然公園内にある水族館。",
       "orderIndex": 17,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJswiYns5hGGARwIL8waCJLe0"
+      "googlePlaceId": "ChIJswiYns5hGGARwIL8waCJLe0",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/aq-jp-018.jpg"
     },
     {
       "spotId": "aq-jp-019",
@@ -220,7 +235,8 @@
       "spotDescription": "洗練された水族館と博物館。ライトアップされた水槽、ペンギン、アザラシ、イルカのパフォーマンスを楽しめる。",
       "orderIndex": 18,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJC1aZZFeKGGARGLX8IHTOn-c"
+      "googlePlaceId": "ChIJC1aZZFeKGGARGLX8IHTOn-c",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/aq-jp-019.jpg"
     },
     {
       "spotId": "aq-jp-020",
@@ -231,7 +247,8 @@
       "spotDescription": "スタイリッシュでモダンな水族館。さまざまな魚やペンギンを飼育し、カフェも併設。",
       "orderIndex": 19,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJO6bK3daOGGARYEFGg4Xm-VI"
+      "googlePlaceId": "ChIJO6bK3daOGGARYEFGg4Xm-VI",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/aq-jp-020.jpg"
     },
     {
       "spotId": "aq-jp-021",
@@ -253,7 +270,8 @@
       "spotDescription": "地元の多摩川からアマゾンの熱帯雨林まで、水辺をリアルに再現し 200 種以上を紹介。",
       "orderIndex": 21,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJhcZzAWBhGGARKzzglvIW7so"
+      "googlePlaceId": "ChIJhcZzAWBhGGARKzzglvIW7so",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/aq-jp-022.jpg"
     },
     {
       "spotId": "aq-jp-023",
@@ -264,7 +282,8 @@
       "spotDescription": "1993 年開園の遊園地。海の動物たちのショーが楽しめる水族館、各種アトラクション、マリーナも併設。",
       "orderIndex": 22,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJTRC2enlBGGARR82PUNymZUE"
+      "googlePlaceId": "ChIJTRC2enlBGGARR82PUNymZUE",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/aq-jp-023.jpg"
     },
     {
       "spotId": "aq-jp-024",
@@ -275,7 +294,8 @@
       "spotDescription": "ドーナツ型の水槽に地元の湖や川に生息する淡水魚を展示する教育センター。",
       "orderIndex": 23,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJi3Fad5lmGWARvIujaJtmp7A"
+      "googlePlaceId": "ChIJi3Fad5lmGWARvIujaJtmp7A",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/aq-jp-024.jpg"
     },
     {
       "spotId": "aq-jp-025",
@@ -297,7 +317,8 @@
       "spotDescription": "ジンベイザメ、イルカ、アシカなどの海洋生物が見られる人気の水族館。ショーと餌やりも見られる。",
       "orderIndex": 25,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJud5H4tQl918RkYfWBvfbsac"
+      "googlePlaceId": "ChIJud5H4tQl918RkYfWBvfbsac",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/aq-jp-026.jpg"
     },
     {
       "spotId": "aq-jp-027",
@@ -308,7 +329,8 @@
       "spotDescription": "さまざまな魚、カエル、カメがいる小さな水族館。ワークショップも開催され、飲食店がある。",
       "orderIndex": 26,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJ_U_QuQGQBGARC5DFcXhVlY0"
+      "googlePlaceId": "ChIJ_U_QuQGQBGARC5DFcXhVlY0",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/aq-jp-027.jpg"
     },
     {
       "spotId": "aq-jp-028",
@@ -319,7 +341,8 @@
       "spotDescription": "クジラをはじめ、さまざまな生き物を展示する近代的な水族館。イルカショーを開催し、飲食店もある。",
       "orderIndex": 27,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJsyTJ06B5A2ARvt6FJ9xiqaE"
+      "googlePlaceId": "ChIJsyTJ06B5A2ARvt6FJ9xiqaE",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/aq-jp-028.jpg"
     },
     {
       "spotId": "aq-jp-029",
@@ -341,7 +364,8 @@
       "spotDescription": "琵琶湖の歴史を学べる博物館。水族展示室があり、化石と動物標本も展示している。",
       "orderIndex": 29,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJXRxdK4x0AWARsBFMj8YBCd0"
+      "googlePlaceId": "ChIJXRxdK4x0AWARsBFMj8YBCd0",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/aq-jp-030.jpg"
     },
     {
       "spotId": "aq-jp-031",
@@ -352,7 +376,8 @@
       "spotDescription": "This modern aquarium with 9 zones features a giant salamander, penguins & seals, plus a dolphin program.",
       "orderIndex": 30,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJXdx4CxwGAWARWUbHqiTaF1Q"
+      "googlePlaceId": "ChIJXdx4CxwGAWARWUbHqiTaF1Q",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/aq-jp-031.jpg"
     },
     {
       "spotId": "aq-jp-032",
@@ -363,7 +388,8 @@
       "spotDescription": "1955 年に開館した大規模な水族館。数千種類もの動物たちがテーマ別に分けられた 12 のゾーンで飼育されている。",
       "orderIndex": 31,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJVVVANuv1A2ARyCiTNeo9qAs"
+      "googlePlaceId": "ChIJVVVANuv1A2ARyCiTNeo9qAs",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/aq-jp-032.jpg"
     },
     {
       "spotId": "aq-jp-033",
@@ -374,7 +400,8 @@
       "spotDescription": "海の生き物に触れ合い、イルカやセイウチのショーが楽しめる水族館。",
       "orderIndex": 32,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJ7d3jtoZXBGARmYPZ5ZpR59M"
+      "googlePlaceId": "ChIJ7d3jtoZXBGARmYPZ5ZpR59M",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/aq-jp-033.jpg"
     },
     {
       "spotId": "aq-jp-034",
@@ -385,7 +412,8 @@
       "spotDescription": "世界最大級の水族館。北極圏から熱帯までの海洋生物を展示。",
       "orderIndex": 33,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJzakNjPToAGARzCwIriDFg28"
+      "googlePlaceId": "ChIJzakNjPToAGARzCwIriDFg28",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/aq-jp-034.jpg"
     },
     {
       "spotId": "aq-jp-035",
@@ -396,7 +424,8 @@
       "spotDescription": "スタイリッシュでモダンな空間に外来種の魚、哺乳類、爬虫類が暮らすファミリー向けのアトラクション。",
       "orderIndex": 34,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJQ5ZHUK38AGARxxGtklDGX9U"
+      "googlePlaceId": "ChIJQ5ZHUK38AGARxxGtklDGX9U",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/aq-jp-035.jpg"
     },
     {
       "spotId": "aq-jp-036",
@@ -407,7 +436,8 @@
       "spotDescription": null,
       "orderIndex": 35,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJgQxfKgCFAGARDDvvrnSqDw0"
+      "googlePlaceId": "ChIJgQxfKgCFAGARDDvvrnSqDw0",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/aq-jp-036.jpg"
     },
     {
       "spotId": "aq-jp-037",
@@ -429,7 +459,8 @@
       "spotDescription": "さまざまな海洋生物の展示、ショーエリア、トレーナー ツアーなどが楽しめる人気の水族館。",
       "orderIndex": 37,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJH8FDRkO2_18RZNSIArj2i88"
+      "googlePlaceId": "ChIJH8FDRkO2_18RZNSIArj2i88",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/aq-jp-038.jpg"
     },
     {
       "spotId": "aq-jp-039",
@@ -440,7 +471,8 @@
       "spotDescription": "丘の上にある水族館。室内外の展示と、子供が魚に触れられる池がある。",
       "orderIndex": 38,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJMRVxmVvgVDURC2C19VInfn0"
+      "googlePlaceId": "ChIJMRVxmVvgVDURC2C19VInfn0",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/aq-jp-039.jpg"
     },
     {
       "spotId": "aq-jp-040",
@@ -451,7 +483,8 @@
       "spotDescription": "シロイルカ、サメなど、400 種を超える海洋生物の見られる水族館。ペンギンの餌やりや海底トンネルもある。",
       "orderIndex": 39,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJfQ8qpEVbWjURYy3hwrcz_xw"
+      "googlePlaceId": "ChIJfQ8qpEVbWjURYy3hwrcz_xw",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/aq-jp-040.jpg"
     },
     {
       "spotId": "aq-jp-041",
@@ -473,7 +506,8 @@
       "spotDescription": "目が赤く光るアカメの水槽、ウナギの水槽、ふれあいプール、ペンギンの展示などが楽しめる小規模な水族館。",
       "orderIndex": 41,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJWxArWRYaTjURlX4sPd4OxFw"
+      "googlePlaceId": "ChIJWxArWRYaTjURlX4sPd4OxFw",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/aq-jp-042.jpg"
     },
     {
       "spotId": "aq-jp-043",
@@ -484,7 +518,8 @@
       "spotDescription": "四万十川に生息するさまざまな種類の魚のいる水槽。カワウソ餌やりタイム、ペンギンショーもある。",
       "orderIndex": 42,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJPaGSBn9vTzURTS5UJ4JSeAU"
+      "googlePlaceId": "ChIJPaGSBn9vTzURTS5UJ4JSeAU",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/aq-jp-043.jpg"
     },
     {
       "spotId": "aq-jp-044",
@@ -495,7 +530,8 @@
       "spotDescription": "親子連れで楽しめるこぢんまりとした水族館。クジラやペンギンが飼育され、アシカのショーも見られる。屋外にはピクニック広場もある。",
       "orderIndex": 43,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJpbpftsqwWjURD6UNc1rni0A"
+      "googlePlaceId": "ChIJpbpftsqwWjURD6UNc1rni0A",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/aq-jp-044.jpg"
     },
     {
       "spotId": "aq-jp-045",
@@ -506,7 +542,8 @@
       "spotDescription": "多様な海洋生物が展示され、スタジアム プールを備えた都市型水族館。イルカやアシカのショーを開催。",
       "orderIndex": 44,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJR4tIGrGNQTURRMLEZ9kNOr8"
+      "googlePlaceId": "ChIJR4tIGrGNQTURRMLEZ9kNOr8",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/aq-jp-045.jpg"
     },
     {
       "spotId": "aq-jp-046",
@@ -517,7 +554,8 @@
       "spotDescription": "180 羽以上のペンギンが暮らす水族館。自然の海をネットと柵で囲ったペンギンビーチやビオトープもあり、カヤック体験もできる。",
       "orderIndex": 45,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJk2sjlOaqajURPi5soRvA8HU"
+      "googlePlaceId": "ChIJk2sjlOaqajURPi5soRvA8HU",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/aq-jp-046.jpg"
     },
     {
       "spotId": "aq-jp-047",
@@ -539,7 +577,8 @@
       "spotDescription": "さまざまな在来種を飼育する水族館。餌やり体験やイルカショーもある。",
       "orderIndex": 47,
       "recognitionRadiusMeters": null,
-      "googlePlaceId": "ChIJT98JvRpePjURoAs7WvwOIlg"
+      "googlePlaceId": "ChIJT98JvRpePjURoAs7WvwOIlg",
+      "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/aq-jp-048.jpg"
     },
     {
       "spotId": "aq-jp-049",

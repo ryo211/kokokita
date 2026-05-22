@@ -1,14 +1,6 @@
 import SwiftUI
 import MapKit
 
-// シートの高さを伝えるためのPreferenceKey
-struct SheetHeightPreferenceKey: PreferenceKey {
-    static var defaultValue: CGFloat = 0
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
-        value = nextValue()
-    }
-}
-
 struct VisitMapView: View {
     private static let zoomOnVisitFocusKey = "visitList.map.zoomOnVisitFocus"
 
@@ -30,92 +22,84 @@ struct VisitMapView: View {
     @State private var showMapSettings = false
     @AppStorage(Self.zoomOnVisitFocusKey) private var zoomOnVisitFocus = true
 
-    // 選択されたアイテムを最後に配置するようソート
+    // 選択されたアイテムを最後に配置するようソート（最前面に描画）
     private var sortedItems: [VisitAggregate] {
         items.sorted { item1, item2 in
             let isItem1Selected = item1.id == selectedItemId
             let isItem2Selected = item2.id == selectedItemId
-
-            if isItem1Selected == isItem2Selected {
-                return false // 両方選択/非選択なら順序を変えない
-            }
-            return isItem2Selected // 選択されたものを後ろに
+            if isItem1Selected == isItem2Selected { return false }
+            return isItem2Selected
         }
     }
 
     var body: some View {
-        ZStack(alignment: .bottom) {
-            Map(position: $cameraPosition) {
-                // 訪問記録のピン（選択されたものを最後に描画するためソート）
-                ForEach(sortedItems) { agg in
-                    if agg.visit.latitude != 0 || agg.visit.longitude != 0 {
-                        let isSelected = selectedItemId == agg.id
-                        let pinColor = firstLabelColor(for: agg)
-                        Annotation("", coordinate: CLLocationCoordinate2D(
-                            latitude: agg.visit.latitude,
-                            longitude: agg.visit.longitude
-                        )) {
-                            MapPinView(isSelected: isSelected, pinColor: pinColor)
-                                .onTapGesture {
-                                    selectedItemId = agg.id
-                                }
+        VStack(spacing: 0) {
+            // 上部 2/3：地図
+            ZStack(alignment: .topTrailing) {
+                Map(position: $cameraPosition) {
+                    ForEach(sortedItems) { agg in
+                        if agg.visit.latitude != 0 || agg.visit.longitude != 0 {
+                            let isSelected = selectedItemId == agg.id
+                            let pinColor = firstLabelColor(for: agg)
+                            Annotation("", coordinate: CLLocationCoordinate2D(
+                                latitude: agg.visit.latitude,
+                                longitude: agg.visit.longitude
+                            )) {
+                                MapPinView(isSelected: isSelected, pinColor: pinColor)
+                                    .onTapGesture {
+                                        selectedItemId = (selectedItemId == agg.id ? nil : agg.id)
+                                    }
+                            }
+                            .annotationTitles(.hidden)
+                        }
+                    }
+
+                    // 現在地のピン
+                    if showCurrentLocation, let location = currentLocation {
+                        Annotation("現在地", coordinate: location) {
+                            CurrentLocationPinView()
                         }
                         .annotationTitles(.hidden)
                     }
                 }
-
-                // 現在地のピン（一番上に表示）
-                if showCurrentLocation, let location = currentLocation {
-                    Annotation("現在地", coordinate: location) {
-                        CurrentLocationPinView()
-                    }
-                    .annotationTitles(.hidden)
+                .mapStyle(.standard)
+                .onMapCameraChange { context in
+                    currentMapRegion = context.region
                 }
-            }
-            .mapStyle(.standard)
-            .onMapCameraChange { context in
-                currentMapRegion = context.region
-            }
 
-            // 右上ボタン群
-            VStack {
-                HStack {
-                    Spacer()
-                    VStack(spacing: 10) {
-                        mapSettingsButton
-                        currentLocationButton
-                    }
-                        .padding(.trailing, 16)
-                        .padding(.top, 16)
+                // 右上ボタン群
+                VStack(spacing: 10) {
+                    mapSettingsButton
+                    currentLocationButton
                 }
+                .padding(.trailing, 16)
+                .padding(.top, 16)
+            }
+            .containerRelativeFrame(.vertical, count: 2, span: 1, spacing: 0)
+
+            Divider()
+
+            // 下部 1/3：記録リスト
+            if items.isEmpty {
                 Spacer()
-            }
-
-            // 下部詳細シート
-            if let selectedId = selectedItemId,
-               let selected = items.first(where: { $0.id == selectedId }) {
-                VisitMapDetailSheet(
-                    aggregate: selected,
-                    labelMap: labelMap,
-                    groupMap: groupMap,
-                    memberMap: memberMap,
-                    labelColorMap: labelColorMap,
-                    onClose: {
-                        selectedItemId = nil
-                    },
-                    onTap: {
-                        onShowDetail(selectedId)
+            } else {
+                ScrollViewReader { proxy in
+                    List {
+                        ForEach(items, id: \.id) { visit in
+                            visitRowView(for: visit)
+                                .id(visit.id)
+                        }
                     }
-                )
-                .transition(.move(edge: .bottom).combined(with: .opacity))
-                .animation(.easeInOut(duration: 0.25), value: selectedItemId)
+                    .listStyle(.plain)
+                    .onChange(of: selectedItemId) { _, newId in
+                        if let newId {
+                            withAnimation { proxy.scrollTo(newId, anchor: .center) }
+                        }
+                    }
+                }
             }
-        }
-        .onPreferenceChange(SheetHeightPreferenceKey.self) { height in
-            sheetHeight = height
         }
         .task {
-            // 初期選択がある場合はそのピンにズーム、なければ全体表示
             if let id = selectedItemId {
                 focusOnItem(id: id, animated: false)
             } else {
@@ -126,15 +110,55 @@ struct VisitMapView: View {
             updateCameraPosition()
         }
         .onChange(of: selectedItemId) { _, newId in
-            guard let newId else { return }
-            focusOnItem(id: newId, animated: true)
+            if let newId {
+                focusOnItem(id: newId, animated: true)
+            } else {
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    updateCameraPosition()
+                }
+            }
         }
         .sheet(isPresented: $showMapSettings) {
             VisitMapSettingsSheet(zoomOnVisitFocus: $zoomOnVisitFocus)
         }
     }
 
-    /// 訪問記録の先頭ラベル色を取得（名前順でソートして最初のラベルの色）
+    // MARK: - Row View
+
+    @ViewBuilder
+    private func visitRowView(for visit: VisitAggregate) -> some View {
+        let isFocused = selectedItemId == visit.id
+        HStack(spacing: 0) {
+            VisitRow(agg: visit, nameResolver: nameResolver, compact: true, labelColorMap: labelColorMap)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    selectedItemId = (selectedItemId == visit.id ? nil : visit.id)
+                }
+            Button {
+                onShowDetail(visit.id)
+            } label: {
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(Color(.tertiaryLabel))
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+        }
+        .listRowBackground(isFocused ? Color.blue.opacity(0.1) : nil)
+    }
+
+    private func nameResolver(_ labelIds: [UUID], _ groupId: UUID?, _ memberIds: [UUID]) -> (labels: [String], group: String?, members: [String]) {
+        let labels = labelIds.compactMap { labelMap[$0] }
+        let group = groupId.flatMap { groupMap[$0] }
+        let members = memberIds.compactMap { memberMap[$0] }
+        return (labels, group, members)
+    }
+
+    // MARK: - Map Helpers
+
+    /// 訪問記録の先頭ラベル色を取得
     private func firstLabelColor(for agg: VisitAggregate) -> Color? {
         let names = agg.details.labelIds
             .compactMap { labelMap[$0] }
@@ -143,26 +167,18 @@ struct VisitMapView: View {
         return labelColorMap[firstName]
     }
 
-    /// 指定IDのピンを画面中心にしてズームイン
+    /// 指定IDのピンにカメラをフォーカス
     private func focusOnItem(id: UUID, animated: Bool) {
         guard let agg = items.first(where: { $0.id == id }),
               agg.visit.latitude != 0 || agg.visit.longitude != 0 else { return }
         let center = CLLocationCoordinate2D(latitude: agg.visit.latitude, longitude: agg.visit.longitude)
         let region: MKCoordinateRegion
         if zoomOnVisitFocus {
-            region = MKCoordinateRegion(
-                center: center,
-                latitudinalMeters: 500,
-                longitudinalMeters: 500
-            )
+            region = MKCoordinateRegion(center: center, latitudinalMeters: 500, longitudinalMeters: 500)
         } else if let currentMapRegion {
             region = MKCoordinateRegion(center: center, span: currentMapRegion.span)
         } else {
-            region = MKCoordinateRegion(
-                center: center,
-                latitudinalMeters: 1000,
-                longitudinalMeters: 1000
-            )
+            region = MKCoordinateRegion(center: center, latitudinalMeters: 1000, longitudinalMeters: 1000)
         }
         if animated {
             withAnimation(.easeInOut(duration: 0.3)) {
@@ -185,29 +201,22 @@ struct VisitMapView: View {
         }
 
         if validCoordinates.count == 1 {
-            // 1件だけの場合は中心に配置
-            let center = validCoordinates[0]
-            let region = MKCoordinateRegion(
-                center: center,
+            cameraPosition = .region(MKCoordinateRegion(
+                center: validCoordinates[0],
                 latitudinalMeters: 1000,
                 longitudinalMeters: 1000
-            )
-            cameraPosition = .region(region)
+            ))
         } else {
-            // 複数の場合は全て収まるように
             let rect = validCoordinates.reduce(MKMapRect.null) { rect, coord in
                 let point = MKMapPoint(coord)
-                let pointRect = MKMapRect(x: point.x, y: point.y, width: 0, height: 0)
-                return rect.union(pointRect)
+                return rect.union(MKMapRect(x: point.x, y: point.y, width: 0, height: 0))
             }
-
-            // 少し余白を持たせる
-            let paddedRect = rect.insetBy(dx: -rect.size.width * 0.1, dy: -rect.size.height * 0.1)
-            cameraPosition = .rect(paddedRect)
+            cameraPosition = .rect(rect.insetBy(dx: -rect.size.width * 0.1, dy: -rect.size.height * 0.1))
         }
     }
 
-    // MARK: - Current Location Button (Liquid Glass)
+    // MARK: - Map Settings Button
+
     private var mapSettingsButton: some View {
         Button {
             showMapSettings = true
@@ -218,10 +227,7 @@ struct VisitMapView: View {
                     Circle()
                         .fill(
                             LinearGradient(
-                                colors: [
-                                    Color.white.opacity(0.12),
-                                    Color.white.opacity(0.03)
-                                ],
+                                colors: [Color.white.opacity(0.12), Color.white.opacity(0.03)],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )
@@ -231,10 +237,7 @@ struct VisitMapView: View {
                     Circle()
                         .strokeBorder(
                             LinearGradient(
-                                colors: [
-                                    Color.white.opacity(0.2),
-                                    Color.white.opacity(0.08)
-                                ],
+                                colors: [Color.white.opacity(0.2), Color.white.opacity(0.08)],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             ),
@@ -252,23 +255,18 @@ struct VisitMapView: View {
         .buttonStyle(.plain)
     }
 
-    // MARK: - Current Location Button (Liquid Glass)
+    // MARK: - Current Location Button
+
     private var currentLocationButton: some View {
         Button {
-            Task {
-                await toggleCurrentLocation()
-            }
+            Task { await toggleCurrentLocation() }
         } label: {
             ZStack {
                 if showCurrentLocation {
-                    // アクティブ状態: Liquid Glassプライマリスタイル
                     Circle()
                         .fill(
                             LinearGradient(
-                                colors: [
-                                    Color.blue.opacity(0.95),
-                                    Color.blue.opacity(0.75)
-                                ],
+                                colors: [Color.blue.opacity(0.95), Color.blue.opacity(0.75)],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )
@@ -277,10 +275,7 @@ struct VisitMapView: View {
                             Circle()
                                 .fill(
                                     LinearGradient(
-                                        colors: [
-                                            Color.white.opacity(0.25),
-                                            Color.clear
-                                        ],
+                                        colors: [Color.white.opacity(0.25), Color.clear],
                                         startPoint: .top,
                                         endPoint: .bottom
                                     )
@@ -290,17 +285,13 @@ struct VisitMapView: View {
                         .shadow(color: Color.blue.opacity(0.35), radius: 8, x: 0, y: 2)
                         .shadow(color: Color.blue.opacity(0.15), radius: 3, x: 0, y: 1)
                 } else {
-                    // 非アクティブ状態: Liquid Glassセカンダリスタイル
                     Circle()
                         .fill(.ultraThinMaterial)
                         .overlay {
                             Circle()
                                 .fill(
                                     LinearGradient(
-                                        colors: [
-                                            Color.white.opacity(0.12),
-                                            Color.white.opacity(0.03)
-                                        ],
+                                        colors: [Color.white.opacity(0.12), Color.white.opacity(0.03)],
                                         startPoint: .topLeading,
                                         endPoint: .bottomTrailing
                                     )
@@ -310,10 +301,7 @@ struct VisitMapView: View {
                             Circle()
                                 .strokeBorder(
                                     LinearGradient(
-                                        colors: [
-                                            Color.white.opacity(0.2),
-                                            Color.white.opacity(0.08)
-                                        ],
+                                        colors: [Color.white.opacity(0.2), Color.white.opacity(0.08)],
                                         startPoint: .topLeading,
                                         endPoint: .bottomTrailing
                                     ),
@@ -340,13 +328,11 @@ struct VisitMapView: View {
 
     private func toggleCurrentLocation() async {
         if showCurrentLocation {
-            // OFF にする
             withAnimation {
                 showCurrentLocation = false
                 currentLocation = nil
             }
         } else {
-            // ON にする
             await fetchAndShowCurrentLocation()
         }
     }
@@ -358,28 +344,14 @@ struct VisitMapView: View {
         do {
             let (location, _) = try await locationService.requestOneShotLocation()
             let coordinate = location.coordinate
-
             currentLocation = coordinate
 
             withAnimation {
                 showCurrentLocation = true
-
-                // ズームレベルを維持したまま中心だけ移動
                 if let existingRegion = currentMapRegion {
-                    // 既存のズームレベルを維持
-                    let newRegion = MKCoordinateRegion(
-                        center: coordinate,
-                        span: existingRegion.span
-                    )
-                    cameraPosition = .region(newRegion)
+                    cameraPosition = .region(MKCoordinateRegion(center: coordinate, span: existingRegion.span))
                 } else {
-                    // 初回はデフォルトのズームレベルで表示
-                    let region = MKCoordinateRegion(
-                        center: coordinate,
-                        latitudinalMeters: 1000,
-                        longitudinalMeters: 1000
-                    )
-                    cameraPosition = .region(region)
+                    cameraPosition = .region(MKCoordinateRegion(center: coordinate, latitudinalMeters: 1000, longitudinalMeters: 1000))
                 }
             }
         } catch {
@@ -387,6 +359,8 @@ struct VisitMapView: View {
         }
     }
 }
+
+// MARK: - Map Settings Sheet
 
 private struct VisitMapSettingsSheet: View {
     @Binding var zoomOnVisitFocus: Bool
@@ -406,15 +380,10 @@ private struct VisitMapSettingsSheet: View {
 
                 HStack(spacing: 0) {
                     toggleButton(title: "ON", isSelected: zoomOnVisitFocus) {
-                        withAnimation(.easeInOut(duration: 0.18)) {
-                            zoomOnVisitFocus = true
-                        }
+                        withAnimation(.easeInOut(duration: 0.18)) { zoomOnVisitFocus = true }
                     }
-
                     toggleButton(title: "OFF", isSelected: !zoomOnVisitFocus) {
-                        withAnimation(.easeInOut(duration: 0.18)) {
-                            zoomOnVisitFocus = false
-                        }
+                        withAnimation(.easeInOut(duration: 0.18)) { zoomOnVisitFocus = false }
                     }
                 }
                 .padding(4)
@@ -435,11 +404,7 @@ private struct VisitMapSettingsSheet: View {
         .presentationDetents([.height(220)])
     }
 
-    private func toggleButton(
-        title: String,
-        isSelected: Bool,
-        action: @escaping () -> Void
-    ) -> some View {
+    private func toggleButton(title: String, isSelected: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(title)
                 .font(.subheadline.weight(.semibold))
@@ -453,28 +418,23 @@ private struct VisitMapSettingsSheet: View {
 }
 
 // MARK: - Map Pin View
+
 struct MapPinView: View {
     let isSelected: Bool
     var pinColor: Color?
 
-    /// ピンの表示色（ラベル色 > デフォルト赤）
-    private var baseColor: Color {
-        pinColor ?? .red
-    }
+    private var baseColor: Color { pinColor ?? .red }
 
     var body: some View {
         ZStack {
-            // 選択時は外側に目立つハロー効果
             if isSelected {
                 Circle()
                     .fill(baseColor.opacity(0.3))
                     .frame(width: 36, height: 36)
             }
-
             Circle()
-                .fill(isSelected ? baseColor : baseColor)
+                .fill(baseColor)
                 .frame(width: isSelected ? 28 : 16, height: isSelected ? 28 : 16)
-
             Circle()
                 .stroke(Color.white, lineWidth: isSelected ? 3 : 2)
                 .frame(width: isSelected ? 28 : 16, height: isSelected ? 28 : 16)
@@ -485,111 +445,20 @@ struct MapPinView: View {
 }
 
 // MARK: - Current Location Pin View
+
 struct CurrentLocationPinView: View {
     var body: some View {
         ZStack {
-            // 外側の円（薄い青色の範囲表示）
             Circle()
                 .fill(Color.blue.opacity(0.2))
                 .frame(width: 32, height: 32)
-
-            // 内側の円（濃い緑色）
             Circle()
                 .fill(Color.green)
                 .frame(width: 16, height: 16)
-
-            // 白い縁取り
             Circle()
                 .stroke(Color.white, lineWidth: 3)
                 .frame(width: 16, height: 16)
         }
         .shadow(radius: 3)
-    }
-}
-
-// MARK: - Detail Sheet
-struct VisitMapDetailSheet: View {
-    let aggregate: VisitAggregate
-    let labelMap: [UUID: String]
-    let groupMap: [UUID: String]
-    let memberMap: [UUID: String]
-    var labelColorMap: [String: Color] = [:]
-    let onClose: () -> Void
-    let onTap: () -> Void
-
-    @State private var dragOffset: CGFloat = 0
-
-    var body: some View {
-        VStack(spacing: 0) {
-            // ドラッグハンドル
-            Capsule()
-                .fill(Color.secondary.opacity(0.3))
-                .frame(width: 36, height: 4)
-                .padding(.top, 8)
-                .padding(.bottom, 6)
-
-            // ClearBlueHorizontalCardのmapSheet用コンテンツを使用
-            ClearBlueHorizontalCard(
-                aggregate: aggregate,
-                variant: .mapSheet,
-                labelMap: labelMap,
-                groupMap: groupMap,
-                memberMap: memberMap,
-                labelColorMap: labelColorMap,
-                onClose: onClose
-            )
-        }
-        .background(
-            ZStack {
-                // 不透明な背景
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(Color(.systemBackground))
-
-                // 薄青い色のオーバーレイ
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(VisitCardStyle.clearBlueBackground)
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .strokeBorder(VisitCardStyle.clearBlueBorder, lineWidth: VisitCardStyle.clearBlueBorderWidth)
-                    }
-            }
-        )
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: 5)
-        .padding(.horizontal, 8)
-        .padding(.bottom, 8)
-        .offset(y: dragOffset)
-        .contentShape(Rectangle())
-        .onTapGesture {
-            onTap()
-        }
-        .gesture(
-            DragGesture()
-                .onChanged { value in
-                    // 下方向のドラッグのみ許可
-                    if value.translation.height > 0 {
-                        dragOffset = value.translation.height
-                    }
-                }
-                .onEnded { value in
-                    // 100pt以上下に引っ張ったら閉じる
-                    if value.translation.height > 100 {
-                        onClose()
-                    }
-                    // 元の位置に戻す
-                    withAnimation(.easeOut(duration: 0.2)) {
-                        dragOffset = 0
-                    }
-                }
-        )
-        .overlay(
-            GeometryReader { geometry in
-                Color.clear
-                    .preference(
-                        key: SheetHeightPreferenceKey.self,
-                        value: geometry.size.height
-                    )
-            }
-        )
     }
 }

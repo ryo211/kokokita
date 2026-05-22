@@ -17,7 +17,7 @@ private enum CourseViewLayout: CaseIterable {
     }
 }
 
-private enum CourseSpotPhotoSize: String, CaseIterable {
+enum CourseSpotPhotoSize: String, CaseIterable {
     case none
     case small
     case medium
@@ -56,14 +56,16 @@ struct CourseDetailView: View {
     /// 地図とリストの表示レイアウト
     @State private var viewLayout: CourseViewLayout = .split
     /// スポットフォーカス時に地図をズームするか
-    @AppStorage(Self.zoomOnSpotFocusKey) private var zoomOnSpotFocus = true
-    @AppStorage(Self.spotPhotoSizeKey) private var spotPhotoSizeRaw = CourseSpotPhotoSize.medium.rawValue
+    @AppStorage(Self.zoomOnSpotFocusKey) private var zoomOnSpotFocus = false
+    @AppStorage(Self.spotPhotoSizeKey) private var spotPhotoSizeRaw = CourseSpotPhotoSize.large.rawValue
     @State private var showCourseMapSettings = false
     @State private var visibleMapSpan = MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
     /// フォーカス中スポットのスクリーン座標（リーダーライン描画用）
     @State private var selectedSpotScreenPoint: CGPoint? = nil
     /// ライトボックス表示中の画像 URL
     @State private var expandedImageUrl: URL? = nil
+    /// ライトボックス表示中の画像クレジット（nil の場合は非表示）
+    @State private var expandedImageCredit: String? = nil
     /// 進捗バースワイプの二重発火防止フラグ
     @State private var progressSwipeConsumed = false
 
@@ -85,8 +87,8 @@ struct CourseDetailView: View {
             let radius = spot.recognitionRadiusMeters ?? course.recognitionRadiusMeters
             let span = CourseDetailView.spotSpan(recognitionRadius: radius)
             let savedPhotoSize = CourseSpotPhotoSize(
-                rawValue: UserDefaults.standard.string(forKey: Self.spotPhotoSizeKey) ?? CourseSpotPhotoSize.medium.rawValue
-            ) ?? .medium
+                rawValue: UserDefaults.standard.string(forKey: Self.spotPhotoSizeKey) ?? CourseSpotPhotoSize.large.rawValue
+            ) ?? .large
             let center = CourseDetailView.focusCenter(
                 latitude: spot.latitude,
                 longitude: spot.longitude,
@@ -205,10 +207,24 @@ struct CourseDetailView: View {
                         }
                     }
                 }
+                .overlay(alignment: .bottomTrailing) {
+                    // 画像クレジット（画像外の右下）
+                    if let credit = expandedImageCredit {
+                        Text(credit)
+                            .font(.caption2)
+                            .foregroundStyle(.white.opacity(0.85))
+                            .shadow(color: .black.opacity(0.8), radius: 3, x: 0, y: 1)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .padding(.trailing, 16)
+                            .padding(.bottom, 16)
+                    }
+                }
                 .contentShape(Rectangle())
                 .onTapGesture {
                     withAnimation(.easeInOut(duration: 0.2)) {
                         expandedImageUrl = nil
+                        expandedImageCredit = nil
                     }
                 }
                 .transition(.opacity.combined(with: .scale(scale: 0.92)))
@@ -218,7 +234,7 @@ struct CourseDetailView: View {
     }
 
     private var spotPhotoSize: CourseSpotPhotoSize {
-        CourseSpotPhotoSize(rawValue: spotPhotoSizeRaw) ?? .medium
+        CourseSpotPhotoSize(rawValue: spotPhotoSizeRaw) ?? .large
     }
 
     // MARK: - 遡り判定
@@ -395,6 +411,7 @@ struct CourseDetailView: View {
                     if let url = remoteUrl {
                         withAnimation(.easeInOut(duration: 0.2)) {
                             expandedImageUrl = url
+                            expandedImageCredit = spot.imageCredit.flatMap { $0.isEmpty ? nil : $0 }
                         }
                     }
                 }
@@ -644,13 +661,13 @@ struct CourseDetailView: View {
     }
 }
 
-private struct CourseMapSettingsSheet: View {
+struct CourseMapSettingsSheet: View {
     @Binding var zoomOnSpotFocus: Bool
     @Binding var spotPhotoSizeRaw: String
     @Environment(\.dismiss) private var dismiss
 
     private var selectedPhotoSize: CourseSpotPhotoSize {
-        CourseSpotPhotoSize(rawValue: spotPhotoSizeRaw) ?? .medium
+        CourseSpotPhotoSize(rawValue: spotPhotoSizeRaw) ?? .large
     }
 
     var body: some View {
@@ -980,12 +997,6 @@ private struct SpotListRowView: View {
                         Text(spot.name)
                             .font(.body)
 
-                        if spot.coverImageUrl != nil || spot.localCoverImagePath != nil {
-                            Image(systemName: "camera")
-                                .font(.caption)
-                                .foregroundStyle(Color.secondary)
-                        }
-
                         if spot.isCheckedIn {
                             Image(systemName: "checkmark.circle.fill")
                                 .font(.body)
@@ -1050,9 +1061,29 @@ private struct SpotListRowView: View {
 private struct SpotRowBackdropView: View {
     let spot: CourseSpot
     let isSelected: Bool
+    @Environment(\.colorScheme) private var colorScheme
 
     private var hasImage: Bool {
         spot.localCoverImagePath != nil || spot.coverImageUrl != nil
+    }
+
+    private var imageOpacity: Double {
+        if colorScheme == .dark {
+            return isSelected ? 0.82 : 0.72
+        }
+        return isSelected ? 0.62 : 0.50
+    }
+
+    private var trailingBackgroundOpacity: Double {
+        colorScheme == .dark ? 0.02 : 0.10
+    }
+
+    private var midBackgroundOpacity: Double {
+        colorScheme == .dark ? 0.42 : 0.62
+    }
+
+    private var selectedTintOpacity: Double {
+        colorScheme == .dark ? 0.11 : 0.07
     }
 
     var body: some View {
@@ -1065,9 +1096,9 @@ private struct SpotRowBackdropView: View {
                             height: geo.size.height
                         )
                         .clipped()
-                        .opacity(isSelected ? 0.62 : 0.50)
-                        .saturation(isSelected ? 1.1 : 1.05)
-                        .contrast(1.12)
+                        .opacity(imageOpacity)
+                        .saturation(colorScheme == .dark ? (isSelected ? 1.16 : 1.1) : (isSelected ? 1.1 : 1.05))
+                        .contrast(colorScheme == .dark ? 1.05 : 1.12)
                         .offset(x: 10)
                         .mask(
                             LinearGradient(
@@ -1084,16 +1115,27 @@ private struct SpotRowBackdropView: View {
                     LinearGradient(
                         colors: [
                             Color(uiColor: .systemBackground),
-                            Color(uiColor: .systemBackground).opacity(0.62),
-                            Color(uiColor: .systemBackground).opacity(0.10)
+                            Color(uiColor: .systemBackground).opacity(midBackgroundOpacity),
+                            Color(uiColor: .systemBackground).opacity(trailingBackgroundOpacity)
                         ],
                         startPoint: .leading,
                         endPoint: .trailing
                     )
                 }
 
+                if spot.isCheckedIn {
+                    Image("kokokita_hanko")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: min(geo.size.width * 0.42, 172))
+                        .opacity(isSelected ? 0.48 : 0.40)
+                        .rotationEffect(.degrees(-10))
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
+                        .offset(x: -8, y: isSelected ? 6 : 2)
+                }
+
                 if isSelected {
-                    Color.indigo.opacity(0.07)
+                    Color.indigo.opacity(selectedTintOpacity)
                 }
             }
             .frame(width: geo.size.width, height: geo.size.height)
@@ -1286,7 +1328,7 @@ private struct SpotDetailExpandedView: View {
 // MARK: - スポット画像リーダーラインビュー
 
 /// スポットのスクリーン座標から右上方向にリーダーライン（指示棒）を伸ばし、画像を表示する
-private struct SpotLeaderLineView: View {
+struct SpotLeaderLineView: View {
     let spotPoint: CGPoint
     let size: CourseSpotPhotoSize
     /// ローカル保存画像（優先）
@@ -1454,6 +1496,14 @@ private struct CourseSummarySheet: View {
                         if let summary = course.summary {
                             Text(summary)
                                 .font(.body)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+
+                        // 画像クレジット（説明文末尾）
+                        if let credit = course.imageCredit, !credit.isEmpty {
+                            Text(credit)
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                         }
 

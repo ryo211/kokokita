@@ -226,6 +226,7 @@ final class RecordingController {
                                 address: spot.address, latitude: spot.latitude,
                                 longitude: spot.longitude, spotDescription: spot.spotDescription,
                                 coverImageUrl: spot.coverImageUrl,
+                                imageCredit: spot.imageCredit,
                                 localCoverImagePath: spot.localCoverImagePath,
                                 orderIndex: spot.orderIndex,
                                 recognitionRadiusMeters: spot.recognitionRadiusMeters,
@@ -246,6 +247,7 @@ final class RecordingController {
                     allowRetroactive: result.course.allowRetroactive,
                     detailUrl: result.course.detailUrl,
                     coverImageUrl: result.course.coverImageUrl,
+                    imageCredit: result.course.imageCredit,
                     localCoverImagePath: result.course.localCoverImagePath,
                     createdAt: result.course.createdAt, updatedAt: result.course.updatedAt,
                     categories: result.course.categories,
@@ -254,7 +256,8 @@ final class RecordingController {
                 let updatedSpots = updatedSections.flatMap(\.spots)
                 let updatedSpot = updatedSpots.first(where: { $0.id == result.spot.id }) ?? result.spot
                 return CourseRecognitionService.RecognitionResult(
-                    course: updatedCourse, spot: updatedSpot, distanceMeters: result.distanceMeters
+                    course: updatedCourse, spot: updatedSpot,
+                    distanceMeters: result.distanceMeters, achievedAt: result.achievedAt
                 )
             }
         } catch {
