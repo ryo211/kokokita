@@ -210,6 +210,7 @@ private struct PilgrimageBottomBar: View {
     let onModeSwitch: () -> Void
     let onMyListTabFrame: (CGRect) -> Void
     let onCourseTabFrame: (CGRect) -> Void
+    @Environment(\.colorScheme) private var colorScheme
 
     private let tabItems: [(PilgrimageTab, String, String)] = [
         (.home, "house.fill", L.Tab.home),
@@ -218,23 +219,33 @@ private struct PilgrimageBottomBar: View {
         (.myList, "plus.square.on.square", L.Tab.create),
     ]
 
+    private var footerOverlayColor: Color {
+        colorScheme == .dark
+            ? Color(.systemBackground).opacity(0.72)
+            : Color.clear
+    }
+
+    private var modeSwitchColor: Color {
+        colorScheme == .dark
+            ? Color.accentColor.opacity(0.92)
+            : Color.accentColor
+    }
+
     var body: some View {
         ZStack {
             Rectangle()
-                .fill(.ultraThinMaterial)
+                .fill(colorScheme == .dark ? .regularMaterial : .ultraThinMaterial)
                 .frame(height: UIConstants.Size.tabBarHeight)
+                .overlay(footerOverlayColor)
                 .overlay(Divider(), alignment: .top)
 
             HStack(spacing: 8) {
                 // ккокита（記録）ボタン（左端）
-                Button(action: onRecord) {
-                    Image("kokokita_indigo")
-                        .resizable()
-                        .scaledToFit()
-                    .frame(width: 60, height: 60)
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel(L.Tab.kokokita)
+                KokokitaTabActionButton(
+                    imageName: "kokokita_irodori_indigo_v2",
+                    tintColor: colorScheme == .dark ? Color(red: 0.74, green: 0.70, blue: 1.0) : Color.indigo,
+                    action: onRecord
+                )
 
                 // カスタムタブバー（フレーム取得付き）
                 CustomTabBar(
@@ -256,10 +267,10 @@ private struct PilgrimageBottomBar: View {
                         Text(L.Tab.modeRecord)
                             .font(.caption2)
                     }
-                    .foregroundStyle(Color.accentColor.opacity(0.7))
+                    .foregroundStyle(modeSwitchColor.opacity(colorScheme == .dark ? 1.0 : 0.7))
                     .frame(width: 52, height: 52)
                     .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .strokeBorder(Color.accentColor.opacity(0.45), lineWidth: 1.5))
+                        .strokeBorder(modeSwitchColor.opacity(colorScheme == .dark ? 0.62 : 0.45), lineWidth: 1.5))
                 }
                 .buttonStyle(.plain)
             }
@@ -278,35 +289,98 @@ private struct CustomTabBar: View {
     let onSelect: (PilgrimageTab) -> Void
     let onMyListTabFrame: (CGRect) -> Void
     let onCourseTabFrame: (CGRect) -> Void
+    @Environment(\.colorScheme) private var colorScheme
+
+    private var tintColor: Color {
+        colorScheme == .dark ? Color(red: 0.74, green: 0.70, blue: 1.0) : Color.indigo
+    }
+
+    private var containerOverlay: LinearGradient {
+        LinearGradient(
+            colors: colorScheme == .dark
+                ? [
+                    Color(.secondarySystemBackground).opacity(0.86),
+                    Color(.tertiarySystemBackground).opacity(0.68)
+                ]
+                : [
+                    Color.white.opacity(0.12),
+                    Color.white.opacity(0.04)
+                ],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+    }
+
+    private var containerBorder: LinearGradient {
+        LinearGradient(
+            colors: colorScheme == .dark
+                ? [
+                    Color.white.opacity(0.16),
+                    Color.white.opacity(0.05)
+                ]
+                : [
+                    Color.white.opacity(0.2),
+                    Color.white.opacity(0.08)
+                ],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+    }
+
+    private var indicatorFill: LinearGradient {
+        LinearGradient(
+            colors: colorScheme == .dark
+                ? [
+                    tintColor.opacity(0.34),
+                    tintColor.opacity(0.18)
+                ]
+                : [
+                    tintColor.opacity(0.15),
+                    tintColor.opacity(0.08)
+                ],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+    }
+
+    private var indicatorBorder: LinearGradient {
+        LinearGradient(
+            colors: colorScheme == .dark
+                ? [
+                    tintColor.opacity(0.62),
+                    tintColor.opacity(0.26)
+                ]
+                : [
+                    tintColor.opacity(0.3),
+                    tintColor.opacity(0.15)
+                ],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+    }
+
+    private var inactiveForeground: Color {
+        colorScheme == .dark ? Color.primary.opacity(0.64) : Color.primary.opacity(0.5)
+    }
 
     var body: some View {
         GeometryReader { geo in
             ZStack(alignment: .leading) {
                 // 背景
                 RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .fill(.ultraThinMaterial)
+                    .fill(colorScheme == .dark ? .regularMaterial : .ultraThinMaterial)
                     .overlay {
                         RoundedRectangle(cornerRadius: 20, style: .continuous)
-                            .fill(
-                                LinearGradient(
-                                    colors: [Color.white.opacity(0.12), Color.white.opacity(0.04)],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
+                            .fill(containerOverlay)
                     }
                     .overlay {
                         RoundedRectangle(cornerRadius: 20, style: .continuous)
                             .strokeBorder(
-                                LinearGradient(
-                                    colors: [Color.white.opacity(0.2), Color.white.opacity(0.08)],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
+                                containerBorder,
                                 lineWidth: 0.5
                             )
                     }
-                    .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 3)
+                    .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.32 : 0.1), radius: 8, x: 0, y: 3)
 
                 let tabCount = CGFloat(items.count)
                 let tabWidth = max((geo.size.width - 16) / tabCount, 0)
@@ -314,30 +388,20 @@ private struct CustomTabBar: View {
 
                 // スライディングインジケーター
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(.ultraThinMaterial)
+                    .fill(colorScheme == .dark ? .thinMaterial : .ultraThinMaterial)
                     .overlay {
                         RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .fill(
-                                LinearGradient(
-                                    colors: [Color.indigo.opacity(0.15), Color.indigo.opacity(0.08)],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
+                            .fill(indicatorFill)
                     }
                     .overlay {
                         RoundedRectangle(cornerRadius: 16, style: .continuous)
                             .strokeBorder(
-                                LinearGradient(
-                                    colors: [Color.indigo.opacity(0.3), Color.indigo.opacity(0.15)],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
+                                indicatorBorder,
                                 lineWidth: 1
                             )
                     }
                     .frame(width: tabWidth, height: max(geo.size.height - 12, 0))
-                    .shadow(color: Color.black.opacity(0.08), radius: 6, x: 0, y: 2)
+                    .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.24 : 0.08), radius: 6, x: 0, y: 2)
                     .offset(x: 6 + CGFloat(currentIndex) * tabWidth)
                     .animation(.interpolatingSpring(stiffness: 150, damping: 18), value: current)
 
@@ -357,7 +421,7 @@ private struct CustomTabBar: View {
                                         .font(.caption2)
                                         .fontWeight(current == tabId ? .semibold : .regular)
                                 }
-                                .foregroundStyle(current == tabId ? Color.indigo : Color.primary.opacity(0.5))
+                                .foregroundStyle(current == tabId ? tintColor : inactiveForeground)
                                 .frame(width: tabWidth)
 
                                 // コースタブ（.map）の赤ポチバッジ

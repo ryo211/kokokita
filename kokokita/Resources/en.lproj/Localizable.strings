@@ -393,10 +393,12 @@
 "pilgrimageHome.seeAll" = "See All";
 "pilgrimageHome.progressFormat" = "%d/%d Spots";
 "pilgrimageHome.nearbyTitle" = "Nearby Spots";
+"pilgrimageHome.nearbyTabShort" = "Nearby";
 "pilgrimageHome.nearbyRefresh" = "Refresh";
 "pilgrimageHome.noNearbySpots" = "No spots nearby";
 "pilgrimageHome.locationUnavailable" = "Location unavailable";
-"pilgrimageHome.recentTitle" = "Recent Achievements";
+"pilgrimageHome.recentTitle" = "Visited Spots";
+"pilgrimageHome.recentTabShort" = "Visited";
 "pilgrimageHome.noRecentAchievements" = "No achievements yet";
 "pilgrimageHome.distanceMeter" = "%dm";
 
@@ -404,6 +406,7 @@
 "spotPanelList.displayLimitSuffix" = " items";
 "spotPanelList.displayLimitAll" = "All";
 "spotPanelList.favoritesTitle" = "Favorite Spots";
+"spotPanelList.favoritesTabShort" = "Favorites";
 "spotPanelList.noFavorites" = "No favorite spots yet\nTap the heart icon in a course to add favorites";
 "spotPanelList.noFavoritesShort" = "No favorites yet";
 
@@ -540,6 +543,18 @@
 "spotList.title" = "Spots";
 "spotList.locationUnavailable" = "Location unavailable";
 "spotList.noSpots" = "No nearby spots\nPlease enable a pilgrimage course";
+"spotList.mode.nearby" = "Nearby Spots";
+"spotList.mode.nearby.short" = "Nearby";
+"spotList.mode.favorites" = "Favorites";
+"spotList.mode.favorites.short" = "Fav";
+"spotList.mode.visited" = "Visited Spots";
+"spotList.mode.visited.short" = "Visited";
+"spotList.noFavorites" = "No favorite spots";
+"spotList.noVisited" = "No visited spots yet";
+"spotList.sortType.added" = "Added";
+"spotList.nearbySubtitle" = "Nearest from";
+"spotList.distanceSubtitle" = "Nearest from";
+"spotList.totalCount" = "Total %d";
 
 // MARK: - TaxonomyList (sort)
 "taxonomyList.sortNewest" = "Newest first";

@@ -22,6 +22,15 @@ enum SpotPanelKind: Hashable {
         case .favorites: "heart.fill"
         }
     }
+
+    /// 対応する SpotListScreen の表示モード
+    var spotListMode: SpotListMode {
+        switch self {
+        case .nearby:             return .nearby
+        case .favorites:          return .favorites
+        case .recentAchievements: return .visited
+        }
+    }
 }
 
 // スポット行の付加情報（種別に応じて距離または日付を表示）

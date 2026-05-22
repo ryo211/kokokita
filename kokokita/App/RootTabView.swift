@@ -163,24 +163,35 @@ private struct CustomBottomBar: View {
     let onSelect: (RootTab) -> Void
     let onCenterTap: () -> Void
     let onModeSwitch: () -> Void
+    @Environment(\.colorScheme) private var colorScheme
+
+    private var footerOverlayColor: Color {
+        colorScheme == .dark
+            ? Color(.systemBackground).opacity(0.72)
+            : Color.clear
+    }
+
+    private var modeSwitchColor: Color {
+        colorScheme == .dark
+            ? Color(red: 0.74, green: 0.70, blue: 1.0)
+            : Color.indigo
+    }
 
     var body: some View {
         ZStack {
             Rectangle()
-                .fill(.ultraThinMaterial)
+                .fill(colorScheme == .dark ? .regularMaterial : .ultraThinMaterial)
                 .frame(height: UIConstants.Size.tabBarHeight)
+                .overlay(footerOverlayColor)
                 .overlay(Divider(), alignment: .top)
 
             HStack(spacing: 8) {
                 // ккокита（記録）ボタン（左端）
-                Button(action: onCenterTap) {
-                    Image("kokokita_blue")
-                        .resizable()
-                        .scaledToFit()
-                    .frame(width: 60, height: 60)
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel(L.Tab.kokokita)
+                KokokitaTabActionButton(
+                    imageName: "kokokita_irodori_blue_v2",
+                    tintColor: .accentColor,
+                    action: onCenterTap
+                )
 
                 // スライディングタブバー（記録モードの3タブ）
                 SliderTabBar(
@@ -203,10 +214,10 @@ private struct CustomBottomBar: View {
                         Text(L.Tab.modePilgrimage)
                             .font(.caption2)
                     }
-                    .foregroundStyle(Color.indigo.opacity(0.7))
+                    .foregroundStyle(modeSwitchColor.opacity(colorScheme == .dark ? 0.92 : 0.7))
                     .frame(width: 52, height: 52)
                     .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .strokeBorder(Color.indigo.opacity(0.45), lineWidth: 1.5))
+                        .strokeBorder(modeSwitchColor.opacity(colorScheme == .dark ? 0.62 : 0.45), lineWidth: 1.5))
                 }
                 .buttonStyle(.plain)
             }

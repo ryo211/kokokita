@@ -15,6 +15,13 @@ struct DeveloperToolsScreen: View {
                     Label(L.Settings.dataMigration, systemImage: "arrow.up.arrow.down.circle")
                         .foregroundStyle(.blue)
                 }
+
+                NavigationLink {
+                    AppIconGeneratorScreen()
+                } label: {
+                    Label("App Icon Generator", systemImage: "app.dashed")
+                        .foregroundStyle(.indigo)
+                }
             }
 
             Section {
