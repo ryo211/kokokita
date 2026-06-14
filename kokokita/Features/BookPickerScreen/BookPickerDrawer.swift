@@ -270,7 +270,7 @@ enum PremiumGate {
 
     /// ブックを追加できるか（将来の課金チェック差し替えポイント）
     static func canAddBook(existingCount: Int) -> Bool {
-        // TODO: 課金状態を確認してここを差し替える
-        return existingCount < maxBooksForFree
+        // TODO: 課金実装後にここで課金状態を確認する
+        return true
     }
 }
