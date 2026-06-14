@@ -60,8 +60,8 @@
 "home.filter.group" = "旅行";
 "home.filter.period" = "期間";
 "home.search.placeholder" = "検索";
-"home.deleteConfirmTitle" = "この記録を削除しますか？";
-"home.deleteConfirmMessage" = "この操作は取り消せません。";
+"home.deleteConfirmTitle" = "ゴミ箱へ移動";
+"home.deleteConfirmMessage" = "削除した記録はゴミ箱に30日間保存されます。";
 "home.noTitle" = "No Title";
 "home.itemsCount" = "件";
 "home.switchToMap" = "地図に切り替え";
@@ -80,10 +80,10 @@
 "detail.group" = "旅行";
 "detail.memo" = "メモ";
 "detail.facility" = "施設情報";
-"detail.deleteConfirmTitle" = "この記録を削除しますか？";
-"detail.deleteConfirmMessage" = "この操作は取り消せません。";
-"detail.deleteVisitTitle" = "記録を削除";
-"detail.deleteVisitMessage" = "この記録を削除しますか？";
+"detail.deleteConfirmTitle" = "ゴミ箱へ移動";
+"detail.deleteConfirmMessage" = "削除した記録はゴミ箱に30日間保存されます。";
+"detail.deleteVisitTitle" = "ゴミ箱へ移動";
+"detail.deleteVisitMessage" = "削除した記録はゴミ箱に30日間保存されます。";
 "detail.nearbyPastRecords" = "近くの記録";
 "detail.sameGroupRecords" = "同じ旅行の記録";
 
@@ -305,8 +305,8 @@
 "confirmation.noInternet" = "インターネットに接続されていないため、周辺施設情報を取得できません。";
 "confirmation.noPOIFound" = "周辺に施設が見つかりませんでした";
 "confirmation.selectFacility" = "候補のスポットから選択";
-"confirmation.deleteConfirmTitle" = "この記録を削除しますか？";
-"confirmation.deleteConfirmMessage" = "この操作は取り消せません。";
+"confirmation.deleteConfirmTitle" = "ゴミ箱へ移動";
+"confirmation.deleteConfirmMessage" = "削除した記録はゴミ箱に30日間保存されます。";
 "confirmation.recentVisitsHeader" = "この近くで過去に記録した場所";
 "confirmation.nearbyPlacesHeader" = "周辺の施設";
 
@@ -563,3 +563,47 @@
 // MARK: - TaxonomyList（ソート）
 "taxonomyList.sortNewest" = "新しい順";
 "taxonomyList.sortCount" = "多い順";
+
+// MARK: - AutoRecord（自動記録）
+"autoRecord.badge.title" = "自動記録";
+"autoRecord.badge.countFormat" = "%d件の候補";
+"autoRecord.review.title" = "自動記録の候補";
+"autoRecord.review.subtitle" = "OSが検知した訪問記録候補を確認してください";
+"autoRecord.review.empty" = "未確認の候補はありません";
+"autoRecord.review.approve" = "記録する";
+"autoRecord.review.dismiss" = "却下";
+"autoRecord.review.dismissAll" = "すべて却下";
+"autoRecord.review.arrivalDate" = "到着";
+"autoRecord.review.stayDuration" = "滞在時間";
+"autoRecord.review.stayDurationFormat" = "%d分";
+"autoRecord.review.accuracy" = "精度";
+"autoRecord.review.accuracyFormat" = "±%dm";
+"autoRecord.review.loadingPlace" = "地名を取得中…";
+"autoRecord.settings.title" = "自動記録";
+"autoRecord.settings.toggle" = "自動記録を有効にする";
+"autoRecord.settings.toggleDescription" = "バックグラウンドで訪問を自動検知し、承認後に記録します";
+"autoRecord.permission.title" = "常に位置情報を使用";
+"autoRecord.permission.message" = "自動記録には「常に許可」の位置情報権限が必要です。訪れた場所を後から確認・記録するために使用します。";
+"autoRecord.permission.openSettings" = "設定を開く";
+"autoRecord.dismiss.confirmTitle" = "候補を却下";
+"autoRecord.dismiss.confirmMessage" = "この候補を削除します。元に戻せません。";
+"autoRecord.dismissAll.confirmTitle" = "すべての候補を却下";
+"autoRecord.dismissAll.confirmMessage" = "%d件の候補をすべて削除します。元に戻せません。";
+"autoRecord.home.pendingBanner" = "自動記録の候補が%d件あります";
+"autoRecord.settings.reviewCandidates" = "記録候補を確認する";
+
+// MARK: - Trash（ゴミ箱）
+"trash.title" = "ゴミ箱";
+"trash.empty" = "ゴミ箱は空です";
+"trash.emptyDescription" = "削除した記録は30日間ここに保存されます";
+"trash.restore" = "復元";
+"trash.permanentlyDelete" = "完全削除";
+"trash.emptyTrash" = "ゴミ箱を空にする";
+"trash.emptyTrashConfirmTitle" = "ゴミ箱を空にしますか？";
+"trash.emptyTrashConfirmMessage" = "%d件の記録が完全に削除されます。この操作は元に戻せません。";
+"trash.permanentlyDeleteConfirmTitle" = "完全に削除しますか？";
+"trash.permanentlyDeleteConfirmMessage" = "この操作は元に戻せません。";
+"trash.deletedAt" = "削除日: %@";
+"trash.expiresIn" = "あと%d日で自動削除";
+"trash.expiresToday" = "本日自動削除されます";
+"trash.count" = "%d件";

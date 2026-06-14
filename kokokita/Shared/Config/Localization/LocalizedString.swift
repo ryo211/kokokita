@@ -651,6 +651,54 @@ enum L {
         static let retroactiveDateSuffix = localized("checkIn.retroactiveDateSuffix")
     }
 
+    // MARK: - AutoRecord（自動記録）
+    enum AutoRecord {
+        static let badgeTitle = localized("autoRecord.badge.title")
+        static func badgeCountFormat(_ count: Int) -> String { String(format: localized("autoRecord.badge.countFormat"), count) }
+        static let reviewTitle = localized("autoRecord.review.title")
+        static let reviewSubtitle = localized("autoRecord.review.subtitle")
+        static let reviewEmpty = localized("autoRecord.review.empty")
+        static let approve = localized("autoRecord.review.approve")
+        static let dismiss = localized("autoRecord.review.dismiss")
+        static let dismissAll = localized("autoRecord.review.dismissAll")
+        static let arrivalDate = localized("autoRecord.review.arrivalDate")
+        static let stayDuration = localized("autoRecord.review.stayDuration")
+        static func stayDurationFormat(_ minutes: Int) -> String { String(format: localized("autoRecord.review.stayDurationFormat"), minutes) }
+        static let accuracy = localized("autoRecord.review.accuracy")
+        static func accuracyFormat(_ meters: Int) -> String { String(format: localized("autoRecord.review.accuracyFormat"), meters) }
+        static let loadingPlace = localized("autoRecord.review.loadingPlace")
+        static let settingsTitle = localized("autoRecord.settings.title")
+        static let settingsToggle = localized("autoRecord.settings.toggle")
+        static let settingsToggleDescription = localized("autoRecord.settings.toggleDescription")
+        static let reviewCandidates = localized("autoRecord.settings.reviewCandidates")
+        static let permissionTitle = localized("autoRecord.permission.title")
+        static let permissionMessage = localized("autoRecord.permission.message")
+        static let permissionOpenSettings = localized("autoRecord.permission.openSettings")
+        static let dismissConfirmTitle = localized("autoRecord.dismiss.confirmTitle")
+        static let dismissConfirmMessage = localized("autoRecord.dismiss.confirmMessage")
+        static let dismissAllConfirmTitle = localized("autoRecord.dismissAll.confirmTitle")
+        static func dismissAllConfirmMessage(_ count: Int) -> String { String(format: localized("autoRecord.dismissAll.confirmMessage"), count) }
+        static func homePendingBanner(_ count: Int) -> String { String(format: localized("autoRecord.home.pendingBanner"), count) }
+    }
+
+    // MARK: - Trash（ゴミ箱）
+    enum Trash {
+        static let title = localized("trash.title")
+        static let empty = localized("trash.empty")
+        static let emptyDescription = localized("trash.emptyDescription")
+        static let restore = localized("trash.restore")
+        static let permanentlyDelete = localized("trash.permanentlyDelete")
+        static let emptyTrash = localized("trash.emptyTrash")
+        static let emptyTrashConfirmTitle = localized("trash.emptyTrashConfirmTitle")
+        static func emptyTrashConfirmMessage(_ count: Int) -> String { String(format: localized("trash.emptyTrashConfirmMessage"), count) }
+        static let permanentlyDeleteConfirmTitle = localized("trash.permanentlyDeleteConfirmTitle")
+        static let permanentlyDeleteConfirmMessage = localized("trash.permanentlyDeleteConfirmMessage")
+        static func deletedAt(_ date: String) -> String { String(format: localized("trash.deletedAt"), date) }
+        static func expiresIn(_ days: Int) -> String { String(format: localized("trash.expiresIn"), days) }
+        static let expiresToday = localized("trash.expiresToday")
+        static func count(_ n: Int) -> String { String(format: localized("trash.count"), n) }
+    }
+
     // MARK: - Helper
     private static func localized(_ key: String, comment: String = "") -> String {
         NSLocalizedString(key, comment: comment)

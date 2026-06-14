@@ -166,7 +166,6 @@ struct RecentRecordsCarousel: View {
         let repo = AppContainer.shared.repo
         do {
             try repo.delete(id: id)
-            NotificationCenter.default.post(name: .visitsChanged, object: nil)
         } catch {
             Logger.error("Failed to delete visit from home carousel", error: error)
         }

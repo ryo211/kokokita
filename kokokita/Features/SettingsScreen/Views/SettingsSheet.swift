@@ -3,10 +3,56 @@ import SwiftUI
 struct SettingsSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(AppModeManager.self) private var modeManager
+    @ObservedObject private var autoRecordSettings = AutoRecordSettings.shared
+    @State private var showCandidateReview = false
+    @State private var pendingCandidateCount: Int = 0
 
     var body: some View {
         NavigationStack {
             List {
+                // 自動記録
+                Section {
+                    Toggle(isOn: $autoRecordSettings.isEnabled) {
+                        Label(L.AutoRecord.settingsToggle, systemImage: "waveform.path.ecg")
+                    }
+                    .onChange(of: autoRecordSettings.isEnabled) { _, isEnabled in
+                        if isEnabled {
+                            AppContainer.shared.autoRecord.requestAlwaysAuthorization()
+                            AppContainer.shared.autoRecord.startMonitoring()
+                        } else {
+                            AppContainer.shared.autoRecord.stopMonitoring()
+                        }
+                    }
+
+                    if autoRecordSettings.isEnabled {
+                        Button {
+                            showCandidateReview = true
+                        } label: {
+                            HStack {
+                                Label(L.AutoRecord.reviewCandidates, systemImage: "list.bullet.clipboard")
+                                    .foregroundStyle(.primary)
+                                Spacer()
+                                if pendingCandidateCount > 0 {
+                                    Text("\(pendingCandidateCount)")
+                                        .font(.caption)
+                                        .foregroundStyle(.white)
+                                        .padding(.horizontal, 7)
+                                        .padding(.vertical, 3)
+                                        .background(Color.accentColor)
+                                        .clipShape(Capsule())
+                                }
+                                Image(systemName: "chevron.right")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                } header: {
+                    Text(L.AutoRecord.settingsTitle)
+                } footer: {
+                    Text(L.AutoRecord.settingsToggleDescription)
+                }
+
                 // アプリモード切替
                 Section {
                     Button {
@@ -82,7 +128,16 @@ struct SettingsSheet: View {
                     }
                 }
             }
+            .sheet(isPresented: $showCandidateReview) {
+                AutoRecordCandidateReviewScreen()
+                    .onDisappear { loadPendingCount() }
+            }
+            .onAppear { loadPendingCount() }
         }
+    }
+
+    private func loadPendingCount() {
+        pendingCandidateCount = (try? AppContainer.shared.candidateRepo.countPending()) ?? 0
     }
 
     private var appVersion: String {

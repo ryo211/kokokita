@@ -278,13 +278,85 @@ final class CoreDataVisitRepository {
     }
     #endif
 
+    /// ゴミ箱へ移動（ソフト削除）。deletedAt にタイムスタンプをセットする
     func delete(id: UUID) throws {
-        if let v = try fetchVisitEntity(id: id) {
-            // ファイルパスを先に退避して削除
+        guard let v = try fetchVisitEntity(id: id) else { return }
+        v.deletedAt = Date()
+        try ctx.save()
+        NotificationCenter.default.post(name: .visitsChanged, object: nil)
+        Logger.info("記録をゴミ箱に移動しました: \(id)")
+    }
+
+    // MARK: - Trash（ゴミ箱）
+
+    /// ゴミ箱内の記録を deletedAt 降順で取得
+    func fetchTrashed() throws -> [VisitAggregate] {
+        let request: NSFetchRequest<VisitEntity> = VisitEntity.fetchRequest()
+        request.predicate = NSPredicate(format: "deletedAt != nil")
+        request.sortDescriptors = [NSSortDescriptor(key: "deletedAt", ascending: false)]
+        request.relationshipKeyPathsForPrefetching = ["details", "details.labels", "details.members", "details.photos"]
+        let rows = try ctx.fetch(request)
+        return rows.compactMap { self.toAggregate($0) }
+    }
+
+    /// ゴミ箱の件数
+    func countTrashed() throws -> Int {
+        let request: NSFetchRequest<VisitEntity> = VisitEntity.fetchRequest()
+        request.predicate = NSPredicate(format: "deletedAt != nil")
+        return try ctx.count(for: request)
+    }
+
+    /// ゴミ箱から復元（deletedAt をクリア）
+    func restore(id: UUID) throws {
+        guard let v = try fetchVisitEntity(id: id) else { return }
+        v.deletedAt = nil
+        try ctx.save()
+        NotificationCenter.default.post(name: .visitsChanged, object: nil)
+        Logger.info("記録をゴミ箱から復元しました: \(id)")
+    }
+
+    /// 完全削除（写真ファイルも削除）
+    func permanentlyDelete(id: UUID) throws {
+        guard let v = try fetchVisitEntity(id: id) else { return }
+        let photos = photoEntities(from: v.details)
+        for p in photos { if let path = p.filePath { ImageStore.delete(path) } }
+        ctx.delete(v)
+        try ctx.save()
+        NotificationCenter.default.post(name: .visitsChanged, object: nil)
+        Logger.info("記録を完全削除しました: \(id)")
+    }
+
+    /// ゴミ箱を空にする（全件完全削除）
+    func emptyTrash() throws {
+        let request: NSFetchRequest<VisitEntity> = VisitEntity.fetchRequest()
+        request.predicate = NSPredicate(format: "deletedAt != nil")
+        let rows = try ctx.fetch(request)
+        for v in rows {
             let photos = photoEntities(from: v.details)
             for p in photos { if let path = p.filePath { ImageStore.delete(path) } }
             ctx.delete(v)
+        }
+        if !rows.isEmpty {
             try ctx.save()
+            NotificationCenter.default.post(name: .visitsChanged, object: nil)
+            Logger.info("ゴミ箱を空にしました（\(rows.count)件削除）")
+        }
+    }
+
+    /// 保持期間を超えたゴミ箱内の記録を自動完全削除（起動時に呼ぶ）
+    func cleanUpExpiredTrash() throws {
+        let cutoff = Date().addingTimeInterval(-AppConfig.trashRetentionDays * 86400)
+        let request: NSFetchRequest<VisitEntity> = VisitEntity.fetchRequest()
+        request.predicate = NSPredicate(format: "deletedAt != nil AND deletedAt < %@", cutoff as NSDate)
+        let rows = try ctx.fetch(request)
+        for v in rows {
+            let photos = photoEntities(from: v.details)
+            for p in photos { if let path = p.filePath { ImageStore.delete(path) } }
+            ctx.delete(v)
+        }
+        if !rows.isEmpty {
+            try ctx.save()
+            Logger.info("ゴミ箱の期限切れ記録を \(rows.count) 件完全削除しました")
         }
     }
 
@@ -298,7 +370,7 @@ final class CoreDataVisitRepository {
     ) throws -> [VisitAggregate] {
         // 型を明示
         let request: NSFetchRequest<VisitEntity> = VisitEntity.fetchRequest()
-        var predicates: [NSPredicate] = []
+        var predicates: [NSPredicate] = [NSPredicate(format: "deletedAt == nil")]
 
         // VisitEntity(1) -details-> VisitDetailsEntity(1) -labels-> LabelEntity(*)
         if let lf = filterLabel {
@@ -347,6 +419,7 @@ final class CoreDataVisitRepository {
     /// 最新の訪問記録を指定件数だけ取得（Core Data レベルでソート・件数制限）
     func fetchRecent(limit: Int) throws -> [VisitAggregate] {
         let request: NSFetchRequest<VisitEntity> = VisitEntity.fetchRequest()
+        request.predicate = NSPredicate(format: "deletedAt == nil")
         request.sortDescriptors = [NSSortDescriptor(key: "timestampUTC", ascending: false)]
         request.fetchLimit = limit
         // リレーションを事前読み込みしてN+1を軽減
@@ -378,6 +451,7 @@ final class CoreDataVisitRepository {
         let request: NSFetchRequest<VisitEntity> = VisitEntity.fetchRequest()
 
         var predicates: [NSPredicate] = [
+            NSPredicate(format: "deletedAt == nil"),
             NSPredicate(format: "latitude BETWEEN {%f, %f}", latitude - degreeOffset, latitude + degreeOffset),
             NSPredicate(format: "longitude BETWEEN {%f, %f}", longitude - degreeOffset, longitude + degreeOffset)
         ]
@@ -619,7 +693,7 @@ final class CoreDataVisitRepository {
             photoPaths: photoPaths
         )
 
-        return VisitAggregate(id: id, visit: visit, details: details)
+        return VisitAggregate(id: id, visit: visit, details: details, deletedAt: v.deletedAt)
     }
 
 
@@ -749,6 +823,7 @@ final class CoreDataVisitRepository {
 
     func allVisitsCount() throws -> Int {
         let request: NSFetchRequest<VisitEntity> = VisitEntity.fetchRequest()
+        request.predicate = NSPredicate(format: "deletedAt == nil")
         return try ctx.count(for: request)
     }
 

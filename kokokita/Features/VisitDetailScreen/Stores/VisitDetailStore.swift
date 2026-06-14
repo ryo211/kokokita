@@ -25,9 +25,6 @@ final class VisitDetailStore {
     // MARK: - 共有
     var sharePayload: SharePayload? = nil
 
-    // MARK: - 削除確認
-    var showDeleteAlert = false
-
     // MARK: - タクソノミー選択（詳細画面遷移用）
     var selectedLabel: LabelTag? = nil
     var selectedGroup: GroupTag? = nil

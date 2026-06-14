@@ -110,7 +110,8 @@ struct VisitDetailScreen: View {
                 }
 
                 Button(role: .destructive) {
-                    store.showDeleteAlert = true
+                    onDelete()
+                    dismiss()
                 } label: {
                     Image(systemName: "trash")
                 }
@@ -120,15 +121,6 @@ struct VisitDetailScreen: View {
 
         .sheet(item: $store.sharePayload) { payload in
             ActivityView(items: [payload.text, payload.image])
-        }
-        .alert(L.Detail.deleteConfirmTitle, isPresented: $store.showDeleteAlert) {
-            Button(L.Common.delete, role: .destructive) {
-                onDelete()
-                dismiss()
-            }
-            Button(L.Common.cancel, role: .cancel) { }
-        } message: {
-            Text(L.Detail.deleteConfirmMessage)
         }
         // タクソノミー詳細画面への遷移
         .navigationDestination(item: $store.selectedLabel) { label in

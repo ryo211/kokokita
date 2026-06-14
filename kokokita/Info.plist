@@ -4,5 +4,9 @@
 <dict>
 	<key>GADApplicationIdentifier</key>
 	<string>ca-app-pub-7495977536865069~4734364300</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>location</string>
+	</array>
 </dict>
 </plist>

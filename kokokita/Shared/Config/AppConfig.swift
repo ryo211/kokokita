@@ -30,6 +30,20 @@ struct AppConfig {
     /// 位置情報取得のタイムアウト（秒）
     static let locationTimeout: TimeInterval = 30
 
+    // MARK: - Trash Settings（ゴミ箱）
+    /// ゴミ箱の保持日数（これより古い記録は自動的に完全削除）
+    static let trashRetentionDays: Double = 30
+
+    // MARK: - Auto Record Settings（自動記録）
+    /// 精度足切り: これより粗い Visit は候補化しない（メートル）
+    static let autoRecordMaxAccuracyMeters: Double = 200
+    /// 滞在時間足切り: これより短い滞在は候補化しない（秒）
+    static let autoRecordMinStaySeconds: TimeInterval = 5 * 60
+    /// 候補の保持日数（これより古い候補は自動削除）
+    static let autoRecordRetentionDays: TimeInterval = 30
+    /// pending 候補の上限件数
+    static let autoRecordMaxCandidates: Int = 100
+
     // MARK: - Share Settings
     /// 共有画像の論理サイズ（width）
     static let shareImageLogicalWidth: CGFloat = 360

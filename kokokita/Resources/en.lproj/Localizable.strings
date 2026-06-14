@@ -60,8 +60,8 @@
 "home.filter.group" = "Trip";
 "home.filter.period" = "Period";
 "home.search.placeholder" = "Search";
-"home.deleteConfirmTitle" = "Delete this record?";
-"home.deleteConfirmMessage" = "This action cannot be undone.";
+"home.deleteConfirmTitle" = "Move to Trash";
+"home.deleteConfirmMessage" = "Deleted records are saved in the Trash for 30 days.";
 "home.noTitle" = "No Title";
 "home.itemsCount" = "items";
 "home.switchToMap" = "Switch to Map";
@@ -80,10 +80,10 @@
 "detail.group" = "Trip";
 "detail.memo" = "Memo";
 "detail.facility" = "Facility Info";
-"detail.deleteConfirmTitle" = "Delete this record?";
-"detail.deleteConfirmMessage" = "This action cannot be undone.";
-"detail.deleteVisitTitle" = "Delete Record";
-"detail.deleteVisitMessage" = "Delete this record?";
+"detail.deleteConfirmTitle" = "Move to Trash";
+"detail.deleteConfirmMessage" = "Deleted records are saved in the Trash for 30 days.";
+"detail.deleteVisitTitle" = "Move to Trash";
+"detail.deleteVisitMessage" = "Deleted records are saved in the Trash for 30 days.";
 "detail.nearbyPastRecords" = "Nearby Records";
 "detail.sameGroupRecords" = "Records in This Trip";
 
@@ -303,8 +303,8 @@
 "confirmation.noInternet" = "Cannot fetch nearby places without an internet connection.";
 "confirmation.noPOIFound" = "No places found nearby";
 "confirmation.selectFacility" = "Choose from Candidate Spots";
-"confirmation.deleteConfirmTitle" = "Delete this record?";
-"confirmation.deleteConfirmMessage" = "This action cannot be undone.";
+"confirmation.deleteConfirmTitle" = "Move to Trash";
+"confirmation.deleteConfirmMessage" = "Deleted records are saved in the Trash for 30 days.";
 "confirmation.recentVisitsHeader" = "Past Records Nearby";
 "confirmation.nearbyPlacesHeader" = "Nearby Places";
 
@@ -559,3 +559,47 @@
 // MARK: - TaxonomyList (sort)
 "taxonomyList.sortNewest" = "Newest first";
 "taxonomyList.sortCount" = "Most visits";
+
+// MARK: - AutoRecord
+"autoRecord.badge.title" = "Auto Record";
+"autoRecord.badge.countFormat" = "%d candidates";
+"autoRecord.review.title" = "Auto-Recorded Visits";
+"autoRecord.review.subtitle" = "Review visits detected automatically by your device";
+"autoRecord.review.empty" = "No pending candidates";
+"autoRecord.review.approve" = "Record";
+"autoRecord.review.dismiss" = "Dismiss";
+"autoRecord.review.dismissAll" = "Dismiss All";
+"autoRecord.review.arrivalDate" = "Arrival";
+"autoRecord.review.stayDuration" = "Stay duration";
+"autoRecord.review.stayDurationFormat" = "%d min";
+"autoRecord.review.accuracy" = "Accuracy";
+"autoRecord.review.accuracyFormat" = "±%dm";
+"autoRecord.review.loadingPlace" = "Loading place name…";
+"autoRecord.settings.title" = "Auto Record";
+"autoRecord.settings.toggle" = "Enable Auto Record";
+"autoRecord.settings.toggleDescription" = "Automatically detect visits in the background and let you confirm them later";
+"autoRecord.permission.title" = "Always Allow Location";
+"autoRecord.permission.message" = "Auto Record requires Always On location permission to detect visits in the background.";
+"autoRecord.permission.openSettings" = "Open Settings";
+"autoRecord.dismiss.confirmTitle" = "Dismiss Candidate";
+"autoRecord.dismiss.confirmMessage" = "This candidate will be deleted and cannot be undone.";
+"autoRecord.dismissAll.confirmTitle" = "Dismiss All Candidates";
+"autoRecord.dismissAll.confirmMessage" = "All %d candidates will be deleted and cannot be undone.";
+"autoRecord.home.pendingBanner" = "%d auto-recorded visit(s) pending";
+"autoRecord.settings.reviewCandidates" = "Review Candidates";
+
+// MARK: - Trash
+"trash.title" = "Trash";
+"trash.empty" = "Trash Is Empty";
+"trash.emptyDescription" = "Deleted records are saved here for 30 days";
+"trash.restore" = "Restore";
+"trash.permanentlyDelete" = "Delete Permanently";
+"trash.emptyTrash" = "Empty Trash";
+"trash.emptyTrashConfirmTitle" = "Empty Trash?";
+"trash.emptyTrashConfirmMessage" = "%d records will be permanently deleted. This cannot be undone.";
+"trash.permanentlyDeleteConfirmTitle" = "Delete Permanently?";
+"trash.permanentlyDeleteConfirmMessage" = "This action cannot be undone.";
+"trash.deletedAt" = "Deleted: %@";
+"trash.expiresIn" = "Auto-deletes in %d day(s)";
+"trash.expiresToday" = "Auto-deletes today";
+"trash.count" = "%d items";
