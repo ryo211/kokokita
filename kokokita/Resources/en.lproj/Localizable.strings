@@ -559,3 +559,17 @@
 // MARK: - TaxonomyList (sort)
 "taxonomyList.sortNewest" = "Newest first";
 "taxonomyList.sortCount" = "Most visits";
+
+// MARK: - SlideShow (video mode)
+"slideShow.toolbarButton" = "Video Mode";
+"slideShow.noPlayableSpots" = "No spots available";
+"slideShow.noPlayableSpotsDesc" = "No spots with photos found.\nVideo mode is unavailable.";
+"slideShow.settings.title" = "Playback Settings";
+"slideShow.settings.interval" = "Display Duration";
+"slideShow.settings.intervalSec" = "%.1f sec";
+"slideShow.settings.minSec" = "0.5 sec";
+"slideShow.settings.maxSec" = "3 sec";
+"slideShow.settings.animationSpeed" = "Transition Animation";
+"slideShow.settings.speed.slow" = "Slow";
+"slideShow.settings.speed.medium" = "Normal";
+"slideShow.settings.speed.fast" = "Fast";

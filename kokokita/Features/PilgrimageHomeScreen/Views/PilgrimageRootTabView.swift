@@ -4,6 +4,7 @@ import SwiftUI
 // 記録モードと同じカスタムタブバー UI を使用
 struct PilgrimageRootTabView: View {
     @Environment(AppModeManager.self) private var modeManager
+    @Environment(AppUIState.self) private var ui
     @State private var tab: PilgrimageTab = .home
     @State private var recording = RecordingController()
     /// CourseScreen と共有するストア（NEWバッジ連動用）
@@ -49,39 +50,42 @@ struct PilgrimageRootTabView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
 
                 // フッター（バナー広告 + カスタムタブバー）
-                VStack(spacing: 0) {
-                    #if DEBUG
-                    if debugSettings.isAdDisplayEnabled {
+                if !ui.isTabBarHidden {
+                    VStack(spacing: 0) {
+                        #if DEBUG
+                        if debugSettings.isAdDisplayEnabled {
+                            BannerAdView(adUnitID: pilgrimageBannerAdUnitID)
+                                .background(.thinMaterial)
+                        }
+                        #else
                         BannerAdView(adUnitID: pilgrimageBannerAdUnitID)
                             .background(.thinMaterial)
-                    }
-                    #else
-                    BannerAdView(adUnitID: pilgrimageBannerAdUnitID)
-                        .background(.thinMaterial)
-                    #endif
+                        #endif
 
-                    PilgrimageBottomBar(
-                        current: tab,
-                        showCourseTabBadge: showCourseTabBadge,
-                        onSelect: { newTab in
-                            let prev = tab
-                            tab = newTab
-                            if newTab == .map {
-                                // コースタブに入ったら赤ポチだけ消す
-                                // コース一覧のNEWバッジはそのまま表示し続ける
-                                withAnimation { showCourseTabBadge = false }
-                            } else if prev == .map {
-                                // コースタブから離れたらNEWバッジをクリア
-                                courseStore.newlyAddedCourseIds.removeAll()
-                            }
-                        },
-                        onRecord: {
-                            recording.checkLocationPermissionAndCreate()
-                        },
-                        onModeSwitch: { modeManager.setMode(.record) },
-                        onMyListTabFrame: { myListTabFrame = $0 },
-                        onCourseTabFrame: { courseTabFrame = $0 }
-                    )
+                        PilgrimageBottomBar(
+                            current: tab,
+                            showCourseTabBadge: showCourseTabBadge,
+                            onSelect: { newTab in
+                                let prev = tab
+                                tab = newTab
+                                if newTab == .map {
+                                    // コースタブに入ったら赤ポチだけ消す
+                                    // コース一覧のNEWバッジはそのまま表示し続ける
+                                    withAnimation { showCourseTabBadge = false }
+                                } else if prev == .map {
+                                    // コースタブから離れたらNEWバッジをクリア
+                                    courseStore.newlyAddedCourseIds.removeAll()
+                                }
+                            },
+                            onRecord: {
+                                recording.checkLocationPermissionAndCreate()
+                            },
+                            onModeSwitch: { modeManager.setMode(.record) },
+                            onMyListTabFrame: { myListTabFrame = $0 },
+                            onCourseTabFrame: { courseTabFrame = $0 }
+                        )
+                    }
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
             }
             // ルートフレームを取得（グローバル→ローカル変換用）
@@ -106,6 +110,7 @@ struct PilgrimageRootTabView: View {
                 .allowsHitTesting(false)
             }
         }
+        .animation(.snappy, value: ui.isTabBarHidden)
         .recordingOverlay(recording)
         .ignoresSafeArea(.keyboard, edges: .bottom)
         .onReceive(NotificationCenter.default.publisher(for: .courseEnabled)) { notification in

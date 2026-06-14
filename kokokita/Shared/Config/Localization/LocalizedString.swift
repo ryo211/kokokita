@@ -651,6 +651,24 @@ enum L {
         static let retroactiveDateSuffix = localized("checkIn.retroactiveDateSuffix")
     }
 
+    // MARK: - SlideShow（動画モード）
+    enum SlideShow {
+        static let toolbarButton = localized("slideShow.toolbarButton")
+        static let noPlayableSpots = localized("slideShow.noPlayableSpots")
+        static let noPlayableSpotsDesc = localized("slideShow.noPlayableSpotsDesc")
+        static let settingsTitle = localized("slideShow.settings.title")
+        static let settingsInterval = localized("slideShow.settings.interval")
+        static func settingsIntervalSec(_ sec: Double) -> String {
+            String(format: localized("slideShow.settings.intervalSec"), sec)
+        }
+        static let settingsMinSec = localized("slideShow.settings.minSec")
+        static let settingsMaxSec = localized("slideShow.settings.maxSec")
+        static let settingsAnimationSpeed = localized("slideShow.settings.animationSpeed")
+        static let speedSlow   = localized("slideShow.settings.speed.slow")
+        static let speedMedium = localized("slideShow.settings.speed.medium")
+        static let speedFast   = localized("slideShow.settings.speed.fast")
+    }
+
     // MARK: - Helper
     private static func localized(_ key: String, comment: String = "") -> String {
         NSLocalizedString(key, comment: comment)

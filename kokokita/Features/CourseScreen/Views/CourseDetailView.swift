@@ -171,10 +171,17 @@ struct CourseDetailView: View {
         }
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                Button {
-                    showSummary = true
-                } label: {
-                    Image(systemName: "info.circle")
+                HStack(spacing: 4) {
+                    NavigationLink {
+                        CourseSlideShowView(course: course)
+                    } label: {
+                        Image(systemName: "play.rectangle")
+                    }
+                    Button {
+                        showSummary = true
+                    } label: {
+                        Image(systemName: "info.circle")
+                    }
                 }
             }
         }

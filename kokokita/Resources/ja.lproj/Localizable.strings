@@ -563,3 +563,17 @@
 // MARK: - TaxonomyList（ソート）
 "taxonomyList.sortNewest" = "新しい順";
 "taxonomyList.sortCount" = "多い順";
+
+// MARK: - SlideShow（動画モード）
+"slideShow.toolbarButton" = "動画モード";
+"slideShow.noPlayableSpots" = "表示できるスポットがありません";
+"slideShow.noPlayableSpotsDesc" = "写真付きのスポットがないため\n動画モードを利用できません";
+"slideShow.settings.title" = "再生設定";
+"slideShow.settings.interval" = "スポット表示時間";
+"slideShow.settings.intervalSec" = "%.1f 秒";
+"slideShow.settings.minSec" = "0.5秒";
+"slideShow.settings.maxSec" = "3秒";
+"slideShow.settings.animationSpeed" = "切り替えアニメーション";
+"slideShow.settings.speed.slow" = "ゆっくり";
+"slideShow.settings.speed.medium" = "普通";
+"slideShow.settings.speed.fast" = "キビキビ";

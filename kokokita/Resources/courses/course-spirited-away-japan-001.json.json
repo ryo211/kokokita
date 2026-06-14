@@ -1,0 +1,121 @@
+{
+  "id": "course-spirited-away-japan-001",
+  "courseType": "pilgrimage",
+  "title": "『千と千尋の神隠し』の聖地",
+  "summary": "スタジオジブリの名作『千と千尋の神隠し』の世界観を体感できる、全国各地のモデルスポットを巡るコースです。公式が認めた場所からファンに愛され続ける聖地まで、千尋が迷い込んだ不思議な世界の面影を探しに行きましょう。全7件収録。",
+  "source": "bundled",
+  "isUserCreated": false,
+  "version": 3,
+  "recognitionRadiusMeters": 200,
+  "detailUrl": null,
+  "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/course/course-spirited-away-japan-001.jpg",
+  "categories": [
+    "anime"
+  ],
+  "sections": [
+    {
+      "sectionId": "sec-kanto",
+      "name": "関東エリア",
+      "sectionDescription": "東京・群馬に点在する公式モデルスポット。",
+      "orderIndex": 0,
+      "coverImageUrl": null,
+      "spots": [
+        {
+          "spotId": "sa-001",
+          "name": "積善館（四万温泉）",
+          "latitude": 36.6863394,
+          "longitude": 138.7737791,
+          "spotDescription": "元禄7年（1694年）創業、日本最古の湯宿建築。群馬県重要文化財。油屋のモデルのひとつとして知られ、宮崎駿監督も宿泊したことが伝わる。赤い橋「慶雲橋」や浪漫のトンネルが映画の世界観そのもの。",
+          "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/sa-001.jpg",
+          "orderIndex": 0,
+          "recognitionRadiusMeters": 500,
+          "address": "群馬県吾妻郡中之条町四万温泉"
+        },
+        {
+          "spotId": "sa-002",
+          "name": "江戸東京たてもの園",
+          "latitude": 35.7155722,
+          "longitude": 139.5125434,
+          "spotDescription": "スタジオジブリ公認のモデル地。釜爺のボイラー室のモデル「武居三省堂」、油屋に似た銭湯建築「子宝湯」など、作中のシーンと見比べながら巡れる。",
+          "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/sa-002.jpg",
+          "orderIndex": 1,
+          "recognitionRadiusMeters": 400,
+          "address": "東京都小金井市桜町3-7-1"
+        },
+        {
+          "spotId": "sa-003",
+          "name": "ホテル雅叙園東京",
+          "latitude": 35.6317881,
+          "longitude": 139.7137936,
+          "spotDescription": "目黒川沿いに佇む、絢爛豪華な日本美術を纏った歴史あるホテル。油屋のイメージモデルのひとつとして語られることが多い。百段階段など、異世界感あふれる館内が見どころ。",
+          "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/sa-003.jpg",
+          "orderIndex": 2,
+          "recognitionRadiusMeters": 200,
+          "address": "東京都目黒区下目黒1-8-1"
+        }
+      ]
+    },
+    {
+      "sectionId": "sec-tohoku-shinetsu",
+      "name": "東北・信越エリア",
+      "sectionDescription": "ノスタルジックな温泉街の風景が映画の雰囲気を醸し出すスポット。",
+      "orderIndex": 1,
+      "coverImageUrl": null,
+      "spots": [
+        {
+          "spotId": "sa-004",
+          "name": "銀山温泉",
+          "latitude": 38.5706177,
+          "longitude": 140.5305457,
+          "spotDescription": "大正ロマン漂うレトロな温泉街。川沿いに並ぶ木造多層の旅館が夜のライトアップで幻想的な雰囲気に。特に能登屋旅館は油屋に似ていると多くのファンが訪れる。",
+          "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/sa-004.jpg",
+          "orderIndex": 0,
+          "recognitionRadiusMeters": 300,
+          "address": "山形県尾花沢市銀山新畑"
+        },
+        {
+          "spotId": "sa-005",
+          "name": "歴史の宿 金具屋（渋温泉）",
+          "latitude": 36.734713,
+          "longitude": 138.4329137,
+          "spotDescription": "昭和初期建築の登録有形文化財。千尋が働く湯屋に似た多層木造建築が圧巻。千と千尋の電車シーンに似た情景も近隣で楽しめる。",
+          "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/sa-005.jpg",
+          "orderIndex": 1,
+          "recognitionRadiusMeters": 200,
+          "address": "長野県下高井郡山ノ内町平穏2202"
+        }
+      ]
+    },
+    {
+      "sectionId": "sec-shikoku",
+      "name": "四国・中国エリア",
+      "sectionDescription": "宮崎監督が公言した公式モデルと海を渡る幻想的な駅。",
+      "orderIndex": 2,
+      "coverImageUrl": null,
+      "spots": [
+        {
+          "spotId": "sa-006",
+          "name": "道後温泉本館",
+          "latitude": 33.8520748,
+          "longitude": 132.7864098,
+          "spotDescription": "日本最古の温泉のひとつ。明治27年（1894年）建造の木造三階建て。宮崎駿監督が「油屋のモデルに道後温泉は確かに入っている」と明言した公式モデル地。2024年7月に全館営業再開。",
+          "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/sa-006.jpg",
+          "orderIndex": 0,
+          "recognitionRadiusMeters": 200,
+          "address": "愛媛県松山市道後湯之町5-6"
+        },
+        {
+          "spotId": "sa-007",
+          "name": "下灘駅",
+          "latitude": 33.6551644,
+          "longitude": 132.5893398,
+          "spotDescription": "瀬戸内海を望む海際の無人駅。千尋が銭婆のもとへ向かう「海の上を走る電車」のシーンの雰囲気に最も近い場所として、国内外のジブリファンに愛される絶景スポット。",
+          "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/sa-007.jpg",
+          "orderIndex": 1,
+          "recognitionRadiusMeters": 200,
+          "address": "愛媛県伊予市双海町大久保"
+        }
+      ]
+    }
+  ]
+}

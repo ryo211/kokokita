@@ -1,0 +1,13 @@
+version = 0.1
+
+[default.deploy.parameters]
+stack_name = "kokokita-course-manage"
+resolve_s3 = true
+s3_prefix = "kokokita-course-manage"
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "CfDistributionId=\"E2SLZOSHR82S8Q\""
+image_repositories = []
+confirm_changeset = true
+
+[default.global.parameters]
+region = "ap-northeast-1"
