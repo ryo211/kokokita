@@ -603,3 +603,17 @@
 "trash.expiresIn" = "Auto-deletes in %d day(s)";
 "trash.expiresToday" = "Auto-deletes today";
 "trash.count" = "%d items";
+
+// MARK: - Book
+"book.myBook" = "My Book";
+"book.pickerTitle" = "Book";
+"book.newBook" = "New Book";
+"book.namePlaceholder" = "Book Name";
+"book.premiumTitle" = "Premium Feature";
+"book.premiumDescription" = "Creating multiple books requires\na premium plan.";
+"book.premiumUpgrade" = "Upgrade";
+"book.deleteConfirm" = "Delete this book?";
+"book.deleteDescription" = "All records, labels, groups, and members in this book will be deleted. This cannot be undone.";
+"book.rename" = "Rename";
+"book.colorLabel" = "Cover Color";
+"book.currentLabel" = "In Use";

@@ -3,6 +3,8 @@ import CoreData
 
 final class CoreDataVisitRepository {
     private let ctx: NSManagedObjectContext
+    /// 現在選択中のブックID（AppContainer.setCurrentBook() で更新される）
+    var currentBookId: UUID = UUID()
 
     init(context: NSManagedObjectContext = CoreDataStack.shared.context) {
         self.ctx = context
@@ -71,6 +73,9 @@ final class CoreDataVisitRepository {
             d.photos = ordered
         }
         
+        // ブック割り当て
+        v.bookId = currentBookId
+
         // リレーション接続（inverse は DataModel 側で設定しておく）
         v.details = d
 
@@ -292,7 +297,10 @@ final class CoreDataVisitRepository {
     /// ゴミ箱内の記録を deletedAt 降順で取得
     func fetchTrashed() throws -> [VisitAggregate] {
         let request: NSFetchRequest<VisitEntity> = VisitEntity.fetchRequest()
-        request.predicate = NSPredicate(format: "deletedAt != nil")
+        request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [
+            NSPredicate(format: "deletedAt != nil"),
+            NSPredicate(format: "bookId == %@", currentBookId as CVarArg)
+        ])
         request.sortDescriptors = [NSSortDescriptor(key: "deletedAt", ascending: false)]
         request.relationshipKeyPathsForPrefetching = ["details", "details.labels", "details.members", "details.photos"]
         let rows = try ctx.fetch(request)
@@ -302,7 +310,10 @@ final class CoreDataVisitRepository {
     /// ゴミ箱の件数
     func countTrashed() throws -> Int {
         let request: NSFetchRequest<VisitEntity> = VisitEntity.fetchRequest()
-        request.predicate = NSPredicate(format: "deletedAt != nil")
+        request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [
+            NSPredicate(format: "deletedAt != nil"),
+            NSPredicate(format: "bookId == %@", currentBookId as CVarArg)
+        ])
         return try ctx.count(for: request)
     }
 
@@ -370,7 +381,10 @@ final class CoreDataVisitRepository {
     ) throws -> [VisitAggregate] {
         // 型を明示
         let request: NSFetchRequest<VisitEntity> = VisitEntity.fetchRequest()
-        var predicates: [NSPredicate] = [NSPredicate(format: "deletedAt == nil")]
+        var predicates: [NSPredicate] = [
+            NSPredicate(format: "deletedAt == nil"),
+            NSPredicate(format: "bookId == %@", currentBookId as CVarArg)
+        ]
 
         // VisitEntity(1) -details-> VisitDetailsEntity(1) -labels-> LabelEntity(*)
         if let lf = filterLabel {
@@ -419,7 +433,10 @@ final class CoreDataVisitRepository {
     /// 最新の訪問記録を指定件数だけ取得（Core Data レベルでソート・件数制限）
     func fetchRecent(limit: Int) throws -> [VisitAggregate] {
         let request: NSFetchRequest<VisitEntity> = VisitEntity.fetchRequest()
-        request.predicate = NSPredicate(format: "deletedAt == nil")
+        request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [
+            NSPredicate(format: "deletedAt == nil"),
+            NSPredicate(format: "bookId == %@", currentBookId as CVarArg)
+        ])
         request.sortDescriptors = [NSSortDescriptor(key: "timestampUTC", ascending: false)]
         request.fetchLimit = limit
         // リレーションを事前読み込みしてN+1を軽減
@@ -452,6 +469,7 @@ final class CoreDataVisitRepository {
 
         var predicates: [NSPredicate] = [
             NSPredicate(format: "deletedAt == nil"),
+            NSPredicate(format: "bookId == %@", currentBookId as CVarArg),
             NSPredicate(format: "latitude BETWEEN {%f, %f}", latitude - degreeOffset, latitude + degreeOffset),
             NSPredicate(format: "longitude BETWEEN {%f, %f}", longitude - degreeOffset, longitude + degreeOffset)
         ]
@@ -505,6 +523,7 @@ final class CoreDataVisitRepository {
 
     func allLabels() throws -> [LabelTag] {
         let req: NSFetchRequest<LabelEntity> = LabelEntity.fetchRequest()
+        req.predicate = NSPredicate(format: "bookId == %@", currentBookId as CVarArg)
         req.sortDescriptors = [NSSortDescriptor(key: #keyPath(LabelEntity.name), ascending: true)]
         return try ctx.fetch(req).compactMap { row in
             guard let id = row.id, let name = row.name else {
@@ -517,6 +536,7 @@ final class CoreDataVisitRepository {
 
     func allGroups() throws -> [GroupTag] {
         let req: NSFetchRequest<GroupEntity> = GroupEntity.fetchRequest()
+        req.predicate = NSPredicate(format: "bookId == %@", currentBookId as CVarArg)
         req.sortDescriptors = [NSSortDescriptor(key: #keyPath(GroupEntity.name), ascending: true)]
         return try ctx.fetch(req).compactMap { row in
             guard let id = row.id, let name = row.name else {
@@ -529,6 +549,7 @@ final class CoreDataVisitRepository {
 
     func allMembers() throws -> [MemberTag] {
         let req: NSFetchRequest<MemberEntity> = MemberEntity.fetchRequest()
+        req.predicate = NSPredicate(format: "bookId == %@", currentBookId as CVarArg)
         req.sortDescriptors = [NSSortDescriptor(key: #keyPath(MemberEntity.name), ascending: true)]
         return try ctx.fetch(req).compactMap { row in
             guard let id = row.id, let name = row.name else {
@@ -541,7 +562,10 @@ final class CoreDataVisitRepository {
 
     func upsertLabel(name: String) throws -> LabelTag {
         let req: NSFetchRequest<LabelEntity> = LabelEntity.fetchRequest()
-        req.predicate = NSPredicate(format: "name == %@", name)
+        req.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [
+            NSPredicate(format: "name == %@", name),
+            NSPredicate(format: "bookId == %@", currentBookId as CVarArg)
+        ])
         if let hit = try ctx.fetch(req).first, let id = hit.id, let nm = hit.name {
             return LabelTag(id: id, name: nm, colorId: hit.colorId)
         }
@@ -549,6 +573,7 @@ final class CoreDataVisitRepository {
         let newId = UUID()
         e.id = newId
         e.name = name
+        e.bookId = currentBookId
         try ctx.save()
         guard let savedId = e.id, let savedName = e.name else {
             Logger.error("Failed to save label entity properly")
@@ -559,7 +584,10 @@ final class CoreDataVisitRepository {
 
     func upsertGroup(name: String) throws -> GroupTag {
         let req: NSFetchRequest<GroupEntity> = GroupEntity.fetchRequest()
-        req.predicate = NSPredicate(format: "name == %@", name)
+        req.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [
+            NSPredicate(format: "name == %@", name),
+            NSPredicate(format: "bookId == %@", currentBookId as CVarArg)
+        ])
         if let hit = try ctx.fetch(req).first, let id = hit.id, let nm = hit.name {
             return GroupTag(id: id, name: nm)
         }
@@ -567,6 +595,7 @@ final class CoreDataVisitRepository {
         let newId = UUID()
         e.id = newId
         e.name = name
+        e.bookId = currentBookId
         try ctx.save()
         guard let savedId = e.id, let savedName = e.name else {
             Logger.error("Failed to save group entity properly")
@@ -577,7 +606,10 @@ final class CoreDataVisitRepository {
 
     func upsertMember(name: String) throws -> MemberTag {
         let req: NSFetchRequest<MemberEntity> = MemberEntity.fetchRequest()
-        req.predicate = NSPredicate(format: "name == %@", name)
+        req.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [
+            NSPredicate(format: "name == %@", name),
+            NSPredicate(format: "bookId == %@", currentBookId as CVarArg)
+        ])
         if let hit = try ctx.fetch(req).first, let id = hit.id, let nm = hit.name {
             return MemberTag(id: id, name: nm)
         }
@@ -585,6 +617,7 @@ final class CoreDataVisitRepository {
         let newId = UUID()
         e.id = newId
         e.name = name
+        e.bookId = currentBookId
         try ctx.save()
         guard let savedId = e.id, let savedName = e.name else {
             Logger.error("Failed to save member entity properly")
@@ -823,7 +856,10 @@ final class CoreDataVisitRepository {
 
     func allVisitsCount() throws -> Int {
         let request: NSFetchRequest<VisitEntity> = VisitEntity.fetchRequest()
-        request.predicate = NSPredicate(format: "deletedAt == nil")
+        request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [
+            NSPredicate(format: "deletedAt == nil"),
+            NSPredicate(format: "bookId == %@", currentBookId as CVarArg)
+        ])
         return try ctx.count(for: request)
     }
 
@@ -876,6 +912,7 @@ final class CoreDataVisitRepository {
         let newId = UUID()
         e.id = newId
         e.name = trimmed
+        e.bookId = currentBookId
         try ctx.save()
         guard let savedId = e.id else {
             Logger.error("Label entity ID is nil after save")
@@ -895,6 +932,7 @@ final class CoreDataVisitRepository {
         let newId = UUID()
         e.id = newId
         e.name = trimmed
+        e.bookId = currentBookId
         try ctx.save()
         guard let savedId = e.id else {
             Logger.error("Group entity ID is nil after save")
@@ -914,6 +952,7 @@ final class CoreDataVisitRepository {
         let newId = UUID()
         e.id = newId
         e.name = trimmed
+        e.bookId = currentBookId
         try ctx.save()
         guard let savedId = e.id else {
             Logger.error("Member entity ID is nil after save")

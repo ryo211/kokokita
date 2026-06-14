@@ -12,4 +12,6 @@ final class AppUIState {
     var isCalendarVisible: Bool = false
     /// 地図画面で特定の訪問記録にフォーカスするリクエスト（他タブからの遷移用）
     var mapFocusVisitId: UUID? = nil
+    /// 現在選択中のブック
+    var currentBook: Book? = nil
 }

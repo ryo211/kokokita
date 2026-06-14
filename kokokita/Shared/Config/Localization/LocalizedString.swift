@@ -699,6 +699,22 @@ enum L {
         static func count(_ n: Int) -> String { String(format: localized("trash.count"), n) }
     }
 
+    // MARK: - Book
+    enum Book {
+        static let myBook = localized("book.myBook")
+        static let pickerTitle = localized("book.pickerTitle")
+        static let newBook = localized("book.newBook")
+        static let namePlaceholder = localized("book.namePlaceholder")
+        static let premiumTitle = localized("book.premiumTitle")
+        static let premiumDescription = localized("book.premiumDescription")
+        static let premiumUpgrade = localized("book.premiumUpgrade")
+        static let deleteConfirm = localized("book.deleteConfirm")
+        static let deleteDescription = localized("book.deleteDescription")
+        static let rename = localized("book.rename")
+        static let colorLabel = localized("book.colorLabel")
+        static let currentLabel = localized("book.currentLabel")
+    }
+
     // MARK: - Helper
     private static func localized(_ key: String, comment: String = "") -> String {
         NSLocalizedString(key, comment: comment)

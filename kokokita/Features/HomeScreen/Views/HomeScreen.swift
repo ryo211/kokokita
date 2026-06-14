@@ -3,6 +3,7 @@ import SwiftUI
 struct HomeScreen: View {
     @Environment(AppUIState.self) private var ui
     @State private var showSettings = false
+    @State private var showBookDrawer = false
     @State private var store = VisitListStore(repo: AppContainer.shared.repo)
     @State private var isPulsing = true
     @State private var recentVisits: [VisitAggregate]? = nil  // nilで初期化
@@ -80,6 +81,24 @@ struct HomeScreen: View {
                 .padding(.bottom, 24)
             }
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        showBookDrawer = true
+                    } label: {
+                        HStack(spacing: 5) {
+                            Image(systemName: "book.closed.fill")
+                                .font(.subheadline)
+                                .foregroundStyle(ui.currentBook?.color ?? Color(.systemBlue))
+                            Text(ui.currentBook?.name ?? L.Book.myBook)
+                                .font(.subheadline.weight(.medium))
+                                .foregroundStyle(.primary)
+                                .lineLimit(1)
+                            Image(systemName: "chevron.down")
+                                .font(.caption2.weight(.semibold))
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         showSettings = true
@@ -98,6 +117,13 @@ struct HomeScreen: View {
                 AutoRecordCandidateReviewScreen()
                     .onDisappear { loadPendingCandidateCount() }
             }
+            .overlay(alignment: .leading) {
+                if showBookDrawer {
+                    BookPickerDrawer(onDismiss: { withAnimation(.easeInOut(duration: 0.2)) { showBookDrawer = false } })
+                        .transition(.move(edge: .leading))
+                }
+            }
+            .animation(.easeInOut(duration: 0.22), value: showBookDrawer)
         }
         .task {
             // アニメーション開始（初回のみ）
@@ -118,6 +144,11 @@ struct HomeScreen: View {
             loadTaxonomy()
             loadRecentVisits()
             loadPendingCandidateCount()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .bookChanged)) { _ in
+            ui.currentBook = AppContainer.shared.currentBook
+            loadTaxonomy()
+            loadRecentVisits()
         }
     }
 

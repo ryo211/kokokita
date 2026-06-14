@@ -607,3 +607,17 @@
 "trash.expiresIn" = "あと%d日で自動削除";
 "trash.expiresToday" = "本日自動削除されます";
 "trash.count" = "%d件";
+
+// MARK: - Book
+"book.myBook" = "マイブック";
+"book.pickerTitle" = "ブック";
+"book.newBook" = "新しいブック";
+"book.namePlaceholder" = "ブック名";
+"book.premiumTitle" = "プレミアム機能";
+"book.premiumDescription" = "複数のブックを作成するには\nプレミアムプランが必要です。";
+"book.premiumUpgrade" = "アップグレード";
+"book.deleteConfirm" = "このブックを削除しますか？";
+"book.deleteDescription" = "ブック内のすべての記録・ラベル・グループ・メンバーが削除されます。この操作は元に戻せません。";
+"book.rename" = "名前を変更";
+"book.colorLabel" = "カバーカラー";
+"book.currentLabel" = "使用中";
