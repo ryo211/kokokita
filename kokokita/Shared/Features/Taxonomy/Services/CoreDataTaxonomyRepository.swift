@@ -15,7 +15,7 @@ final class CoreDataTaxonomyRepository {
 
     func allLabels() throws -> [LabelTag] {
         let req: NSFetchRequest<LabelEntity> = LabelEntity.fetchRequest()
-        req.predicate = NSPredicate(format: "bookId == %@", currentBookId as CVarArg)
+        req.predicate = NSPredicate(format: "bookId == %@", currentBookId as NSUUID)
         req.sortDescriptors = [NSSortDescriptor(key: #keyPath(LabelEntity.name), ascending: true)]
         return try ctx.fetch(req).compactMap { row in
             guard let id = row.id, let name = row.name else {
@@ -28,7 +28,7 @@ final class CoreDataTaxonomyRepository {
 
     func allGroups() throws -> [GroupTag] {
         let req: NSFetchRequest<GroupEntity> = GroupEntity.fetchRequest()
-        req.predicate = NSPredicate(format: "bookId == %@", currentBookId as CVarArg)
+        req.predicate = NSPredicate(format: "bookId == %@", currentBookId as NSUUID)
         req.sortDescriptors = [NSSortDescriptor(key: #keyPath(GroupEntity.name), ascending: true)]
         return try ctx.fetch(req).compactMap { row in
             guard let id = row.id, let name = row.name else {
@@ -41,7 +41,7 @@ final class CoreDataTaxonomyRepository {
 
     func allMembers() throws -> [MemberTag] {
         let req: NSFetchRequest<MemberEntity> = MemberEntity.fetchRequest()
-        req.predicate = NSPredicate(format: "bookId == %@", currentBookId as CVarArg)
+        req.predicate = NSPredicate(format: "bookId == %@", currentBookId as NSUUID)
         req.sortDescriptors = [NSSortDescriptor(key: #keyPath(MemberEntity.name), ascending: true)]
         return try ctx.fetch(req).compactMap { row in
             guard let id = row.id, let name = row.name else {

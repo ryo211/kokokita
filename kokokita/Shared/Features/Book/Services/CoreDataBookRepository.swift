@@ -66,7 +66,7 @@ final class CoreDataBookRepository {
             defaultBook = try createBook(name: defaultName, colorId: Book.defaultColorId)
         }
 
-        let bid = defaultBook.id as CVarArg
+        let bid = defaultBook.id
         try assignOrphanedEntities(entityName: "VisitEntity", bookId: bid)
         try assignOrphanedEntities(entityName: "LabelEntity", bookId: bid)
         try assignOrphanedEntities(entityName: "GroupEntity", bookId: bid)
@@ -77,12 +77,12 @@ final class CoreDataBookRepository {
 
     // MARK: - Private
 
-    private func assignOrphanedEntities(entityName: String, bookId: CVarArg) throws {
+    private func assignOrphanedEntities(entityName: String, bookId: UUID) throws {
         let req = NSFetchRequest<NSManagedObject>(entityName: entityName)
         req.predicate = NSPredicate(format: "bookId == nil")
         let rows = try ctx.fetch(req)
         guard !rows.isEmpty else { return }
-        for row in rows { row.setValue(bookId as? UUID, forKey: "bookId") }
+        for row in rows { row.setValue(bookId, forKey: "bookId") }
         try ctx.save()
         Logger.info("\(entityName): \(rows.count)件をデフォルトブックに移行しました")
     }
