@@ -669,6 +669,42 @@ enum L {
         static let speedFast   = localized("slideShow.settings.speed.fast")
     }
 
+    // MARK: - AutoRecord（自動記録）
+    enum AutoRecord {
+        static let reviewTitle = localized("autoRecord.reviewTitle")
+        static let reviewSubtitle = localized("autoRecord.reviewSubtitle")
+        static let reviewEmpty = localized("autoRecord.reviewEmpty")
+        static let approve = localized("autoRecord.approve")
+        static let dismiss = localized("autoRecord.dismiss")
+        static let dismissAll = localized("autoRecord.dismissAll")
+        static let dismissAllConfirmTitle = localized("autoRecord.dismissAllConfirmTitle")
+        static func dismissAllConfirmMessage(_ count: Int) -> String {
+            String(format: localized("autoRecord.dismissAllConfirmMessage"), count)
+        }
+        static let dismissConfirmTitle = localized("autoRecord.dismissConfirmTitle")
+        static let dismissConfirmMessage = localized("autoRecord.dismissConfirmMessage")
+        static let loadingPlace = localized("autoRecord.loadingPlace")
+        static func stayDurationFormat(_ minutes: Int) -> String {
+            String(format: localized("autoRecord.stayDurationFormat"), minutes)
+        }
+        static func accuracyFormat(_ meters: Int) -> String {
+            String(format: localized("autoRecord.accuracyFormat"), meters)
+        }
+    }
+
+    // MARK: - TourMode（スポット巡りモード）
+    enum TourMode {
+        static let title = localized("tourMode.title")
+        static let toolbarButton = localized("tourMode.toolbarButton")
+        static let settingsIntervalLabel = localized("tourMode.settings.intervalLabel")
+        static func settingsIntervalSec(_ sec: Double) -> String {
+            String(format: localized("tourMode.settings.intervalSec"), sec)
+        }
+        static let settingsIntervalMin = localized("tourMode.settings.intervalMin")
+        static let settingsIntervalMax = localized("tourMode.settings.intervalMax")
+        static let startButton = localized("tourMode.startButton")
+    }
+
     // MARK: - Helper
     private static func localized(_ key: String, comment: String = "") -> String {
         NSLocalizedString(key, comment: comment)

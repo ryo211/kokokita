@@ -577,3 +577,27 @@
 "slideShow.settings.speed.slow" = "ゆっくり";
 "slideShow.settings.speed.medium" = "普通";
 "slideShow.settings.speed.fast" = "キビキビ";
+
+// MARK: - AutoRecord（自動記録）
+"autoRecord.reviewTitle" = "自動記録の候補";
+"autoRecord.reviewSubtitle" = "記録として確定する場所を選んでください";
+"autoRecord.reviewEmpty" = "確認待ちの候補はありません";
+"autoRecord.approve" = "記録する";
+"autoRecord.dismiss" = "却下";
+"autoRecord.dismissAll" = "全件却下";
+"autoRecord.dismissAllConfirmTitle" = "全件却下しますか？";
+"autoRecord.dismissAllConfirmMessage" = "%d 件の候補をすべて削除します。この操作は取り消せません。";
+"autoRecord.dismissConfirmTitle" = "この候補を却下しますか？";
+"autoRecord.dismissConfirmMessage" = "この候補は削除されます。この操作は取り消せません。";
+"autoRecord.loadingPlace" = "地名を取得中…";
+"autoRecord.stayDurationFormat" = "%d 分滞在";
+"autoRecord.accuracyFormat" = "精度 %dm";
+
+// MARK: - TourMode（スポット巡りモード）
+"tourMode.title" = "スポット巡りモード";
+"tourMode.toolbarButton" = "順番巡り";
+"tourMode.settings.intervalLabel" = "スポット表示時間";
+"tourMode.settings.intervalSec" = "%.0f 秒";
+"tourMode.settings.intervalMin" = "1秒";
+"tourMode.settings.intervalMax" = "5秒";
+"tourMode.startButton" = "再生開始";

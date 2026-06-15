@@ -30,6 +30,16 @@ struct AppConfig {
     /// 位置情報取得のタイムアウト（秒）
     static let locationTimeout: TimeInterval = 30
 
+    // MARK: - Auto Record Settings
+    /// 候補の保持期間（日数）- これを超えた候補は自動削除
+    static let autoRecordRetentionDays: Double = 7
+    /// 精度の足切り閾値（メートル）- これより大きい誤差の CLVisit は破棄
+    static let autoRecordMaxAccuracyMeters: CLLocationAccuracy = 100
+    /// 滞在時間の最小秒数 - これより短い滞在は破棄
+    static let autoRecordMinStaySeconds: TimeInterval = 300
+    /// 候補の上限件数 - 上限に達した場合は新規候補を破棄
+    static let autoRecordMaxCandidates: Int = 50
+
     // MARK: - Share Settings
     /// 共有画像の論理サイズ（width）
     static let shareImageLogicalWidth: CGFloat = 360

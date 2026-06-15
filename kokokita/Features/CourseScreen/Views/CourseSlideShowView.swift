@@ -791,7 +791,7 @@ private struct KokokitaVideoBrandBadge: View {
     }
 }
 
-private struct KokokitaEndPromotionStage: View {
+struct KokokitaEndPromotionStage: View {
     let safeTop: CGFloat
     let safeBottom: CGFloat
 

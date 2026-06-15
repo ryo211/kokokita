@@ -573,3 +573,27 @@
 "slideShow.settings.speed.slow" = "Slow";
 "slideShow.settings.speed.medium" = "Normal";
 "slideShow.settings.speed.fast" = "Fast";
+
+// MARK: - AutoRecord
+"autoRecord.reviewTitle" = "Auto-Record Candidates";
+"autoRecord.reviewSubtitle" = "Select places to save as records";
+"autoRecord.reviewEmpty" = "No pending candidates";
+"autoRecord.approve" = "Save";
+"autoRecord.dismiss" = "Dismiss";
+"autoRecord.dismissAll" = "Dismiss All";
+"autoRecord.dismissAllConfirmTitle" = "Dismiss all candidates?";
+"autoRecord.dismissAllConfirmMessage" = "This will delete all %d candidates. This action cannot be undone.";
+"autoRecord.dismissConfirmTitle" = "Dismiss this candidate?";
+"autoRecord.dismissConfirmMessage" = "This candidate will be deleted. This action cannot be undone.";
+"autoRecord.loadingPlace" = "Loading place name…";
+"autoRecord.stayDurationFormat" = "%d min stay";
+"autoRecord.accuracyFormat" = "Accuracy %dm";
+
+// MARK: - TourMode (Spot Tour Mode)
+"tourMode.title" = "Spot Tour Mode";
+"tourMode.toolbarButton" = "Tour";
+"tourMode.settings.intervalLabel" = "Display Duration";
+"tourMode.settings.intervalSec" = "%.0f sec";
+"tourMode.settings.intervalMin" = "1 sec";
+"tourMode.settings.intervalMax" = "5 sec";
+"tourMode.startButton" = "Start";
