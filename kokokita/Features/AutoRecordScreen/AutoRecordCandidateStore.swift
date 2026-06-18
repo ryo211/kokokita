@@ -77,17 +77,30 @@ final class AutoRecordCandidateStore {
 
     // MARK: - 承認
 
-    /// 候補を承認して後付け記録として確定する
+    /// 候補を承認して証明付き記録として確定する（CLVisit由来のGPS座標を署名付きで保存）
     /// - Returns: 新しく作成された Visit の ID（編集画面への遷移用）
     @discardableResult
     func approve(candidate: VisitCandidate) throws -> UUID {
         let visitId = UUID()
+        // CLVisit はシステム提供の位置情報のため、ソフトウェアシミュレート・外部アクセサリではない
+        let flags = LocationSourceFlags(isSimulatedBySoftware: false, isProducedByAccessory: false)
+        let integrity = try AppContainer.shared.integ.signImmutablePayload(
+            id: visitId,
+            timestampUTC: candidate.arrivalDate,
+            lat: candidate.latitude,
+            lon: candidate.longitude,
+            acc: candidate.horizontalAccuracy,
+            flags: flags
+        )
         let visit = Visit(
             id: visitId,
             timestampUTC: candidate.arrivalDate,
             latitude: candidate.latitude,
             longitude: candidate.longitude,
-            horizontalAccuracy: candidate.horizontalAccuracy
+            horizontalAccuracy: candidate.horizontalAccuracy,
+            isSimulatedBySoftware: false,
+            isProducedByAccessory: false,
+            integrity: integrity
         )
         let details = VisitDetails(
             title: nil,
@@ -101,7 +114,7 @@ final class AutoRecordCandidateStore {
             resolvedAddress: candidate.placeName,
             photoPaths: []
         )
-        try visitRepo.createManualEntry(visit: visit, details: details)
+        try visitRepo.create(visit: visit, details: details)
         try candidateRepo.deleteAfterApproval(id: candidate.id)
         candidates.removeAll { $0.id == candidate.id }
         NotificationCenter.default.post(name: .visitsChanged, object: nil)
