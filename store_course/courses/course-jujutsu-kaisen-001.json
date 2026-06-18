@@ -1,0 +1,196 @@
+{
+  "id": "course-jujutsu-kaisen-001",
+  "courseType": "pilgrimage",
+  "title": "『呪術廻戦』の聖地",
+  "summary": "芥見下々による漫画・アニメ『呪術廻戦』の舞台となった全国各地のスポットを巡るコースです。渋谷事変の舞台となった渋谷エリア、釘崎が初登場した原宿、五条悟ゆかりの仙台、そして両面宿儺伝説が残る岐阜まで、作品の名シーンを現実で体感できます。全13件収録。",
+  "source": "downloaded",
+  "isUserCreated": false,
+  "version": 1,
+  "recognitionRadiusMeters": 100.0,
+  "detailUrl": null,
+  "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/course/course-jujutsu-kaisen-001.jpg",
+  "categories": [
+    "anime"
+  ],
+  "sections": [
+    {
+      "sectionId": "sec-shibuya",
+      "name": "渋谷エリア",
+      "sectionDescription": "「渋谷事変」の舞台。作中で驚くほど忠実に再現された渋谷の街並みを巡る。",
+      "orderIndex": 0,
+      "coverImageUrl": null,
+      "spots": [
+        {
+          "spotId": "jjk-001",
+          "name": "渋谷駅 東京メトロ副都心線ホーム（5・6番線）",
+          "latitude": 35.6591021,
+          "longitude": 139.7024542,
+          "spotDescription": "渋谷事変で五条悟が封印された衝撃のシーンの舞台。ホーム付近の案内看板の前で獄門疆が開かれた。楕円形の大きな吹き抜けも作中に忠実に描かれている。",
+          "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/jjk-001.jpg",
+          "orderIndex": 0,
+          "recognitionRadiusMeters": 150.0,
+          "address": "東京都渋谷区道玄坂2-1-1"
+        },
+        {
+          "spotId": "jjk-002",
+          "name": "渋谷ヒカリエ 地下3階",
+          "latitude": 35.6591239,
+          "longitude": 139.7037298,
+          "spotDescription": "渋谷事変（第32話）で、渋谷に到着した五条悟が「帳」によって閉じ込められた群衆を目の当たりにするシーンの舞台。",
+          "coverImageUrl": null,
+          "orderIndex": 1,
+          "recognitionRadiusMeters": 100.0,
+          "address": "東京都渋谷区渋谷2-21-1"
+        },
+        {
+          "spotId": "jjk-003",
+          "name": "渋谷モディ前",
+          "latitude": 35.6614887,
+          "longitude": 139.7005798,
+          "spotDescription": "渋谷事変（第35話）で、虎杖・猪野・伏黒の3人が呪術師を入れないための「帳」を破ろうと試みたシーンのモデル。",
+          "coverImageUrl": null,
+          "orderIndex": 2,
+          "recognitionRadiusMeters": 100.0,
+          "address": "東京都渋谷区神南1-21-3"
+        },
+        {
+          "spotId": "jjk-004",
+          "name": "東京メトロ明治神宮前駅",
+          "latitude": 35.6690374,
+          "longitude": 139.7042217,
+          "spotDescription": "渋谷事変で冥冥班が到着し、虎杖と別行動を開始した場所。地下2階では特級呪霊との戦闘、地下5階では真人の移動シーンが描かれている。",
+          "coverImageUrl": null,
+          "orderIndex": 3,
+          "recognitionRadiusMeters": 150.0,
+          "address": "東京都渋谷区神宮前6-3-1"
+        }
+      ]
+    },
+    {
+      "sectionId": "sec-harajuku-shinjuku",
+      "name": "原宿・新宿エリア",
+      "sectionDescription": "釘崎野薔薇の初登場シーンや、五条・夏油の過去が描かれた場所。",
+      "orderIndex": 1,
+      "coverImageUrl": null,
+      "spots": [
+        {
+          "spotId": "jjk-005",
+          "name": "JR原宿駅（竹下口）",
+          "latitude": 35.671243,
+          "longitude": 139.7026613,
+          "spotDescription": "第3話「鉄骨娘」で五条・虎杖・伏黒が釘崎を迎えに待ち合わせた場所。釘崎野薔薇が初めて登場するシーンのモデル。",
+          "coverImageUrl": null,
+          "orderIndex": 0,
+          "recognitionRadiusMeters": 100.0,
+          "address": "東京都渋谷区神宮前1-18-20"
+        },
+        {
+          "spotId": "jjk-006",
+          "name": "竹下通り",
+          "latitude": 35.6710335,
+          "longitude": 139.7051821,
+          "spotDescription": "第3話で釘崎がモデルスカウトに声をかけるシーンのモデル地。作中でカラフルな看板や店が忠実に再現されている。",
+          "coverImageUrl": null,
+          "orderIndex": 1,
+          "recognitionRadiusMeters": 150.0,
+          "address": "東京都渋谷区神宮前1丁目"
+        },
+        {
+          "spotId": "jjk-007",
+          "name": "新宿の目（新宿駅西口地下）",
+          "latitude": 35.6896067,
+          "longitude": 139.7005713,
+          "spotDescription": "第1期第1クールOPで東堂葵が登場するシーンの背景として描かれた巨大なオブジェ。新宿駅西口地下コンコースに設置されている。",
+          "coverImageUrl": null,
+          "orderIndex": 2,
+          "recognitionRadiusMeters": 100.0,
+          "address": "東京都新宿区新宿3-38-1（新宿駅西口地下）"
+        },
+        {
+          "spotId": "jjk-008",
+          "name": "新宿・思い出横丁",
+          "latitude": 35.6927011,
+          "longitude": 139.6995778,
+          "spotDescription": "「懐玉・玉折」編で、五条悟と夏油傑が最後に会うシーンのモデルと言われている路地。昭和レトロな雰囲気が作中の情景と重なる。",
+          "coverImageUrl": null,
+          "orderIndex": 3,
+          "recognitionRadiusMeters": 100.0,
+          "address": "東京都新宿区西新宿1-2"
+        },
+        {
+          "spotId": "jjk-009",
+          "name": "吉祥寺パークロード",
+          "latitude": 35.7049258,
+          "longitude": 139.5808424,
+          "spotDescription": "第1期OPで真人が登場するシーンのモデル。商店街のアーケードの雰囲気が作中のカットとよく一致していると言われている。",
+          "coverImageUrl": null,
+          "orderIndex": 4,
+          "recognitionRadiusMeters": 150.0,
+          "address": "東京都武蔵野市吉祥寺本町1丁目"
+        }
+      ]
+    },
+    {
+      "sectionId": "sec-sendai",
+      "name": "仙台エリア",
+      "sectionDescription": "五条悟が喜久福をお土産に買ったことで有名な仙台。「渋谷事変」以降のアニメでも舞台として登場。",
+      "orderIndex": 2,
+      "coverImageUrl": null,
+      "spots": [
+        {
+          "spotId": "jjk-010",
+          "name": "喜久水庵 JR仙台駅店",
+          "latitude": 38.2607292,
+          "longitude": 140.8820327,
+          "spotDescription": "第2話で五条悟がお土産として購入した仙台銘菓「喜久福」の販売店。アニメ放送時には呪術廻戦とのコラボも実施された。仙台巡礼のスタート地点として最適。",
+          "coverImageUrl": null,
+          "orderIndex": 0,
+          "recognitionRadiusMeters": 100.0,
+          "address": "宮城県仙台市青葉区中央1-1-1（JR仙台駅構内）"
+        },
+        {
+          "spotId": "jjk-011",
+          "name": "八木山橋（竜の口渓谷）",
+          "latitude": 38.25060819999999,
+          "longitude": 140.8511706,
+          "spotDescription": "第22話で虎杖・伏黒・釘崎の3人が「八十八橋」へ向かうシーンのモデル。地上約70mの深い渓谷を跨ぐ大橋で、地元では心霊スポットとしても知られる。",
+          "coverImageUrl": null,
+          "orderIndex": 1,
+          "recognitionRadiusMeters": 200.0,
+          "address": "宮城県仙台市青葉区川内"
+        },
+        {
+          "spotId": "jjk-012",
+          "name": "ハピナ名掛丁商店街",
+          "latitude": 38.2620431,
+          "longitude": 140.8799494,
+          "spotDescription": "劇場版『呪術廻戦 0』に登場する「ハピナ商店街」のモデル。仙台駅東口近くに位置するアーケード商店街で、作中の雰囲気と比べながら歩くことができる。",
+          "coverImageUrl": null,
+          "orderIndex": 2,
+          "recognitionRadiusMeters": 150.0,
+          "address": "宮城県仙台市青葉区中央2丁目"
+        }
+      ]
+    },
+    {
+      "sectionId": "sec-gifu",
+      "name": "岐阜エリア",
+      "sectionDescription": "呪いの王・両面宿儺のゆかりの地として知られる飛騨。",
+      "orderIndex": 3,
+      "coverImageUrl": null,
+      "spots": [
+        {
+          "spotId": "jjk-013",
+          "name": "千光寺（飛騨高山）",
+          "latitude": 36.1899752,
+          "longitude": 137.288125,
+          "spotDescription": "両面宿儺が開祖と言い伝えられる寺院。作中では「呪いの王」として描かれる宿儺だが、千光寺では古代の飛騨を治めた英雄として伝えられている。県指定有形文化財『両面宿儺坐像』が安置されている。",
+          "coverImageUrl": null,
+          "orderIndex": 0,
+          "recognitionRadiusMeters": 200.0,
+          "address": "岐阜県高山市丹生川町下保1553"
+        }
+      ]
+    }
+  ]
+}

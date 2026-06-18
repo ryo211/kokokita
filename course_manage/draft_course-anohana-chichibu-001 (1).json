@@ -1,0 +1,161 @@
+{
+  "id": "course-anohana-chichibu-001",
+  "courseType": "pilgrimage",
+  "title": "あの日見た花の名前を僕達はまだ知らない。の聖地",
+  "summary": "埼玉県秩父市を舞台にした名作アニメ「あの花」の聖地を巡るコースです。旧秩父橋や定林寺など、超平和バスターズの軌跡をたどりましょう。全9件収録。",
+  "source": "downloaded",
+  "isUserCreated": false,
+  "version": 1,
+  "recognitionRadiusMeters": 150,
+  "detailUrl": null,
+  "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/course/course-anohana-chichibu-001.jpg",
+  "categories": [
+    "anime"
+  ],
+  "sections": [
+    {
+      "sectionId": "sec-station-area",
+      "name": "西武秩父駅周辺",
+      "sectionDescription": "巡礼のスタート地点。駅から番場通りにかけてのエリア。",
+      "orderIndex": 0,
+      "coverImageUrl": null,
+      "spots": [
+        {
+          "spotId": "anohana-001",
+          "name": "西武秩父駅",
+          "address": "埼玉県秩父市野坂町1-16-15",
+          "latitude": 35.9897391,
+          "longitude": 139.0838545,
+          "spotDescription": "巡礼の出発点。駅前の秩父観光情報館では聖地巡礼マップを無料配布している。",
+          "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/anohana-001.jpg",
+          "orderIndex": 0,
+          "recognitionRadiusMeters": 200
+        },
+        {
+          "spotId": "anohana-002",
+          "name": "番場通り",
+          "address": "埼玉県秩父市番場町",
+          "latitude": 35.9966696,
+          "longitude": 139.0848698,
+          "spotDescription": "劇場版でじんたんが秘密基地へ向かう際に通った石畳の通り。大正モダンな建物が並ぶ。",
+          "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/anohana-002.jpg",
+          "orderIndex": 1,
+          "recognitionRadiusMeters": 150
+        },
+        {
+          "spotId": "anohana-003",
+          "name": "秩父神社",
+          "address": "埼玉県秩父市番場町1-3",
+          "latitude": 35.9976189,
+          "longitude": 139.0841388,
+          "spotDescription": "2話や劇場版に登場。神社入口付近はじんたんとゆきあつが遭遇するシーンの背景となった。",
+          "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/anohana-003.jpg",
+          "orderIndex": 2,
+          "recognitionRadiusMeters": 150
+        }
+      ]
+    },
+    {
+      "sectionId": "sec-jorinji-area",
+      "name": "定林寺・けやき公園エリア",
+      "sectionDescription": "超平和バスターズが幼少期にかくれんぼをした定林寺と、隣接するけやき公園。",
+      "orderIndex": 1,
+      "coverImageUrl": null,
+      "spots": [
+        {
+          "spotId": "anohana-004",
+          "name": "定林寺（札所17番）",
+          "address": "埼玉県秩父市桜木町21-3",
+          "latitude": 36.00575,
+          "longitude": 139.0842889,
+          "spotDescription": "超平和バスターズがかくれんぼをした聖地。OPにも登場するお坊さんパネルが健在。あの花絵馬も販売中。",
+          "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/anohana-004.jpg",
+          "orderIndex": 0,
+          "recognitionRadiusMeters": 100
+        },
+        {
+          "spotId": "anohana-005",
+          "name": "けやき公園",
+          "address": "埼玉県秩父市相生町１１",
+          "latitude": 36.0032747,
+          "longitude": 139.0829753,
+          "spotDescription": "3話でじんたんが訪れる定林寺隣の公園。じんたんが座っていた青いベンチが置かれている。",
+          "coverImageUrl": null,
+          "orderIndex": 1,
+          "recognitionRadiusMeters": 100
+        }
+      ]
+    },
+    {
+      "sectionId": "sec-hitsujiyama-area",
+      "name": "羊山公園エリア",
+      "sectionDescription": "OPでぽっぽが柵に腰かけ秩父市街を見下ろしたシーンのロケ地。春は芝桜が絶景。",
+      "orderIndex": 3,
+      "coverImageUrl": null,
+      "spots": [
+        {
+          "spotId": "anohana-008",
+          "name": "羊山公園 見晴らしの丘",
+          "address": "埼玉県秩父市大宮6360",
+          "latitude": 35.99022,
+          "longitude": 139.0903366,
+          "spotDescription": "OPでぽっぽが柵に腰かけ街を見渡したシーンの場所。秩父市街を一望できる絶景スポット。",
+          "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/anohana-008.jpg",
+          "orderIndex": 0,
+          "recognitionRadiusMeters": 150
+        },
+        {
+          "spotId": "anohana-009",
+          "name": "羊山公園 芝桜の丘",
+          "address": "埼玉県秩父市大宮6360",
+          "latitude": 35.9812351,
+          "longitude": 139.0884463,
+          "spotDescription": "じんたんの回想シーンに登場する花畑のモデルと言われている。4月下旬～5月上旬は芝桜が見頃。",
+          "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/anohana-009.jpg",
+          "orderIndex": 1,
+          "recognitionRadiusMeters": 150
+        }
+      ]
+    },
+    {
+      "sectionId": "sec-kyuchichibubashi-area",
+      "name": "旧秩父橋エリア",
+      "sectionDescription": "作品を象徴する最重要スポット。OPやポスターのメインビジュアルに使われた橋。",
+      "orderIndex": 4,
+      "coverImageUrl": null,
+      "spots": [
+        {
+          "spotId": "anohana-010",
+          "name": "旧秩父橋",
+          "address": "埼玉県秩父市阿保町3795番地1先",
+          "latitude": 36.0186589,
+          "longitude": 139.0864983,
+          "spotDescription": "最重要聖地。OPや宣伝ポスターのメインビジュアル。じんたんがめんまをおぶって歩いたアーチ橋。",
+          "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/anohana-010.jpg",
+          "orderIndex": 0,
+          "recognitionRadiusMeters": 150
+        }
+      ]
+    },
+    {
+      "sectionId": "sec-mukujinja-area",
+      "name": "椋神社エリア",
+      "sectionDescription": "作中で花火（龍勢）を打ち上げたシーンのモデル地。毎年10月に龍勢祭りが開催される。",
+      "orderIndex": 5,
+      "coverImageUrl": null,
+      "spots": [
+        {
+          "spotId": "anohana-011",
+          "name": "椋神社・龍勢会館",
+          "address": "埼玉県秩父市下吉田7377",
+          "latitude": 36.0451241,
+          "longitude": 139.0329571,
+          "spotDescription": "超平和バスターズが花火を打ち上げた場所のモデル。毎年10月に「あの花」コラボ龍勢が奉納される。",
+          "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/anohana-011.jpg",
+          "orderIndex": 0,
+          "recognitionRadiusMeters": 200
+        }
+      ]
+    }
+  ]
+}

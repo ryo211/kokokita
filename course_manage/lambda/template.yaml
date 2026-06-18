@@ -1,0 +1,63 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+
+Description: kokokita コース管理 API
+
+Parameters:
+  CfDistributionId:
+    Type: String
+    Description: CloudFront ディストリビューション ID
+  AdminSecret:
+    Type: String
+    NoEcho: true
+    Description: >
+      Lambda API を保護する秘密トークン（推測されにくいランダム文字列）
+      例: openssl rand -hex 32 で生成
+
+Globals:
+  Function:
+    Runtime: python3.12
+    Timeout: 30
+    MemorySize: 256
+    Environment:
+      Variables:
+        S3_BUCKET:      kokokita-resources
+        CF_DIST_ID:     !Ref CfDistributionId
+        BASE_CDN_URL:   https://kokokita-app.irodoriq.com/course
+        ALLOWED_ORIGIN: https://kokokita-app.irodoriq.com
+        ADMIN_SECRET:   !Ref AdminSecret
+
+Resources:
+  CourseManageFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: kokokita-course-manage
+      CodeUri: ./
+      Handler: handler.lambda_handler
+      # API Gateway をやめて Lambda Function URL に切り替え
+      # → CORS をネイティブサポート、API Gateway の設定が不要になる
+      FunctionUrlConfig:
+        AuthType: NONE
+        Cors:
+          AllowOrigins:
+            - https://kokokita-app.irodoriq.com
+          AllowHeaders:
+            - content-type
+            - x-admin-secret
+          AllowMethods:
+            - POST
+          MaxAge: 300
+      Policies:
+        - S3CrudPolicy:
+            BucketName: kokokita-resources
+        - Statement:
+            - Effect: Allow
+              Action:
+                - cloudfront:CreateInvalidation
+              Resource: !Sub >-
+                arn:aws:cloudfront::${AWS::AccountId}:distribution/${CfDistributionId}
+
+Outputs:
+  FunctionUrl:
+    Description: Lambda Function URL（index.html の API_BASE_URL に設定してください）
+    Value: !GetAtt CourseManageFunctionUrl.FunctionUrl

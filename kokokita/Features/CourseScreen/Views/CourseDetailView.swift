@@ -41,6 +41,7 @@ struct CourseDetailView: View {
     private let courseId: UUID
     var showTitle: Bool = true
     private let showSummaryOnAppear: Bool
+    @Environment(AppUIState.self) private var appUIState
     @State private var course: Course
 
     @State private var selectedSpotId: UUID? = nil
@@ -68,6 +69,17 @@ struct CourseDetailView: View {
     @State private var expandedImageCredit: String? = nil
     /// 進捗バースワイプの二重発火防止フラグ
     @State private var progressSwipeConsumed = false
+
+    // MARK: - スポット巡りモード状態
+    @AppStorage("tourMode.intervalSeconds") private var tourIntervalSeconds: Double = 3.0
+    @State private var isTourPlaying = false
+    @State private var tourSpotIndex = 0
+    @State private var tourTask: Task<Void, Never>?
+    @State private var showTourSettings = false
+    @State private var isShowingTourEndPromotion = false
+
+    /// ツアー中（再生中 or 終了プロモーション表示中）
+    private var isTourActive: Bool { isTourPlaying || isShowingTourEndPromotion }
 
     init(
         course: Course,
@@ -111,36 +123,72 @@ struct CourseDetailView: View {
 
     var body: some View {
         GeometryReader { geo in
-            VStack(spacing: 0) {
-                // 地図エリア（mapFull: 全画面 / split: 50% / listFull: 非表示）
-                if viewLayout == .mapFull {
-                    mapArea
-                } else if viewLayout == .split {
-                    mapArea
-                        .frame(height: geo.size.height * 0.50)
+            ZStack {
+                VStack(spacing: 0) {
+                    // 地図エリア（mapFull: 全画面 / split: 50% / listFull: 非表示）
+                    if viewLayout == .mapFull {
+                        mapArea
+                    } else if viewLayout == .split {
+                        mapArea
+                            .frame(height: geo.size.height * 0.50)
+                    }
+
+                    // 進捗バー＋レイアウト切替ボタン（常時表示）
+                    progressStrip
+
+                    Divider()
+
+                    // リストエリア（mapFull: 非表示 / split: 50% / listFull: 全画面）
+                    if viewLayout != .mapFull {
+                        SpotListAreaView(
+                            course: course,
+                            userLocation: userLocation,
+                            selectedSpotId: selectedSpotId,
+                            isTourPlaying: isTourActive,
+                            onSpotTapped: focusSpot,
+                            onLayoutSwipe: switchLayout
+                        )
+                        .equatable()
+                    }
                 }
+                .animation(.easeInOut(duration: 0.3), value: viewLayout)
 
-                // 進捗バー＋レイアウト切替ボタン（常時表示）
-                progressStrip
-
-                Divider()
-
-                // リストエリア（mapFull: 非表示 / split: 50% / listFull: 全画面）
-                if viewLayout != .mapFull {
-                    SpotListAreaView(
-                        course: course,
-                        userLocation: userLocation,
-                        selectedSpotId: selectedSpotId,
-                        onSpotTapped: focusSpot,
-                        onLayoutSwipe: switchLayout
+                // ツアー終了プロモーション画面
+                if isShowingTourEndPromotion {
+                    KokokitaEndPromotionStage(
+                        safeTop: 0,
+                        safeBottom: geo.safeAreaInsets.bottom
                     )
-                    .equatable()
+                    .transition(.opacity)
                 }
+
             }
-            .animation(.easeInOut(duration: 0.3), value: viewLayout)
+            .animation(.easeInOut(duration: 0.4), value: isShowingTourEndPromotion)
         }
-        .navigationTitle(showTitle ? course.title : "")
+        .navigationTitle(showTitle && !isTourActive ? course.title : "")
         .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(isTourActive)
+        .onChange(of: isTourPlaying) { _, playing in
+            if playing { appUIState.isTabBarHidden = true }
+        }
+        .onChange(of: isShowingTourEndPromotion) { _, showing in
+            if !showing && !isTourPlaying {
+                appUIState.isTabBarHidden = false
+            }
+        }
+        .onDisappear {
+            if isTourActive {
+                tourTask?.cancel()
+                isTourPlaying = false
+                isShowingTourEndPromotion = false
+                appUIState.isTabBarHidden = false
+            }
+        }
+        .sheet(isPresented: $showTourSettings) {
+            SpotTourSettingsSheet(intervalSeconds: $tourIntervalSeconds) {
+                startTour()
+            }
+        }
         // 画面表示のたびに最新データを取得（CoreDataキャッシュを確実に反映）
         .task {
             reloadCourse()
@@ -170,11 +218,38 @@ struct CourseDetailView: View {
             }
         }
         .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button {
-                    showSummary = true
-                } label: {
-                    Image(systemName: "info.circle")
+            if !isTourActive {
+                // スポット巡りモード
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button { showTourSettings = true } label: {
+                        Image(systemName: "scope")
+                    }
+                }
+                // 動画モード
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    NavigationLink {
+                        CourseSlideShowView(course: course)
+                    } label: {
+                        Image(systemName: "play.rectangle")
+                    }
+                }
+                // コース概要
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button { showSummary = true } label: {
+                        Image(systemName: "info.circle")
+                    }
+                }
+            } else {
+                ToolbarItem(placement: .principal) {
+                    HStack(spacing: 8) {
+                        if showTitle {
+                            Text(course.title)
+                                .font(.headline)
+                                .lineLimit(1)
+                        }
+                        tourActiveBadge
+                            .onTapGesture { stopTour() }
+                    }
                 }
             }
         }
@@ -235,6 +310,29 @@ struct CourseDetailView: View {
 
     private var spotPhotoSize: CourseSpotPhotoSize {
         CourseSpotPhotoSize(rawValue: spotPhotoSizeRaw) ?? .large
+    }
+
+    private var tourActiveBadge: some View {
+        HStack(spacing: 5) {
+            Image(systemName: "waveform")
+                .font(.system(size: 11, weight: .semibold))
+                .symbolEffect(.variableColor.iterative, options: .repeating)
+            Text("ココキタ")
+                .font(.system(size: 13, weight: .bold, design: .rounded))
+            Image("kokokita-app-icon-clearBlueDeep")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 18, height: 18)
+                .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
+        }
+        .foregroundStyle(.white)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 5)
+        .background {
+            Capsule()
+                .fill(Color.indigo)
+        }
+        .contentShape(Capsule())
     }
 
     // MARK: - 遡り判定
@@ -353,15 +451,19 @@ struct CourseDetailView: View {
                 updateSpotScreenPoint(proxy: proxy)
             }
             .overlay(alignment: .topTrailing) {
-                courseMapSettingsButton
-                    .padding(12)
+                if !isTourActive {
+                    courseMapSettingsButton
+                        .padding(12)
+                }
             }
             .overlay {
                 leaderLineOverlay
             }
             .overlay(alignment: .bottomTrailing) {
-                locationButton
-                    .padding([.trailing, .bottom], 12)
+                if !isTourActive {
+                    locationButton
+                        .padding([.trailing, .bottom], 12)
+                }
             }
         }
     }
@@ -595,6 +697,63 @@ struct CourseDetailView: View {
         )
     }
 
+    // MARK: - スポット巡りモード
+
+    private func startTour() {
+        guard !course.spots.isEmpty else { return }
+        // 地図が見えていないレイアウトの場合は split に切り替え
+        if viewLayout == .listFull {
+            withAnimation(.easeInOut(duration: 0.3)) { viewLayout = .split }
+        }
+        isTourPlaying = true
+        isShowingTourEndPromotion = false
+        tourSpotIndex = 0
+        tourFocusSpot(course.spots[0])
+        scheduleTourAdvance()
+    }
+
+    private func stopTour() {
+        tourTask?.cancel()
+        isTourPlaying = false
+        isShowingTourEndPromotion = false
+        appUIState.isTabBarHidden = false
+    }
+
+    private func scheduleTourAdvance() {
+        tourTask?.cancel()
+        tourTask = Task {
+            try? await Task.sleep(nanoseconds: UInt64(tourIntervalSeconds * 1_000_000_000))
+            guard !Task.isCancelled else { return }
+            await MainActor.run { advanceTour() }
+        }
+    }
+
+    private func advanceTour() {
+        let nextIndex = tourSpotIndex + 1
+        if nextIndex < course.spots.count {
+            tourSpotIndex = nextIndex
+            tourFocusSpot(course.spots[nextIndex])
+            scheduleTourAdvance()
+        } else {
+            // 全スポット終了 → プロモーション画面へ
+            tourTask?.cancel()
+            isTourPlaying = false
+            withAnimation(.easeInOut(duration: 0.5)) {
+                isShowingTourEndPromotion = true
+            }
+        }
+    }
+
+    private func tourFocusSpot(_ spot: CourseSpot) {
+        withAnimation(.easeInOut(duration: 0.6)) {
+            selectedSpotId = spot.id
+            guard spot.hasValidCoordinate else { return }
+            // ズームは変えずに現在のスパンのままスポットを中心に移動
+            let center = focusCenter(for: spot, span: visibleMapSpan)
+            cameraPosition = .region(MKCoordinateRegion(center: center, span: visibleMapSpan))
+        }
+    }
+
     // MARK: - 全スポットフィット計算
 
     /// recognitionRadiusMeters の円が地図上に収まるズームスパンを返す。
@@ -658,6 +817,71 @@ struct CourseDetailView: View {
             center: CLLocationCoordinate2D(latitude: centerLat, longitude: centerLon),
             span: MKCoordinateSpan(latitudeDelta: spanLat, longitudeDelta: spanLon)
         )
+    }
+}
+
+// MARK: - スポット巡りモード設定シート
+
+struct SpotTourSettingsSheet: View {
+    @Binding var intervalSeconds: Double
+    @Environment(\.dismiss) private var dismiss
+    let onStart: () -> Void
+
+    private var clampedInterval: Double {
+        min(max(1, intervalSeconds), 5)
+    }
+
+    var body: some View {
+        NavigationStack {
+            VStack(alignment: .leading, spacing: 24) {
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Text(L.TourMode.settingsIntervalLabel)
+                            .font(.headline)
+                        Spacer()
+                        Text(L.TourMode.settingsIntervalSec(clampedInterval))
+                            .font(.subheadline.monospacedDigit())
+                            .foregroundStyle(.secondary)
+                    }
+
+                    Slider(value: $intervalSeconds, in: 1...5, step: 1)
+                        .tint(.indigo)
+
+                    HStack {
+                        Text(L.TourMode.settingsIntervalMin)
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        Text(L.TourMode.settingsIntervalMax)
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                Button {
+                    dismiss()
+                    onStart()
+                } label: {
+                    Label(L.TourMode.startButton, systemImage: "play.fill")
+                        .font(.headline)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .background(Color.indigo, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                        .foregroundStyle(.white)
+                }
+
+                Spacer()
+            }
+            .padding(20)
+            .navigationTitle(L.TourMode.title)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button(L.Common.cancel) { dismiss() }
+                }
+            }
+        }
+        .presentationDetents([.height(280)])
     }
 }
 
@@ -760,6 +984,8 @@ private struct SpotListAreaView: View, Equatable {
     let course: Course
     let userLocation: CLLocationCoordinate2D?
     let selectedSpotId: UUID?
+    /// ツアー再生中は達成済スポットを非表示にしてソートチップも隠す
+    var isTourPlaying: Bool = false
     let onSpotTapped: (CourseSpot) -> Void
     /// 上スワイプ=true / 下スワイプ=false でレイアウト切替を親に通知
     var onLayoutSwipe: (Bool) -> Void = { _ in }
@@ -771,6 +997,7 @@ private struct SpotListAreaView: View, Equatable {
     static func == (lhs: Self, rhs: Self) -> Bool {
         lhs.course == rhs.course &&
         lhs.selectedSpotId == rhs.selectedSpotId &&
+        lhs.isTourPlaying == rhs.isTourPlaying &&
         lhs.userLocation?.latitude == rhs.userLocation?.latitude &&
         lhs.userLocation?.longitude == rhs.userLocation?.longitude
     }
@@ -794,43 +1021,45 @@ private struct SpotListAreaView: View, Equatable {
 
     var body: some View {
         VStack(spacing: 0) {
-            // ソートヘッダー
-            HStack(spacing: 8) {
-                SortChip(label: L.Course.sortDefault, isSelected: !sortByDistance) {
-                    sortByDistance = false
-                }
-                SortChip(label: L.Course.sortDistance, isSelected: sortByDistance) {
-                    sortByDistance = true
-                }
-                .disabled(userLocation == nil)
-                .opacity(userLocation == nil ? 0.4 : 1)
-                Spacer()
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
-            .contentShape(Rectangle())
-            .gesture(
-                DragGesture(minimumDistance: 5, coordinateSpace: .local)
-                    .onChanged { value in
-                        guard !sortHeaderSwipeConsumed else { return }
-                        if value.translation.height < -15 {
-                            sortHeaderSwipeConsumed = true
-                            onLayoutSwipe(true)
-                        } else if value.translation.height > 15 {
-                            sortHeaderSwipeConsumed = true
-                            onLayoutSwipe(false)
-                        }
+            // ソートヘッダー（ツアー中は非表示）
+            if !isTourPlaying {
+                HStack(spacing: 8) {
+                    SortChip(label: L.Course.sortDefault, isSelected: !sortByDistance) {
+                        sortByDistance = false
                     }
-                    .onEnded { _ in sortHeaderSwipeConsumed = false }
-            )
+                    SortChip(label: L.Course.sortDistance, isSelected: sortByDistance) {
+                        sortByDistance = true
+                    }
+                    .disabled(userLocation == nil)
+                    .opacity(userLocation == nil ? 0.4 : 1)
+                    Spacer()
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .contentShape(Rectangle())
+                .gesture(
+                    DragGesture(minimumDistance: 5, coordinateSpace: .local)
+                        .onChanged { value in
+                            guard !sortHeaderSwipeConsumed else { return }
+                            if value.translation.height < -15 {
+                                sortHeaderSwipeConsumed = true
+                                onLayoutSwipe(true)
+                            } else if value.translation.height > 15 {
+                                sortHeaderSwipeConsumed = true
+                                onLayoutSwipe(false)
+                            }
+                        }
+                        .onEnded { _ in sortHeaderSwipeConsumed = false }
+                )
 
-            Divider()
+                Divider()
+            }
 
             ScrollViewReader { proxy in
                 ScrollView {
                     VStack(spacing: 0) {
                         let indexMap = globalSpotIndex
-                        if sortByDistance {
+                        if sortByDistance && !isTourPlaying {
                             // 距離順フラットリスト（セクション無視）
                             let sorted = distanceSortedSpots
                             ForEach(sorted, id: \.spot.id) { item in
@@ -848,31 +1077,36 @@ private struct SpotListAreaView: View, Equatable {
                                 }
                             }
                         } else {
-                            // デフォルト: セクション別
+                            // デフォルト: セクション別（ツアー中は達成済スポットを非表示）
                             ForEach(course.sections) { section in
-                                if section.hasName {
-                                    CourseSectionHeaderView(section: section)
-                                }
-                                ForEach(section.spots) { spot in
-                                    let distance: Double? = userLocation.map { loc in
-                                        CLLocation(latitude: loc.latitude, longitude: loc.longitude)
-                                            .distance(from: CLLocation(latitude: spot.latitude, longitude: spot.longitude))
+                                let visibleSpots = isTourPlaying
+                                    ? section.spots.filter { !$0.isCheckedIn }
+                                    : section.spots
+                                if !visibleSpots.isEmpty {
+                                    if section.hasName {
+                                        CourseSectionHeaderView(section: section)
                                     }
-                                    SpotListRowView(
-                                        spot: spot,
-                                        orderNumber: (indexMap[spot.id] ?? 0) + 1,
-                                        isSelected: selectedSpotId == spot.id,
-                                        distance: distance
-                                    )
-                                    .id(spot.id)
-                                    .onTapGesture { onSpotTapped(spot) }
+                                    ForEach(visibleSpots) { spot in
+                                        let distance: Double? = userLocation.map { loc in
+                                            CLLocation(latitude: loc.latitude, longitude: loc.longitude)
+                                                .distance(from: CLLocation(latitude: spot.latitude, longitude: spot.longitude))
+                                        }
+                                        SpotListRowView(
+                                            spot: spot,
+                                            orderNumber: (indexMap[spot.id] ?? 0) + 1,
+                                            isSelected: selectedSpotId == spot.id,
+                                            distance: distance
+                                        )
+                                        .id(spot.id)
+                                        .onTapGesture { onSpotTapped(spot) }
 
-                                    if spot.id != section.spots.last?.id {
-                                        Divider().padding(.leading, 52)
+                                        if spot.id != visibleSpots.last?.id {
+                                            Divider().padding(.leading, 52)
+                                        }
                                     }
-                                }
-                                if section.id != course.sections.last?.id {
-                                    Divider()
+                                    if section.id != course.sections.last?.id {
+                                        Divider()
+                                    }
                                 }
                             }
                         }

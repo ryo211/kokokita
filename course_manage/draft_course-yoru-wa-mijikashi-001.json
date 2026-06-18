@@ -1,0 +1,185 @@
+{
+  "id": "course-yoru-wa-mijikashi-001",
+  "courseType": "pilgrimage",
+  "title": "『夜は短し歩けよ乙女』の聖地",
+  "summary": "森見登美彦の小説・アニメ映画「夜は短し歩けよ乙女」の舞台となった京都の地を巡るコースです。先斗町の夜の飲み歩きから下鴨神社の古本まつり、京都大学の学園祭まで、黒髪の乙女と先輩が駆け抜けた4つの章を追体験できます。全12件収録。",
+  "source": "downloaded",
+  "isUserCreated": false,
+  "version": 1,
+  "recognitionRadiusMeters": 150,
+  "detailUrl": null,
+  "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/course/course-yoru-wa-mijikashi-001.jpg",
+  "categories": [
+    "anime"
+  ],
+  "sections": [
+    {
+      "sectionId": "sec-ch1-nightwalk",
+      "name": "第一章：夜は短し歩けよ乙女",
+      "sectionDescription": "黒髪の乙女が夜の先斗町・木屋町を飲み歩き、偽電気ブランを求めた夜の章。",
+      "orderIndex": 0,
+      "coverImageUrl": null,
+      "spots": [
+        {
+          "spotId": "ymj-001",
+          "name": "先斗町",
+          "address": "京都府京都市中京区先斗町",
+          "latitude": 35.0058,
+          "longitude": 135.7723,
+          "spotDescription": "乙女が一人で飲み歩いた夜の舞台。細い路地に高級料亭や隠れ家バーが並ぶ花街。",
+          "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/ymj-001.jpg",
+          "orderIndex": 0,
+          "recognitionRadiusMeters": 200
+        },
+        {
+          "spotId": "ymj-002",
+          "name": "bar moon walk 四条木屋町店",
+          "address": "京都府京都市下京区四条通小橋西入る真町455 第一小橋会館ビル3階",
+          "latitude": 35.0031,
+          "longitude": 135.7706,
+          "spotDescription": "作中「月面歩行」のモデル。乙女が東堂さんと出会い、偽電気ブランを飲んだバー。",
+          "coverImageUrl": null,
+          "orderIndex": 1,
+          "recognitionRadiusMeters": 80
+        },
+        {
+          "spotId": "ymj-003",
+          "name": "東華菜館 本店",
+          "address": "京都府京都市下京区四条大橋西詰",
+          "latitude": 35.0038,
+          "longitude": 135.7718,
+          "spotDescription": "木屋町・先斗町界隈を象徴する大正建築の中華料理店。作品の舞台となった界隈に位置する。",
+          "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/ymj-003.jpg",
+          "orderIndex": 2,
+          "recognitionRadiusMeters": 80
+        }
+      ]
+    },
+    {
+      "sectionId": "sec-ch2-furuhon",
+      "name": "第二章：深海魚たち",
+      "sectionDescription": "下鴨神社で開かれる納涼古本まつりが舞台。乙女が絵本「ラ・タ・タ・タム」を探し求めた章。",
+      "orderIndex": 1,
+      "coverImageUrl": null,
+      "spots": [
+        {
+          "spotId": "ymj-004",
+          "name": "下鴨神社（賀茂御祖神社）",
+          "address": "京都府京都市左京区下鴨泉川町59",
+          "latitude": 35.0394,
+          "longitude": 135.7722,
+          "spotDescription": "世界遺産。毎年8月に「下鴨納涼古本まつり」が開催される、第二章のメイン舞台。",
+          "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/ymj-004.jpg",
+          "orderIndex": 0,
+          "recognitionRadiusMeters": 300
+        },
+        {
+          "spotId": "ymj-005",
+          "name": "糺の森",
+          "address": "京都府京都市左京区下鴨泉川町59-2",
+          "latitude": 35.0358,
+          "longitude": 135.7724,
+          "spotDescription": "下鴨神社の参道に広がる原生林。古本まつりの会場となり、乙女が古書を探し歩いた森。",
+          "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/ymj-005.jpg",
+          "orderIndex": 1,
+          "recognitionRadiusMeters": 250
+        },
+        {
+          "spotId": "ymj-006",
+          "name": "鴨川デルタ（出町柳）",
+          "address": "京都府京都市左京区下鴨宮崎町",
+          "latitude": 35.0378,
+          "longitude": 135.7719,
+          "spotDescription": "賀茂川と高野川の合流点。先輩と乙女も訪れた、森見作品のシンボル的スポット。",
+          "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/ymj-006.jpg",
+          "orderIndex": 2,
+          "recognitionRadiusMeters": 150
+        }
+      ]
+    },
+    {
+      "sectionId": "sec-ch3-gakuensai",
+      "name": "第三章：御都合主義者かく語りき",
+      "sectionDescription": "京都大学の学園祭が舞台。「偏屈王」や「韋駄天コタツ」など奇想天外な催しが繰り広げられた章。",
+      "orderIndex": 2,
+      "coverImageUrl": null,
+      "spots": [
+        {
+          "spotId": "ymj-007",
+          "name": "京都大学 吉田キャンパス",
+          "address": "京都府京都市左京区吉田本町",
+          "latitude": 35.0268,
+          "longitude": 135.7814,
+          "spotDescription": "主人公たちが通う大学のモデル。11月の学祭「11月祭」では現実の韋駄天コタツも出現したことがある。",
+          "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/ymj-007.jpg",
+          "orderIndex": 0,
+          "recognitionRadiusMeters": 300
+        },
+        {
+          "spotId": "ymj-008",
+          "name": "吉田寮",
+          "address": "京都府京都市左京区吉田本町",
+          "latitude": 35.0265,
+          "longitude": 135.7822,
+          "spotDescription": "作中「下鴨幽水荘」のモデルとされる京都大学の自治寮。歴史ある木造建築が今も残る。",
+          "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/ymj-008.jpg",
+          "orderIndex": 1,
+          "recognitionRadiusMeters": 100
+        },
+        {
+          "spotId": "ymj-009",
+          "name": "吉田神社",
+          "address": "京都府京都市左京区吉田神楽岡町30",
+          "latitude": 35.027,
+          "longitude": 135.7876,
+          "spotDescription": "パンツ総番長が恋する女性との再会を願い、パンツを賭けて参拝した神社。願いは見事に叶った。",
+          "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/ymj-009.jpg",
+          "orderIndex": 2,
+          "recognitionRadiusMeters": 150
+        }
+      ]
+    },
+    {
+      "sectionId": "sec-ch4-kaze",
+      "name": "第四章・終章：魔風邪恋風邪 / 大団円",
+      "sectionDescription": "京都中に風邪が蔓延した第四章と、先輩と乙女がついに結ばれる大団円の章。",
+      "orderIndex": 3,
+      "coverImageUrl": null,
+      "spots": [
+        {
+          "spotId": "ymj-010",
+          "name": "百万遍交差点",
+          "address": "京都府京都市左京区田中門前町",
+          "latitude": 35.0268,
+          "longitude": 135.7796,
+          "spotDescription": "先輩が「ナカメ作戦」を実行し乙女を追い続けた京大周辺のシンボル的交差点。",
+          "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/ymj-010.jpg",
+          "orderIndex": 0,
+          "recognitionRadiusMeters": 100
+        },
+        {
+          "spotId": "ymj-011",
+          "name": "阿闍梨餅本舗 満月 本店",
+          "address": "京都府京都市左京区鞠小路通今出川上ル",
+          "latitude": 35.0268,
+          "longitude": 135.7699,
+          "spotDescription": "作中で乙女が歩き食いした阿闍梨餅の本店。創業1856年、京都が誇る銘菓を聖地で味わいたい。",
+          "coverImageUrl": null,
+          "orderIndex": 1,
+          "recognitionRadiusMeters": 80
+        },
+        {
+          "spotId": "ymj-012",
+          "name": "進々堂 京大北門前",
+          "address": "京都府京都市左京区北白川追分町88",
+          "latitude": 35.0285,
+          "longitude": 135.7828,
+          "spotDescription": "先輩と乙女が初デートの待ち合わせをした1930年創業の純喫茶。物語のラストシーンの舞台。",
+          "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/ymj-012.jpg",
+          "orderIndex": 2,
+          "recognitionRadiusMeters": 80
+        }
+      ]
+    }
+  ]
+}

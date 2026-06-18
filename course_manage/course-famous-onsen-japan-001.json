@@ -1,0 +1,191 @@
+{
+  "id": "course-famous-onsen-japan-001",
+  "courseType": "pilgrimage",
+  "title": "日本有名温泉地 16選",
+  "summary": "草津・有馬・道後など、日本人なら誰もが名前を知る全国の名湯16か所を巡るコース。温泉地のシンボルスポットにチェックインして、訪問の証を残そう。全16件収録。",
+  "source": "downloaded",
+  "isUserCreated": false,
+  "version": 1,
+  "recognitionRadiusMeters": 300.0,
+  "detailUrl": null,
+  "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/course/course-famous-onsen-japan-001.jpg",
+  "categories": ["history_culture"],
+  "spots": [
+    {
+      "spotId": "onsen-jp-001",
+      "name": "草津温泉（湯畑）",
+      "latitude": 36.6188,
+      "longitude": 138.5960,
+      "spotDescription": "草津温泉のシンボル。毎分約4,000リットルが湧出する源泉で、湯けむりと硫黄の香りが立ちこめる温泉街の中心地。",
+      "coverImageUrl": null,
+      "orderIndex": 0,
+      "recognitionRadiusMeters": 200.0,
+      "address": "群馬県吾妻郡草津町草津"
+    },
+    {
+      "spotId": "onsen-jp-002",
+      "name": "下呂温泉（噴泉池）",
+      "latitude": 35.8108,
+      "longitude": 137.2455,
+      "spotDescription": "飛騨川河川敷に湧く下呂温泉のシンボル。日本三名泉のひとつ。現在は足湯として開放されている。",
+      "coverImageUrl": null,
+      "orderIndex": 1,
+      "recognitionRadiusMeters": 150.0,
+      "address": "岐阜県下呂市幸田"
+    },
+    {
+      "spotId": "onsen-jp-003",
+      "name": "道後温泉（本館）",
+      "latitude": 33.8517,
+      "longitude": 132.7856,
+      "spotDescription": "日本最古の温泉のひとつ。明治27年築の木造三層楼は国の重要文化財。夏目漱石「坊っちゃん」の舞台としても名高い。",
+      "coverImageUrl": null,
+      "orderIndex": 2,
+      "recognitionRadiusMeters": 150.0,
+      "address": "愛媛県松山市道後湯之町5-6"
+    },
+    {
+      "spotId": "onsen-jp-004",
+      "name": "別府温泉（海地獄）",
+      "latitude": 33.2944,
+      "longitude": 131.4897,
+      "spotDescription": "別府地獄めぐりの代表格。コバルトブルーの泉面が美しい国指定名勝。泉温は約98度にもなる。",
+      "coverImageUrl": null,
+      "orderIndex": 3,
+      "recognitionRadiusMeters": 150.0,
+      "address": "大分県別府市大字鉄輪559-1"
+    },
+    {
+      "spotId": "onsen-jp-005",
+      "name": "登別温泉（地獄谷）",
+      "latitude": 42.4739,
+      "longitude": 141.1958,
+      "spotDescription": "北海道最大の温泉地・登別温泉のシンボル。噴気が立ちこめる荒涼とした谷で、毎分約3,000リットルが湧出する。",
+      "coverImageUrl": null,
+      "orderIndex": 4,
+      "recognitionRadiusMeters": 200.0,
+      "address": "北海道登別市登別温泉町無番地"
+    },
+    {
+      "spotId": "onsen-jp-006",
+      "name": "有馬温泉（金の湯）",
+      "latitude": 34.7987,
+      "longitude": 135.2462,
+      "spotDescription": "日本三名泉・有馬温泉の象徴的な公共浴場。鉄分を多く含む赤褐色の「金泉」を気軽に体験できる。",
+      "coverImageUrl": null,
+      "orderIndex": 5,
+      "recognitionRadiusMeters": 150.0,
+      "address": "兵庫県神戸市北区有馬町833"
+    },
+    {
+      "spotId": "onsen-jp-007",
+      "name": "由布院温泉（金鱗湖）",
+      "latitude": 33.2619,
+      "longitude": 131.3828,
+      "spotDescription": "由布院温泉街の奥に佇む神秘的な湖。湖底から温泉と淡水が湧出し、冬の朝には幻想的な霧が立ちこめる。",
+      "coverImageUrl": null,
+      "orderIndex": 6,
+      "recognitionRadiusMeters": 200.0,
+      "address": "大分県由布市湯布院町川上1561-1"
+    },
+    {
+      "spotId": "onsen-jp-008",
+      "name": "箱根温泉（大涌谷）",
+      "latitude": 35.2373,
+      "longitude": 139.0218,
+      "spotDescription": "箱根火山の噴気地帯。黒たまごで有名な観光スポットで、硫黄の白煙が絶えず立ちのぼる箱根温泉の象徴的風景。",
+      "coverImageUrl": null,
+      "orderIndex": 7,
+      "recognitionRadiusMeters": 300.0,
+      "address": "神奈川県足柄下郡箱根町仙石原1251"
+    },
+    {
+      "spotId": "onsen-jp-009",
+      "name": "黒川温泉（湯あかり）",
+      "latitude": 33.0928,
+      "longitude": 131.1261,
+      "spotDescription": "九州の山深くに佇む黒川温泉のランドマーク。竹灯籠が川面を照らす幻想的な光のアート。冬期開催が有名。",
+      "coverImageUrl": null,
+      "orderIndex": 8,
+      "recognitionRadiusMeters": 200.0,
+      "address": "熊本県阿蘇郡南小国町満願寺6594-3"
+    },
+    {
+      "spotId": "onsen-jp-010",
+      "name": "城崎温泉（さとの湯）",
+      "latitude": 35.6235,
+      "longitude": 134.8107,
+      "spotDescription": "外湯めぐりで知られる城崎温泉の七湯のひとつ。温泉街の入口に位置し、最も規模の大きな外湯施設。",
+      "coverImageUrl": null,
+      "orderIndex": 9,
+      "recognitionRadiusMeters": 150.0,
+      "address": "兵庫県豊岡市城崎町湯島906-1"
+    },
+    {
+      "spotId": "onsen-jp-011",
+      "name": "指宿温泉（砂むし会館「砂楽」）",
+      "latitude": 31.2447,
+      "longitude": 130.6367,
+      "spotDescription": "天然の砂むし温泉で全国的に有名な施設。海岸に横たわり温かい砂に埋まる体験は指宿温泉ならでは。",
+      "coverImageUrl": null,
+      "orderIndex": 10,
+      "recognitionRadiusMeters": 150.0,
+      "address": "鹿児島県指宿市湯の浜5-25-18"
+    },
+    {
+      "spotId": "onsen-jp-012",
+      "name": "熱海温泉（大湯間歇泉）",
+      "latitude": 35.0968,
+      "longitude": 139.0730,
+      "spotDescription": "かつて世界三大間歇泉のひとつに数えられた熱海温泉の象徴的源泉。約5分ごとに湯が噴出し、熱海開湯の歴史を伝える市指定文化財。",
+      "coverImageUrl": null,
+      "orderIndex": 11,
+      "recognitionRadiusMeters": 150.0,
+      "address": "静岡県熱海市上宿町3"
+    },
+    {
+      "spotId": "onsen-jp-013",
+      "name": "伊香保温泉（石段街）",
+      "latitude": 36.4787,
+      "longitude": 138.9002,
+      "spotDescription": "365段の石段が続く伊香保温泉のシンボル。両側に土産店や旅館が立ち並び、温泉情緒あふれる景色が続く。",
+      "coverImageUrl": null,
+      "orderIndex": 12,
+      "recognitionRadiusMeters": 200.0,
+      "address": "群馬県渋川市伊香保町伊香保"
+    },
+    {
+      "spotId": "onsen-jp-014",
+      "name": "白浜温泉（崎の湯）",
+      "latitude": 33.6883,
+      "longitude": 135.3414,
+      "spotDescription": "日本三古湯のひとつ・白浜温泉を代表する野天風呂。波打ち際に立ち、太平洋を望みながら入浴できる絶景の湯。",
+      "coverImageUrl": null,
+      "orderIndex": 13,
+      "recognitionRadiusMeters": 150.0,
+      "address": "和歌山県西牟婁郡白浜町1668"
+    },
+    {
+      "spotId": "onsen-jp-015",
+      "name": "銀山温泉（銀山川沿い温泉街）",
+      "latitude": 38.5667,
+      "longitude": 140.4383,
+      "spotDescription": "大正時代の洋風旅館が建ち並ぶ山形の名湯。銀山川沿いのノスタルジックな景観はSNSでも人気の絶景スポット。",
+      "coverImageUrl": null,
+      "orderIndex": 14,
+      "recognitionRadiusMeters": 200.0,
+      "address": "山形県尾花沢市銀山新畑"
+    },
+    {
+      "spotId": "onsen-jp-016",
+      "name": "鬼怒川温泉（鬼怒川公園岩風呂）",
+      "latitude": 36.8078,
+      "longitude": 139.6753,
+      "spotDescription": "鬼怒川温泉を代表する日帰り入浴施設。鬼怒川の渓谷美を望みながら入浴でき、温泉地のシンボル的存在。",
+      "coverImageUrl": null,
+      "orderIndex": 15,
+      "recognitionRadiusMeters": 150.0,
+      "address": "栃木県日光市鬼怒川温泉滝308"
+    }
+  ]
+}

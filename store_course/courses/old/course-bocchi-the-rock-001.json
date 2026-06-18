@@ -1,0 +1,185 @@
+{
+  "id": "course-bocchi-the-rock-001",
+  "courseType": "pilgrimage",
+  "title": "『ぼっち・ざ・ろっく！』の聖地",
+  "summary": "はまじあきによる漫画・アニメ『ぼっち・ざ・ろっく！』の舞台を巡るコースです。結束バンドの拠点・下北沢を中心に、ぼっちちゃんと虹夏の出会いの公園、江ノ島遠足、きくりが現れた神社まで、作品の名シーンを現実で体感できます。全13件収録。",
+  "source": "downloaded",
+  "isUserCreated": false,
+  "version": 1,
+  "recognitionRadiusMeters": 100.0,
+  "detailUrl": null,
+  "coverImageUrl": null,
+  "categories": ["anime"],
+  "sections": [
+    {
+      "sectionId": "sec-shimokitazawa",
+      "name": "下北沢エリア",
+      "sectionDescription": "結束バンドの活動拠点。STARRYのモデルをはじめ、作中カットの大半がここに集中している。",
+      "orderIndex": 0,
+      "coverImageUrl": null,
+      "spots": [
+        {
+          "spotId": "btr-001",
+          "name": "下北沢SHELTER",
+          "latitude": 35.6614,
+          "longitude": 139.6677,
+          "spotDescription": "結束バンドの拠点ライブハウス「STARRY」のモデル。外観・入口の位置まで作中に忠実に再現されている。聖地巡礼者増加により公式から撮影マナーへの注意喚起が出ているため節度ある行動を。",
+          "coverImageUrl": null,
+          "orderIndex": 0,
+          "recognitionRadiusMeters": 80.0,
+          "address": "東京都世田谷区北沢2-6-10 仙田ビルB1"
+        },
+        {
+          "spotId": "btr-002",
+          "name": "下北沢駅",
+          "latitude": 35.6618,
+          "longitude": 139.6686,
+          "spotDescription": "作中に繰り返し登場するメインの拠点駅。京王井の頭線西口は劇中曲「星座になれたら」キービジュアルのモデル地。東口前ではぼっちが歌詞書けずに土下座するシーンなども描かれている。",
+          "coverImageUrl": null,
+          "orderIndex": 1,
+          "recognitionRadiusMeters": 150.0,
+          "address": "東京都世田谷区北沢2丁目"
+        },
+        {
+          "spotId": "btr-003",
+          "name": "居酒屋こけら",
+          "latitude": 35.6629,
+          "longitude": 139.6683,
+          "spotDescription": "第8話で結束バンドがライブ打ち上げに訪れた居酒屋のモデル。作中の「こけら」と店名・外観ともに一致するお気に入りの聖地としてファンに親しまれている。",
+          "coverImageUrl": null,
+          "orderIndex": 2,
+          "recognitionRadiusMeters": 80.0,
+          "address": "東京都世田谷区北沢2-3-12 友和ビル102"
+        },
+        {
+          "spotId": "btr-004",
+          "name": "タイムズ下北沢第8",
+          "latitude": 35.6625,
+          "longitude": 139.6688,
+          "spotDescription": "アー写（アーティスト写真）撮影シーンのモデルとして登場する駐車場。ファンの間でも特に人気の高いアー写スポットのひとつ。",
+          "coverImageUrl": null,
+          "orderIndex": 3,
+          "recognitionRadiusMeters": 80.0,
+          "address": "東京都世田谷区北沢2丁目9"
+        },
+        {
+          "spotId": "btr-005",
+          "name": "下北線路街 空き地",
+          "latitude": 35.6621,
+          "longitude": 139.6670,
+          "spotDescription": "第5話「飛べない魚」でぼっちが土管で練習するシーンのモデル。小田急線の線路跡地を活用した空き地で、作中の土管も実在する。",
+          "coverImageUrl": null,
+          "orderIndex": 4,
+          "recognitionRadiusMeters": 100.0,
+          "address": "東京都世田谷区北沢2-33付近"
+        },
+        {
+          "spotId": "btr-006",
+          "name": "どんぐりひろば公園",
+          "latitude": 35.6594,
+          "longitude": 139.6710,
+          "spotDescription": "第4話でぼっちが作詞に悩むシーンやアー写ロケ地探しのシーンに登場。リョウと喜多ちゃんが乗っていたシカやカタツムリの遊具が実際に設置されている。",
+          "coverImageUrl": null,
+          "orderIndex": 5,
+          "recognitionRadiusMeters": 100.0,
+          "address": "東京都世田谷区代沢2丁目"
+        }
+      ]
+    },
+    {
+      "sectionId": "sec-tokyo-other",
+      "name": "東京（その他エリア）",
+      "sectionDescription": "下北沢以外の都内聖地。ぼっちと虹夏の出会いの場から、新宿・御茶ノ水まで。",
+      "orderIndex": 1,
+      "coverImageUrl": null,
+      "spots": [
+        {
+          "spotId": "btr-007",
+          "name": "松ノ木児童遊園",
+          "latitude": 35.6924,
+          "longitude": 139.6490,
+          "spotDescription": "第1話でぼっちと虹夏が運命的に出会った公園。すべての物語が始まった場所。下北沢から5kmほど離れた杉並区新高円寺にあり、巡礼者が特に訪れたい場所として人気が高い。",
+          "coverImageUrl": null,
+          "orderIndex": 0,
+          "recognitionRadiusMeters": 100.0,
+          "address": "東京都杉並区松ノ木3丁目"
+        },
+        {
+          "spotId": "btr-008",
+          "name": "新宿LOFT",
+          "latitude": 35.6951,
+          "longitude": 139.7038,
+          "spotDescription": "きくりのバンド「SICK HACK」の拠点ライブハウス「新宿FOLT」のモデル。結束バンドがSICK HACKのライブを見に来るシーンで登場する。現在も多くのライブが行われる現役のライブハウス。",
+          "coverImageUrl": null,
+          "orderIndex": 1,
+          "recognitionRadiusMeters": 100.0,
+          "address": "東京都新宿区歌舞伎町1-12-9 タテハナビルB2"
+        },
+        {
+          "spotId": "btr-009",
+          "name": "イシバシ楽器 御茶ノ水本店",
+          "latitude": 35.6997,
+          "longitude": 139.7648,
+          "spotDescription": "最終話でぼっちがギターを買いに訪れた楽器店街・御茶ノ水のモデル。JR御茶ノ水駅周辺の楽器店街は作中に忠実に描かれており、楽器好きのファンにとっても聖地。",
+          "coverImageUrl": null,
+          "orderIndex": 2,
+          "recognitionRadiusMeters": 100.0,
+          "address": "東京都千代田区神田駿河台2-2"
+        }
+      ]
+    },
+    {
+      "sectionId": "sec-kanagawa",
+      "name": "神奈川エリア",
+      "sectionDescription": "第6話の金沢八景、第9話の江ノ島遠足回の舞台。",
+      "orderIndex": 2,
+      "coverImageUrl": null,
+      "spots": [
+        {
+          "spotId": "btr-010",
+          "name": "琵琶島神社",
+          "latitude": 35.3344,
+          "longitude": 139.6221,
+          "spotDescription": "第6話「八景」できくりがぼっちたちの前に突然現れた神社。金沢八景駅近くの海沿いに佇む小さな神社で、作中の独特な登場シーンと合わせてファンには印象深い場所。",
+          "coverImageUrl": null,
+          "orderIndex": 0,
+          "recognitionRadiusMeters": 150.0,
+          "address": "神奈川県横浜市金沢区瀬戸18-14"
+        },
+        {
+          "spotId": "btr-011",
+          "name": "片瀬江ノ島駅",
+          "latitude": 35.3013,
+          "longitude": 139.4876,
+          "spotDescription": "第9話・江ノ島回で結束バンドが降り立った駅。白亜の竜宮城風外観が特徴的で、作中にも印象的に描かれている。青ブタの聖地としても有名な駅。",
+          "coverImageUrl": null,
+          "orderIndex": 1,
+          "recognitionRadiusMeters": 150.0,
+          "address": "神奈川県藤沢市片瀬海岸1丁目"
+        },
+        {
+          "spotId": "btr-012",
+          "name": "江ノ島 江島神社大鳥居",
+          "latitude": 35.3006,
+          "longitude": 139.4794,
+          "spotDescription": "第9話でぼっちたちが訪れた江ノ島入口の大鳥居。作中の「江ノ島入り口交差点」のカットで背景に描かれており、江ノ島巡礼のスタート地点。",
+          "coverImageUrl": null,
+          "orderIndex": 2,
+          "recognitionRadiusMeters": 150.0,
+          "address": "神奈川県藤沢市江の島2丁目"
+        },
+        {
+          "spotId": "btr-013",
+          "name": "江の島シーキャンドル（展望灯台）",
+          "latitude": 35.2993,
+          "longitude": 139.4789,
+          "spotDescription": "第9話でぼっちたちが江ノ島の頂上付近で盛り上がるシーンのモデル。作中でぼっちと喜多ちゃんがハイテンションになるシーンはこの周辺が舞台。入場有料（500円）。",
+          "coverImageUrl": null,
+          "orderIndex": 3,
+          "recognitionRadiusMeters": 150.0,
+          "address": "神奈川県藤沢市江の島2-3-28"
+        }
+      ]
+    }
+  ]
+}

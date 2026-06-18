@@ -1,0 +1,214 @@
+{
+  "id": "course-kokuho-movie-001",
+  "courseType": "pilgrimage",
+  "title": "映画『国宝』の聖地",
+  "summary": "吉沢亮×横浜流星W主演、李相日監督の映画『国宝』（2025年）のロケ地を巡るコース。京都・大阪・滋賀・兵庫・和歌山など関西各地に点在する歌舞伎と任侠の舞台を訪ねる。全13件収録。",
+  "source": "bundled",
+  "isUserCreated": false,
+  "version": 1,
+  "recognitionRadiusMeters": 150,
+  "detailUrl": null,
+  "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/course/course-kokuho-movie-001.jpg",
+  "categories": [
+    "movie_drama"
+  ],
+  "sections": [
+    {
+      "sectionId": "sec-kyoto",
+      "name": "京都（歌舞伎の舞台・花街）",
+      "sectionDescription": "浪花座外観・楽屋・人力車パレードなど、物語の核心シーンが撮影された京都の劇場・花街・神社。",
+      "orderIndex": 0,
+      "coverImageUrl": null,
+      "spots": [
+        {
+          "spotId": "kkh-001",
+          "name": "先斗町歌舞練場（浪花座・外観）",
+          "address": "京都府京都市中京区中島町113",
+          "latitude": 35.0080847,
+          "longitude": 135.7711783,
+          "spotDescription": "喜久雄が初めて足を踏み入れた「浪花座」外観のロケ地。吉沢亮と横浜流星のクライマックスシーンも撮影された花街の名建築。",
+          "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/kkh-001.jpg",
+          "orderIndex": 0,
+          "recognitionRadiusMeters": 100
+        },
+        {
+          "spotId": "kkh-002",
+          "name": "上七軒歌舞練場（浪花座・楽屋内部）",
+          "address": "京都府京都市上京区真盛町742",
+          "latitude": 35.0298449,
+          "longitude": 135.7367474,
+          "spotDescription": "浪花座の楽屋内部シーンのロケ地。喜久雄が初めて楽屋に足を踏み入れる印象的な場面が撮影された京都最古の花街・上七軒の歌舞練場。",
+          "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/kkh-002.jpg",
+          "orderIndex": 1,
+          "recognitionRadiusMeters": 100
+        },
+        {
+          "spotId": "kkh-003",
+          "name": "今宮神社（人力車パレードシーン）",
+          "address": "京都府京都市北区紫野今宮町21",
+          "latitude": 35.0459513,
+          "longitude": 135.7420479,
+          "spotDescription": "三代目花井半二郎の人力車パレードが撮影された東門参道。古都の風情が残る時代劇の定番ロケ地。名物あぶり餅の茶屋も劇中に映る。",
+          "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/kkh-003.jpg",
+          "orderIndex": 2,
+          "recognitionRadiusMeters": 150
+        },
+        {
+          "spotId": "kkh-004",
+          "name": "南座（歌舞伎座シーン）",
+          "address": "京都府京都市東山区四条大橋東詰",
+          "latitude": 35.0041518,
+          "longitude": 135.7723095,
+          "spotDescription": "日本最古の劇場のひとつ。劇中の歌舞伎座シーンのロケ地として使われたとされる、四条川端の名建築。",
+          "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/kkh-004.jpg",
+          "orderIndex": 3,
+          "recognitionRadiusMeters": 150
+        },
+        {
+          "spotId": "kkh-005",
+          "name": "レストラン百花園（ハンバーグステーキのシーン）",
+          "address": "京都府八幡市八幡平谷10-1",
+          "latitude": 34.8959737,
+          "longitude": 135.7034736,
+          "spotDescription": "「ナポリタン付きのハンバーグステーキ」を食べるドライブインシーンのロケ地。昭和の雰囲気が残る京都府八幡市の老舗レストラン。",
+          "coverImageUrl": null,
+          "orderIndex": 4,
+          "recognitionRadiusMeters": 100
+        }
+      ]
+    },
+    {
+      "sectionId": "sec-shiga",
+      "name": "滋賀（歌舞伎座・病院シーン）",
+      "sectionDescription": "歌舞伎劇場「日乃本座」のロケ地となったびわ湖大津館と、病棟シーンを撮影した滋賀県立総合病院。",
+      "orderIndex": 1,
+      "coverImageUrl": null,
+      "spots": [
+        {
+          "spotId": "kkh-006",
+          "name": "びわ湖大津館（日乃本座・外観）",
+          "address": "滋賀県大津市柳が崎5-35",
+          "latitude": 35.0264021,
+          "longitude": 135.8686301,
+          "spotDescription": "歌舞伎の殿堂「日乃本座」外観のロケ地。約200人のエキストラが参加した大規模ロケ。歌舞伎座そっくりの外観が選定理由。現在もパネル展開催中。",
+          "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/kkh-006.jpg",
+          "orderIndex": 0,
+          "recognitionRadiusMeters": 200
+        },
+        {
+          "spotId": "kkh-007",
+          "name": "滋賀県立総合病院（病棟シーン）",
+          "address": "滋賀県守山市守山5-4-30",
+          "latitude": 35.0618989,
+          "longitude": 135.9885229,
+          "spotDescription": "改修工事中の病棟を貸し切ってロケ撮影が行われた病院。喜久雄・俊介・春江の三人が登場するシーンの舞台。",
+          "coverImageUrl": null,
+          "orderIndex": 1,
+          "recognitionRadiusMeters": 150
+        }
+      ]
+    },
+    {
+      "sectionId": "sec-osaka",
+      "name": "大阪（青春の舞台・玉手橋）",
+      "sectionDescription": "喜久雄と俊介の青春を彩った大阪・東大阪エリアのロケ地。",
+      "orderIndex": 2,
+      "coverImageUrl": null,
+      "spots": [
+        {
+          "spotId": "kkh-008",
+          "name": "玉手橋（石川の吊り橋）",
+          "address": "大阪府藤井寺市道明寺6丁目",
+          "latitude": 34.5666137,
+          "longitude": 135.6216905,
+          "spotDescription": "吊り橋として日本初の国登録有形文化財。白い塔と赤い欄干が印象的。劇中で二人をずっと見届けた橋として登場。道明寺駅が最寄り。",
+          "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/kkh-008.jpg",
+          "orderIndex": 0,
+          "recognitionRadiusMeters": 150
+        },
+        {
+          "spotId": "kkh-009",
+          "name": "東大阪市立日新高等学校（桜並木シーン）",
+          "address": "大阪府東大阪市日下町7-9-11",
+          "latitude": 34.694649,
+          "longitude": 135.652708,
+          "spotDescription": "喜久雄と俊介の青春の象徴となる桜並木シーンの撮影地。正門前の桜並木が美しい。※一般学校につき訪問時は節度ある行動を。",
+          "coverImageUrl": null,
+          "orderIndex": 1,
+          "recognitionRadiusMeters": 100
+        }
+      ]
+    },
+    {
+      "sectionId": "sec-hyogo",
+      "name": "兵庫（近畿最古の芝居小屋）",
+      "sectionDescription": "吉沢亮・横浜流星のクランクイン地であり、地方巡業シーンを撮影した出石永楽館。",
+      "orderIndex": 3,
+      "coverImageUrl": null,
+      "spots": [
+        {
+          "spotId": "kkh-010",
+          "name": "出石永楽館（地方巡業シーン）",
+          "address": "兵庫県豊岡市出石町柳17-2",
+          "latitude": 35.4619159,
+          "longitude": 134.8715535,
+          "spotDescription": "近畿最古の現存する芝居小屋。主演二人のクランクイン地。「二人藤娘」の歌舞伎絵など劇中小道具の特別展示も実施中。",
+          "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/kkh-010.jpg",
+          "orderIndex": 0,
+          "recognitionRadiusMeters": 100
+        }
+      ]
+    },
+    {
+      "sectionId": "sec-wakayama",
+      "name": "和歌山（どん底の喜久雄・道成寺）",
+      "sectionDescription": "歌舞伎界を追放された喜久雄が屋上で舞い続けた廃業寸前のホテルと、劇中演目「二人道成寺」ゆかりの道成寺。",
+      "orderIndex": 4,
+      "coverImageUrl": null,
+      "spots": [
+        {
+          "spotId": "kkh-011",
+          "name": "ホテルいとう（屋上で舞うシーン）",
+          "address": "和歌山県岩出市岡田862",
+          "latitude": 34.2548075,
+          "longitude": 135.3137967,
+          "spotDescription": "どん底に落ちた喜久雄がボロボロのまま屋上で舞い続ける、劇中最も印象的なシーンのロケ地。昭和の香りが色濃く残る和歌山・岩出市のホテル。",
+          "coverImageUrl": null,
+          "orderIndex": 0,
+          "recognitionRadiusMeters": 150
+        },
+        {
+          "spotId": "kkh-012",
+          "name": "道成寺（二人道成寺・ゆかりの寺）",
+          "address": "和歌山県日高郡日高川町鐘巻1738",
+          "latitude": 33.9146149,
+          "longitude": 135.1749493,
+          "spotDescription": "劇中の印象的な演目「二人道成寺」のゆかりの地。安珍・清姫伝説の舞台として知られる真言宗の古刹。",
+          "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/kkh-012.jpg",
+          "orderIndex": 1,
+          "recognitionRadiusMeters": 200
+        }
+      ]
+    },
+    {
+      "sectionId": "sec-tokyo",
+      "name": "東京（国立劇場・歌舞伎座）",
+      "sectionDescription": "楽屋・客席シーンが撮影された東京のロケ地。",
+      "orderIndex": 5,
+      "coverImageUrl": null,
+      "spots": [
+        {
+          "spotId": "kkh-013",
+          "name": "歌舞伎座（東銀座）",
+          "address": "東京都中央区銀座4-12-15",
+          "latitude": 35.6694253,
+          "longitude": 139.7677446,
+          "spotDescription": "日本歌舞伎の殿堂。劇中の歌舞伎座シーンのロケ地。楽屋や客席シーンが撮影された。伝統芸能ファンなら必訪の聖地。",
+          "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/kkh-013.jpg",
+          "orderIndex": 0,
+          "recognitionRadiusMeters": 150
+        }
+      ]
+    }
+  ]
+}

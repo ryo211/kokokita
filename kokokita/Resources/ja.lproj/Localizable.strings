@@ -621,3 +621,26 @@
 "book.rename" = "名前を変更";
 "book.colorLabel" = "カバーカラー";
 "book.currentLabel" = "使用中";
+
+// MARK: - SlideShow（動画モード）
+"slideShow.toolbarButton" = "動画モード";
+"slideShow.noPlayableSpots" = "表示できるスポットがありません";
+"slideShow.noPlayableSpotsDesc" = "写真付きのスポットがないため\n動画モードを利用できません";
+"slideShow.settings.title" = "再生設定";
+"slideShow.settings.interval" = "スポット表示時間";
+"slideShow.settings.intervalSec" = "%.1f 秒";
+"slideShow.settings.minSec" = "0.5秒";
+"slideShow.settings.maxSec" = "3秒";
+"slideShow.settings.animationSpeed" = "切り替えアニメーション";
+"slideShow.settings.speed.slow" = "ゆっくり";
+"slideShow.settings.speed.medium" = "普通";
+"slideShow.settings.speed.fast" = "キビキビ";
+
+// MARK: - TourMode（スポット巡りモード）
+"tourMode.title" = "スポット巡りモード";
+"tourMode.toolbarButton" = "順番巡り";
+"tourMode.settings.intervalLabel" = "スポット表示時間";
+"tourMode.settings.intervalSec" = "%.0f 秒";
+"tourMode.settings.intervalMin" = "1秒";
+"tourMode.settings.intervalMax" = "5秒";
+"tourMode.startButton" = "再生開始";
