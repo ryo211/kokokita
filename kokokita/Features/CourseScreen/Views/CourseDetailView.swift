@@ -403,7 +403,7 @@ struct CourseDetailView: View {
             Map(position: $cameraPosition) {
                 // 非選択ピンを先に描画（z-order: 下）
                 ForEach(Array(course.spots.enumerated()), id: \.element.id) { index, spot in
-                    if spot.hasValidCoordinate && spot.id != selectedSpotId {
+                    if spot.hasValidCoordinate {
                         Annotation(
                             "",
                             coordinate: CLLocationCoordinate2D(latitude: spot.latitude, longitude: spot.longitude),
@@ -419,7 +419,8 @@ struct CourseDetailView: View {
                     }
                 }
 
-                // 選択ピンを最後に単独描画（z-order: 最前面）
+                // 認識半径サークル（選択時のみ）
+                // 選択ピン自体は Map 外の SwiftUI overlay で描画（z-order 保証のため）
                 if let selectedId = selectedSpotId,
                    let entry = course.spots.enumerated().first(where: { $0.element.id == selectedId }),
                    entry.element.hasValidCoordinate {
@@ -428,14 +429,6 @@ struct CourseDetailView: View {
                     MapCircle(center: coord, radius: spot.recognitionRadiusMeters ?? course.recognitionRadiusMeters)
                         .foregroundStyle(Color.indigo.opacity(0.08))
                         .stroke(Color.indigo.opacity(0.5), lineWidth: 1.5)
-                    Annotation("", coordinate: coord, anchor: .center) {
-                        SpotPinView(
-                            orderNumber: entry.offset + 1,
-                            isCheckedIn: spot.isCheckedIn,
-                            isSelected: true
-                        )
-                        .onTapGesture { focusSpot(spot) }
-                    }
                 }
 
                 // 現在地ピン
@@ -498,6 +491,20 @@ struct CourseDetailView: View {
             }
             .overlay {
                 leaderLineOverlay
+            }
+            // 選択ピンを SwiftUI overlay として最前面に描画（MapKit z-order に依存しない）
+            .overlay {
+                if let spotPoint = selectedSpotScreenPoint,
+                   let entry = course.spots.enumerated().first(where: { $0.element.id == selectedSpotId }),
+                   entry.element.hasValidCoordinate {
+                    SpotPinView(
+                        orderNumber: entry.offset + 1,
+                        isCheckedIn: entry.element.isCheckedIn,
+                        isSelected: true
+                    )
+                    .onTapGesture { focusSpot(entry.element) }
+                    .position(spotPoint)
+                }
             }
             .overlay(alignment: .bottomTrailing) {
                 if isTourActive {
