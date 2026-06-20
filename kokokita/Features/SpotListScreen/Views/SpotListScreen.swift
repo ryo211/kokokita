@@ -190,9 +190,9 @@ struct SpotListScreen: View {
         ZStack(alignment: .top) {
             MapReader { proxy in
                 Map(position: $cameraPosition, interactionModes: [.pan, .zoom, .pitch]) {
-                    // スポットピン
+                    // 非選択ピンを先に描画（z-order: 下）
                     ForEach(Array(store.nearbySpots.enumerated()), id: \.element.spot.id) { index, item in
-                        if item.spot.hasValidCoordinate {
+                        if item.spot.hasValidCoordinate && item.spot.id != selectedSpotId {
                             let coord = CLLocationCoordinate2D(
                                 latitude: item.spot.latitude,
                                 longitude: item.spot.longitude
@@ -201,18 +201,32 @@ struct SpotListScreen: View {
                                 SpotPinView(
                                     orderNumber: index + 1,
                                     isCheckedIn: item.spot.isCheckedIn,
-                                    isSelected: selectedSpotId == item.spot.id
+                                    isSelected: false
                                 )
                                 .onTapGesture { focusOrUnfocus(item: item) }
                             }
-                            if selectedSpotId == item.spot.id {
-                                MapCircle(
-                                    center: coord,
-                                    radius: item.spot.recognitionRadiusMeters ?? item.course.recognitionRadiusMeters
-                                )
-                                .foregroundStyle(Color.indigo.opacity(0.08))
-                                .stroke(Color.indigo.opacity(0.5), lineWidth: 1.5)
-                            }
+                        }
+                    }
+
+                    // 選択ピンを最後に単独描画（z-order: 最前面）
+                    if let selectedId = selectedSpotId,
+                       let entry = store.nearbySpots.enumerated().first(where: { $0.element.spot.id == selectedId }),
+                       entry.element.spot.hasValidCoordinate {
+                        let item = entry.element
+                        let coord = CLLocationCoordinate2D(
+                            latitude: item.spot.latitude,
+                            longitude: item.spot.longitude
+                        )
+                        MapCircle(center: coord, radius: item.spot.recognitionRadiusMeters ?? item.course.recognitionRadiusMeters)
+                            .foregroundStyle(Color.indigo.opacity(0.08))
+                            .stroke(Color.indigo.opacity(0.5), lineWidth: 1.5)
+                        Annotation("", coordinate: coord, anchor: .center) {
+                            SpotPinView(
+                                orderNumber: entry.offset + 1,
+                                isCheckedIn: item.spot.isCheckedIn,
+                                isSelected: true
+                            )
+                            .onTapGesture { focusOrUnfocus(item: item) }
                         }
                     }
 
@@ -1081,23 +1095,44 @@ private struct SpotPinView: View {
     let isCheckedIn: Bool
     let isSelected: Bool
 
-    private var pinColor: Color { isCheckedIn ? .indigo : Color(uiColor: .systemGray3) }
-    private var size: CGFloat { isSelected ? 18 : 14 }
+    private var size: CGFloat { isSelected ? 20 : 14 }
 
     var body: some View {
         ZStack {
+            // フォーカス時のスポットライト（背後からの照射グロー）
             Circle()
-                .fill(isSelected ? Color.indigo : .white)
+                .fill(Color.indigo.opacity(0.38))
+                .frame(width: 42, height: 42)
+                .blur(radius: 9)
+                .scaleEffect(isSelected ? 1 : 0.01)
+                .opacity(isSelected ? 1 : 0)
+
+            // 外縁（白リング + 影）
+            Circle()
+                .fill(Color.white)
                 .frame(width: size + 5, height: size + 5)
-                .shadow(color: .black.opacity(0.35), radius: 4, x: 0, y: 2)
-            Circle()
-                .fill(pinColor)
-                .frame(width: size, height: size)
-            Text("\(orderNumber)")
-                .font(.system(size: isSelected ? 8 : 6, weight: .bold))
-                .foregroundStyle(.white)
+                .shadow(color: .black.opacity(isSelected ? 0.4 : 0.25),
+                        radius: isSelected ? 6 : 3, x: 0, y: 2)
+
+            if isCheckedIn {
+                // 達成済み：ゴールド + スター
+                Circle()
+                    .fill(Color(hue: 0.13, saturation: 0.85, brightness: 0.95))
+                    .frame(width: size, height: size)
+                Image(systemName: "star.fill")
+                    .font(.system(size: isSelected ? 9 : 6, weight: .bold))
+                    .foregroundStyle(.white)
+            } else {
+                // 未達成：インディゴ + 番号
+                Circle()
+                    .fill(Color.indigo)
+                    .frame(width: size, height: size)
+                Text("\(orderNumber)")
+                    .font(.system(size: isSelected ? 9 : 6, weight: .bold))
+                    .foregroundStyle(.white)
+            }
         }
-        .animation(.easeInOut(duration: 0.15), value: isSelected)
+        .animation(.easeOut(duration: 0.2), value: isSelected)
     }
 }
 
@@ -1121,13 +1156,22 @@ private struct SpotListRowView: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 12) {
+                // 番号バッジ（達成済み: ゴールド★ / 未達成: インディゴ番号）
                 ZStack {
                     Circle()
-                        .fill(spot.isCheckedIn ? Color.indigo : Color(uiColor: .systemGray4))
+                        .fill(spot.isCheckedIn
+                              ? Color(hue: 0.13, saturation: 0.85, brightness: 0.95)
+                              : Color.indigo)
                         .frame(width: 32, height: 32)
-                    Text("\(orderNumber)")
-                        .font(.caption.bold())
-                        .foregroundStyle(.white)
+                    if spot.isCheckedIn {
+                        Image(systemName: "star.fill")
+                            .font(.system(size: 13, weight: .bold))
+                            .foregroundStyle(.white)
+                    } else {
+                        Text("\(orderNumber)")
+                            .font(.caption.bold())
+                            .foregroundStyle(.white)
+                    }
                 }
 
                 VStack(alignment: .leading, spacing: 2) {

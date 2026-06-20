@@ -618,10 +618,11 @@
 "book.colorLabel" = "Cover Color";
 "book.currentLabel" = "In Use";
 
-// MARK: - SlideShow (video mode)
-"slideShow.toolbarButton" = "Video Mode";
+// MARK: - SlideShow (Cinema Mode)
+"slideShow.menuLabel" = "Cinema Mode";
+"slideShow.toolbarButton" = "Cinema Mode";
 "slideShow.noPlayableSpots" = "No spots available";
-"slideShow.noPlayableSpotsDesc" = "No spots with photos found.\nVideo mode is unavailable.";
+"slideShow.noPlayableSpotsDesc" = "No spots with photos found.\nCinema Mode is unavailable.";
 "slideShow.settings.title" = "Playback Settings";
 "slideShow.settings.interval" = "Display Duration";
 "slideShow.settings.intervalSec" = "%.1f sec";
@@ -632,11 +633,24 @@
 "slideShow.settings.speed.medium" = "Normal";
 "slideShow.settings.speed.fast" = "Fast";
 
-// MARK: - TourMode (Spot Tour Mode)
-"tourMode.title" = "Spot Tour Mode";
-"tourMode.toolbarButton" = "Tour";
+// MARK: - TourMode (Tour Mode)
+"tourMode.title" = "Tour Mode";
+"tourMode.menuLabel" = "Tour Mode";
+"tourMode.toolbarButton" = "Tour Mode";
 "tourMode.settings.intervalLabel" = "Display Duration";
-"tourMode.settings.intervalSec" = "%.0f sec";
-"tourMode.settings.intervalMin" = "1 sec";
+"tourMode.settings.intervalSec" = "%.1f sec";
+"tourMode.settings.intervalMin" = "0.5 sec";
 "tourMode.settings.intervalMax" = "5 sec";
 "tourMode.startButton" = "Start";
+"tourMode.settings.photoSpotsOnly" = "Photo spots only";
+"tourMode.settings.typewriter" = "Typewriter Effect";
+"tourMode.settings.typewriterDesc" = "Reveals the description one character at a time. When ON, the auto-advance timer is disabled.";
+
+// MARK: - CourseDetail Menu
+"courseDetail.menu.courseInfo" = "Course Info";
+"courseDetail.menu.sectionMapSettings" = "Map Settings";
+"courseDetail.menu.sectionPlayback" = "Playback";
+"courseDetail.menu.zoomOnFocus" = "Focus Zoom";
+"courseDetail.menu.zoomOnFocusOn" = "Focus Zoom: ON";
+"courseDetail.menu.zoomOnFocusOff" = "Focus Zoom: OFF";
+"courseDetail.menu.spotPhotoSize" = "Spot Photo";

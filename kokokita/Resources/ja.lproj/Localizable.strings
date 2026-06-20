@@ -622,10 +622,11 @@
 "book.colorLabel" = "カバーカラー";
 "book.currentLabel" = "使用中";
 
-// MARK: - SlideShow（動画モード）
-"slideShow.toolbarButton" = "動画モード";
+// MARK: - SlideShow（シネマモード）
+"slideShow.menuLabel" = "シネマモード";
+"slideShow.toolbarButton" = "シネマモード";
 "slideShow.noPlayableSpots" = "表示できるスポットがありません";
-"slideShow.noPlayableSpotsDesc" = "写真付きのスポットがないため\n動画モードを利用できません";
+"slideShow.noPlayableSpotsDesc" = "写真付きのスポットがないため\nシネマモードを利用できません";
 "slideShow.settings.title" = "再生設定";
 "slideShow.settings.interval" = "スポット表示時間";
 "slideShow.settings.intervalSec" = "%.1f 秒";
@@ -636,11 +637,24 @@
 "slideShow.settings.speed.medium" = "普通";
 "slideShow.settings.speed.fast" = "キビキビ";
 
-// MARK: - TourMode（スポット巡りモード）
-"tourMode.title" = "スポット巡りモード";
-"tourMode.toolbarButton" = "順番巡り";
+// MARK: - TourMode（ツアーモード）
+"tourMode.title" = "ツアーモード";
+"tourMode.menuLabel" = "ツアーモード";
+"tourMode.toolbarButton" = "ツアーモード";
 "tourMode.settings.intervalLabel" = "スポット表示時間";
-"tourMode.settings.intervalSec" = "%.0f 秒";
-"tourMode.settings.intervalMin" = "1秒";
+"tourMode.settings.intervalSec" = "%.1f 秒";
+"tourMode.settings.intervalMin" = "0.5秒";
 "tourMode.settings.intervalMax" = "5秒";
 "tourMode.startButton" = "再生開始";
+"tourMode.settings.photoSpotsOnly" = "写真があるスポットのみ";
+"tourMode.settings.typewriter" = "説明文タイプライター演出";
+"tourMode.settings.typewriterDesc" = "説明文を一文字ずつ表示します。ONにするとスポット切り替え時間は無効になります。";
+
+// MARK: - CourseDetail メニュー
+"courseDetail.menu.courseInfo" = "コース概要";
+"courseDetail.menu.sectionMapSettings" = "地図設定";
+"courseDetail.menu.sectionPlayback" = "再生機能";
+"courseDetail.menu.zoomOnFocus" = "フォーカスズーム";
+"courseDetail.menu.zoomOnFocusOn" = "フォーカスズーム: ON";
+"courseDetail.menu.zoomOnFocusOff" = "フォーカスズーム: OFF";
+"courseDetail.menu.spotPhotoSize" = "スポット写真";

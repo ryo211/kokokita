@@ -59,7 +59,6 @@ struct CourseDetailView: View {
     /// スポットフォーカス時に地図をズームするか
     @AppStorage(Self.zoomOnSpotFocusKey) private var zoomOnSpotFocus = false
     @AppStorage(Self.spotPhotoSizeKey) private var spotPhotoSizeRaw = CourseSpotPhotoSize.large.rawValue
-    @State private var showCourseMapSettings = false
     @State private var visibleMapSpan = MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
     /// フォーカス中スポットのスクリーン座標（リーダーライン描画用）
     @State private var selectedSpotScreenPoint: CGPoint? = nil
@@ -70,13 +69,27 @@ struct CourseDetailView: View {
     /// 進捗バースワイプの二重発火防止フラグ
     @State private var progressSwipeConsumed = false
 
-    // MARK: - スポット巡りモード状態
+    // MARK: - ツアーモード状態
     @AppStorage("tourMode.intervalSeconds") private var tourIntervalSeconds: Double = 3.0
+    @AppStorage("tourMode.photoSpotsOnly") private var tourPhotoSpotsOnly = false
     @State private var isTourPlaying = false
+    @State private var isTourPaused = false
     @State private var tourSpotIndex = 0
     @State private var tourTask: Task<Void, Never>?
     @State private var showTourSettings = false
     @State private var isShowingTourEndPromotion = false
+    // シネマモード（programmatic navigation）
+    @State private var showCinemaMode = false
+    // タイプライター演出
+    @AppStorage("tourMode.typewriterEnabled") private var tourTypewriterEnabled = false
+    @State private var typewriterCount: Int = 0
+    @State private var typewriterTask: Task<Void, Never>? = nil
+
+    /// ツアーで巡るスポット（写真フィルタを反映）
+    private var tourSpots: [CourseSpot] {
+        guard tourPhotoSpotsOnly else { return course.spots }
+        return course.spots.filter { $0.coverImageUrl != nil || $0.localCoverImagePath != nil }
+    }
 
     /// ツアー中（再生中 or 終了プロモーション表示中）
     private var isTourActive: Bool { isTourPlaying || isShowingTourEndPromotion }
@@ -133,10 +146,12 @@ struct CourseDetailView: View {
                             .frame(height: geo.size.height * 0.50)
                     }
 
-                    // 進捗バー＋レイアウト切替ボタン（常時表示）
-                    progressStrip
+                    // 進捗バー＋レイアウト切替ボタン（ツアーモード中は非表示）
+                    if !isTourActive {
+                        progressStrip
 
-                    Divider()
+                        Divider()
+                    }
 
                     // リストエリア（mapFull: 非表示 / split: 50% / listFull: 全画面）
                     if viewLayout != .mapFull {
@@ -145,6 +160,8 @@ struct CourseDetailView: View {
                             userLocation: userLocation,
                             selectedSpotId: selectedSpotId,
                             isTourPlaying: isTourActive,
+                            typewriterCount: typewriterCount,
+                            isTypewriterActive: isTourActive && tourTypewriterEnabled,
                             onSpotTapped: focusSpot,
                             onLayoutSwipe: switchLayout
                         )
@@ -153,19 +170,21 @@ struct CourseDetailView: View {
                 }
                 .animation(.easeInOut(duration: 0.3), value: viewLayout)
 
-                // ツアー終了プロモーション画面
+                // ツアー終了プロモーション画面（タップで解除）
                 if isShowingTourEndPromotion {
                     KokokitaEndPromotionStage(
                         safeTop: 0,
                         safeBottom: geo.safeAreaInsets.bottom
                     )
+                    .contentShape(Rectangle())
+                    .onTapGesture { stopTour() }
                     .transition(.opacity)
                 }
 
             }
             .animation(.easeInOut(duration: 0.4), value: isShowingTourEndPromotion)
         }
-        .navigationTitle(showTitle && !isTourActive ? course.title : "")
+        .navigationTitle(showTitle ? course.title : "")
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(isTourActive)
         .onChange(of: isTourPlaying) { _, playing in
@@ -185,7 +204,11 @@ struct CourseDetailView: View {
             }
         }
         .sheet(isPresented: $showTourSettings) {
-            SpotTourSettingsSheet(intervalSeconds: $tourIntervalSeconds) {
+            SpotTourSettingsSheet(
+                intervalSeconds: $tourIntervalSeconds,
+                photoSpotsOnly: $tourPhotoSpotsOnly,
+                typewriterEnabled: $tourTypewriterEnabled
+            ) {
                 startTour()
             }
         }
@@ -217,50 +240,66 @@ struct CourseDetailView: View {
                 cameraPosition = .region(MKCoordinateRegion(center: center, span: visibleMapSpan))
             }
         }
+        .navigationDestination(isPresented: $showCinemaMode) {
+            CourseSlideShowView(course: course)
+        }
         .toolbar {
             if !isTourActive {
-                // スポット巡りモード
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button { showTourSettings = true } label: {
-                        Image(systemName: "scope")
-                    }
-                }
-                // 動画モード
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    NavigationLink {
-                        CourseSlideShowView(course: course)
-                    } label: {
-                        Image(systemName: "play.rectangle")
-                    }
-                }
-                // コース概要
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button { showSummary = true } label: {
-                        Image(systemName: "info.circle")
-                    }
-                }
-            } else {
-                ToolbarItem(placement: .principal) {
-                    HStack(spacing: 8) {
-                        if showTitle {
-                            Text(course.title)
-                                .font(.headline)
-                                .lineLimit(1)
+                    Menu {
+                        Button { showSummary = true } label: {
+                            Label(L.CourseDetail.menuCourseInfo, systemImage: "info.circle")
                         }
-                        tourActiveBadge
-                            .onTapGesture { stopTour() }
+
+                        Section(L.CourseDetail.menuSectionMapSettings) {
+                            Button {
+                                zoomOnSpotFocus.toggle()
+                            } label: {
+                                Label(
+                                    zoomOnSpotFocus
+                                        ? L.CourseDetail.menuZoomOnFocusOn
+                                        : L.CourseDetail.menuZoomOnFocusOff,
+                                    systemImage: zoomOnSpotFocus
+                                        ? "viewfinder.circle.fill"
+                                        : "viewfinder.circle"
+                                )
+                            }
+                            Menu {
+                                ForEach(CourseSpotPhotoSize.allCases, id: \.rawValue) { size in
+                                    Button {
+                                        spotPhotoSizeRaw = size.rawValue
+                                    } label: {
+                                        if spotPhotoSize == size {
+                                            Label(size.title, systemImage: "checkmark")
+                                        } else {
+                                            Text(size.title)
+                                        }
+                                    }
+                                }
+                            } label: {
+                                Label(
+                                    "\(L.CourseDetail.menuSpotPhotoSize): \(spotPhotoSize.title)",
+                                    systemImage: "photo.on.rectangle"
+                                )
+                            }
+                        }
+
+                        Section(L.CourseDetail.menuSectionPlayback) {
+                            Button { showTourSettings = true } label: {
+                                Label(L.TourMode.menuLabel, systemImage: "scope")
+                            }
+                            Button { showCinemaMode = true } label: {
+                                Label(L.SlideShow.menuLabel, systemImage: "play.rectangle")
+                            }
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis.circle")
                     }
                 }
             }
         }
         .sheet(isPresented: $showSummary) {
             CourseSummarySheet(course: course)
-        }
-        .sheet(isPresented: $showCourseMapSettings) {
-            CourseMapSettingsSheet(
-                zoomOnSpotFocus: $zoomOnSpotFocus,
-                spotPhotoSizeRaw: $spotPhotoSizeRaw
-            )
         }
         // 遡り判定結果シート（ストアシートとの競合を避けるためここに配置）
         .sheet(item: $pendingRetroactiveResult) { result in
@@ -362,9 +401,9 @@ struct CourseDetailView: View {
     private var mapArea: some View {
         MapReader { proxy in
             Map(position: $cameraPosition) {
+                // 非選択ピンを先に描画（z-order: 下）
                 ForEach(Array(course.spots.enumerated()), id: \.element.id) { index, spot in
-                    // 不正な座標のスポットはピンを立てない
-                    if spot.hasValidCoordinate {
+                    if spot.hasValidCoordinate && spot.id != selectedSpotId {
                         Annotation(
                             "",
                             coordinate: CLLocationCoordinate2D(latitude: spot.latitude, longitude: spot.longitude),
@@ -373,22 +412,29 @@ struct CourseDetailView: View {
                             SpotPinView(
                                 orderNumber: index + 1,
                                 isCheckedIn: spot.isCheckedIn,
-                                isSelected: selectedSpotId == spot.id
+                                isSelected: false
                             )
-                            .onTapGesture {
-                                focusSpot(spot)
-                            }
+                            .onTapGesture { focusSpot(spot) }
                         }
+                    }
+                }
 
-                        // フォーカス中スポットのチェックイン有効範囲を表示
-                        if selectedSpotId == spot.id, spot.hasValidCoordinate {
-                            MapCircle(
-                                center: CLLocationCoordinate2D(latitude: spot.latitude, longitude: spot.longitude),
-                                radius: spot.recognitionRadiusMeters ?? course.recognitionRadiusMeters
-                            )
-                            .foregroundStyle(Color.indigo.opacity(0.08))
-                            .stroke(Color.indigo.opacity(0.5), lineWidth: 1.5)
-                        }
+                // 選択ピンを最後に単独描画（z-order: 最前面）
+                if let selectedId = selectedSpotId,
+                   let entry = course.spots.enumerated().first(where: { $0.element.id == selectedId }),
+                   entry.element.hasValidCoordinate {
+                    let spot = entry.element
+                    let coord = CLLocationCoordinate2D(latitude: spot.latitude, longitude: spot.longitude)
+                    MapCircle(center: coord, radius: spot.recognitionRadiusMeters ?? course.recognitionRadiusMeters)
+                        .foregroundStyle(Color.indigo.opacity(0.08))
+                        .stroke(Color.indigo.opacity(0.5), lineWidth: 1.5)
+                    Annotation("", coordinate: coord, anchor: .center) {
+                        SpotPinView(
+                            orderNumber: entry.offset + 1,
+                            isCheckedIn: spot.isCheckedIn,
+                            isSelected: true
+                        )
+                        .onTapGesture { focusSpot(spot) }
                     }
                 }
 
@@ -450,35 +496,33 @@ struct CourseDetailView: View {
                 guard selectedSpotScreenPoint != nil else { return }
                 updateSpotScreenPoint(proxy: proxy)
             }
-            .overlay(alignment: .topTrailing) {
-                if !isTourActive {
-                    courseMapSettingsButton
-                        .padding(12)
-                }
-            }
             .overlay {
                 leaderLineOverlay
             }
             .overlay(alignment: .bottomTrailing) {
-                if !isTourActive {
+                if isTourActive {
+                    HStack(spacing: 10) {
+                        Button {
+                            isTourPaused ? resumeTour() : pauseTour()
+                        } label: {
+                            Image(systemName: isTourPaused ? "play.fill" : "pause.fill")
+                                .font(.system(size: 12, weight: .bold))
+                                .foregroundStyle(.white)
+                                .frame(width: 28, height: 28)
+                                .background(Color.indigo, in: Circle())
+                        }
+                        .buttonStyle(.plain)
+
+                        tourActiveBadge
+                            .onTapGesture { stopTour() }
+                    }
+                    .padding([.trailing, .bottom], 16)
+                } else {
                     locationButton
                         .padding([.trailing, .bottom], 12)
                 }
             }
         }
-    }
-
-    private var courseMapSettingsButton: some View {
-        Button {
-            showCourseMapSettings = true
-        } label: {
-            Image(systemName: "slider.horizontal.3")
-                .font(.system(size: 14, weight: .medium))
-                .frame(width: 36, height: 36)
-                .background(.regularMaterial, in: Circle())
-                .shadow(color: .black.opacity(0.15), radius: 4, x: 0, y: 2)
-        }
-        .buttonStyle(.plain)
     }
 
     /// フォーカス中スポットのスクリーン座標を MapProxy で更新する
@@ -700,23 +744,41 @@ struct CourseDetailView: View {
     // MARK: - スポット巡りモード
 
     private func startTour() {
-        guard !course.spots.isEmpty else { return }
+        let spots = tourSpots
+        guard !spots.isEmpty else { return }
         // 地図が見えていないレイアウトの場合は split に切り替え
         if viewLayout == .listFull {
             withAnimation(.easeInOut(duration: 0.3)) { viewLayout = .split }
         }
         isTourPlaying = true
+        isTourPaused = false
         isShowingTourEndPromotion = false
         tourSpotIndex = 0
-        tourFocusSpot(course.spots[0])
-        scheduleTourAdvance()
+        tourFocusSpot(spots[0])
+        scheduleOrTypewriter(for: spots[0])
     }
 
     private func stopTour() {
         tourTask?.cancel()
+        typewriterTask?.cancel()
+        typewriterCount = 0
         isTourPlaying = false
+        isTourPaused = false
         isShowingTourEndPromotion = false
         appUIState.isTabBarHidden = false
+    }
+
+    private func pauseTour() {
+        isTourPaused = true
+        tourTask?.cancel()
+        typewriterTask?.cancel()
+    }
+
+    private func resumeTour() {
+        isTourPaused = false
+        let spots = tourSpots
+        guard tourSpotIndex < spots.count else { return }
+        scheduleOrTypewriter(for: spots[tourSpotIndex])
     }
 
     private func scheduleTourAdvance() {
@@ -728,12 +790,41 @@ struct CourseDetailView: View {
         }
     }
 
-    private func advanceTour() {
-        let nextIndex = tourSpotIndex + 1
-        if nextIndex < course.spots.count {
-            tourSpotIndex = nextIndex
-            tourFocusSpot(course.spots[nextIndex])
+    /// タイプライターON → タイプライター演出、OFF → タイマー自動進行
+    private func scheduleOrTypewriter(for spot: CourseSpot) {
+        if tourTypewriterEnabled {
+            startTypewriter(for: spot)
+        } else {
             scheduleTourAdvance()
+        }
+    }
+
+    /// タイトル → 説明文の順に1文字ずつ太字化し、完了後に余韻を残してから次のスポットへ進む
+    private func startTypewriter(for spot: CourseSpot) {
+        typewriterTask?.cancel()
+        typewriterCount = 0
+        let totalChars = spot.name.count + (spot.spotDescription?.count ?? 0)
+        guard totalChars > 0 else { scheduleTourAdvance(); return }
+        typewriterTask = Task {
+            for _ in 0..<totalChars {
+                try? await Task.sleep(nanoseconds: 20_000_000) // 40ms/文字
+                guard !Task.isCancelled else { return }
+                await MainActor.run { typewriterCount += 1 }
+            }
+            // 全文字太字化後、余韻として1秒待ってから次のスポットへ
+            try? await Task.sleep(nanoseconds: 500_000_000)
+            guard !Task.isCancelled else { return }
+            await MainActor.run { advanceTour() }
+        }
+    }
+
+    private func advanceTour() {
+        let spots = tourSpots
+        let nextIndex = tourSpotIndex + 1
+        if nextIndex < spots.count {
+            tourSpotIndex = nextIndex
+            tourFocusSpot(spots[nextIndex])
+            scheduleOrTypewriter(for: spots[nextIndex])
         } else {
             // 全スポット終了 → プロモーション画面へ
             tourTask?.cancel()
@@ -824,16 +915,19 @@ struct CourseDetailView: View {
 
 struct SpotTourSettingsSheet: View {
     @Binding var intervalSeconds: Double
+    @Binding var photoSpotsOnly: Bool
+    @Binding var typewriterEnabled: Bool
     @Environment(\.dismiss) private var dismiss
     let onStart: () -> Void
 
     private var clampedInterval: Double {
-        min(max(1, intervalSeconds), 5)
+        min(max(0.5, intervalSeconds), 5.0)
     }
 
     var body: some View {
         NavigationStack {
             VStack(alignment: .leading, spacing: 24) {
+                // スポット表示時間（タイプライターON時は無効）
                 VStack(alignment: .leading, spacing: 8) {
                     HStack {
                         Text(L.TourMode.settingsIntervalLabel)
@@ -844,7 +938,7 @@ struct SpotTourSettingsSheet: View {
                             .foregroundStyle(.secondary)
                     }
 
-                    Slider(value: $intervalSeconds, in: 1...5, step: 1)
+                    Slider(value: $intervalSeconds, in: 0.5...5, step: 0.5)
                         .tint(.indigo)
 
                     HStack {
@@ -856,6 +950,23 @@ struct SpotTourSettingsSheet: View {
                             .font(.caption2)
                             .foregroundStyle(.secondary)
                     }
+                }
+                .disabled(typewriterEnabled)
+                .opacity(typewriterEnabled ? 0.35 : 1)
+
+                Toggle(L.TourMode.settingsPhotoSpotsOnly, isOn: $photoSpotsOnly)
+                    .font(.headline)
+                    .tint(.indigo)
+
+                // タイプライター演出
+                VStack(alignment: .leading, spacing: 6) {
+                    Toggle(L.TourMode.settingsTypewriter, isOn: $typewriterEnabled)
+                        .font(.headline)
+                        .tint(.indigo)
+                    Text(L.TourMode.settingsTypewriterDesc)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
 
                 Button {
@@ -881,100 +992,10 @@ struct SpotTourSettingsSheet: View {
                 }
             }
         }
-        .presentationDetents([.height(280)])
+        .presentationDetents([.height(440)])
     }
 }
 
-struct CourseMapSettingsSheet: View {
-    @Binding var zoomOnSpotFocus: Bool
-    @Binding var spotPhotoSizeRaw: String
-    @Environment(\.dismiss) private var dismiss
-
-    private var selectedPhotoSize: CourseSpotPhotoSize {
-        CourseSpotPhotoSize(rawValue: spotPhotoSizeRaw) ?? .large
-    }
-
-    var body: some View {
-        NavigationStack {
-            VStack(alignment: .leading, spacing: 22) {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("スポットフォーカス時のズーム")
-                        .font(.headline)
-                    Text("スポットを選択したときに、地図をスポット中心へ移動しながらズームインするかを切り替えます。")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-
-                HStack(spacing: 0) {
-                    toggleButton(title: "ON", isSelected: zoomOnSpotFocus) {
-                        withAnimation(.easeInOut(duration: 0.18)) {
-                            zoomOnSpotFocus = true
-                        }
-                    }
-
-                    toggleButton(title: "OFF", isSelected: !zoomOnSpotFocus) {
-                        withAnimation(.easeInOut(duration: 0.18)) {
-                            zoomOnSpotFocus = false
-                        }
-                    }
-                }
-                .padding(4)
-                .background(Color.secondary.opacity(0.12), in: Capsule())
-
-                VStack(alignment: .leading, spacing: 10) {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("スポット写真の大きさ")
-                            .font(.headline)
-                        Text("地図上に表示するスポット写真のサイズを選べます。")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                    }
-
-                    HStack(spacing: 0) {
-                        ForEach(CourseSpotPhotoSize.allCases, id: \.rawValue) { size in
-                            toggleButton(title: size.title, isSelected: selectedPhotoSize == size) {
-                                withAnimation(.easeInOut(duration: 0.18)) {
-                                    spotPhotoSizeRaw = size.rawValue
-                                }
-                            }
-                        }
-                    }
-                    .padding(4)
-                    .background(Color.secondary.opacity(0.12), in: Capsule())
-                }
-
-                Spacer()
-            }
-            .padding(20)
-            .navigationTitle("地図設定")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(L.Common.done) { dismiss() }
-                        .fontWeight(.semibold)
-                }
-            }
-        }
-        .presentationDetents([.height(340)])
-    }
-
-    private func toggleButton(
-        title: String,
-        isSelected: Bool,
-        action: @escaping () -> Void
-    ) -> some View {
-        Button(action: action) {
-            Text(title)
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(isSelected ? Color.white : Color.primary)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 9)
-                .background(isSelected ? Color.indigo : Color.clear, in: Capsule())
-        }
-        .buttonStyle(.plain)
-    }
-}
 
 // MARK: - スポットリストエリア
 
@@ -986,6 +1007,10 @@ private struct SpotListAreaView: View, Equatable {
     let selectedSpotId: UUID?
     /// ツアー再生中は達成済スポットを非表示にしてソートチップも隠す
     var isTourPlaying: Bool = false
+    /// タイプライター演出で太字化済みの文字数（タイトル + 説明文を合算）
+    var typewriterCount: Int = 0
+    /// タイプライター演出が有効かどうか
+    var isTypewriterActive: Bool = false
     let onSpotTapped: (CourseSpot) -> Void
     /// 上スワイプ=true / 下スワイプ=false でレイアウト切替を親に通知
     var onLayoutSwipe: (Bool) -> Void = { _ in }
@@ -998,6 +1023,8 @@ private struct SpotListAreaView: View, Equatable {
         lhs.course == rhs.course &&
         lhs.selectedSpotId == rhs.selectedSpotId &&
         lhs.isTourPlaying == rhs.isTourPlaying &&
+        lhs.typewriterCount == rhs.typewriterCount &&
+        lhs.isTypewriterActive == rhs.isTypewriterActive &&
         lhs.userLocation?.latitude == rhs.userLocation?.latitude &&
         lhs.userLocation?.longitude == rhs.userLocation?.longitude
     }
@@ -1067,7 +1094,8 @@ private struct SpotListAreaView: View, Equatable {
                                     spot: item.spot,
                                     orderNumber: (indexMap[item.spot.id] ?? 0) + 1,
                                     isSelected: selectedSpotId == item.spot.id,
-                                    distance: item.distance
+                                    distance: item.distance,
+                                    tourTypewriterCount: (isTypewriterActive && selectedSpotId == item.spot.id) ? typewriterCount : nil
                                 )
                                 .id(item.spot.id)
                                 .onTapGesture { onSpotTapped(item.spot) }
@@ -1095,7 +1123,8 @@ private struct SpotListAreaView: View, Equatable {
                                             spot: spot,
                                             orderNumber: (indexMap[spot.id] ?? 0) + 1,
                                             isSelected: selectedSpotId == spot.id,
-                                            distance: distance
+                                            distance: distance,
+                                            tourTypewriterCount: (isTypewriterActive && selectedSpotId == spot.id) ? typewriterCount : nil
                                         )
                                         .id(spot.id)
                                         .onTapGesture { onSpotTapped(spot) }
@@ -1172,28 +1201,44 @@ private struct SpotPinView: View {
     let isCheckedIn: Bool
     let isSelected: Bool
 
-    private var pinColor: Color { isCheckedIn ? .indigo : Color(uiColor: .systemGray3) }
-    private var size: CGFloat { isSelected ? 18 : 14 }
+    private var size: CGFloat { isSelected ? 20 : 14 }
 
     var body: some View {
         ZStack {
-            // 縁（通常: 白 / 選択: オレンジ）+ 影でピンを浮かせる
+            // フォーカス時のスポットライト（背後からの照射グロー）
             Circle()
-                .fill(isSelected ? Color.indigo : .white)
+                .fill(Color.indigo.opacity(0.38))
+                .frame(width: 42, height: 42)
+                .blur(radius: 9)
+                .scaleEffect(isSelected ? 1 : 0.01)
+                .opacity(isSelected ? 1 : 0)
+
+            // 外縁（白リング + 影）
+            Circle()
+                .fill(Color.white)
                 .frame(width: size + 5, height: size + 5)
-                .shadow(color: .black.opacity(0.35), radius: 4, x: 0, y: 2)
+                .shadow(color: .black.opacity(isSelected ? 0.4 : 0.25),
+                        radius: isSelected ? 6 : 3, x: 0, y: 2)
 
-            // ピン本体
-            Circle()
-                .fill(pinColor)
-                .frame(width: size, height: size)
-
-            // 番号ラベル
-            Text("\(orderNumber)")
-                .font(.system(size: isSelected ? 8 : 6, weight: .bold))
-                .foregroundStyle(.white)
+            if isCheckedIn {
+                // 達成済み：ゴールド + スター
+                Circle()
+                    .fill(Color(hue: 0.13, saturation: 0.85, brightness: 0.95))
+                    .frame(width: size, height: size)
+                Image(systemName: "star.fill")
+                    .font(.system(size: isSelected ? 9 : 6, weight: .bold))
+                    .foregroundStyle(.white)
+            } else {
+                // 未達成：インディゴ + 番号
+                Circle()
+                    .fill(Color.indigo)
+                    .frame(width: size, height: size)
+                Text("\(orderNumber)")
+                    .font(.system(size: isSelected ? 9 : 6, weight: .bold))
+                    .foregroundStyle(.white)
+            }
         }
-        .animation(.easeInOut(duration: 0.15), value: isSelected)
+        .animation(.easeOut(duration: 0.2), value: isSelected)
     }
 }
 
@@ -1204,6 +1249,8 @@ private struct SpotListRowView: View {
     let orderNumber: Int
     let isSelected: Bool
     var distance: Double? = nil
+    /// タイプライター演出で太字化済みの文字数（nil = 演出なし）
+    var tourTypewriterCount: Int? = nil
 
     @Environment(\.spotFavoriteStore) private var favoriteStore
 
@@ -1212,24 +1259,59 @@ private struct SpotListRowView: View {
         return d < 1000 ? String(format: "%.0fm", d) : String(format: "%.1fkm", d / 1000)
     }
 
+    /// 全文を表示しつつ前から boldCount 文字を太字・primaryカラーにした AttributedString を返す
+    private func makeTypewriterAttributedText(full: String, boldCount: Int, boldFont: Font, dimFont: Font) -> AttributedString {
+        var result = AttributedString(full)
+        let clampedCount = min(boldCount, full.count)
+        let boldEnd = result.index(result.startIndex, offsetByCharacters: clampedCount)
+
+        if result.startIndex < boldEnd {
+            result[result.startIndex..<boldEnd].font = boldFont
+            result[result.startIndex..<boldEnd].foregroundColor = Color.primary
+        }
+        if boldEnd < result.endIndex {
+            result[boldEnd..<result.endIndex].font = dimFont
+            result[boldEnd..<result.endIndex].foregroundColor = Color.secondary
+        }
+        return result
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             // メイン行
             HStack(spacing: 12) {
-                // 番号バッジ
+                // 番号バッジ（達成済み: ゴールド★ / 未達成: インディゴ番号）
                 ZStack {
                     Circle()
-                        .fill(spot.isCheckedIn ? Color.indigo : Color(uiColor: .systemGray4))
+                        .fill(spot.isCheckedIn
+                              ? Color(hue: 0.13, saturation: 0.85, brightness: 0.95)
+                              : Color.indigo)
                         .frame(width: 32, height: 32)
-                    Text("\(orderNumber)")
-                        .font(.caption.bold())
-                        .foregroundStyle(.white)
+                    if spot.isCheckedIn {
+                        Image(systemName: "star.fill")
+                            .font(.system(size: 13, weight: .bold))
+                            .foregroundStyle(.white)
+                    } else {
+                        Text("\(orderNumber)")
+                            .font(.caption.bold())
+                            .foregroundStyle(.white)
+                    }
                 }
 
                 VStack(alignment: .leading, spacing: 2) {
                     HStack(spacing: 6) {
-                        Text(spot.name)
-                            .font(.body)
+                        if let count = tourTypewriterCount {
+                            // タイプライター演出中: タイトルも薄い → 太字へ
+                            Text(makeTypewriterAttributedText(
+                                full: spot.name,
+                                boldCount: count,
+                                boldFont: .body.bold(),
+                                dimFont: .body
+                            ))
+                        } else {
+                            Text(spot.name)
+                                .font(.body)
+                        }
 
                         if spot.isCheckedIn {
                             Image(systemName: "checkmark.circle.fill")
@@ -1238,7 +1320,17 @@ private struct SpotListRowView: View {
                         }
                     }
 
-                    if let desc = spot.spotDescription {
+                    if let count = tourTypewriterCount, let desc = spot.spotDescription {
+                        // タイプライター演出中: 説明文は title.count 分を差し引いた残りでboldCount計算
+                        let descBoldCount = max(0, count - spot.name.count)
+                        Text(makeTypewriterAttributedText(
+                            full: desc,
+                            boldCount: descBoldCount,
+                            boldFont: .caption.bold(),
+                            dimFont: .caption
+                        ))
+                        .lineLimit(nil)
+                    } else if let desc = spot.spotDescription {
                         Text(desc)
                             .font(.caption)
                             .foregroundStyle(.secondary)
@@ -1581,11 +1673,21 @@ struct SpotLeaderLineView: View {
             let lineEnd = lineEnd(imageCenter: imgCenter, imageSize: imageSize)
 
             ZStack {
-                // リーダーライン（スポット中心 → 画像端）
+                // リーダーライン（ピン外縁 → 画像端）
                 Canvas { ctx, _ in
+                    // ピン外縁半径分オフセット（番号が見えるようピンの裏から線を出す）
+                    let pinOuterRadius: CGFloat = 13
+                    let dx = lineEnd.x - spotPoint.x
+                    let dy = lineEnd.y - spotPoint.y
+                    let dist = sqrt(dx * dx + dy * dy)
+                    let lineStart: CGPoint = dist > 0
+                        ? CGPoint(x: spotPoint.x + dx / dist * pinOuterRadius,
+                                  y: spotPoint.y + dy / dist * pinOuterRadius)
+                        : spotPoint
+
                     let path: Path = {
                         var p = Path()
-                        p.move(to: spotPoint)
+                        p.move(to: lineStart)
                         p.addLine(to: lineEnd)
                         return p
                     }()
@@ -1595,16 +1697,6 @@ struct SpotLeaderLineView: View {
                     // 本体（白い線）
                     ctx.stroke(path, with: .color(.white.opacity(0.95)),
                                style: StrokeStyle(lineWidth: 2.5, lineCap: .round))
-                    // スポット側の始点ドット（シャドウ）
-                    ctx.fill(
-                        Path(ellipseIn: CGRect(x: spotPoint.x - 4.5, y: spotPoint.y - 4.5, width: 9, height: 9)),
-                        with: .color(.black.opacity(0.25))
-                    )
-                    // スポット側の始点ドット（本体）
-                    ctx.fill(
-                        Path(ellipseIn: CGRect(x: spotPoint.x - 3.5, y: spotPoint.y - 3.5, width: 7, height: 7)),
-                        with: .color(.white.opacity(0.95))
-                    )
                 }
                 .allowsHitTesting(false)
 
@@ -1763,3 +1855,92 @@ private struct CourseSummarySheet: View {
         .iPadSheetSize(iPhoneDetents: [.medium, .large])
     }
 }
+
+// MARK: - 地図設定シート（SpotListScreen と共有）
+
+struct CourseMapSettingsSheet: View {
+    @Binding var zoomOnSpotFocus: Bool
+    @Binding var spotPhotoSizeRaw: String
+    @Environment(\.dismiss) private var dismiss
+
+    private var selectedPhotoSize: CourseSpotPhotoSize {
+        CourseSpotPhotoSize(rawValue: spotPhotoSizeRaw) ?? .large
+    }
+
+    var body: some View {
+        NavigationStack {
+            VStack(alignment: .leading, spacing: 22) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("スポットフォーカス時のズーム")
+                        .font(.headline)
+                    Text("スポットを選択したときに、地図をスポット中心へ移動しながらズームインするかを切り替えます。")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                HStack(spacing: 0) {
+                    toggleButton(title: "ON", isSelected: zoomOnSpotFocus) {
+                        withAnimation(.easeInOut(duration: 0.18)) { zoomOnSpotFocus = true }
+                    }
+                    toggleButton(title: "OFF", isSelected: !zoomOnSpotFocus) {
+                        withAnimation(.easeInOut(duration: 0.18)) { zoomOnSpotFocus = false }
+                    }
+                }
+                .padding(4)
+                .background(Color.secondary.opacity(0.12), in: Capsule())
+
+                VStack(alignment: .leading, spacing: 10) {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("スポット写真の大きさ")
+                            .font(.headline)
+                        Text("地図上に表示するスポット写真のサイズを選べます。")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+
+                    HStack(spacing: 0) {
+                        ForEach(CourseSpotPhotoSize.allCases, id: \.rawValue) { size in
+                            toggleButton(title: size.title, isSelected: selectedPhotoSize == size) {
+                                withAnimation(.easeInOut(duration: 0.18)) {
+                                    spotPhotoSizeRaw = size.rawValue
+                                }
+                            }
+                        }
+                    }
+                    .padding(4)
+                    .background(Color.secondary.opacity(0.12), in: Capsule())
+                }
+
+                Spacer()
+            }
+            .padding(20)
+            .navigationTitle("地図設定")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(L.Common.done) { dismiss() }
+                        .fontWeight(.semibold)
+                }
+            }
+        }
+        .presentationDetents([.height(340)])
+    }
+
+    private func toggleButton(
+        title: String,
+        isSelected: Bool,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(isSelected ? Color.white : Color.primary)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 9)
+                .background(isSelected ? Color.indigo : Color.clear, in: Capsule())
+        }
+        .buttonStyle(.plain)
+    }
+}
+

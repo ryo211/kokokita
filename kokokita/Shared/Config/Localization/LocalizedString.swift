@@ -715,8 +715,9 @@ enum L {
         static let currentLabel = localized("book.currentLabel")
     }
 
-    // MARK: - SlideShow（動画モード）
+    // MARK: - SlideShow（シネマモード）
     enum SlideShow {
+        static let menuLabel = localized("slideShow.menuLabel")
         static let toolbarButton = localized("slideShow.toolbarButton")
         static let noPlayableSpots = localized("slideShow.noPlayableSpots")
         static let noPlayableSpotsDesc = localized("slideShow.noPlayableSpotsDesc")
@@ -733,9 +734,10 @@ enum L {
         static let speedFast   = localized("slideShow.settings.speed.fast")
     }
 
-    // MARK: - TourMode（スポット巡りモード）
+    // MARK: - TourMode（ツアーモード）
     enum TourMode {
         static let title = localized("tourMode.title")
+        static let menuLabel = localized("tourMode.menuLabel")
         static let toolbarButton = localized("tourMode.toolbarButton")
         static let settingsIntervalLabel = localized("tourMode.settings.intervalLabel")
         static func settingsIntervalSec(_ sec: Double) -> String {
@@ -744,6 +746,20 @@ enum L {
         static let settingsIntervalMin = localized("tourMode.settings.intervalMin")
         static let settingsIntervalMax = localized("tourMode.settings.intervalMax")
         static let startButton = localized("tourMode.startButton")
+        static let settingsPhotoSpotsOnly = localized("tourMode.settings.photoSpotsOnly")
+        static let settingsTypewriter = localized("tourMode.settings.typewriter")
+        static let settingsTypewriterDesc = localized("tourMode.settings.typewriterDesc")
+    }
+
+    // MARK: - CourseDetail メニュー
+    enum CourseDetail {
+        static let menuCourseInfo = localized("courseDetail.menu.courseInfo")
+        static let menuSectionMapSettings = localized("courseDetail.menu.sectionMapSettings")
+        static let menuSectionPlayback = localized("courseDetail.menu.sectionPlayback")
+        static let menuZoomOnFocus = localized("courseDetail.menu.zoomOnFocus")
+        static let menuZoomOnFocusOn = localized("courseDetail.menu.zoomOnFocusOn")
+        static let menuZoomOnFocusOff = localized("courseDetail.menu.zoomOnFocusOff")
+        static let menuSpotPhotoSize = localized("courseDetail.menu.spotPhotoSize")
     }
 
     // MARK: - Helper
