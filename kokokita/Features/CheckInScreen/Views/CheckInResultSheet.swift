@@ -17,7 +17,7 @@ struct CheckInResultSheet: View {
                         .padding(.bottom, 0)
 
                     LazyVStack(spacing: 14) {
-                        ForEach(Array(results.enumerated()), id: \.element.spot.id) { index, result in
+                        ForEach(Array(results.enumerated()), id: \.offset) { index, result in
                             StampedCheckInCard(
                                 result: result,
                                 stampDelay: Double(index) * 0.18

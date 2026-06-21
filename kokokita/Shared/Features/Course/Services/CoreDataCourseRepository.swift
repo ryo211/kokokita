@@ -50,21 +50,20 @@ final class CoreDataCourseRepository: CourseRepository {
         // fetchLimit を設けず同UUID の全エンティティを更新する
         // （syncSections の不具合で重複エンティティが生成された場合も確実にリンクを反映するため）
         let req = CourseSpotEntity.fetchRequest()
-        req.predicate = NSPredicate(format: "id == %@", spotId as CVarArg)
+        req.predicate = NSPredicate(format: "id == %@", spotId as NSUUID)
         let found = try ctx.fetch(req)
 
-        guard !found.isEmpty else {
-            Logger.warning("checkIn: スポットが見つかりません spotId=\(spotId)")
-            return
-        }
+        guard !found.isEmpty else { return }
 
         // visitId → VisitDetailsEntity を解決
         var visitDetails: VisitDetailsEntity? = nil
         if let visitId = visitId {
             let vReq = VisitEntity.fetchRequest()
-            vReq.predicate = NSPredicate(format: "id == %@", visitId as CVarArg)
+            vReq.predicate = NSPredicate(format: "id == %@", visitId as NSUUID)
             vReq.fetchLimit = 1
-            visitDetails = try ctx.fetch(vReq).first?.details
+            if let visitEntity = try ctx.fetch(vReq).first {
+                visitDetails = visitEntity.details
+            }
         }
 
         for spot in found {
@@ -94,7 +93,7 @@ final class CoreDataCourseRepository: CourseRepository {
 
     private func fetchEntity(id: UUID) throws -> CourseEntity? {
         let req = CourseEntity.fetchRequest()
-        req.predicate = NSPredicate(format: "id == %@", id as CVarArg)
+        req.predicate = NSPredicate(format: "id == %@", id as NSUUID)
         req.fetchLimit = 1
         return try ctx.fetch(req).first
     }
@@ -282,12 +281,17 @@ final class CoreDataCourseRepository: CourseRepository {
     }
 
     private func mapToSpot(_ s: CourseSpotEntity) -> CourseSpot {
-        // visits リレーションから VisitEntity.id を日時昇順で取得
-        let sortedVisitDetails = ((s.visits as? Set<VisitDetailsEntity>) ?? [])
-            .sorted { ($0.visit?.timestampUTC ?? .distantPast) < ($1.visit?.timestampUTC ?? .distantPast) }
-        let visitIds: [UUID] = sortedVisitDetails.compactMap { $0.visit?.id }
+        // visits リレーション（CourseSpotEntity → VisitDetailsEntity）からリンク済み VisitDetailsEntity を取得
+        let rawVisits = s.visits as? Set<VisitDetailsEntity> ?? []
+        // ZVISITDETAILSENTITY.ZVISIT（逆方向FK）はCoreDataが書き込まないため nil になる。
+        // 代わりに ZVISITENTITY.ZDETAILS（VisitEntity.details FK）方向でバッチフェッチする。
+        let visitReq = VisitEntity.fetchRequest()
+        visitReq.predicate = NSPredicate(format: "details IN %@", rawVisits)
+        visitReq.sortDescriptors = [NSSortDescriptor(key: "timestampUTC", ascending: true)]
+        let linkedVisits = (try? ctx.fetch(visitReq)) ?? []
+        let visitIds: [UUID] = linkedVisits.compactMap { $0.id }
         // firstCheckedInAt は visits の最古の訪問日時から導出（CoreData フラグは参照しない）
-        let firstCheckedInAt: Date? = sortedVisitDetails.first?.visit?.timestampUTC
+        let firstCheckedInAt: Date? = linkedVisits.first?.timestampUTC
         return CourseSpot(
             id: s.id ?? UUID(),
             spotId: s.spotId ?? "",
