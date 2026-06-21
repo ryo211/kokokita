@@ -6,6 +6,9 @@ struct CourseListView: View {
     @Bindable var store: CourseListStore
     @State private var showCourseStore = false
     @State private var storeSheetStore = CourseStoreSheetStore()
+    @State private var searchText: String = ""
+    @FocusState private var isSearchFocused: Bool
+    @AppStorage("courseListAddHintDismissed") private var hintDismissed: Bool = false
 
     // カテゴリに属するコースを返す
     private func courses(for category: CourseCategory) -> [Course] {
@@ -17,39 +20,77 @@ struct CourseListView: View {
         CourseCategory.allCases.filter { !courses(for: $0).isEmpty }
     }
 
+    // 検索結果（タイトル部分一致）
+    private var searchResults: [Course] {
+        guard !searchText.isEmpty else { return [] }
+        return store.courses.filter { $0.title.localizedCaseInsensitiveContains(searchText) }
+    }
+
     var body: some View {
         ZStack {
             CourseListBackground()
 
-            ScrollView {
-                if store.courses.isEmpty {
+            if !searchText.isEmpty {
+                // 検索中：フラットなコース一覧
+                if searchResults.isEmpty {
                     ContentUnavailableView(
                         L.Course.emptyTitle,
-                        systemImage: "plus.circle",
-                        description: Text(L.Course.emptyDescription)
+                        systemImage: "magnifyingglass",
+                        description: Text("「\(searchText)」に一致するコースはありません")
                     )
-                    .padding(.top, 60)
                 } else {
-                    LazyVGrid(
-                        columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)],
-                        spacing: 12
-                    ) {
-                        ForEach(availableCategories, id: \.rawValue) { category in
-                            // NavigationLink で push することでネイティブスワイプバックが使える
-                            NavigationLink(value: category) {
-                                CategoryGridCard(
-                                    category: category,
-                                    courses: courses(for: category)
-                                )
+                    List {
+                        ForEach(searchResults) { course in
+                            let isNew = store.newlyAddedCourseIds.contains(course.id)
+                            NavigationLink(value: course.id) {
+                                CourseRowView(course: course, isNew: isNew)
                             }
-                            .buttonStyle(.plain)
                         }
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.top, 16)
-                    .padding(.bottom, 8)
+                    .listStyle(.plain)
+                }
+            } else {
+                // 通常：カテゴリグリッド
+                ScrollView {
+                    if store.courses.isEmpty {
+                        ContentUnavailableView(
+                            L.Course.emptyTitle,
+                            systemImage: "plus.circle",
+                            description: Text(L.Course.emptyDescription)
+                        )
+                        .padding(.top, 60)
+                    } else {
+                        LazyVGrid(
+                            columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)],
+                            spacing: 12
+                        ) {
+                            ForEach(availableCategories, id: \.rawValue) { category in
+                                NavigationLink(value: category) {
+                                    CategoryGridCard(
+                                        category: category,
+                                        courses: courses(for: category)
+                                    )
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.top, 16)
+                        .padding(.bottom, 8)
+                    }
                 }
             }
+        }
+        .overlay(alignment: .topTrailing) {
+            if !hintDismissed {
+                AddCourseHintCallout()
+                    .offset(x: -23, y: -11)
+                    .transition(.opacity.combined(with: .scale(scale: 0.85, anchor: .topTrailing)))
+            }
+        }
+        .animation(.easeInOut(duration: 0.2), value: hintDismissed)
+        .safeAreaInset(edge: .bottom) {
+            CourseSearchBar(searchText: $searchText, isFocused: $isSearchFocused)
         }
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -65,16 +106,22 @@ struct CourseListView: View {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button {
                     showCourseStore = true
+                    hintDismissed = true
                 } label: {
-                    ZStack(alignment: .topTrailing) {
-                        Image(systemName: "plus")
-                        if storeSheetStore.hasNewArrivals {
-                            Circle()
-                                .fill(Color.red)
-                                .frame(width: 8, height: 8)
-                                .offset(x: 6, y: -6)
+                    Image(systemName: "plus")
+                        .overlay(alignment: .center) {
+                            if !hintDismissed {
+                                PulseRing()
+                            }
                         }
-                    }
+                        .overlay(alignment: .topTrailing) {
+                            if storeSheetStore.hasNewArrivals {
+                                Circle()
+                                    .fill(Color.red)
+                                    .frame(width: 8, height: 8)
+                                    .offset(x: 6, y: -6)
+                            }
+                        }
                 }
             }
         }
@@ -92,6 +139,65 @@ struct CourseListView: View {
         .sheet(isPresented: $showCourseStore) {
             CourseStoreSheet(store: storeSheetStore)
         }
+    }
+}
+
+// MARK: - コース追加オンボーディング: ヒント吹き出し
+
+private struct AddCourseHintCallout: View {
+    var body: some View {
+        VStack(alignment: .trailing, spacing: 0) {
+            HintTriangle()
+                .fill(Color.indigo)
+                .frame(width: 12, height: 7)
+                .padding(.trailing, 14)
+
+            Text(L.Course.addHint)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.white)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(Color.indigo, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                .shadow(color: .indigo.opacity(0.3), radius: 6, x: 0, y: 3)
+        }
+        .allowsHitTesting(false)
+    }
+}
+
+private struct HintTriangle: Shape {
+    func path(in rect: CGRect) -> Path {
+        var p = Path()
+        p.move(to: CGPoint(x: rect.midX, y: rect.minY))
+        p.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
+        p.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
+        p.closeSubpath()
+        return p
+    }
+}
+
+// MARK: - コース追加オンボーディング: パルスリング
+
+private struct PulseRing: View {
+    @State private var scale: CGFloat = 1.0
+    @State private var opacity: Double = 0.8
+
+    var body: some View {
+        Circle()
+            .stroke(Color.indigo, lineWidth: 2)
+            .frame(width: 28, height: 28)
+            .scaleEffect(scale, anchor: .center)
+            .opacity(opacity)
+            .allowsHitTesting(false)
+            .onAppear {
+                // onAppear を即時実行するとツールバー初期レイアウトのアニメーションに
+                // 乗って「＋」が動いて見える。1フレーム遅らせて回避する。
+                Task { @MainActor in
+                    withAnimation(.easeOut(duration: 1.1).repeatForever(autoreverses: false)) {
+                        scale = 2.0
+                        opacity = 0
+                    }
+                }
+            }
     }
 }
 

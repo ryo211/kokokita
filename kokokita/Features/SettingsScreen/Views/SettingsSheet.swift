@@ -24,27 +24,25 @@ struct SettingsSheet: View {
                         }
                     }
 
-                    if autoRecordSettings.isEnabled {
-                        Button {
-                            showCandidateReview = true
-                        } label: {
-                            HStack {
-                                Label(L.AutoRecord.reviewCandidates, systemImage: "list.bullet.clipboard")
-                                    .foregroundStyle(.primary)
-                                Spacer()
-                                if pendingCandidateCount > 0 {
-                                    Text("\(pendingCandidateCount)")
-                                        .font(.caption)
-                                        .foregroundStyle(.white)
-                                        .padding(.horizontal, 7)
-                                        .padding(.vertical, 3)
-                                        .background(Color.accentColor)
-                                        .clipShape(Capsule())
-                                }
-                                Image(systemName: "chevron.right")
+                    Button {
+                        showCandidateReview = true
+                    } label: {
+                        HStack {
+                            Label(L.AutoRecord.reviewCandidates, systemImage: "list.bullet.clipboard")
+                                .foregroundStyle(.primary)
+                            Spacer()
+                            if pendingCandidateCount > 0 {
+                                Text("\(pendingCandidateCount)")
                                     .font(.caption)
-                                    .foregroundStyle(.secondary)
+                                    .foregroundStyle(.white)
+                                    .padding(.horizontal, 7)
+                                    .padding(.vertical, 3)
+                                    .background(Color.accentColor)
+                                    .clipShape(Capsule())
                             }
+                            Image(systemName: "chevron.right")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
                         }
                     }
                 } header: {

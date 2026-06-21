@@ -479,6 +479,7 @@ enum L {
         static let categoryUserCreated     = localized("course.category.user_created")
         static let newBadge = localized("course.newBadge")
         static let achieved = localized("course.achieved")
+        static let addHint = localized("course.addHint")
         static let notVisited = localized("course.notVisited")
         static let noAddress = localized("course.noAddress")
         static func visitedOn(_ dateString: String) -> String { String(format: localized("course.visitedOn"), dateString) }
@@ -503,6 +504,7 @@ enum L {
         static let filterAvailable = localized("courseStore.filter.available")
         static let filterInstalled = localized("courseStore.filter.installed")
         static let filterAll = localized("courseStore.filter.all")
+        static let searchPlaceholder = localized("courseStore.searchPlaceholder")
     }
 
     // MARK: - Manual Entry (後付け記録)
@@ -621,6 +623,8 @@ enum L {
         static let nearbySubtitle = localized("spotList.nearbySubtitle")
         static let distanceSubtitle = localized("spotList.distanceSubtitle")
         static func totalCount(_ count: Int) -> String { String(format: localized("spotList.totalCount"), count) }
+        static let filterPrefecture = localized("spotList.filter.prefecture")
+        static let filterAllPrefectures = localized("spotList.filter.allPrefectures")
     }
 
     // MARK: - TaxonomyList（タクソノミー一覧ソート）

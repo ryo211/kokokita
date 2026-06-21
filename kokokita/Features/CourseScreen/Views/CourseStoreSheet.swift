@@ -39,49 +39,53 @@ struct CourseStoreSheet: View {
 
 private struct CourseStoreListView: View {
     @Bindable var store: CourseStoreSheetStore
+    @FocusState private var isSearchFocused: Bool
 
     var body: some View {
         VStack(spacing: 0) {
-            // ダウンロード状態フィルターバー
-            HStack(spacing: 8) {
-                ForEach(StoreDownloadFilter.allCases, id: \.self) { filter in
-                    CourseStoreFilterChip(
-                        label: filter.label,
-                        isSelected: store.selectedDownloadFilter == filter
-                    ) {
-                        store.selectedDownloadFilter = filter
-                    }
-                }
-                Spacer()
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 10)
-
-            Divider()
-
-            // カテゴリフィルターバー
-            ScrollView(.horizontal, showsIndicators: false) {
+            // 検索中はフィルターバーを非表示
+            if store.searchText.isEmpty {
+                // ダウンロード状態フィルターバー
                 HStack(spacing: 8) {
-                    CourseStoreFilterChip(
-                        label: L.Home.filterAll,
-                        isSelected: store.selectedCategory == nil
-                    ) {
-                        store.selectedCategory = nil
-                    }
-                    ForEach(CourseCategory.allCases, id: \.rawValue) { category in
+                    ForEach(StoreDownloadFilter.allCases, id: \.self) { filter in
                         CourseStoreFilterChip(
-                            icon: category.iconName,
-                            label: category.displayName,
-                            isSelected: store.selectedCategory == category
+                            label: filter.label,
+                            isSelected: store.selectedDownloadFilter == filter
                         ) {
-                            store.selectedCategory = store.selectedCategory == category ? nil : category
+                            store.selectedDownloadFilter = filter
                         }
                     }
+                    Spacer()
                 }
                 .padding(.horizontal, 16)
-                .padding(.vertical, 8)
+                .padding(.vertical, 10)
+
+                Divider()
+
+                // カテゴリフィルターバー
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        CourseStoreFilterChip(
+                            label: L.Home.filterAll,
+                            isSelected: store.selectedCategory == nil
+                        ) {
+                            store.selectedCategory = nil
+                        }
+                        ForEach(CourseCategory.allCases, id: \.rawValue) { category in
+                            CourseStoreFilterChip(
+                                icon: category.iconName,
+                                label: category.displayName,
+                                isSelected: store.selectedCategory == category
+                            ) {
+                                store.selectedCategory = store.selectedCategory == category ? nil : category
+                            }
+                        }
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                }
+                Divider()
             }
-            Divider()
 
             if store.isLoadingIndex {
                 Spacer()
@@ -89,9 +93,9 @@ private struct CourseStoreListView: View {
                 Spacer()
             } else if store.filteredCourses.isEmpty {
                 ContentUnavailableView(
-                    L.CourseStore.emptyTitle,
-                    systemImage: "arrow.down.circle",
-                    description: Text(L.CourseStore.emptyDescription)
+                    store.searchText.isEmpty ? L.CourseStore.emptyTitle : L.CourseStore.emptyTitle,
+                    systemImage: store.searchText.isEmpty ? "arrow.down.circle" : "magnifyingglass",
+                    description: Text(store.searchText.isEmpty ? L.CourseStore.emptyDescription : "「\(store.searchText)」に一致するコースはありません")
                 )
             } else {
                 List {
@@ -108,6 +112,45 @@ private struct CourseStoreListView: View {
                 .listStyle(.plain)
             }
         }
+        .safeAreaInset(edge: .bottom) {
+            CourseSearchBar(searchText: $store.searchText, isFocused: $isSearchFocused)
+        }
+    }
+}
+
+// MARK: - 検索バー（画面下部固定・CourseListView でも共用）
+
+struct CourseSearchBar: View {
+    @Binding var searchText: String
+    var isFocused: FocusState<Bool>.Binding
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "magnifyingglass")
+                .foregroundStyle(.secondary)
+                .font(.system(size: 15))
+
+            TextField(L.CourseStore.searchPlaceholder, text: $searchText)
+                .focused(isFocused)
+                .font(.body)
+                .submitLabel(.search)
+
+            Button {
+                searchText = ""
+                isFocused.wrappedValue = false
+            } label: {
+                Image(systemName: "xmark.circle.fill")
+                    .foregroundStyle(searchText.isEmpty ? Color.secondary.opacity(0.4) : Color.secondary)
+                    .font(.system(size: 16))
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 9)
+        .background(Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+        .background(.bar)
     }
 }
 

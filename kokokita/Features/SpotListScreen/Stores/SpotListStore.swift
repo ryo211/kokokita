@@ -61,6 +61,8 @@ final class SpotListStore {
     var displayLimit: Int = 10
     /// フィルターで除外するコースID（空 = すべて表示）
     var excludedCourseIds: Set<UUID> = []
+    /// 都道府県フィルター（nil = すべて表示）
+    var prefectureFilter: String? = nil
     /// お気に入りID（View から同期）
     var favoriteSpotIds: Set<UUID> = []
     var isLoading = false
@@ -101,6 +103,43 @@ final class SpotListStore {
                 }
             }
             .count
+    }
+
+    // MARK: - 都道府県ユーティリティ
+
+    private static let prefectureList: [String] = [
+        "北海道", "青森県", "岩手県", "宮城県", "秋田県", "山形県", "福島県",
+        "茨城県", "栃木県", "群馬県", "埼玉県", "千葉県", "東京都", "神奈川県",
+        "新潟県", "富山県", "石川県", "福井県", "山梨県", "長野県", "岐阜県",
+        "静岡県", "愛知県", "三重県", "滋賀県", "京都府", "大阪府", "兵庫県",
+        "奈良県", "和歌山県", "鳥取県", "島根県", "岡山県", "広島県", "山口県",
+        "徳島県", "香川県", "愛媛県", "高知県", "福岡県", "佐賀県", "長崎県",
+        "熊本県", "大分県", "宮崎県", "鹿児島県", "沖縄県"
+    ]
+
+    static func extractPrefecture(from address: String?) -> String? {
+        guard let address else { return nil }
+        return prefectureList.first { address.contains($0) }
+    }
+
+    /// 現在のモード・コースフィルターに基づいてスポットに登場する都道府県の一覧を返す
+    var availablePrefectures: [String] {
+        let active = courses.filter { !$0.isUserCreated || $0.isEnabled }
+        var seen = Set<String>()
+        for course in active where !excludedCourseIds.contains(course.id) {
+            let spots: [CourseSpot]
+            switch listMode {
+            case .nearby:    spots = course.spots
+            case .favorites: spots = course.spots.filter { favoriteSpotIds.contains($0.id) }
+            case .visited:   spots = course.spots.filter { $0.isCheckedIn }
+            }
+            for spot in spots {
+                if let pref = Self.extractPrefecture(from: spot.address) {
+                    seen.insert(pref)
+                }
+            }
+        }
+        return Self.prefectureList.filter { seen.contains($0) }
     }
 
     private let repo: CourseRepository
@@ -170,6 +209,8 @@ final class SpotListStore {
             where !excludedCourseIds.contains(course.id)
                && (!course.isUserCreated || course.isEnabled) {
             for spot in course.spots where spot.hasValidCoordinate {
+                if let pref = prefectureFilter,
+                   Self.extractPrefecture(from: spot.address) != pref { continue }
                 let spotLocation = CLLocation(latitude: spot.latitude, longitude: spot.longitude)
                 results.append((course, spot, fromLocation.distance(from: spotLocation)))
             }
@@ -184,6 +225,8 @@ final class SpotListStore {
 
         for course in courses where !excludedCourseIds.contains(course.id) && (!course.isUserCreated || course.isEnabled) {
             for spot in course.spots where spot.hasValidCoordinate && favoriteSpotIds.contains(spot.id) {
+                if let pref = prefectureFilter,
+                   Self.extractPrefecture(from: spot.address) != pref { continue }
                 let distance = fromLocation.map {
                     CLLocation(latitude: spot.latitude, longitude: spot.longitude).distance(from: $0)
                 } ?? 0
@@ -207,6 +250,8 @@ final class SpotListStore {
 
         for course in courses where !excludedCourseIds.contains(course.id) && (!course.isUserCreated || course.isEnabled) {
             for spot in course.spots where spot.hasValidCoordinate && spot.isCheckedIn {
+                if let pref = prefectureFilter,
+                   Self.extractPrefecture(from: spot.address) != pref { continue }
                 let distance = fromLocation.map {
                     CLLocation(latitude: spot.latitude, longitude: spot.longitude).distance(from: $0)
                 } ?? 0

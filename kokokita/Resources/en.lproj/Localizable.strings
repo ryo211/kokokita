@@ -340,6 +340,7 @@
 "courseStore.filter.available" = "Available";
 "courseStore.filter.installed" = "Installed";
 "courseStore.filter.all" = "All";
+"courseStore.searchPlaceholder" = "Search courses";
 "course.emptyTitle" = "No Courses";
 "course.emptyDescription" = "Tap + in the top right to add a course";
 "course.enable" = "Enable";
@@ -360,6 +361,7 @@
 "course.category.user_created" = "My Courses";
 "course.newBadge" = "NEW";
 "course.achieved" = "done";
+"course.addHint" = "Add a course here";
 "course.notVisited" = "Not Visited";
 "course.noAddress" = "No Address";
 "course.visitedOn" = "Visited on %@";
@@ -555,6 +557,8 @@
 "spotList.nearbySubtitle" = "Nearest from";
 "spotList.distanceSubtitle" = "Nearest from";
 "spotList.totalCount" = "Total %d";
+"spotList.filter.prefecture" = "Prefecture";
+"spotList.filter.allPrefectures" = "All";
 
 // MARK: - TaxonomyList (sort)
 "taxonomyList.sortNewest" = "Newest first";

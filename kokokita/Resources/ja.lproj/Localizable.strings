@@ -342,6 +342,7 @@
 "courseStore.filter.available" = "未入手";
 "courseStore.filter.installed" = "追加済み";
 "courseStore.filter.all" = "すべて";
+"courseStore.searchPlaceholder" = "コースを検索";
 "course.emptyTitle" = "コースがありません";
 "course.emptyDescription" = "右上の＋からコースを追加できます";
 "course.enable" = "有効にする";
@@ -364,6 +365,7 @@
 "course.category.user_created" = "自作コース";
 "course.newBadge" = "NEW";
 "course.achieved" = "達成";
+"course.addHint" = "コースを追加できます";
 "course.notVisited" = "未訪問";
 "course.noAddress" = "住所未登録";
 "course.visitedOn" = "%@に巡礼済み";
@@ -559,6 +561,8 @@
 "spotList.nearbySubtitle" = "から近いスポット";
 "spotList.distanceSubtitle" = "から近い順";
 "spotList.totalCount" = "全%d件";
+"spotList.filter.prefecture" = "都道府県";
+"spotList.filter.allPrefectures" = "すべて";
 
 // MARK: - TaxonomyList（ソート）
 "taxonomyList.sortNewest" = "新しい順";

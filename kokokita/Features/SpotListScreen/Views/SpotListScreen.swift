@@ -154,6 +154,8 @@ struct SpotListScreen: View {
                 cameraPosition = .region(MKCoordinateRegion(center: center, span: visibleMapSpan))
             }
         }
+        .onChange(of: store.prefectureFilter) { _, _ in fitAllPoints() }
+        .onChange(of: store.excludedCourseIds) { _, _ in fitAllPoints() }
         .sheet(isPresented: $showMapSettings) {
             CourseMapSettingsSheet(
                 zoomOnSpotFocus: $zoomOnSpotFocus,
@@ -636,7 +638,7 @@ struct SpotListScreen: View {
                 .background(Color.indigo, in: Circle())
                 .shadow(color: Color.indigo.opacity(0.45), radius: 8, x: 0, y: 4)
                 .overlay(alignment: .topTrailing) {
-                    if !store.excludedCourseIds.isEmpty {
+                    if !store.excludedCourseIds.isEmpty || store.prefectureFilter != nil {
                         Circle().fill(Color.white).frame(width: 10, height: 10)
                             .overlay { Circle().fill(Color.indigo.opacity(0.7)).frame(width: 7, height: 7) }
                             .offset(x: 2, y: -2)
@@ -1121,22 +1123,28 @@ private struct SpotPinView: View {
                 .shadow(color: .black.opacity(isSelected ? 0.4 : 0.25),
                         radius: isSelected ? 6 : 3, x: 0, y: 2)
 
-            if isCheckedIn {
-                // 達成済み：ゴールド + スター
-                Circle()
-                    .fill(Color(hue: 0.13, saturation: 0.85, brightness: 0.95))
-                    .frame(width: size, height: size)
-                Image(systemName: "star.fill")
-                    .font(.system(size: isSelected ? 9 : 6, weight: .bold))
-                    .foregroundStyle(.white)
-            } else {
-                // 未達成：インディゴ + 番号
+            // インディゴ + 番号（達成済みも同色）
+            ZStack {
                 Circle()
                     .fill(Color.indigo)
                     .frame(width: size, height: size)
                 Text("\(orderNumber)")
                     .font(.system(size: isSelected ? 9 : 6, weight: .bold))
                     .foregroundStyle(.white)
+            }
+            .overlay(alignment: .bottomTrailing) {
+                if isCheckedIn {
+                    // 達成済み：右下に小チェックバッジ
+                    ZStack {
+                        Circle()
+                            .fill(Color.white)
+                            .frame(width: isSelected ? 9 : 7, height: isSelected ? 9 : 7)
+                        Image(systemName: "checkmark")
+                            .font(.system(size: isSelected ? 5 : 4, weight: .bold))
+                            .foregroundStyle(Color.indigo)
+                    }
+                    .offset(x: isSelected ? 3 : 2, y: isSelected ? 3 : 2)
+                }
             }
         }
         .animation(.easeOut(duration: 0.2), value: isSelected)
@@ -1163,21 +1171,26 @@ private struct SpotListRowView: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 12) {
-                // 番号バッジ（達成済み: ゴールド★ / 未達成: インディゴ番号）
+                // 番号バッジ（インディゴ統一 / 達成済みは右下チェックバッジ付き）
                 ZStack {
                     Circle()
-                        .fill(spot.isCheckedIn
-                              ? Color(hue: 0.13, saturation: 0.85, brightness: 0.95)
-                              : Color.indigo)
+                        .fill(Color.indigo)
                         .frame(width: 32, height: 32)
+                    Text("\(orderNumber)")
+                        .font(.caption.bold())
+                        .foregroundStyle(.white)
+                }
+                .overlay(alignment: .bottomTrailing) {
                     if spot.isCheckedIn {
-                        Image(systemName: "star.fill")
-                            .font(.system(size: 13, weight: .bold))
-                            .foregroundStyle(.white)
-                    } else {
-                        Text("\(orderNumber)")
-                            .font(.caption.bold())
-                            .foregroundStyle(.white)
+                        ZStack {
+                            Circle()
+                                .fill(Color.white)
+                                .frame(width: 14, height: 14)
+                            Image(systemName: "checkmark")
+                                .font(.system(size: 8, weight: .bold))
+                                .foregroundStyle(Color.indigo)
+                        }
+                        .offset(x: 4, y: 4)
                     }
                 }
 
@@ -1469,6 +1482,63 @@ private struct SpotFilterPanel: View {
             }
             .padding(.horizontal, 16)
             .padding(.bottom, 10)
+
+            Divider()
+
+            // 都道府県フィルター
+            HStack {
+                Text(L.SpotList.filterPrefecture)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                Spacer()
+                Menu {
+                    if !store.availablePrefectures.isEmpty {
+                        ForEach(store.availablePrefectures, id: \.self) { pref in
+                            Button {
+                                store.prefectureFilter = pref
+                                store.recalculateNearbySpots()
+                            } label: {
+                                if store.prefectureFilter == pref {
+                                    Label(pref, systemImage: "checkmark")
+                                } else {
+                                    Text(pref)
+                                }
+                            }
+                        }
+                        Divider()
+                    }
+                    Button {
+                        store.prefectureFilter = nil
+                        store.recalculateNearbySpots()
+                    } label: {
+                        if store.prefectureFilter == nil {
+                            Label(L.SpotList.filterAllPrefectures, systemImage: "checkmark")
+                        } else {
+                            Text(L.SpotList.filterAllPrefectures)
+                        }
+                    }
+                } label: {
+                    HStack(spacing: 4) {
+                        Text(store.prefectureFilter ?? L.SpotList.filterAllPrefectures)
+                            .font(.subheadline.weight(.medium))
+                            .foregroundStyle(store.prefectureFilter != nil ? Color.indigo : Color.primary)
+                        Image(systemName: "chevron.up.chevron.down")
+                            .font(.system(size: 9, weight: .semibold))
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(
+                        store.prefectureFilter != nil
+                            ? Color.indigo.opacity(0.12)
+                            : Color.secondary.opacity(0.10),
+                        in: Capsule()
+                    )
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
 
             Divider()
 

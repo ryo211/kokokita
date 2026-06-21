@@ -26,6 +26,7 @@ final class CourseStoreSheetStore {
     var downloadStatuses: [String: CourseDownloadStatus] = [:]
     var selectedCategory: CourseCategory? = nil
     var selectedDownloadFilter: StoreDownloadFilter = .available
+    var searchText: String = ""
     var isLoadingIndex: Bool = false
     /// ロード済みフラグ（CourseListView からの pre-fetch と二重取得防止）
     private(set) var isIndexLoaded = false
@@ -84,6 +85,12 @@ final class CourseStoreSheetStore {
 
     var filteredCourses: [StoreCourseSummary] {
         var result = storeCourses
+
+        // テキスト検索（入力中は他フィルターより優先）
+        if !searchText.isEmpty {
+            result = result.filter { $0.title.localizedCaseInsensitiveContains(searchText) }
+            return result
+        }
 
         // カテゴリフィルター
         if let cat = selectedCategory {

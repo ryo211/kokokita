@@ -1227,22 +1227,28 @@ private struct SpotPinView: View {
                 .shadow(color: .black.opacity(isSelected ? 0.4 : 0.25),
                         radius: isSelected ? 6 : 3, x: 0, y: 2)
 
-            if isCheckedIn {
-                // 達成済み：ゴールド + スター
-                Circle()
-                    .fill(Color(hue: 0.13, saturation: 0.85, brightness: 0.95))
-                    .frame(width: size, height: size)
-                Image(systemName: "star.fill")
-                    .font(.system(size: isSelected ? 9 : 6, weight: .bold))
-                    .foregroundStyle(.white)
-            } else {
-                // 未達成：インディゴ + 番号
+            // インディゴ + 番号（達成済みも同色）
+            ZStack {
                 Circle()
                     .fill(Color.indigo)
                     .frame(width: size, height: size)
                 Text("\(orderNumber)")
                     .font(.system(size: isSelected ? 9 : 6, weight: .bold))
                     .foregroundStyle(.white)
+            }
+            .overlay(alignment: .bottomTrailing) {
+                if isCheckedIn {
+                    // 達成済み：右下に小チェックバッジ
+                    ZStack {
+                        Circle()
+                            .fill(Color.white)
+                            .frame(width: isSelected ? 9 : 7, height: isSelected ? 9 : 7)
+                        Image(systemName: "checkmark")
+                            .font(.system(size: isSelected ? 5 : 4, weight: .bold))
+                            .foregroundStyle(Color.indigo)
+                    }
+                    .offset(x: isSelected ? 3 : 2, y: isSelected ? 3 : 2)
+                }
             }
         }
         .animation(.easeOut(duration: 0.2), value: isSelected)
@@ -1287,21 +1293,26 @@ private struct SpotListRowView: View {
         VStack(spacing: 0) {
             // メイン行
             HStack(spacing: 12) {
-                // 番号バッジ（達成済み: ゴールド★ / 未達成: インディゴ番号）
+                // 番号バッジ（インディゴ統一 / 達成済みは右下チェックバッジ付き）
                 ZStack {
                     Circle()
-                        .fill(spot.isCheckedIn
-                              ? Color(hue: 0.13, saturation: 0.85, brightness: 0.95)
-                              : Color.indigo)
+                        .fill(Color.indigo)
                         .frame(width: 32, height: 32)
+                    Text("\(orderNumber)")
+                        .font(.caption.bold())
+                        .foregroundStyle(.white)
+                }
+                .overlay(alignment: .bottomTrailing) {
                     if spot.isCheckedIn {
-                        Image(systemName: "star.fill")
-                            .font(.system(size: 13, weight: .bold))
-                            .foregroundStyle(.white)
-                    } else {
-                        Text("\(orderNumber)")
-                            .font(.caption.bold())
-                            .foregroundStyle(.white)
+                        ZStack {
+                            Circle()
+                                .fill(Color.white)
+                                .frame(width: 14, height: 14)
+                            Image(systemName: "checkmark")
+                                .font(.system(size: 8, weight: .bold))
+                                .foregroundStyle(Color.indigo)
+                        }
+                        .offset(x: 4, y: 4)
                     }
                 }
 
