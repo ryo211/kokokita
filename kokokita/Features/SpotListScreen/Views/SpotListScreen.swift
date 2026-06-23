@@ -606,25 +606,6 @@ struct SpotListScreen: View {
         .animation(.easeInOut(duration: 0.28), value: store.listMode)
         .animation(.spring(duration: 0.35, bounce: 0.05), value: showFilter)
         .clipped()
-        // 横スワイプでモード循環切り替え（縦スクロールとは独立して動作）
-        .simultaneousGesture(
-            DragGesture(minimumDistance: 40, coordinateSpace: .local)
-                .onEnded { value in
-                    guard abs(value.translation.width) > abs(value.translation.height) * 1.5,
-                          abs(value.translation.width) > 40 else { return }
-                    let allModes = SpotListMode.allCases
-                    guard let currentIndex = allModes.firstIndex(of: store.listMode) else { return }
-                    if value.translation.width < 0 {
-                        // 左スワイプ → 次のモード（新コンテンツは右から）
-                        listTransitionEdge = .trailing
-                        switchMode(to: allModes[(currentIndex + 1) % allModes.count])
-                    } else {
-                        // 右スワイプ → 前のモード（新コンテンツは左から）
-                        listTransitionEdge = .leading
-                        switchMode(to: allModes[(currentIndex - 1 + allModes.count) % allModes.count])
-                    }
-                }
-        )
     }
 
     private var filterButton: some View {
@@ -1256,6 +1237,10 @@ private struct SpotListRowView: View {
 
 private struct SpotRowExpandedView: View {
     let spot: CourseSpot
+    @State private var linkedVisits: [VisitAggregate] = []
+    @State private var labelMap: [UUID: String] = [:]
+    @State private var groupMap: [UUID: String] = [:]
+    @State private var memberMap: [UUID: String] = [:]
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -1288,9 +1273,102 @@ private struct SpotRowExpandedView: View {
                 .padding(.leading, 60)
                 .padding(.trailing, 16)
             }
+
+            if !linkedVisits.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 10) {
+                        ForEach(linkedVisits, id: \.visit.id) { aggregate in
+                            NavigationLink {
+                                VisitDetailScreen(
+                                    data: toDetailData(aggregate),
+                                    visitId: aggregate.id,
+                                    onBack: {},
+                                    onEdit: {},
+                                    onShare: {},
+                                    onDelete: {
+                                        try? AppContainer.shared.repo.delete(id: aggregate.id)
+                                        NotificationCenter.default.post(name: .visitsChanged, object: nil)
+                                        reloadLinkedVisits()
+                                    },
+                                    onUpdate: {
+                                        NotificationCenter.default.post(name: .visitsChanged, object: nil)
+                                        reloadLinkedVisits()
+                                    },
+                                    onMapTap: nil
+                                )
+                            } label: {
+                                CheckInVisitCard(aggregate: aggregate)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                    .padding(.leading, 60)
+                    .padding(.trailing, 16)
+                    .padding(.bottom, 4)
+                }
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.bottom, 10)
+        .task(id: spot.id) {
+            await loadData()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .visitsChanged)) { _ in
+            reloadLinkedVisits()
+        }
+    }
+
+    private func loadData() async {
+        let repo = AppContainer.shared.repo
+        labelMap = (try? repo.allLabels())?.reduce(into: [:]) { $0[$1.id] = $1.name } ?? [:]
+        groupMap = (try? repo.allGroups())?.reduce(into: [:]) { $0[$1.id] = $1.name } ?? [:]
+        memberMap = (try? repo.allMembers())?.reduce(into: [:]) { $0[$1.id] = $1.name } ?? [:]
+        reloadLinkedVisits()
+    }
+
+    private func reloadLinkedVisits() {
+        guard !spot.visitIds.isEmpty else {
+            linkedVisits = []
+            return
+        }
+        linkedVisits = spot.visitIds.compactMap { id in
+            try? AppContainer.shared.repo.get(by: id)
+        }
+    }
+
+    private func toDetailData(_ agg: VisitAggregate) -> VisitDetailData {
+        let title: String = {
+            let t = agg.details.title?.trimmingCharacters(in: .whitespacesAndNewlines)
+            if let t, !t.isEmpty { return t }
+            if let f = agg.details.facilityName, !f.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { return f }
+            return L.Home.noTitle
+        }()
+
+        let coord: CLLocationCoordinate2D? = {
+            let lat = agg.visit.latitude
+            let lon = agg.visit.longitude
+            guard lat != 0 || lon != 0 else { return nil }
+            return .init(latitude: lat, longitude: lon)
+        }()
+
+        return VisitDetailData(
+            title: title,
+            labels: agg.details.labelIds.compactMap { labelMap[$0] },
+            group: agg.details.groupId.flatMap { groupMap[$0] },
+            members: agg.details.memberIds.compactMap { memberMap[$0] },
+            timestamp: agg.visit.timestampUTC,
+            address: agg.details.resolvedAddress ?? agg.details.facilityAddress,
+            coordinate: coord,
+            memo: agg.details.comment,
+            facility: FacilityInfo(
+                name: agg.details.facilityName,
+                address: agg.details.facilityAddress,
+                phone: nil
+            ),
+            facilityCategory: agg.details.facilityCategory,
+            photoPaths: agg.details.photoPaths,
+            isManualEntry: agg.visit.isManualEntry
+        )
     }
 }
 
