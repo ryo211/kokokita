@@ -41,6 +41,7 @@ final class VisitCandidateRepository {
         entity.status = candidate.status.rawValue
         entity.detectedAt = candidate.detectedAt
         try ctx.save()
+        NotificationCenter.default.post(name: .autoRecordCandidatesChanged, object: nil)
         Logger.info("自動記録候補を保存しました: \(candidate.id)")
     }
 
@@ -60,6 +61,7 @@ final class VisitCandidateRepository {
         guard let entity = try fetchEntity(id: id) else { return }
         ctx.delete(entity)
         try ctx.save()
+        NotificationCenter.default.post(name: .autoRecordCandidatesChanged, object: nil)
         Logger.info("自動記録候補を却下しました: \(id)")
     }
 
@@ -71,6 +73,7 @@ final class VisitCandidateRepository {
         entities.forEach { ctx.delete($0) }
         if !entities.isEmpty {
             try ctx.save()
+            NotificationCenter.default.post(name: .autoRecordCandidatesChanged, object: nil)
             Logger.info("古い自動記録候補を \(entities.count) 件削除しました")
         }
     }
@@ -80,6 +83,7 @@ final class VisitCandidateRepository {
         guard let entity = try fetchEntity(id: id) else { return }
         ctx.delete(entity)
         try ctx.save()
+        NotificationCenter.default.post(name: .autoRecordCandidatesChanged, object: nil)
     }
 
     // MARK: - Private

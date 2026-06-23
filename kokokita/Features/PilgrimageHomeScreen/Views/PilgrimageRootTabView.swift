@@ -11,6 +11,8 @@ struct PilgrimageRootTabView: View {
     @State private var courseStore = CourseListStore()
     /// コースタブの赤ポチ（タブをタップで消える、コース一覧NEWバッジとは独立）
     @State private var showCourseTabBadge = false
+    /// 自動記録候補がある場合、記録モード切り替えボタンに赤ポチを表示
+    @State private var hasAutoRecordCandidates = false
     /// 飛翔アニメーション実行中フラグ
     @State private var isFlyAnimating = false
     /// マイリストタブのグローバルフレーム
@@ -80,6 +82,7 @@ struct PilgrimageRootTabView: View {
                             onRecord: {
                                 recording.checkLocationPermissionAndCreate()
                             },
+                            showRecordModeBadge: hasAutoRecordCandidates,
                             onModeSwitch: { modeManager.setMode(.record) },
                             onMyListTabFrame: { myListTabFrame = $0 },
                             onCourseTabFrame: { courseTabFrame = $0 }
@@ -117,6 +120,14 @@ struct PilgrimageRootTabView: View {
             guard let _ = notification.object as? UUID else { return }
             triggerCourseEnabledEffect()
         }
+        .onAppear {
+            refreshAutoRecordCandidateBadge()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .autoRecordCandidatesChanged)) { _ in
+            Task { @MainActor in
+                refreshAutoRecordCandidateBadge()
+            }
+        }
     }
 
     // MARK: - 座標変換
@@ -140,6 +151,15 @@ struct PilgrimageRootTabView: View {
             withAnimation(.spring(duration: 0.4)) {
                 showCourseTabBadge = true
             }
+        }
+    }
+
+    private func refreshAutoRecordCandidateBadge() {
+        do {
+            hasAutoRecordCandidates = try AppContainer.shared.candidateRepo.countPending() > 0
+        } catch {
+            hasAutoRecordCandidates = false
+            Logger.error("自動記録候補の件数取得に失敗しました", error: error)
         }
     }
 }
@@ -212,6 +232,7 @@ private struct PilgrimageBottomBar: View {
     let showCourseTabBadge: Bool
     let onSelect: (PilgrimageTab) -> Void
     let onRecord: () -> Void
+    let showRecordModeBadge: Bool
     let onModeSwitch: () -> Void
     let onMyListTabFrame: (CGRect) -> Void
     let onCourseTabFrame: (CGRect) -> Void
@@ -266,16 +287,26 @@ private struct PilgrimageBottomBar: View {
                 Button {
                     onModeSwitch()
                 } label: {
-                    VStack(spacing: 3) {
-                        Image(systemName: "mappin.circle")
-                            .font(.title3)
-                        Text(L.Tab.modeRecord)
-                            .font(.caption2)
+                    ZStack(alignment: .topTrailing) {
+                        VStack(spacing: 3) {
+                            Image(systemName: "mappin.circle")
+                                .font(.title3)
+                            Text(L.Tab.modeRecord)
+                                .font(.caption2)
+                        }
+                        .foregroundStyle(modeSwitchColor.opacity(colorScheme == .dark ? 1.0 : 0.7))
+                        .frame(width: 52, height: 52)
+                        .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .strokeBorder(modeSwitchColor.opacity(colorScheme == .dark ? 0.62 : 0.45), lineWidth: 1.5))
+
+                        if showRecordModeBadge {
+                            Circle()
+                                .fill(Color.red)
+                                .frame(width: 9, height: 9)
+                                .offset(x: -6, y: 6)
+                                .transition(.scale.combined(with: .opacity))
+                        }
                     }
-                    .foregroundStyle(modeSwitchColor.opacity(colorScheme == .dark ? 1.0 : 0.7))
-                    .frame(width: 52, height: 52)
-                    .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .strokeBorder(modeSwitchColor.opacity(colorScheme == .dark ? 0.62 : 0.45), lineWidth: 1.5))
                 }
                 .buttonStyle(.plain)
             }
