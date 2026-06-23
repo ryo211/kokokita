@@ -117,6 +117,7 @@ final class AutoRecordCandidateStore {
         try visitRepo.create(visit: visit, details: details)
         try candidateRepo.deleteAfterApproval(id: candidate.id)
         candidates.removeAll { $0.id == candidate.id }
+        AppIconBadgeService.shared.setBadgeCount(candidates.count)
         NotificationCenter.default.post(name: .visitsChanged, object: nil)
         Logger.success("自動記録を承認・確定しました: \(visitId)")
         approvedVisitId = visitId
@@ -128,6 +129,7 @@ final class AutoRecordCandidateStore {
     func dismiss(candidate: VisitCandidate) throws {
         try candidateRepo.dismiss(id: candidate.id)
         candidates.removeAll { $0.id == candidate.id }
+        AppIconBadgeService.shared.setBadgeCount(candidates.count)
         Logger.info("候補を却下しました: \(candidate.id)")
     }
 
@@ -136,6 +138,7 @@ final class AutoRecordCandidateStore {
             try candidateRepo.dismiss(id: candidate.id)
         }
         candidates.removeAll()
+        AppIconBadgeService.shared.setBadgeCount(0)
         Logger.info("全候補を却下しました")
     }
 

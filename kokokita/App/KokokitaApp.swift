@@ -27,6 +27,7 @@ struct KokokitaApp: App {
 
     @State private var uiState = AppUIState()
     @State private var spotFavoriteStore = SpotFavoriteStore()
+    @Environment(\.scenePhase) private var scenePhase
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
 
     var body: some Scene {
@@ -38,6 +39,12 @@ struct KokokitaApp: App {
                 .task {
                     // ブック初期化後に AppUIState へ反映
                     uiState.currentBook = AppContainer.shared.currentBook
+                    AppIconBadgeService.shared.syncAutoRecordCandidateCount()
+                }
+                .onChange(of: scenePhase) { _, newPhase in
+                    if newPhase == .active {
+                        AppIconBadgeService.shared.syncAutoRecordCandidateCount()
+                    }
                 }
         }
     }

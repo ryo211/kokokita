@@ -60,6 +60,7 @@ final class AutoRecordService: NSObject {
         let cutoff = Date().addingTimeInterval(-(AppConfig.autoRecordRetentionDays * 86400.0))
         do {
             try candidateRepo.dismissOlderThan(date: cutoff)
+            AppIconBadgeService.shared.syncAutoRecordCandidateCount(candidateRepo: candidateRepo)
         } catch {
             Logger.error("古い自動記録候補の削除に失敗しました", error: error)
         }
@@ -118,6 +119,7 @@ extension AutoRecordService: CLLocationManagerDelegate {
 
         do {
             try candidateRepo.save(candidate)
+            AppIconBadgeService.shared.syncAutoRecordCandidateCount(candidateRepo: candidateRepo)
             Logger.success("自動記録候補を保存しました (滞在:\(Int(stayDuration / 60))分)")
         } catch {
             Logger.error("自動記録候補の保存に失敗しました", error: error)
