@@ -563,6 +563,25 @@
 "spotList.menu.addFolder" = "Add to Folder";
 "spotList.menu.share" = "Share";
 
+// MARK: - Inquiry
+"inquiry.title" = "Inquiry";
+"inquiry.sectionTarget" = "Target";
+"inquiry.sectionCategory" = "Category";
+"inquiry.sectionContent" = "Details";
+"inquiry.category.provideInfo" = "Provide image or info";
+"inquiry.category.reportError" = "Report an error";
+"inquiry.category.request" = "Request";
+"inquiry.category.question" = "Question";
+"inquiry.category.other" = "Other";
+"inquiry.sendButton" = "Send Inquiry";
+"inquiry.sendNote" = "This will open your mail app";
+"inquiry.email.labelCourse" = "Course";
+"inquiry.email.labelSpot" = "Spot";
+"inquiry.email.labelCategory" = "Category";
+"inquiry.email.labelContent" = "Details";
+"inquiry.email.subject" = "[Inquiry] %@ - %@";
+"inquiry.email.subjectCourse" = "[Inquiry] %@";
+
 // MARK: - TaxonomyList (sort)
 "taxonomyList.sortNewest" = "Newest first";
 "taxonomyList.sortCount" = "Most visits";

@@ -646,6 +646,31 @@ enum L {
         static let noFavoritesShort   = localized("spotPanelList.noFavoritesShort")
     }
 
+    // MARK: - Inquiry（問い合わせ）
+    enum Inquiry {
+        static let title              = localized("inquiry.title")
+        static let sectionTarget      = localized("inquiry.sectionTarget")
+        static let sectionCategory    = localized("inquiry.sectionCategory")
+        static let sectionContent     = localized("inquiry.sectionContent")
+        static let categoryProvideInfo = localized("inquiry.category.provideInfo")
+        static let categoryReportError = localized("inquiry.category.reportError")
+        static let categoryRequest    = localized("inquiry.category.request")
+        static let categoryQuestion   = localized("inquiry.category.question")
+        static let categoryOther      = localized("inquiry.category.other")
+        static let sendButton         = localized("inquiry.sendButton")
+        static let sendNote           = localized("inquiry.sendNote")
+        static let emailLabelCourse   = localized("inquiry.email.labelCourse")
+        static let emailLabelSpot     = localized("inquiry.email.labelSpot")
+        static let emailLabelCategory = localized("inquiry.email.labelCategory")
+        static let emailLabelContent  = localized("inquiry.email.labelContent")
+        static func emailSubject(_ course: String, _ spot: String) -> String {
+            String(format: localized("inquiry.email.subject"), course, spot)
+        }
+        static func emailSubjectCourse(_ course: String) -> String {
+            String(format: localized("inquiry.email.subjectCourse"), course)
+        }
+    }
+
     // MARK: - CheckIn Result
     enum CheckIn {
         static let resultTitle = localized("checkIn.resultTitle")

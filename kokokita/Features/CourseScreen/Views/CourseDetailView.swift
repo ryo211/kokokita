@@ -47,6 +47,7 @@ struct CourseDetailView: View {
     @State private var selectedSpotId: UUID? = nil
     @State private var cameraPosition: MapCameraPosition
     @State private var showSummary = false
+    @State private var showCourseInquiry = false
     /// 遡り判定結果（この画面を開いたタイミングで表示）
     @State private var pendingRetroactiveResult: RetroactiveResultItem? = nil
     /// コース一覧ストア（遡り判定結果の取得に使用）
@@ -252,6 +253,9 @@ struct CourseDetailView: View {
                         Button { showSummary = true } label: {
                             Label(L.CourseDetail.menuCourseInfo, systemImage: "info.circle")
                         }
+                        Button { showCourseInquiry = true } label: {
+                            Label(L.Inquiry.title, systemImage: "questionmark.circle")
+                        }
 
                         Section(L.CourseDetail.menuSectionMapSettings) {
                             Button {
@@ -314,6 +318,9 @@ struct CourseDetailView: View {
         }
         .sheet(isPresented: $showSummary) {
             CourseSummarySheet(course: course)
+        }
+        .sheet(isPresented: $showCourseInquiry) {
+            SpotInquirySheet(courseName: course.title)
         }
         .sheet(isPresented: $showPaywall) {
             PaywallView()
@@ -1116,6 +1123,7 @@ private struct SpotListAreaView: View, Equatable {
                             ForEach(sorted, id: \.spot.id) { item in
                                 SpotListRowView(
                                     spot: item.spot,
+                                    courseName: course.title,
                                     orderNumber: (indexMap[item.spot.id] ?? 0) + 1,
                                     isSelected: selectedSpotId == item.spot.id,
                                     distance: item.distance,
@@ -1145,6 +1153,7 @@ private struct SpotListAreaView: View, Equatable {
                                         }
                                         SpotListRowView(
                                             spot: spot,
+                                            courseName: course.title,
                                             orderNumber: (indexMap[spot.id] ?? 0) + 1,
                                             isSelected: selectedSpotId == spot.id,
                                             distance: distance,
@@ -1276,6 +1285,7 @@ private struct SpotPinView: View {
 
 private struct SpotListRowView: View {
     let spot: CourseSpot
+    let courseName: String
     let orderNumber: Int
     let isSelected: Bool
     var distance: Double? = nil
@@ -1283,6 +1293,7 @@ private struct SpotListRowView: View {
     var tourTypewriterCount: Int? = nil
 
     @Environment(\.spotFavoriteStore) private var favoriteStore
+    @State private var showInquiry = false
 
     private var distanceText: String? {
         guard let d = distance else { return nil }
@@ -1388,20 +1399,58 @@ private struct SpotListRowView: View {
 
                 Spacer()
 
-                // ハートボタン（お気に入り）
-                Button {
-                    favoriteStore.toggle(spot.id)
-                } label: {
-                    Image(systemName: favoriteStore.isFavorite(spot.id) ? "heart.fill" : "heart")
-                        .font(.body.weight(.semibold))
-                        .foregroundStyle(
-                            favoriteStore.isFavorite(spot.id)
-                                ? Color(red: 1.0, green: 0.42, blue: 0.62)
-                                : Color.secondary.opacity(0.88)
-                        )
-                        .shadow(color: Color(uiColor: .systemBackground).opacity(0.9), radius: 1.5, x: 0, y: 0)
+                VStack(spacing: 6) {
+                    // 3点メニューボタン
+                    Menu {
+                        Button { } label: {
+                            Label(L.SpotList.menuAddFolder, systemImage: "folder.badge.plus")
+                        }
+                        Button { showInquiry = true } label: {
+                            Label(L.SpotList.menuInquiry, systemImage: "questionmark.circle")
+                        }
+                        Button { } label: {
+                            Label(L.SpotList.menuShare, systemImage: "square.and.arrow.up")
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundStyle(Color.secondary)
+                            .frame(width: 36, height: 36)
+                            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                            .overlay {
+                                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                    .strokeBorder(Color.secondary.opacity(0.18), lineWidth: 0.8)
+                            }
+                    }
+                    .buttonStyle(.plain)
+
+                    // ハートボタン（お気に入り）
+                    Button {
+                        favoriteStore.toggle(spot.id)
+                    } label: {
+                        let isFav = favoriteStore.isFavorite(spot.id)
+                        Image(systemName: isFav ? "heart.fill" : "heart")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(
+                                isFav
+                                    ? Color(red: 1.0, green: 0.42, blue: 0.62)
+                                    : Color.secondary
+                            )
+                            .frame(width: 36, height: 36)
+                            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                            .overlay {
+                                if isFav {
+                                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                        .fill(Color(red: 1.0, green: 0.42, blue: 0.62).opacity(0.1))
+                                }
+                            }
+                            .overlay {
+                                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                    .strokeBorder(Color.secondary.opacity(0.18), lineWidth: 0.8)
+                            }
+                    }
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 10)
@@ -1416,6 +1465,9 @@ private struct SpotListRowView: View {
             SpotRowBackdropView(spot: spot, isSelected: isSelected)
         }
         .animation(.easeInOut(duration: 0.2), value: isSelected)
+        .sheet(isPresented: $showInquiry) {
+            SpotInquirySheet(courseName: courseName, spotName: spot.name)
+        }
     }
 }
 

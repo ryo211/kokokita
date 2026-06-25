@@ -46,6 +46,9 @@ struct AppConfig {
     /// 除外エリアのデフォルト半径（メートル）
     static let autoRecordExclusionRadiusMeters: Double = 300
 
+    // MARK: - Contact Settings
+    static let supportEmail = "irodori.developer@gmail.com"
+
     // MARK: - Share Settings
     /// 共有画像の論理サイズ（width）
     static let shareImageLogicalWidth: CGFloat = 360

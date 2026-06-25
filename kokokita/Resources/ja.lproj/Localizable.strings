@@ -567,6 +567,25 @@
 "spotList.menu.addFolder" = "フォルダ追加";
 "spotList.menu.share" = "共有";
 
+// MARK: - Inquiry（問い合わせ）
+"inquiry.title" = "問い合わせ";
+"inquiry.sectionTarget" = "問い合わせ対象";
+"inquiry.sectionCategory" = "カテゴリ";
+"inquiry.sectionContent" = "内容";
+"inquiry.category.provideInfo" = "画像や情報の提供";
+"inquiry.category.reportError" = "誤りの報告";
+"inquiry.category.request" = "要望";
+"inquiry.category.question" = "質問";
+"inquiry.category.other" = "その他";
+"inquiry.sendButton" = "問い合わせをする";
+"inquiry.sendNote" = "メーラーが開きます";
+"inquiry.email.labelCourse" = "コース";
+"inquiry.email.labelSpot" = "スポット";
+"inquiry.email.labelCategory" = "カテゴリ";
+"inquiry.email.labelContent" = "内容";
+"inquiry.email.subject" = "[問い合わせ] %@ - %@";
+"inquiry.email.subjectCourse" = "[問い合わせ] %@";
+
 // MARK: - TaxonomyList（ソート）
 "taxonomyList.sortNewest" = "新しい順";
 "taxonomyList.sortCount" = "多い順";

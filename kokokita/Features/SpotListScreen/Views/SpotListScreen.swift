@@ -1143,6 +1143,7 @@ private struct SpotListRowView: View {
     var onCourseTap: () -> Void = {}
 
     @Environment(\.spotFavoriteStore) private var favoriteStore
+    @State private var showInquiry = false
 
     private var distanceText: String? {
         guard let d = distance else { return nil }
@@ -1206,24 +1207,28 @@ private struct SpotListRowView: View {
 
                 Spacer()
 
-                VStack(spacing: 4) {
+                VStack(spacing: 6) {
                     // 3点メニューボタン
                     Menu {
                         Button { } label: {
-                            Label(L.SpotList.menuInquiry, systemImage: "questionmark.circle")
-                        }
-                        Button { } label: {
                             Label(L.SpotList.menuAddFolder, systemImage: "folder.badge.plus")
+                        }
+                        Button { showInquiry = true } label: {
+                            Label(L.SpotList.menuInquiry, systemImage: "questionmark.circle")
                         }
                         Button { } label: {
                             Label(L.SpotList.menuShare, systemImage: "square.and.arrow.up")
                         }
                     } label: {
                         Image(systemName: "ellipsis")
-                            .font(.system(size: 13, weight: .medium))
-                            .foregroundStyle(Color.secondary.opacity(0.65))
-                            .frame(width: 32, height: 28)
-                            .contentShape(Rectangle())
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundStyle(Color.secondary)
+                            .frame(width: 36, height: 36)
+                            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                            .overlay {
+                                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                    .strokeBorder(Color.secondary.opacity(0.18), lineWidth: 0.8)
+                            }
                     }
                     .buttonStyle(.plain)
 
@@ -1231,15 +1236,26 @@ private struct SpotListRowView: View {
                     Button {
                         favoriteStore.toggle(spot.id)
                     } label: {
-                        Image(systemName: favoriteStore.isFavorite(spot.id) ? "heart.fill" : "heart")
-                            .font(.body.weight(.semibold))
+                        let isFav = favoriteStore.isFavorite(spot.id)
+                        Image(systemName: isFav ? "heart.fill" : "heart")
+                            .font(.system(size: 16, weight: .semibold))
                             .foregroundStyle(
-                                favoriteStore.isFavorite(spot.id)
+                                isFav
                                     ? Color(red: 1.0, green: 0.42, blue: 0.62)
-                                    : Color.secondary.opacity(0.88)
+                                    : Color.secondary
                             )
-                            .shadow(color: Color(uiColor: .systemBackground).opacity(0.9), radius: 1.5, x: 0, y: 0)
-                            .frame(width: 32, height: 28)
+                            .frame(width: 36, height: 36)
+                            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                            .overlay {
+                                if isFav {
+                                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                        .fill(Color(red: 1.0, green: 0.42, blue: 0.62).opacity(0.1))
+                                }
+                            }
+                            .overlay {
+                                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                    .strokeBorder(Color.secondary.opacity(0.18), lineWidth: 0.8)
+                            }
                     }
                     .buttonStyle(.plain)
                 }
@@ -1254,6 +1270,9 @@ private struct SpotListRowView: View {
         }
         .background { SpotRowBackdropView(spot: spot, isSelected: isSelected) }
         .animation(.easeInOut(duration: 0.2), value: isSelected)
+        .sheet(isPresented: $showInquiry) {
+            SpotInquirySheet(courseName: course.title, spotName: spot.name)
+        }
     }
 }
 
