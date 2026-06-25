@@ -90,17 +90,19 @@ struct RootTabView: View {
 
             // ===== フッター領域（バナー + カスタムタブバー） =====
             VStack(spacing: 0) {
-                // 固定バナー（フッターの"上"に配置）
+                // 固定バナー（プレミアム会員には非表示）
                 #if DEBUG
-                if debugSettings.isAdDisplayEnabled {
+                if debugSettings.isAdDisplayEnabled && !PremiumManager.shared.isPremium {
                     BannerAdView(adUnitID: bannerAdUnitID)
                         .background(.thinMaterial)
                         .transition(.opacity)
                 }
                 #else
-                BannerAdView(adUnitID: bannerAdUnitID)
-                    .background(.thinMaterial)
-                    .transition(.opacity)
+                if !PremiumManager.shared.isPremium {
+                    BannerAdView(adUnitID: bannerAdUnitID)
+                        .background(.thinMaterial)
+                        .transition(.opacity)
+                }
                 #endif
 
                 if !ui.isTabBarHidden {

@@ -25,6 +25,7 @@
 		B5C6D7E8F9012345678901AB /* Kokokita v11.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = "Kokokita v11.xcdatamodel"; sourceTree = "<group>"; };
 		C3D4E5F6789012345678ABCD /* Kokokita v5.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = "Kokokita v5.xcdatamodel"; sourceTree = "<group>"; };
 		C6D7E8F9012345678901ABCD /* Kokokita v12.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = "Kokokita v12.xcdatamodel"; sourceTree = "<group>"; };
+		D7E8F9012345678901BCDEF0 /* Kokokita v13.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = "Kokokita v13.xcdatamodel"; sourceTree = "<group>"; };
 		D1E2F3A4B5C6789012345678 /* Kokokita v7.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = "Kokokita v7.xcdatamodel"; sourceTree = "<group>"; };
 		E2F3A4B5C6789012345678CD /* Kokokita v8.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = "Kokokita v8.xcdatamodel"; sourceTree = "<group>"; };
 		F3A4B5C6D7890123456789DE /* Kokokita v9.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = "Kokokita v9.xcdatamodel"; sourceTree = "<group>"; };
@@ -484,13 +485,14 @@
 				A4B5C6D7E8F901234567890A /* Kokokita v10.xcdatamodel */,
 				B5C6D7E8F9012345678901AB /* Kokokita v11.xcdatamodel */,
 				C6D7E8F9012345678901ABCD /* Kokokita v12.xcdatamodel */,
+				D7E8F9012345678901BCDEF0 /* Kokokita v13.xcdatamodel */,
 				45B215832E7EF0B70004B944 /* Kokokita.xcdatamodel */,
 				839241C028E14D72997A5066 /* Kokokita v2.xcdatamodel */,
 				A1B2C3D4E5F6789012345678 /* Kokokita v3.xcdatamodel */,
 				B2C3D4E5F6789012345678AB /* Kokokita v4.xcdatamodel */,
 				C3D4E5F6789012345678ABCD /* Kokokita v5.xcdatamodel */,
 			);
-			currentVersion = C6D7E8F9012345678901ABCD /* Kokokita v12.xcdatamodel */;
+			currentVersion = D7E8F9012345678901BCDEF0 /* Kokokita v13.xcdatamodel */;
 			path = Kokokita.xcdatamodeld;
 			sourceTree = "<group>";
 			versionGroupType = wrapper.xcdatamodel;

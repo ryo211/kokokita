@@ -1206,19 +1206,43 @@ private struct SpotListRowView: View {
 
                 Spacer()
 
-                Button {
-                    favoriteStore.toggle(spot.id)
-                } label: {
-                    Image(systemName: favoriteStore.isFavorite(spot.id) ? "heart.fill" : "heart")
-                        .font(.body.weight(.semibold))
-                        .foregroundStyle(
-                            favoriteStore.isFavorite(spot.id)
-                                ? Color(red: 1.0, green: 0.42, blue: 0.62)
-                                : Color.secondary.opacity(0.88)
-                        )
-                        .shadow(color: Color(uiColor: .systemBackground).opacity(0.9), radius: 1.5, x: 0, y: 0)
+                VStack(spacing: 4) {
+                    // 3点メニューボタン
+                    Menu {
+                        Button { } label: {
+                            Label(L.SpotList.menuInquiry, systemImage: "questionmark.circle")
+                        }
+                        Button { } label: {
+                            Label(L.SpotList.menuAddFolder, systemImage: "folder.badge.plus")
+                        }
+                        Button { } label: {
+                            Label(L.SpotList.menuShare, systemImage: "square.and.arrow.up")
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis")
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundStyle(Color.secondary.opacity(0.65))
+                            .frame(width: 32, height: 28)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+
+                    // お気に入りボタン
+                    Button {
+                        favoriteStore.toggle(spot.id)
+                    } label: {
+                        Image(systemName: favoriteStore.isFavorite(spot.id) ? "heart.fill" : "heart")
+                            .font(.body.weight(.semibold))
+                            .foregroundStyle(
+                                favoriteStore.isFavorite(spot.id)
+                                    ? Color(red: 1.0, green: 0.42, blue: 0.62)
+                                    : Color.secondary.opacity(0.88)
+                            )
+                            .shadow(color: Color(uiColor: .systemBackground).opacity(0.9), radius: 1.5, x: 0, y: 0)
+                            .frame(width: 32, height: 28)
+                    }
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 10)

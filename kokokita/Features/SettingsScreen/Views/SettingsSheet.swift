@@ -5,6 +5,7 @@ struct SettingsSheet: View {
     @Environment(AppModeManager.self) private var modeManager
     @ObservedObject private var autoRecordSettings = AutoRecordSettings.shared
     @State private var showCandidateReview = false
+    @State private var showExcludedLocations = false
     @State private var pendingCandidateCount: Int = 0
 
     var body: some View {
@@ -44,6 +45,12 @@ struct SettingsSheet: View {
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
+                    }
+
+                    NavigationLink {
+                        ExcludedLocationsScreen()
+                    } label: {
+                        Label(L.AutoRecord.excludedLocationsTitle, systemImage: "location.slash")
                     }
                 } header: {
                     Text(L.AutoRecord.settingsTitle)

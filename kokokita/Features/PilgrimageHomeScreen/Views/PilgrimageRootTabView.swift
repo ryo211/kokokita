@@ -55,13 +55,15 @@ struct PilgrimageRootTabView: View {
                 if !ui.isTabBarHidden {
                     VStack(spacing: 0) {
                         #if DEBUG
-                        if debugSettings.isAdDisplayEnabled {
+                        if debugSettings.isAdDisplayEnabled && !PremiumManager.shared.isPremium {
                             BannerAdView(adUnitID: pilgrimageBannerAdUnitID)
                                 .background(.thinMaterial)
                         }
                         #else
-                        BannerAdView(adUnitID: pilgrimageBannerAdUnitID)
-                            .background(.thinMaterial)
+                        if !PremiumManager.shared.isPremium {
+                            BannerAdView(adUnitID: pilgrimageBannerAdUnitID)
+                                .background(.thinMaterial)
+                        }
                         #endif
 
                         PilgrimageBottomBar(

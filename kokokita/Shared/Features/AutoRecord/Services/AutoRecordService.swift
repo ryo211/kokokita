@@ -6,13 +6,16 @@ import CoreLocation
 final class AutoRecordService: NSObject {
     private let manager = CLLocationManager()
     private let candidateRepo: VisitCandidateRepository
+    private let excludedRepo: ExcludedLocationRepository
     private let settings: AutoRecordSettings
 
     init(
         candidateRepo: VisitCandidateRepository = VisitCandidateRepository(),
+        excludedRepo: ExcludedLocationRepository = ExcludedLocationRepository(),
         settings: AutoRecordSettings = .shared
     ) {
         self.candidateRepo = candidateRepo
+        self.excludedRepo = excludedRepo
         self.settings = settings
         super.init()
         manager.delegate = self
@@ -91,6 +94,16 @@ extension AutoRecordService: CLLocationManagerDelegate {
         guard stayDuration >= AppConfig.autoRecordMinStaySeconds else {
             Logger.debug("自動記録: 滞在時間不足で破棄 (\(Int(stayDuration))秒 < \(Int(AppConfig.autoRecordMinStaySeconds))秒)")
             return
+        }
+
+        // 除外エリアチェック
+        do {
+            if try excludedRepo.isExcluded(latitude: visit.coordinate.latitude, longitude: visit.coordinate.longitude) {
+                Logger.debug("自動記録: 除外エリア内のため破棄 (lat=\(visit.coordinate.latitude), lon=\(visit.coordinate.longitude))")
+                return
+            }
+        } catch {
+            Logger.error("除外エリアチェックに失敗しました", error: error)
         }
 
         // 上限件数チェック

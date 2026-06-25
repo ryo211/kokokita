@@ -10,13 +10,14 @@ final class AppContainer {
     let bookRepo = CoreDataBookRepository()
     let courseRepo: CoreDataCourseRepository = CoreDataCourseRepository()
     let candidateRepo = VisitCandidateRepository()
+    let excludedLocationRepo = ExcludedLocationRepository()
 
     // Rate Limiter (共有インスタンス)
     let rateLimiter = RateLimiter(minimumInterval: 0.5)
 
     // Services（具体的な実装に直接依存）
     let loc = DefaultLocationService()
-    lazy var autoRecord: AutoRecordService = AutoRecordService(candidateRepo: candidateRepo)
+    lazy var autoRecord: AutoRecordService = AutoRecordService(candidateRepo: candidateRepo, excludedRepo: excludedLocationRepo)
     let autoRecordSettings = AutoRecordSettings.shared
     lazy var poi: MapKitPlaceLookupService = MapKitPlaceLookupService(rateLimiter: rateLimiter)
     let integ = DefaultIntegrityService()

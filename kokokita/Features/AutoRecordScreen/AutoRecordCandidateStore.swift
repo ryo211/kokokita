@@ -8,6 +8,7 @@ import Observation
 final class AutoRecordCandidateStore {
     private let candidateRepo: VisitCandidateRepository
     private let visitRepo: CoreDataVisitRepository
+    private let excludedRepo: ExcludedLocationRepository
     private let geocoder = CLGeocoder()
 
     var candidates: [VisitCandidate] = []
@@ -17,10 +18,12 @@ final class AutoRecordCandidateStore {
 
     init(
         candidateRepo: VisitCandidateRepository = AppContainer.shared.candidateRepo,
-        visitRepo: CoreDataVisitRepository = AppContainer.shared.repo
+        visitRepo: CoreDataVisitRepository = AppContainer.shared.repo,
+        excludedRepo: ExcludedLocationRepository = AppContainer.shared.excludedLocationRepo
     ) {
         self.candidateRepo = candidateRepo
         self.visitRepo = visitRepo
+        self.excludedRepo = excludedRepo
     }
 
     // MARK: - 読み込み
@@ -140,6 +143,25 @@ final class AutoRecordCandidateStore {
         candidates.removeAll()
         AppIconBadgeService.shared.setBadgeCount(0)
         Logger.info("全候補を却下しました")
+    }
+
+    // MARK: - 除外エリアへ追加
+
+    /// 候補の場所を除外エリアに登録し、候補自体も却下する
+    func excludeAndDismiss(candidate: VisitCandidate, label: String?) throws {
+        let location = ExcludedLocation(
+            id: UUID(),
+            label: label.flatMap { $0.isEmpty ? nil : $0 },
+            latitude: candidate.latitude,
+            longitude: candidate.longitude,
+            radiusMeters: AppConfig.autoRecordExclusionRadiusMeters,
+            createdAt: Date()
+        )
+        try excludedRepo.save(location)
+        try candidateRepo.dismiss(id: candidate.id)
+        candidates.removeAll { $0.id == candidate.id }
+        AppIconBadgeService.shared.setBadgeCount(candidates.count)
+        Logger.info("除外エリアに追加し候補を却下しました: \(location.displayLabel)")
     }
 
     var pendingCount: Int { candidates.count }

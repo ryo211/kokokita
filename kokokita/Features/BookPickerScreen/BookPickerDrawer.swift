@@ -231,35 +231,11 @@ private struct BookCreateSheet: View {
     }
 }
 
-// MARK: - Premium Sheet
+// MARK: - Premium Sheet（PaywallViewへの導線）
 
 private struct BookPremiumSheet: View {
-    @Environment(\.dismiss) private var dismiss
-
     var body: some View {
-        VStack(spacing: 24) {
-            Spacer()
-            Image(systemName: "crown.fill")
-                .font(.system(size: 52))
-                .foregroundStyle(.orange)
-            VStack(spacing: 8) {
-                Text(L.Book.premiumTitle)
-                    .font(.title2.bold())
-                Text(L.Book.premiumDescription)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-            }
-            // TODO: IAP導線を実装する
-            Button(L.Book.premiumUpgrade) {}
-                .buttonStyle(.borderedProminent)
-                .disabled(true)
-            Spacer()
-            Button(L.Common.close) { dismiss() }
-                .foregroundStyle(.secondary)
-        }
-        .padding()
-        .presentationDetents([.medium])
+        PaywallView()
     }
 }
 
@@ -268,9 +244,9 @@ private struct BookPremiumSheet: View {
 enum PremiumGate {
     static let maxBooksForFree = 1
 
-    /// ブックを追加できるか（将来の課金チェック差し替えポイント）
+    /// ブックを追加できるか（課金状態と無料枠を確認）
+    @MainActor
     static func canAddBook(existingCount: Int) -> Bool {
-        // TODO: 課金実装後にここで課金状態を確認する
-        return true
+        PremiumManager.shared.isPremium || existingCount < maxBooksForFree
     }
 }

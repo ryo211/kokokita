@@ -7,6 +7,8 @@ struct AutoRecordCandidateReviewScreen: View {
     @State private var store = AutoRecordCandidateStore()
     @State private var editingVisitWrapper: EditingVisitWrapper?
     @State private var dismissingCandidate: VisitCandidate?
+    @State private var excludingCandidate: VisitCandidate?
+    @State private var excludeLabel: String = ""
     @State private var showDismissAllAlert = false
 
     var body: some View {
@@ -58,6 +60,25 @@ struct AutoRecordCandidateReviewScreen: View {
             } message: {
                 Text(L.AutoRecord.dismissConfirmMessage)
             }
+            .alert(L.AutoRecord.excludeTitle, isPresented: Binding<Bool>(
+                get: { excludingCandidate != nil },
+                set: { if !$0 { excludingCandidate = nil; excludeLabel = "" } }
+            )) {
+                TextField(L.AutoRecord.excludeLabelPlaceholder, text: $excludeLabel)
+                Button(L.AutoRecord.excludeConfirm, role: .destructive) {
+                    if let c = excludingCandidate {
+                        try? store.excludeAndDismiss(candidate: c, label: excludeLabel)
+                        excludingCandidate = nil
+                        excludeLabel = ""
+                    }
+                }
+                Button(L.Common.cancel, role: .cancel) {
+                    excludingCandidate = nil
+                    excludeLabel = ""
+                }
+            } message: {
+                Text(L.AutoRecord.excludeMessage(Int(AppConfig.autoRecordExclusionRadiusMeters)))
+            }
             .sheet(item: $editingVisitWrapper) { wrapper in
                 editSheet(visitId: wrapper.visitId)
             }
@@ -102,6 +123,10 @@ struct AutoRecordCandidateReviewScreen: View {
                         },
                         onDismiss: {
                             dismissingCandidate = candidate
+                        },
+                        onExclude: {
+                            excludeLabel = candidate.placeName ?? ""
+                            excludingCandidate = candidate
                         }
                     )
                 }
@@ -126,6 +151,7 @@ private struct CandidateCard: View {
     let candidate: VisitCandidate
     let onApprove: () -> Void
     let onDismiss: () -> Void
+    let onExclude: () -> Void
 
     private let dateFormatter: DateFormatter = {
         let f = DateFormatter()
@@ -174,24 +200,36 @@ private struct CandidateCard: View {
             }
 
             // アクションボタン
-            HStack(spacing: 12) {
+            VStack(spacing: 8) {
+                HStack(spacing: 12) {
+                    Button(role: .destructive) {
+                        onDismiss()
+                    } label: {
+                        Text(L.AutoRecord.dismiss)
+                            .font(.subheadline)
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
+
+                    Button {
+                        onApprove()
+                    } label: {
+                        Text(L.AutoRecord.approve)
+                            .font(.subheadline)
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.borderedProminent)
+                }
+
                 Button(role: .destructive) {
-                    onDismiss()
+                    onExclude()
                 } label: {
-                    Text(L.AutoRecord.dismiss)
-                        .font(.subheadline)
+                    Label(L.AutoRecord.exclude, systemImage: "location.slash")
+                        .font(.caption)
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.bordered)
-
-                Button {
-                    onApprove()
-                } label: {
-                    Text(L.AutoRecord.approve)
-                        .font(.subheadline)
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.borderedProminent)
+                .tint(.secondary)
             }
         }
         .padding()

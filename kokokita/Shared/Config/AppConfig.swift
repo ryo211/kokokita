@@ -43,6 +43,8 @@ struct AppConfig {
     static let autoRecordRetentionDays: TimeInterval = 30
     /// pending 候補の上限件数
     static let autoRecordMaxCandidates: Int = 100
+    /// 除外エリアのデフォルト半径（メートル）
+    static let autoRecordExclusionRadiusMeters: Double = 300
 
     // MARK: - Share Settings
     /// 共有画像の論理サイズ（width）
