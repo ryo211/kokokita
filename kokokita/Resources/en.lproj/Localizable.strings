@@ -719,3 +719,17 @@
 "paywall.debugOverrideOn" = "Debug: Premium forced ON";
 "paywall.debugOverrideOff" = "Debug: Premium forced OFF";
 "paywall.debugOverrideNone" = "Debug: Using real purchase state";
+
+// MARK: - CourseDetail menu (added)
+"courseDetail.menu.share" = "Share";
+
+// MARK: - Share (share preview)
+"share.previewTitle" = "Share Preview";
+"share.button" = "Share";
+"share.imageSection" = "Share Image";
+"share.mapTitle" = "Map";
+"share.textLabel" = "Text";
+"share.appStoreLabel" = "Available on the App Store";
+"share.spotShareText" = "%@ — \"%@\"\n#kokokita";
+"share.courseShareText" = "Explore spots in %@!\n#kokokita";
+"share.spotCountLabel" = "%d spots";

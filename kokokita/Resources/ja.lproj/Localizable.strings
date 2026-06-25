@@ -723,3 +723,17 @@
 "paywall.debugOverrideOn" = "デバッグ: プレミアム強制ON";
 "paywall.debugOverrideOff" = "デバッグ: プレミアム強制OFF";
 "paywall.debugOverrideNone" = "デバッグ: 実際の課金状態を使用";
+
+// MARK: - CourseDetail メニュー（追加）
+"courseDetail.menu.share" = "共有";
+
+// MARK: - Share（共有プレビュー）
+"share.previewTitle" = "共有プレビュー";
+"share.button" = "共有する";
+"share.imageSection" = "共有画像";
+"share.mapTitle" = "地図";
+"share.textLabel" = "テキスト";
+"share.appStoreLabel" = "Available on the App Store";
+"share.spotShareText" = "%@ の「%@」\n#ココキタ";
+"share.courseShareText" = "%@ \n#ココキタ";
+"share.spotCountLabel" = "%d スポット";

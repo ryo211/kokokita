@@ -795,12 +795,31 @@ enum L {
     // MARK: - CourseDetail メニュー
     enum CourseDetail {
         static let menuCourseInfo = localized("courseDetail.menu.courseInfo")
+        static let menuShare = localized("courseDetail.menu.share")
         static let menuSectionMapSettings = localized("courseDetail.menu.sectionMapSettings")
         static let menuSectionPlayback = localized("courseDetail.menu.sectionPlayback")
         static let menuZoomOnFocus = localized("courseDetail.menu.zoomOnFocus")
         static let menuZoomOnFocusOn = localized("courseDetail.menu.zoomOnFocusOn")
         static let menuZoomOnFocusOff = localized("courseDetail.menu.zoomOnFocusOff")
         static let menuSpotPhotoSize = localized("courseDetail.menu.spotPhotoSize")
+    }
+
+    // MARK: - Share（共有プレビュー）
+    enum Share {
+        static let previewTitle = localized("share.previewTitle")
+        static let button = localized("share.button")
+        static let imageSection = localized("share.imageSection")
+        static let mapTitle = localized("share.mapTitle")
+        static let textLabel = localized("share.textLabel")
+        static func spotShareText(_ course: String, _ spot: String) -> String {
+            String(format: localized("share.spotShareText"), course, spot)
+        }
+        static func courseShareText(_ course: String) -> String {
+            String(format: localized("share.courseShareText"), course)
+        }
+        static func spotCountLabel(_ count: Int) -> String {
+            String(format: localized("share.spotCountLabel"), count)
+        }
     }
 
     // MARK: - Paywall（課金ペイウォール）

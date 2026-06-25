@@ -1144,6 +1144,7 @@ private struct SpotListRowView: View {
 
     @Environment(\.spotFavoriteStore) private var favoriteStore
     @State private var showInquiry = false
+    @State private var showShare = false
 
     private var distanceText: String? {
         guard let d = distance else { return nil }
@@ -1216,7 +1217,7 @@ private struct SpotListRowView: View {
                         Button { showInquiry = true } label: {
                             Label(L.SpotList.menuInquiry, systemImage: "questionmark.circle")
                         }
-                        Button { } label: {
+                        Button { showShare = true } label: {
                             Label(L.SpotList.menuShare, systemImage: "square.and.arrow.up")
                         }
                     } label: {
@@ -1272,6 +1273,9 @@ private struct SpotListRowView: View {
         .animation(.easeInOut(duration: 0.2), value: isSelected)
         .sheet(isPresented: $showInquiry) {
             SpotInquirySheet(courseName: course.title, spotName: spot.name)
+        }
+        .sheet(isPresented: $showShare) {
+            SpotSharePreviewSheet(spot: spot, course: course)
         }
     }
 }

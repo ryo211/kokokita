@@ -83,6 +83,8 @@ struct CourseDetailView: View {
     @State private var showCinemaMode = false
     // ペイウォール（プレミアムゲート）
     @State private var showPaywall = false
+    // コース共有プレビュー
+    @State private var showCourseShare = false
     // タイプライター演出
     @AppStorage("tourMode.typewriterEnabled") private var tourTypewriterEnabled = false
     @State private var typewriterCount: Int = 0
@@ -256,6 +258,9 @@ struct CourseDetailView: View {
                         Button { showCourseInquiry = true } label: {
                             Label(L.Inquiry.title, systemImage: "questionmark.circle")
                         }
+                        Button { showCourseShare = true } label: {
+                            Label(L.CourseDetail.menuShare, systemImage: "square.and.arrow.up")
+                        }
 
                         Section(L.CourseDetail.menuSectionMapSettings) {
                             Button {
@@ -324,6 +329,9 @@ struct CourseDetailView: View {
         }
         .sheet(isPresented: $showPaywall) {
             PaywallView()
+        }
+        .sheet(isPresented: $showCourseShare) {
+            CourseSharePreviewSheet(course: course)
         }
         // 遡り判定結果シート（ストアシートとの競合を避けるためここに配置）
         .sheet(item: $pendingRetroactiveResult) { result in
@@ -1123,6 +1131,7 @@ private struct SpotListAreaView: View, Equatable {
                             ForEach(sorted, id: \.spot.id) { item in
                                 SpotListRowView(
                                     spot: item.spot,
+                                    course: course,
                                     courseName: course.title,
                                     orderNumber: (indexMap[item.spot.id] ?? 0) + 1,
                                     isSelected: selectedSpotId == item.spot.id,
@@ -1153,6 +1162,7 @@ private struct SpotListAreaView: View, Equatable {
                                         }
                                         SpotListRowView(
                                             spot: spot,
+                                            course: course,
                                             courseName: course.title,
                                             orderNumber: (indexMap[spot.id] ?? 0) + 1,
                                             isSelected: selectedSpotId == spot.id,
@@ -1285,6 +1295,7 @@ private struct SpotPinView: View {
 
 private struct SpotListRowView: View {
     let spot: CourseSpot
+    let course: Course
     let courseName: String
     let orderNumber: Int
     let isSelected: Bool
@@ -1294,6 +1305,7 @@ private struct SpotListRowView: View {
 
     @Environment(\.spotFavoriteStore) private var favoriteStore
     @State private var showInquiry = false
+    @State private var showShare = false
 
     private var distanceText: String? {
         guard let d = distance else { return nil }
@@ -1408,7 +1420,7 @@ private struct SpotListRowView: View {
                         Button { showInquiry = true } label: {
                             Label(L.SpotList.menuInquiry, systemImage: "questionmark.circle")
                         }
-                        Button { } label: {
+                        Button { showShare = true } label: {
                             Label(L.SpotList.menuShare, systemImage: "square.and.arrow.up")
                         }
                     } label: {
@@ -1467,6 +1479,9 @@ private struct SpotListRowView: View {
         .animation(.easeInOut(duration: 0.2), value: isSelected)
         .sheet(isPresented: $showInquiry) {
             SpotInquirySheet(courseName: courseName, spotName: spot.name)
+        }
+        .sheet(isPresented: $showShare) {
+            SpotSharePreviewSheet(spot: spot, course: course)
         }
     }
 }
