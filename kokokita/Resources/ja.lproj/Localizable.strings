@@ -563,6 +563,9 @@
 "spotList.totalCount" = "全%d件";
 "spotList.filter.prefecture" = "都道府県";
 "spotList.filter.allPrefectures" = "すべて";
+"spotList.menu.inquiry" = "問い合わせ";
+"spotList.menu.addFolder" = "フォルダ追加";
+"spotList.menu.share" = "共有";
 
 // MARK: - TaxonomyList（ソート）
 "taxonomyList.sortNewest" = "新しい順";
@@ -595,6 +598,15 @@
 "autoRecord.dismissAll.confirmMessage" = "%d件の候補をすべて削除します。元に戻せません。";
 "autoRecord.home.pendingBanner" = "自動記録の候補が%d件あります";
 "autoRecord.settings.reviewCandidates" = "記録候補を確認する";
+"autoRecord.exclude" = "この場所を自動検知しない";
+"autoRecord.exclude.title" = "場所を除外する";
+"autoRecord.exclude.message" = "この場所の周辺（約%dm以内）を自動記録から除外します。名前を付けておくと管理しやすくなります。";
+"autoRecord.exclude.labelPlaceholder" = "例：自宅、職場（省略可）";
+"autoRecord.exclude.confirm" = "除外する";
+"autoRecord.excludedLocations.title" = "除外した場所";
+"autoRecord.excludedLocations.empty" = "除外した場所はありません。\n自動記録の候補から「この場所を自動検知しない」を選ぶと追加されます。";
+"autoRecord.excludedLocations.footer" = "左にスワイプすると除外を解除できます";
+"autoRecord.excludedLocations.radius" = "半径%dm";
 
 // MARK: - Trash（ゴミ箱）
 "trash.title" = "ゴミ箱";
@@ -662,3 +674,33 @@
 "courseDetail.menu.zoomOnFocusOn" = "フォーカスズーム: ON";
 "courseDetail.menu.zoomOnFocusOff" = "フォーカスズーム: OFF";
 "courseDetail.menu.spotPhotoSize" = "スポット写真";
+
+// MARK: - Paywall（課金ペイウォール）
+"paywall.title" = "ккокита プレミアム";
+"paywall.subtitle" = "もっと深く、もっと自由に";
+"paywall.feature.noAds" = "広告を非表示";
+"paywall.feature.noAdsDesc" = "広告なしでスッキリ使える";
+"paywall.feature.multiBook" = "複数ブック";
+"paywall.feature.multiBookDesc" = "テーマ別にブックを作成して整理できる";
+"paywall.feature.coursePlayback" = "コース再生";
+"paywall.feature.coursePlaybackDesc" = "ツアーモード・動画モードが使える";
+"paywall.monthly" = "月額";
+"paywall.yearly" = "年額";
+"paywall.yearlyBadge" = "お得";
+"paywall.lifetime" = "買い切り";
+"paywall.lifetimeBadge" = "永続";
+"paywall.ctaSubscribe" = "はじめる";
+"paywall.ctaLifetime" = "購入する";
+"paywall.restore" = "購入を復元";
+"paywall.terms" = "利用規約";
+"paywall.privacy" = "プライバシーポリシー";
+"paywall.loadingProducts" = "価格を読み込み中...";
+"paywall.courseGateTitle" = "プレミアム機能です";
+"paywall.courseGateMessage" = "ツアーモードと動画モードはプレミアムプランでご利用いただけます。";
+"paywall.restoreSuccess" = "購入を復元しました";
+"paywall.restoreFailed" = "復元できる購入が見つかりませんでした";
+"paywall.purchaseError" = "購入できませんでした";
+"paywall.alreadyPremium" = "プレミアム会員";
+"paywall.debugOverrideOn" = "デバッグ: プレミアム強制ON";
+"paywall.debugOverrideOff" = "デバッグ: プレミアム強制OFF";
+"paywall.debugOverrideNone" = "デバッグ: 実際の課金状態を使用";

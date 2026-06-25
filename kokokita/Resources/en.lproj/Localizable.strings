@@ -559,6 +559,9 @@
 "spotList.totalCount" = "Total %d";
 "spotList.filter.prefecture" = "Prefecture";
 "spotList.filter.allPrefectures" = "All";
+"spotList.menu.inquiry" = "Inquiry";
+"spotList.menu.addFolder" = "Add to Folder";
+"spotList.menu.share" = "Share";
 
 // MARK: - TaxonomyList (sort)
 "taxonomyList.sortNewest" = "Newest first";
@@ -591,6 +594,15 @@
 "autoRecord.dismissAll.confirmMessage" = "All %d candidates will be deleted and cannot be undone.";
 "autoRecord.home.pendingBanner" = "%d auto-recorded visit(s) pending";
 "autoRecord.settings.reviewCandidates" = "Review Candidates";
+"autoRecord.exclude" = "Don't Detect This Place";
+"autoRecord.exclude.title" = "Exclude This Place";
+"autoRecord.exclude.message" = "Auto-recording will be disabled within approximately %dm of this location. Adding a name makes it easier to manage.";
+"autoRecord.exclude.labelPlaceholder" = "e.g. Home, Work (optional)";
+"autoRecord.exclude.confirm" = "Exclude";
+"autoRecord.excludedLocations.title" = "Excluded Places";
+"autoRecord.excludedLocations.empty" = "No excluded places.\nTap \"Don't Detect This Place\" on a candidate to add one.";
+"autoRecord.excludedLocations.footer" = "Swipe left to remove an exclusion";
+"autoRecord.excludedLocations.radius" = "%dm radius";
 
 // MARK: - Trash
 "trash.title" = "Trash";
@@ -658,3 +670,33 @@
 "courseDetail.menu.zoomOnFocusOn" = "Focus Zoom: ON";
 "courseDetail.menu.zoomOnFocusOff" = "Focus Zoom: OFF";
 "courseDetail.menu.spotPhotoSize" = "Spot Photo";
+
+// MARK: - Paywall
+"paywall.title" = "Kokokita Premium";
+"paywall.subtitle" = "More freedom, deeper memories";
+"paywall.feature.noAds" = "No Ads";
+"paywall.feature.noAdsDesc" = "Enjoy a clean, ad-free experience";
+"paywall.feature.multiBook" = "Multiple Books";
+"paywall.feature.multiBookDesc" = "Organize visits with themed books";
+"paywall.feature.coursePlayback" = "Course Playback";
+"paywall.feature.coursePlaybackDesc" = "Tour mode & movie mode unlocked";
+"paywall.monthly" = "Monthly";
+"paywall.yearly" = "Yearly";
+"paywall.yearlyBadge" = "Best Value";
+"paywall.lifetime" = "Lifetime";
+"paywall.lifetimeBadge" = "One-time";
+"paywall.ctaSubscribe" = "Get Started";
+"paywall.ctaLifetime" = "Purchase";
+"paywall.restore" = "Restore Purchases";
+"paywall.terms" = "Terms of Service";
+"paywall.privacy" = "Privacy Policy";
+"paywall.loadingProducts" = "Loading prices...";
+"paywall.courseGateTitle" = "Premium Feature";
+"paywall.courseGateMessage" = "Tour mode and movie mode are available with a premium plan.";
+"paywall.restoreSuccess" = "Purchases restored successfully";
+"paywall.restoreFailed" = "No restorable purchases found";
+"paywall.purchaseError" = "Purchase failed";
+"paywall.alreadyPremium" = "Premium Member";
+"paywall.debugOverrideOn" = "Debug: Premium forced ON";
+"paywall.debugOverrideOff" = "Debug: Premium forced OFF";
+"paywall.debugOverrideNone" = "Debug: Using real purchase state";

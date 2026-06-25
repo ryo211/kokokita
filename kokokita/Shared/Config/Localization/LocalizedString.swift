@@ -625,6 +625,9 @@ enum L {
         static func totalCount(_ count: Int) -> String { String(format: localized("spotList.totalCount"), count) }
         static let filterPrefecture = localized("spotList.filter.prefecture")
         static let filterAllPrefectures = localized("spotList.filter.allPrefectures")
+        static let menuInquiry = localized("spotList.menu.inquiry")
+        static let menuAddFolder = localized("spotList.menu.addFolder")
+        static let menuShare = localized("spotList.menu.share")
     }
 
     // MARK: - TaxonomyList（タクソノミー一覧ソート）
@@ -683,6 +686,15 @@ enum L {
         static let dismissAllConfirmTitle = localized("autoRecord.dismissAll.confirmTitle")
         static func dismissAllConfirmMessage(_ count: Int) -> String { String(format: localized("autoRecord.dismissAll.confirmMessage"), count) }
         static func homePendingBanner(_ count: Int) -> String { String(format: localized("autoRecord.home.pendingBanner"), count) }
+        static let exclude = localized("autoRecord.exclude")
+        static let excludeTitle = localized("autoRecord.exclude.title")
+        static func excludeMessage(_ radiusMeters: Int) -> String { String(format: localized("autoRecord.exclude.message"), radiusMeters) }
+        static let excludeLabelPlaceholder = localized("autoRecord.exclude.labelPlaceholder")
+        static let excludeConfirm = localized("autoRecord.exclude.confirm")
+        static let excludedLocationsTitle = localized("autoRecord.excludedLocations.title")
+        static let excludedLocationsEmpty = localized("autoRecord.excludedLocations.empty")
+        static let excludedLocationsFooter = localized("autoRecord.excludedLocations.footer")
+        static func excludedLocationsRadius(_ meters: Int) -> String { String(format: localized("autoRecord.excludedLocations.radius"), meters) }
     }
 
     // MARK: - Trash（ゴミ箱）
@@ -764,6 +776,38 @@ enum L {
         static let menuZoomOnFocusOn = localized("courseDetail.menu.zoomOnFocusOn")
         static let menuZoomOnFocusOff = localized("courseDetail.menu.zoomOnFocusOff")
         static let menuSpotPhotoSize = localized("courseDetail.menu.spotPhotoSize")
+    }
+
+    // MARK: - Paywall（課金ペイウォール）
+    enum Paywall {
+        static let title                = localized("paywall.title")
+        static let subtitle             = localized("paywall.subtitle")
+        static let featureNoAds         = localized("paywall.feature.noAds")
+        static let featureNoAdsDesc     = localized("paywall.feature.noAdsDesc")
+        static let featureMultiBook     = localized("paywall.feature.multiBook")
+        static let featureMultiBookDesc = localized("paywall.feature.multiBookDesc")
+        static let featureCourse        = localized("paywall.feature.coursePlayback")
+        static let featureCourseDesc    = localized("paywall.feature.coursePlaybackDesc")
+        static let monthly              = localized("paywall.monthly")
+        static let yearly               = localized("paywall.yearly")
+        static let yearlyBadge          = localized("paywall.yearlyBadge")
+        static let lifetime             = localized("paywall.lifetime")
+        static let lifetimeBadge        = localized("paywall.lifetimeBadge")
+        static let ctaSubscribe         = localized("paywall.ctaSubscribe")
+        static let ctaLifetime          = localized("paywall.ctaLifetime")
+        static let restore              = localized("paywall.restore")
+        static let terms                = localized("paywall.terms")
+        static let privacy              = localized("paywall.privacy")
+        static let loadingProducts      = localized("paywall.loadingProducts")
+        static let courseGateTitle      = localized("paywall.courseGateTitle")
+        static let courseGateMessage    = localized("paywall.courseGateMessage")
+        static let restoreSuccess       = localized("paywall.restoreSuccess")
+        static let restoreFailed        = localized("paywall.restoreFailed")
+        static let purchaseError        = localized("paywall.purchaseError")
+        static let alreadyPremium       = localized("paywall.alreadyPremium")
+        static let debugOverrideOn      = localized("paywall.debugOverrideOn")
+        static let debugOverrideOff     = localized("paywall.debugOverrideOff")
+        static let debugOverrideNone    = localized("paywall.debugOverrideNone")
     }
 
     // MARK: - Helper

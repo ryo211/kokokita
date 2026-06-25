@@ -80,6 +80,8 @@ struct CourseDetailView: View {
     @State private var isShowingTourEndPromotion = false
     // シネマモード（programmatic navigation）
     @State private var showCinemaMode = false
+    // ペイウォール（プレミアムゲート）
+    @State private var showPaywall = false
     // タイプライター演出
     @AppStorage("tourMode.typewriterEnabled") private var tourTypewriterEnabled = false
     @State private var typewriterCount: Int = 0
@@ -285,10 +287,22 @@ struct CourseDetailView: View {
                         }
 
                         Section(L.CourseDetail.menuSectionPlayback) {
-                            Button { showTourSettings = true } label: {
+                            Button {
+                                if PremiumManager.shared.isPremium {
+                                    showTourSettings = true
+                                } else {
+                                    showPaywall = true
+                                }
+                            } label: {
                                 Label(L.TourMode.menuLabel, systemImage: "scope")
                             }
-                            Button { showCinemaMode = true } label: {
+                            Button {
+                                if PremiumManager.shared.isPremium {
+                                    showCinemaMode = true
+                                } else {
+                                    showPaywall = true
+                                }
+                            } label: {
                                 Label(L.SlideShow.menuLabel, systemImage: "play.rectangle")
                             }
                         }
@@ -300,6 +314,9 @@ struct CourseDetailView: View {
         }
         .sheet(isPresented: $showSummary) {
             CourseSummarySheet(course: course)
+        }
+        .sheet(isPresented: $showPaywall) {
+            PaywallView()
         }
         // 遡り判定結果シート（ストアシートとの競合を避けるためここに配置）
         .sheet(item: $pendingRetroactiveResult) { result in
