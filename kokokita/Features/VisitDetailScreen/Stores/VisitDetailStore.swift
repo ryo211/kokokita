@@ -1,8 +1,6 @@
 import Foundation
 import Observation
 import SwiftUI
-import MapKit
-import CoreLocation
 
 /// 詳細画面の状態管理とビジネスロジックを担当するStore
 @MainActor
@@ -21,9 +19,6 @@ final class VisitDetailStore {
     var sameGroupVisits: [VisitAggregate] = []
     var sameGroupVisitsData: [VisitDetailData] = []
     var currentGroupName: String? = nil
-
-    // MARK: - 共有
-    var sharePayload: SharePayload? = nil
 
     // MARK: - タクソノミー選択（詳細画面遷移用）
     var selectedLabel: LabelTag? = nil
@@ -121,47 +116,4 @@ final class VisitDetailStore {
         }
     }
 
-    // MARK: - 共有
-
-    /// SNSカード画像を生成して共有シートを表示する
-    func makeAndShare(data: VisitDetailData) async {
-        // 1) 地図スナップショット（オフスクリーンでも確実に出る）
-        var mapImage: UIImage? = nil
-        if let c = data.coordinate {
-            mapImage = await MapSnapshotService.makeSnapshot(
-                center: c,
-                size: CGSize(width: AppConfig.shareImageLogicalWidth, height: UIConstants.Size.shareMapHeight),
-                spanMeters: AppConfig.mapDisplayRadius,
-                showCoordinateBadge: true,
-                decimals: AppConfig.coordinateDecimals,
-                badgeInset: UIConstants.Spacing.medium
-            )
-        }
-
-        // 2) 同じ中身を共有用フラグでレンダリング
-        let currentLabelColorMap = labelColorMap
-        let img: UIImage? = await MainActor.run {
-            let content = VStack(spacing: 0) {
-                VisitDetailContent(
-                    data: data,
-                    mapSnapshot: mapImage,
-                    isSharing: true,
-                    nearbyVisits: [],  // 共有時は近くの記録は含めない
-                    nearbyVisitsData: [],
-                    sameGroupVisits: [],  // 共有時はグループ記録は含めない
-                    sameGroupVisitsData: [],
-                    currentGroupName: nil,
-                    labelColorMap: currentLabelColorMap,
-                    photoFullScreenIndex: .constant(nil)
-                )
-                .padding(.all, UIConstants.Spacing.xxLarge)
-            }
-            return ShareImageRenderer.renderWidth(content, width: AppConfig.shareImageLogicalWidth, scale: AppConfig.shareImageScale)
-        }
-
-        // 3) シート表示
-        if let img {
-            self.sharePayload = SharePayload(image: img, text: VisitDetailDataBuilder.shareText(data: data))
-        }
-    }
 }

@@ -25,6 +25,9 @@ struct VisitDetailScreen: View {
     @State private var photoFullScreenIndex: Int? = nil
     @State private var photoDragOffset: CGFloat = 0
 
+    // 共有プレビュー
+    @State private var showSharePreview = false
+
     // SNSカードの論理サイズ（表示用は1/3で描画、保存はscale=3で 1080x1350）
     private let logicalSize = CGSize(width: AppConfig.shareImageLogicalWidth,
                                       height: AppConfig.shareImageLogicalHeight)
@@ -100,7 +103,7 @@ struct VisitDetailScreen: View {
                 }
 
                 Button {
-                    Task { await store.makeAndShare(data: data) }
+                    showSharePreview = true
                 } label: {
                     HStack(spacing: 6) {
                         Image(systemName: "square.and.arrow.up")
@@ -119,8 +122,8 @@ struct VisitDetailScreen: View {
             }
         }
 
-        .sheet(item: $store.sharePayload) { payload in
-            ActivityView(items: [payload.text, payload.image])
+        .sheet(isPresented: $showSharePreview) {
+            VisitSharePreviewSheet(data: data, labelColorMap: store.labelColorMap)
         }
         // タクソノミー詳細画面への遷移
         .navigationDestination(item: $store.selectedLabel) { label in
@@ -222,8 +225,3 @@ struct VisitDetailData {
 }
 
 
-struct SharePayload: Identifiable {
-    let id = UUID()
-    let image: UIImage
-    let text: String
-}

@@ -571,10 +571,175 @@ private enum Sharing {
     }
 }
 
+// MARK: - 訪問記録共有プレビューシート
+
+struct VisitSharePreviewSheet: View {
+    let data: VisitDetailData
+    let labelColorMap: [String: Color]
+    @Environment(\.dismiss) private var dismiss
+
+    @State private var mapImage: UIImage? = nil
+    @State private var renderedShareImage: UIImage? = nil
+    @State private var isRendering = false
+    @State private var editableText: String = ""
+    @State private var showMapEditor = false
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 24) {
+                    textPreviewSection
+                    imagePreviewSection
+                    if data.coordinate != nil {
+                        mapPreviewSection
+                    }
+                }
+                .padding(.vertical, 16)
+            }
+            .navigationTitle(L.Share.previewTitle)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button(L.Common.cancel) { dismiss() }
+                }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button {
+                        presentShareSheet(buildShareItems())
+                    } label: {
+                        Image(systemName: "square.and.arrow.up")
+                            .fontWeight(.semibold)
+                    }
+                    .disabled(renderedShareImage == nil)
+                }
+            }
+        }
+        .sheet(isPresented: $showMapEditor) {
+            if let coord = data.coordinate {
+                let region = MKCoordinateRegion(
+                    center: coord,
+                    latitudinalMeters: 1000,
+                    longitudinalMeters: 1000
+                )
+                ShareMapEditorSheet(visitCoordinate: coord, initialRegion: region) { image in
+                    mapImage = image
+                }
+            }
+        }
+        .task {
+            editableText = VisitDetailDataBuilder.shareText(data: data)
+            await generateMapSnapshot()
+            await renderShareImage()
+        }
+    }
+
+    private var textPreviewSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Label(L.Share.textLabel, systemImage: "text.quote")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+            TextEditor(text: $editableText)
+                .font(.subheadline)
+                .frame(minHeight: 80)
+                .padding(10)
+                .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 10))
+                .scrollContentBackground(.hidden)
+        }
+        .padding(.horizontal)
+    }
+
+    private var imagePreviewSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Label(L.Share.imageSection, systemImage: "photo")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+                .padding(.horizontal)
+
+            if let rendered = renderedShareImage {
+                Image(uiImage: rendered)
+                    .resizable()
+                    .scaledToFit()
+                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .padding(.horizontal)
+                    .shadow(color: .black.opacity(0.12), radius: 10, x: 0, y: 4)
+            } else if isRendering {
+                ProgressView()
+                    .frame(maxWidth: .infinity)
+                    .padding(40)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var mapPreviewSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Label(L.Share.mapTitle, systemImage: "map")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+                .padding(.horizontal)
+
+            if let mapImg = mapImage {
+                editableMapThumbnail(image: mapImg)
+            } else {
+                ProgressView()
+                    .frame(maxWidth: .infinity)
+                    .padding(24)
+            }
+        }
+    }
+
+    private func buildShareItems() -> [Any] {
+        var items: [Any] = [editableText]
+        if let img = renderedShareImage { items.append(img) }
+        if let map = mapImage { items.append(map) }
+        return items
+    }
+
+    @MainActor
+    private func generateMapSnapshot() async {
+        guard let coord = data.coordinate else { return }
+        let region = MKCoordinateRegion(center: coord, latitudinalMeters: 1000, longitudinalMeters: 1000)
+        mapImage = await makeShareMapSnapshot(region: region, spots: [], orderNumbers: [:])
+    }
+
+    @MainActor
+    private func renderShareImage() async {
+        isRendering = true
+        defer { isRendering = false }
+        let currentLabelColorMap = labelColorMap
+        let content = VStack(spacing: 0) {
+            VisitDetailContent(
+                data: data,
+                mapSnapshot: nil,
+                isSharing: true,
+                nearbyVisits: [],
+                nearbyVisitsData: [],
+                sameGroupVisits: [],
+                sameGroupVisitsData: [],
+                currentGroupName: nil,
+                labelColorMap: currentLabelColorMap,
+                photoFullScreenIndex: .constant(nil)
+            )
+            .padding(.all, UIConstants.Spacing.xxLarge)
+        }
+        renderedShareImage = ShareImageRenderer.renderWidth(
+            content,
+            width: AppConfig.shareImageLogicalWidth,
+            scale: AppConfig.shareImageScale
+        )
+    }
+}
+
+extension VisitSharePreviewSheet {
+    func editableMapThumbnail(image: UIImage) -> some View {
+        Sharing.editableMapThumbnail(image: image) { showMapEditor = true }
+    }
+}
+
 // MARK: - 地図エディターシート
 
 struct ShareMapEditorSheet: View {
     let spots: [CourseSpot]
+    let visitCoordinate: CLLocationCoordinate2D?
     let initialRegion: MKCoordinateRegion
     let onConfirm: (UIImage) -> Void
 
@@ -583,8 +748,20 @@ struct ShareMapEditorSheet: View {
     @State private var isCapturing = false
     @Environment(\.dismiss) private var dismiss
 
+    // コース/スポット用
     init(spots: [CourseSpot], initialRegion: MKCoordinateRegion, onConfirm: @escaping (UIImage) -> Void) {
         self.spots = spots
+        self.visitCoordinate = nil
+        self.initialRegion = initialRegion
+        self.onConfirm = onConfirm
+        _cameraPosition = State(initialValue: .region(initialRegion))
+        _currentRegion = State(initialValue: initialRegion)
+    }
+
+    // 訪問記録用
+    init(visitCoordinate: CLLocationCoordinate2D, initialRegion: MKCoordinateRegion, onConfirm: @escaping (UIImage) -> Void) {
+        self.spots = []
+        self.visitCoordinate = visitCoordinate
         self.initialRegion = initialRegion
         self.onConfirm = onConfirm
         _cameraPosition = State(initialValue: .region(initialRegion))
@@ -604,6 +781,10 @@ struct ShareMapEditorSheet: View {
                             ShareMapPinView(orderNumber: index + 1, isCheckedIn: spot.isCheckedIn)
                         }
                     }
+                }
+                if let coord = visitCoordinate {
+                    Marker("", coordinate: coord)
+                        .tint(.indigo)
                 }
             }
             .mapStyle(.standard(emphasis: .muted))
