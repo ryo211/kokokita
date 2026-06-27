@@ -1428,7 +1428,7 @@ private struct SpotListRowView: View {
                             .font(.system(size: 14, weight: .medium))
                             .foregroundStyle(Color.secondary)
                             .frame(width: 36, height: 36)
-                            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                            .background(Color(uiColor: .systemBackground).opacity(0.35), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
                             .overlay {
                                 RoundedRectangle(cornerRadius: 8, style: .continuous)
                                     .strokeBorder(Color.secondary.opacity(0.18), lineWidth: 0.8)
@@ -1449,11 +1449,11 @@ private struct SpotListRowView: View {
                                     : Color.secondary
                             )
                             .frame(width: 36, height: 36)
-                            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                            .background(Color(uiColor: .systemBackground).opacity(0.35), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
                             .overlay {
                                 if isFav {
                                     RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                        .fill(Color(red: 1.0, green: 0.42, blue: 0.62).opacity(0.1))
+                                        .fill(Color(red: 1.0, green: 0.42, blue: 0.62).opacity(0.12))
                                 }
                             }
                             .overlay {
