@@ -37,7 +37,6 @@ struct SpotShareCard: View {
             .frame(width: Self.cardWidth, height: 220)
             .clipped()
 
-            // 下端グラデーション（テキスト読みやすくする）
             LinearGradient(
                 colors: [.clear, .black.opacity(0.55)],
                 startPoint: .top,
@@ -45,7 +44,6 @@ struct SpotShareCard: View {
             )
             .frame(width: Self.cardWidth, height: 110)
 
-            // スポット名・コース名（写真下部に重ねる）
             VStack(alignment: .leading, spacing: 3) {
                 Text(course.title)
                     .font(.caption.weight(.semibold))
@@ -87,7 +85,6 @@ struct SpotShareCard: View {
 
             Divider()
 
-            // アプリロゴフッター
             HStack(spacing: 0) {
                 Image("kokokita-app-icon-clearBlueDeep")
                     .resizable()
@@ -209,6 +206,8 @@ struct SpotSharePreviewSheet: View {
     @State private var mapImage: UIImage? = nil
     @State private var renderedShareImage: UIImage? = nil
     @State private var isRendering = false
+    @State private var editableText: String = ""
+    @State private var showMapEditor = false
 
     var body: some View {
         NavigationStack {
@@ -239,7 +238,23 @@ struct SpotSharePreviewSheet: View {
                 }
             }
         }
+        .sheet(isPresented: $showMapEditor) {
+            if spot.hasValidCoordinate {
+                let coord = CLLocationCoordinate2D(latitude: spot.latitude, longitude: spot.longitude)
+                let radius = spot.recognitionRadiusMeters ?? course.recognitionRadiusMeters
+                let displayRadius = max(radius * 8, 500)
+                let region = MKCoordinateRegion(
+                    center: coord,
+                    latitudinalMeters: displayRadius,
+                    longitudinalMeters: displayRadius
+                )
+                ShareMapEditorSheet(spots: course.spots, initialRegion: region) { image in
+                    mapImage = image
+                }
+            }
+        }
         .task {
+            editableText = L.Share.spotShareText(course.title, spot.name)
             await loadImages()
             await renderShareImage()
         }
@@ -252,11 +267,12 @@ struct SpotSharePreviewSheet: View {
             Label(L.Share.textLabel, systemImage: "text.quote")
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.secondary)
-            Text(shareText)
+            TextEditor(text: $editableText)
                 .font(.subheadline)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(12)
+                .frame(minHeight: 80)
+                .padding(10)
                 .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 10))
+                .scrollContentBackground(.hidden)
         }
         .padding(.horizontal)
     }
@@ -289,30 +305,26 @@ struct SpotSharePreviewSheet: View {
 
     @ViewBuilder
     private var mapPreviewSection: some View {
-        if let mapImg = mapImage {
-            VStack(alignment: .leading, spacing: 8) {
-                Label(L.Share.mapTitle, systemImage: "map")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(.secondary)
-                    .padding(.horizontal)
-                Image(uiImage: mapImg)
-                    .resizable()
-                    .scaledToFit()
-                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                    .padding(.horizontal)
-                    .shadow(color: .black.opacity(0.12), radius: 10, x: 0, y: 4)
+        VStack(alignment: .leading, spacing: 8) {
+            Label(L.Share.mapTitle, systemImage: "map")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+                .padding(.horizontal)
+
+            if let mapImg = mapImage {
+                editableMapThumbnail(image: mapImg)
+            } else {
+                ProgressView()
+                    .frame(maxWidth: .infinity)
+                    .padding(24)
             }
         }
     }
 
     // MARK: - ヘルパー
 
-    private var shareText: String {
-        L.Share.spotShareText(course.title, spot.name)
-    }
-
     private func buildShareItems() -> [Any] {
-        var items: [Any] = [shareText]
+        var items: [Any] = [editableText]
         if let img = renderedShareImage { items.append(img) }
         if let map = mapImage { items.append(map) }
         return items
@@ -329,7 +341,10 @@ struct SpotSharePreviewSheet: View {
         if spot.hasValidCoordinate {
             let coord = CLLocationCoordinate2D(latitude: spot.latitude, longitude: spot.longitude)
             let radius = spot.recognitionRadiusMeters ?? course.recognitionRadiusMeters
-            mapImage = await makeMapSnapshot(coordinate: coord, radius: radius)
+            let displayRadius = max(radius * 8, 500)
+            let region = MKCoordinateRegion(center: coord, latitudinalMeters: displayRadius, longitudinalMeters: displayRadius)
+            let orderNumber = (course.spots.firstIndex(where: { $0.id == spot.id }) ?? 0) + 1
+            mapImage = await makeShareMapSnapshot(region: region, spots: [spot], orderNumbers: [0: orderNumber])
         }
     }
 
@@ -347,32 +362,6 @@ struct SpotSharePreviewSheet: View {
         guard let (data, _) = try? await URLSession.shared.data(from: url) else { return nil }
         return UIImage(data: data)
     }
-
-    private func makeMapSnapshot(coordinate: CLLocationCoordinate2D, radius: Double) async -> UIImage? {
-        let options = MKMapSnapshotter.Options()
-        let displayRadius = max(radius * 8, 500)
-        options.region = MKCoordinateRegion(
-            center: coordinate,
-            latitudinalMeters: displayRadius,
-            longitudinalMeters: displayRadius
-        )
-        options.size = CGSize(width: SpotShareCard.cardWidth, height: 200)
-        options.scale = UIScreen.main.scale
-        options.mapType = .standard
-        options.showsBuildings = true
-        guard let snapshot = try? await MKMapSnapshotter(options: options).start() else { return nil }
-        let pinPoint = snapshot.point(for: coordinate)
-        let size = options.size
-        let renderer = UIGraphicsImageRenderer(size: size)
-        return renderer.image { _ in
-            snapshot.image.draw(at: .zero)
-            let pinSize: CGFloat = 30
-            let pinConfig = UIImage.SymbolConfiguration(pointSize: pinSize, weight: .bold)
-            let pin = UIImage(systemName: "mappin.circle.fill", withConfiguration: pinConfig)?
-                .withTintColor(.systemIndigo, renderingMode: .alwaysOriginal)
-            pin?.draw(at: CGPoint(x: pinPoint.x - pinSize / 2, y: pinPoint.y - pinSize))
-        }
-    }
 }
 
 // MARK: - コース共有プレビューシート
@@ -382,8 +371,11 @@ struct CourseSharePreviewSheet: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var coverImage: UIImage? = nil
+    @State private var mapImage: UIImage? = nil
     @State private var renderedShareImage: UIImage? = nil
     @State private var isRendering = false
+    @State private var editableText: String = ""
+    @State private var showMapEditor = false
 
     var body: some View {
         NavigationStack {
@@ -394,11 +386,12 @@ struct CourseSharePreviewSheet: View {
                         Label(L.Share.textLabel, systemImage: "text.quote")
                             .font(.caption.weight(.semibold))
                             .foregroundStyle(.secondary)
-                        Text(shareText)
+                        TextEditor(text: $editableText)
                             .font(.subheadline)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(12)
+                            .frame(minHeight: 80)
+                            .padding(10)
                             .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 10))
+                            .scrollContentBackground(.hidden)
                     }
                     .padding(.horizontal)
 
@@ -422,6 +415,22 @@ struct CourseSharePreviewSheet: View {
                                 .padding(40)
                         }
                     }
+
+                    // 地図プレビュー
+                    VStack(alignment: .leading, spacing: 8) {
+                        Label(L.Share.mapTitle, systemImage: "map")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                            .padding(.horizontal)
+
+                        if let mapImg = mapImage {
+                            editableMapThumbnail(image: mapImg)
+                        } else {
+                            ProgressView()
+                                .frame(maxWidth: .infinity)
+                                .padding(24)
+                        }
+                    }
                 }
                 .padding(.vertical, 16)
             }
@@ -442,19 +451,26 @@ struct CourseSharePreviewSheet: View {
                 }
             }
         }
+        .sheet(isPresented: $showMapEditor) {
+            ShareMapEditorSheet(
+                spots: course.spots,
+                initialRegion: spotsFitRegion(course.spots)
+            ) { image in
+                mapImage = image
+            }
+        }
         .task {
+            editableText = L.Share.courseShareText(course.title)
             await loadCoverImage()
             await renderShareImage()
+            await generateCourseMap()
         }
     }
 
-    private var shareText: String {
-        L.Share.courseShareText(course.title)
-    }
-
     private func buildShareItems() -> [Any] {
-        var items: [Any] = [shareText]
+        var items: [Any] = [editableText]
         if let img = renderedShareImage { items.append(img) }
+        if let map = mapImage { items.append(map) }
         return items
     }
 
@@ -477,6 +493,191 @@ struct CourseSharePreviewSheet: View {
         renderer.scale = 3.0
         renderedShareImage = renderer.uiImage
     }
+
+    @MainActor
+    private func generateCourseMap() async {
+        let spots = course.spots
+        guard !spots.isEmpty else { return }
+        let region = spotsFitRegion(spots)
+        let orderMap = Dictionary(uniqueKeysWithValues: spots.enumerated().map { ($0.offset, $0.offset + 1) })
+        mapImage = await makeShareMapSnapshot(region: region, spots: spots, orderNumbers: orderMap)
+    }
+}
+
+// MARK: - 地図サムネイル（タップで編集）
+
+/// 共有プレビューシートで使う地図サムネイル共通ビュー
+private func editableMapThumbnail(image: UIImage, action: (() -> Void)? = nil) -> some View {
+    Button {
+        action?()
+    } label: {
+        ZStack(alignment: .bottomTrailing) {
+            Image(uiImage: image)
+                .resizable()
+                .scaledToFit()
+                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+
+            // 編集ヒントバッジ
+            Label(L.Share.mapEditHint, systemImage: "pencil")
+                .font(.caption2.weight(.semibold))
+                .foregroundStyle(.white)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 5)
+                .background(.ultraThinMaterial, in: Capsule())
+                .padding(10)
+        }
+    }
+    .buttonStyle(.plain)
+    .padding(.horizontal)
+    .shadow(color: .black.opacity(0.12), radius: 10, x: 0, y: 4)
+}
+
+// MARK: - View Extension（地図サムネイル呼び出しを簡潔に）
+
+extension SpotSharePreviewSheet {
+    func editableMapThumbnail(image: UIImage) -> some View {
+        Sharing.editableMapThumbnail(image: image) { showMapEditor = true }
+    }
+}
+
+extension CourseSharePreviewSheet {
+    func editableMapThumbnail(image: UIImage) -> some View {
+        Sharing.editableMapThumbnail(image: image) { showMapEditor = true }
+    }
+}
+
+// ネームスペース用 enum（同名関数とViewから呼び分けるため）
+private enum Sharing {
+    static func editableMapThumbnail(image: UIImage, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            ZStack(alignment: .bottomTrailing) {
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFit()
+                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+
+                Label(L.Share.mapEditHint, systemImage: "pencil")
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 5)
+                    .background(.ultraThinMaterial, in: Capsule())
+                    .padding(10)
+            }
+        }
+        .buttonStyle(.plain)
+        .padding(.horizontal)
+        .shadow(color: .black.opacity(0.12), radius: 10, x: 0, y: 4)
+    }
+}
+
+// MARK: - 地図エディターシート
+
+struct ShareMapEditorSheet: View {
+    let spots: [CourseSpot]
+    let initialRegion: MKCoordinateRegion
+    let onConfirm: (UIImage) -> Void
+
+    @State private var cameraPosition: MapCameraPosition
+    @State private var currentRegion: MKCoordinateRegion
+    @State private var isCapturing = false
+    @Environment(\.dismiss) private var dismiss
+
+    init(spots: [CourseSpot], initialRegion: MKCoordinateRegion, onConfirm: @escaping (UIImage) -> Void) {
+        self.spots = spots
+        self.initialRegion = initialRegion
+        self.onConfirm = onConfirm
+        _cameraPosition = State(initialValue: .region(initialRegion))
+        _currentRegion = State(initialValue: initialRegion)
+    }
+
+    var body: some View {
+        NavigationStack {
+            Map(position: $cameraPosition) {
+                ForEach(Array(spots.enumerated()), id: \.element.id) { index, spot in
+                    if spot.hasValidCoordinate {
+                        Annotation(
+                            "",
+                            coordinate: CLLocationCoordinate2D(latitude: spot.latitude, longitude: spot.longitude),
+                            anchor: .center
+                        ) {
+                            ShareMapPinView(orderNumber: index + 1, isCheckedIn: spot.isCheckedIn)
+                        }
+                    }
+                }
+            }
+            .mapStyle(.standard(emphasis: .muted))
+            .mapControls {
+                MapCompass()
+                MapScaleView()
+            }
+            .onMapCameraChange(frequency: .onEnd) { ctx in
+                currentRegion = ctx.region
+            }
+            .ignoresSafeArea(edges: .bottom)
+            .navigationTitle(L.Share.mapEditorTitle)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button(L.Common.cancel) { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    if isCapturing {
+                        ProgressView().controlSize(.small)
+                    } else {
+                        Button(L.Common.done) {
+                            Task { await captureAndConfirm() }
+                        }
+                        .fontWeight(.semibold)
+                    }
+                }
+            }
+        }
+    }
+
+    private func captureAndConfirm() async {
+        isCapturing = true
+        let orderMap = Dictionary(uniqueKeysWithValues: spots.enumerated().map { ($0.offset, $0.offset + 1) })
+        if let image = await makeShareMapSnapshot(region: currentRegion, spots: spots, orderNumbers: orderMap) {
+            onConfirm(image)
+        }
+        dismiss()
+    }
+}
+
+// MARK: - 地図エディター用ピンビュー（SpotPinView と同デザイン）
+
+private struct ShareMapPinView: View {
+    let orderNumber: Int
+    let isCheckedIn: Bool
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .fill(Color.white)
+                .frame(width: 22, height: 22)
+                .shadow(color: .black.opacity(0.25), radius: 3, x: 0, y: 2)
+            ZStack {
+                Circle()
+                    .fill(Color.indigo)
+                    .frame(width: 17, height: 17)
+                Text("\(orderNumber)")
+                    .font(.system(size: 8, weight: .bold))
+                    .foregroundStyle(.white)
+            }
+            .overlay(alignment: .bottomTrailing) {
+                if isCheckedIn {
+                    ZStack {
+                        Circle().fill(Color.white).frame(width: 8, height: 8)
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 4, weight: .bold))
+                            .foregroundStyle(Color.indigo)
+                    }
+                    .offset(x: 2, y: 2)
+                }
+            }
+        }
+    }
 }
 
 // MARK: - App Store バッジビュー
@@ -491,7 +692,6 @@ private struct AppStoreBadgeView: View {
                 .scaledToFit()
                 .frame(height: 30)
         } else {
-            // 公式バッジ未登録時のフォールバック
             HStack(spacing: 5) {
                 Image(systemName: "apple.logo")
                     .font(.system(size: 18, weight: .regular))
@@ -510,6 +710,108 @@ private struct AppStoreBadgeView: View {
     }
 }
 
+// MARK: - 共有地図スナップショット生成（ファイルスコープ）
+
+/// 指定リージョンの地図スナップショットを生成し、SpotPinView スタイルのピンを描画して返す
+private func makeShareMapSnapshot(
+    region: MKCoordinateRegion,
+    spots: [CourseSpot],
+    orderNumbers: [Int: Int]
+) async -> UIImage? {
+    let options = MKMapSnapshotter.Options()
+    options.region = region
+    options.size = CGSize(width: SpotShareCard.cardWidth, height: 200)
+    options.scale = UIScreen.main.scale
+    options.mapType = .standard
+    options.showsBuildings = true
+    guard let snapshot = try? await MKMapSnapshotter(options: options).start() else { return nil }
+    let size = options.size
+    let renderer = UIGraphicsImageRenderer(size: size)
+    return renderer.image { ctx in
+        snapshot.image.draw(at: .zero)
+        for (index, spot) in spots.enumerated() {
+            guard spot.hasValidCoordinate else { continue }
+            let coord = CLLocationCoordinate2D(latitude: spot.latitude, longitude: spot.longitude)
+            let point = snapshot.point(for: coord)
+            // スナップショット外のピンはスキップ
+            guard point.x >= 0, point.x <= size.width,
+                  point.y >= 0, point.y <= size.height else { continue }
+            let orderNumber = orderNumbers[index] ?? (index + 1)
+            drawSpotPin(in: ctx.cgContext, at: point, orderNumber: orderNumber)
+        }
+    }
+}
+
+/// SpotPinView と同デザインのピンを CoreGraphics で描画する（白リング + インディゴ円 + 番号）
+private func drawSpotPin(in ctx: CGContext, at point: CGPoint, orderNumber: Int) {
+    let outerDiameter: CGFloat = 24
+    let innerDiameter: CGFloat = 19
+    let center = CGPoint(x: point.x, y: point.y - outerDiameter / 2)
+
+    // 白い外縁リング（影付き）
+    ctx.saveGState()
+    ctx.setShadow(offset: CGSize(width: 0, height: 2), blur: 3, color: UIColor.black.withAlphaComponent(0.3).cgColor)
+    ctx.setFillColor(UIColor.white.cgColor)
+    ctx.fillEllipse(in: CGRect(
+        x: center.x - outerDiameter / 2,
+        y: center.y - outerDiameter / 2,
+        width: outerDiameter,
+        height: outerDiameter
+    ))
+    ctx.restoreGState()
+
+    // インディゴの内円
+    ctx.setFillColor(UIColor.systemIndigo.cgColor)
+    ctx.fillEllipse(in: CGRect(
+        x: center.x - innerDiameter / 2,
+        y: center.y - innerDiameter / 2,
+        width: innerDiameter,
+        height: innerDiameter
+    ))
+
+    // 番号テキスト
+    let label = "\(orderNumber)"
+    let attrs: [NSAttributedString.Key: Any] = [
+        .font: UIFont.systemFont(ofSize: 9, weight: .bold),
+        .foregroundColor: UIColor.white
+    ]
+    let textSize = label.size(withAttributes: attrs)
+    label.draw(in: CGRect(
+        x: center.x - textSize.width / 2,
+        y: center.y - textSize.height / 2,
+        width: textSize.width,
+        height: textSize.height
+    ), withAttributes: attrs)
+}
+
+// MARK: - 全スポットを収めるリージョン計算
+
+private func spotsFitRegion(_ spots: [CourseSpot]) -> MKCoordinateRegion {
+    let valid = spots.filter { $0.hasValidCoordinate }
+    guard !valid.isEmpty else {
+        return MKCoordinateRegion(
+            center: CLLocationCoordinate2D(latitude: 36.5, longitude: 136.0),
+            span: MKCoordinateSpan(latitudeDelta: 10.0, longitudeDelta: 10.0)
+        )
+    }
+    guard valid.count > 1 else {
+        return MKCoordinateRegion(
+            center: CLLocationCoordinate2D(latitude: valid[0].latitude, longitude: valid[0].longitude),
+            span: MKCoordinateSpan(latitudeDelta: 0.02, longitudeDelta: 0.02)
+        )
+    }
+    let lats = valid.map { $0.latitude }
+    let lons = valid.map { $0.longitude }
+    let centerLat = (lats.min()! + lats.max()!) / 2
+    let centerLon = (lons.min()! + lons.max()!) / 2
+    let spanLat = max((lats.max()! - lats.min()!) * 1.6, 0.01)
+    let spanLon = max((lons.max()! - lons.min()!) * 1.6, 0.01)
+    return MKCoordinateRegion(
+        center: CLLocationCoordinate2D(latitude: centerLat, longitude: centerLon),
+        span: MKCoordinateSpan(latitudeDelta: spanLat, longitudeDelta: spanLon)
+    )
+}
+
 // MARK: - UIActivityViewController を直接 present するヘルパー
 
 /// SwiftUI の .sheet 経由では二重シート競合が発生するため、UIKit レイヤーで直接 present する
@@ -521,7 +823,6 @@ private func presentShareSheet(_ items: [Any]) {
         .first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene,
           let window = scene.windows.first(where: { $0.isKeyWindow }) else { return }
 
-    // iPad: ポップオーバー設定
     if let popover = vc.popoverPresentationController {
         popover.sourceView = window
         popover.sourceRect = CGRect(
@@ -531,7 +832,6 @@ private func presentShareSheet(_ items: [Any]) {
         popover.permittedArrowDirections = []
     }
 
-    // 最前面の ViewController を探して present
     var topVC = window.rootViewController
     while let presented = topVC?.presentedViewController {
         topVC = presented

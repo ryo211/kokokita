@@ -811,6 +811,8 @@ enum L {
         static let imageSection = localized("share.imageSection")
         static let mapTitle = localized("share.mapTitle")
         static let textLabel = localized("share.textLabel")
+        static let mapEditHint = localized("share.mapEditHint")
+        static let mapEditorTitle = localized("share.mapEditorTitle")
         static func spotShareText(_ course: String, _ spot: String) -> String {
             String(format: localized("share.spotShareText"), course, spot)
         }

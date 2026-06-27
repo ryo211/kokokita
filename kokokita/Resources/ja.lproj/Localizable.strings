@@ -737,3 +737,5 @@
 "share.spotShareText" = "%@ の「%@」\n#ココキタ";
 "share.courseShareText" = "%@ \n#ココキタ";
 "share.spotCountLabel" = "%d スポット";
+"share.mapEditHint" = "タップして調整";
+"share.mapEditorTitle" = "地図を調整";

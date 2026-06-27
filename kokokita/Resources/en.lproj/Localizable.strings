@@ -733,3 +733,5 @@
 "share.spotShareText" = "%@ — \"%@\"\n#kokokita";
 "share.courseShareText" = "Explore spots in %@!\n#kokokita";
 "share.spotCountLabel" = "%d spots";
+"share.mapEditHint" = "Tap to adjust";
+"share.mapEditorTitle" = "Adjust Map";
