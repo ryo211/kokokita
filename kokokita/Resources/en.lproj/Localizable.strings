@@ -562,6 +562,23 @@
 "spotList.menu.inquiry" = "Inquiry";
 "spotList.menu.addFolder" = "Add to Folder";
 "spotList.menu.share" = "Share";
+"spotList.mode.folder" = "Folders";
+"spotList.mode.folder.short" = "Folders";
+"spotList.noFolder" = "No spots in this folder";
+
+// MARK: - Folder
+"folder.defaultName" = "Folder";
+"folder.title" = "Add to Folder";
+"folder.new" = "Create New Folder";
+"folder.namePlaceholder" = "Folder Name";
+"folder.create" = "Create";
+"folder.rename" = "Rename";
+"folder.delete" = "Delete";
+"folder.deleteConfirm" = "Delete this folder?";
+"folder.deleteConfirmMessage" = "Spots inside will not be deleted.";
+"folder.select" = "Select Folder";
+"folder.added" = "Added";
+"folder.removeFromFolder" = "Remove from Folder";
 
 // MARK: - Inquiry
 "inquiry.title" = "Inquiry";

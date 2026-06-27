@@ -70,6 +70,17 @@ struct SpotListScreen: View {
     @State private var expandedImageUrl: URL? = nil
 
     @Environment(\.spotFavoriteStore) private var favoriteStore
+    @Environment(\.spotFolderStore) private var folderStore
+
+    /// 現在選択中のフォルダ ID
+    @State private var selectedFolderId: UUID? = nil
+
+    // フォルダ管理アラート
+    @State private var showFolderRenameAlert = false
+    @State private var folderRenameText = ""
+    @State private var showNewFolderAlert = false
+    @State private var newFolderAlertText = ""
+    @State private var showDeleteFolderAlert = false
 
     /// 現在のスポット写真サイズ
     private var spotPhotoSize: CourseSpotPhotoSize {
@@ -79,6 +90,16 @@ struct SpotListScreen: View {
     /// 地点選択が有効かどうか（近くのスポットモード、または距離ソート時）
     private var isLocationSelectionActive: Bool {
         store.listMode == .nearby || store.sortType == .distance
+    }
+
+    /// 現在選択中のフォルダ
+    private var currentFolder: SpotFolder? {
+        folderStore.folders.first(where: { $0.id == selectedFolderId })
+    }
+
+    /// 現在選択中のフォルダのスポット ID 一覧
+    private var currentFolderSpotIds: [UUID] {
+        currentFolder?.spotIds ?? []
     }
 
     var body: some View {
@@ -131,12 +152,27 @@ struct SpotListScreen: View {
         .task {
             store.listMode = initialMode
             store.favoriteSpotIds = favoriteStore.favoriteSpotIds
+            // デフォルトフォルダを初期選択
+            if selectedFolderId == nil {
+                selectedFolderId = folderStore.defaultFolder?.id
+            }
+            store.folderSpotIds = currentFolderSpotIds
             await store.load()
             initializeCamera()
         }
         .onChange(of: favoriteStore.favoriteSpotIds) { _, ids in
             store.favoriteSpotIds = ids
             store.recalculateNearbySpots()
+        }
+        .onChange(of: selectedFolderId) { _, _ in
+            store.folderSpotIds = currentFolderSpotIds
+            store.recalculateNearbySpots()
+            fitAllPoints()
+        }
+        .onChange(of: folderStore.folders) { _, _ in
+            // フォルダ内容が変わった場合（スポット追加・削除）に再計算
+            store.folderSpotIds = currentFolderSpotIds
+            if store.listMode == .folder { store.recalculateNearbySpots() }
         }
         .navigationDestination(item: $courseDetailRoute) { route in
             CourseDetailView(course: route.course, initialSelectedSpotId: route.initialSpotId)
@@ -184,6 +220,39 @@ struct SpotListScreen: View {
             }
         }
         .animation(.easeInOut(duration: 0.2), value: expandedImageUrl != nil)
+        // フォルダ名変更
+        .alert(L.Folder.rename, isPresented: $showFolderRenameAlert) {
+            TextField(L.Folder.namePlaceholder, text: $folderRenameText)
+            Button(L.Common.save) {
+                let name = folderRenameText.trimmingCharacters(in: .whitespacesAndNewlines)
+                if !name.isEmpty, let id = selectedFolderId {
+                    folderStore.renameFolder(id, name: name)
+                }
+            }
+            Button(L.Common.cancel, role: .cancel) {}
+        }
+        // 新規フォルダ作成
+        .alert(L.Folder.new, isPresented: $showNewFolderAlert) {
+            TextField(L.Folder.namePlaceholder, text: $newFolderAlertText)
+            Button(L.Folder.create) {
+                let name = newFolderAlertText.trimmingCharacters(in: .whitespacesAndNewlines)
+                guard !name.isEmpty else { return }
+                let folder = folderStore.createFolder(name: name)
+                selectedFolderId = folder.id
+            }
+            Button(L.Common.cancel, role: .cancel) {}
+        }
+        // フォルダ削除
+        .alert(L.Folder.deleteConfirm, isPresented: $showDeleteFolderAlert) {
+            Button(L.Common.delete, role: .destructive) {
+                guard let id = selectedFolderId else { return }
+                folderStore.deleteFolder(id)
+                selectedFolderId = folderStore.defaultFolder?.id
+            }
+            Button(L.Common.cancel, role: .cancel) {}
+        } message: {
+            Text(L.Folder.deleteConfirmMessage)
+        }
     }
 
     // MARK: - 地図セクション
@@ -310,14 +379,25 @@ struct SpotListScreen: View {
     // MARK: - モード切替タブ（左側付箋UI）
 
     private var spotModeTabsView: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            ForEach(Array(SpotListMode.allCases.enumerated()), id: \.element) { index, mode in
+        let mainModes: [SpotListMode] = [.nearby, .favorites, .visited]
+        let allModes = SpotListMode.allCases
+        return VStack(alignment: .leading, spacing: 4) {
+            // 近く・お気に入り・行った
+            ForEach(Array(mainModes.enumerated()), id: \.element) { index, mode in
                 let isSelected = store.listMode == mode
                 SpotModeTabButton(mode: mode, isSelected: isSelected) {
                     switchMode(to: mode)
                 }
-                .zIndex(isSelected ? 10 : Double(SpotListMode.allCases.count - index))
+                .zIndex(isSelected ? 10 : Double(allModes.count - index))
             }
+            // 区切り（フォルダタブを少し離す）
+            Spacer().frame(height: 8)
+            // フォルダ
+            let isFolderSelected = store.listMode == .folder
+            SpotModeTabButton(mode: .folder, isSelected: isFolderSelected) {
+                switchMode(to: .folder)
+            }
+            .zIndex(isFolderSelected ? 10 : 1)
         }
     }
 
@@ -328,6 +408,10 @@ struct SpotListScreen: View {
         if let currentIdx = allModes.firstIndex(of: store.listMode),
            let newIdx = allModes.firstIndex(of: mode) {
             listTransitionEdge = newIdx > currentIdx ? .trailing : .leading
+        }
+        // フォルダモードに切り替える際はスポットIDを同期
+        if mode == .folder {
+            store.folderSpotIds = currentFolderSpotIds
         }
         withAnimation(.spring(response: 0.3, dampingFraction: 0.75)) {
             selectedSpotId = nil
@@ -547,8 +631,56 @@ struct SpotListScreen: View {
             Group {
                 if store.isLoading {
                     ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else if store.nearbySpots.isEmpty {
+                } else if store.nearbySpots.isEmpty && store.listMode != .folder {
                     emptyView
+                } else if store.listMode == .folder {
+                    // フォルダモード: ヘッダー + スポット一覧（空の場合もヘッダーを表示）
+                    ScrollViewReader { proxy in
+                        ScrollView {
+                            LazyVStack(spacing: 0) {
+                                folderSelectorHeader
+                                    .padding(.horizontal, 16)
+                                    .padding(.vertical, 10)
+                                Divider()
+                                if store.nearbySpots.isEmpty {
+                                    VStack(spacing: 12) {
+                                        Image(systemName: "folder")
+                                            .font(.largeTitle)
+                                            .foregroundStyle(.secondary)
+                                        Text(L.SpotList.noFolder)
+                                            .font(.subheadline)
+                                            .foregroundStyle(.secondary)
+                                            .multilineTextAlignment(.center)
+                                    }
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 48)
+                                } else {
+                                    ForEach(Array(store.nearbySpots.enumerated()), id: \.element.spot.id) { index, item in
+                                        SpotListRowView(
+                                            spot: item.spot,
+                                            course: item.course,
+                                            orderNumber: index + 1,
+                                            isSelected: selectedSpotId == item.spot.id,
+                                            distance: nil,
+                                            onCourseTap: { courseDetailRoute = CourseRoute(course: item.course, initialSpotId: item.spot.id) },
+                                            currentFolderId: selectedFolderId
+                                        )
+                                        .id(item.spot.id)
+                                        .contentShape(Rectangle())
+                                        .onTapGesture { focusOrUnfocus(item: item) }
+                                        if index < store.nearbySpots.count - 1 {
+                                            Divider().padding(.leading, 60)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        .onChange(of: selectedSpotId) { _, newId in
+                            if let id = newId {
+                                withAnimation { proxy.scrollTo(id, anchor: .top) }
+                            }
+                        }
+                    }
                 } else {
                     ScrollViewReader { proxy in
                         ScrollView {
@@ -608,6 +740,73 @@ struct SpotListScreen: View {
         .clipped()
     }
 
+    // フォルダモードのヘッダー: フォルダ名 + 切り替えメニュー
+    private var folderSelectorHeader: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "folder.fill")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.indigo)
+
+            // フォルダ切り替えドロップダウン
+            Menu {
+                ForEach(folderStore.folders) { folder in
+                    Button {
+                        selectedFolderId = folder.id
+                    } label: {
+                        if selectedFolderId == folder.id {
+                            Label(folder.name, systemImage: "checkmark")
+                        } else {
+                            Text(folder.name)
+                        }
+                    }
+                }
+            } label: {
+                HStack(spacing: 4) {
+                    Text(currentFolder?.name ?? L.Folder.select)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.primary)
+                    Image(systemName: "chevron.up.chevron.down")
+                        .font(.system(size: 10, weight: .semibold))
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .buttonStyle(.plain)
+
+            Spacer()
+
+            // フォルダ管理メニュー
+            Menu {
+                Button {
+                    folderRenameText = currentFolder?.name ?? ""
+                    showFolderRenameAlert = true
+                } label: {
+                    Label(L.Folder.rename, systemImage: "pencil")
+                }
+
+                Button {
+                    newFolderAlertText = ""
+                    showNewFolderAlert = true
+                } label: {
+                    Label(L.Folder.new, systemImage: "folder.badge.plus")
+                }
+
+                if currentFolder?.isDefault == false {
+                    Divider()
+                    Button(role: .destructive) {
+                        showDeleteFolderAlert = true
+                    } label: {
+                        Label(L.Folder.delete, systemImage: "trash")
+                    }
+                }
+            } label: {
+                Image(systemName: "ellipsis.circle")
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundStyle(.indigo)
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
     private var filterButton: some View {
         Button {
             withAnimation(.spring(duration: 0.35, bounce: 0.05)) { showFilter = true }
@@ -657,6 +856,8 @@ struct SpotListScreen: View {
                 return L.SpotList.locationUnavailable
             }
             return L.SpotList.noVisited
+        case .folder:
+            return L.SpotList.noFolder
         }
     }
 
@@ -1000,8 +1201,8 @@ private struct SpotModeTabButton: View {
     let isSelected: Bool
     let action: () -> Void
 
-    private let selectedWidth: CGFloat = 104
-    private let unselectedWidth: CGFloat = 80
+    private let selectedWidth: CGFloat = 120
+    private let unselectedWidth: CGFloat = 96
     /// 全 SF Symbol を同じ幅で並べてテキスト開始位置を揃える
     private let iconWidth: CGFloat = 14
     /// 全モード・選択状態で統一フォントサイズ（minimumScaleFactor を使わない）
@@ -1141,10 +1342,14 @@ private struct SpotListRowView: View {
     let isSelected: Bool
     var distance: Double? = nil
     var onCourseTap: () -> Void = {}
+    /// フォルダモードで表示中の場合に設定。メニューが「削除」に切り替わる
+    var currentFolderId: UUID? = nil
 
     @Environment(\.spotFavoriteStore) private var favoriteStore
+    @Environment(\.spotFolderStore) private var folderStore
     @State private var showInquiry = false
     @State private var showShare = false
+    @State private var showFolderPicker = false
 
     private var distanceText: String? {
         guard let d = distance else { return nil }
@@ -1211,8 +1416,18 @@ private struct SpotListRowView: View {
                 VStack(spacing: 6) {
                     // 3点メニューボタン
                     Menu {
-                        Button { } label: {
-                            Label(L.SpotList.menuAddFolder, systemImage: "folder.badge.plus")
+                        if let folderId = currentFolderId {
+                            // フォルダモードから表示: 削除ボタン
+                            Button(role: .destructive) {
+                                folderStore.removeSpot(spot.id, from: folderId)
+                            } label: {
+                                Label(L.Folder.removeFromFolder, systemImage: "folder.badge.minus")
+                            }
+                        } else {
+                            // 通常モード: 追加ボタン（一方向・状態なし）
+                            Button { showFolderPicker = true } label: {
+                                Label(L.SpotList.menuAddFolder, systemImage: "folder.badge.plus")
+                            }
                         }
                         Button { showInquiry = true } label: {
                             Label(L.SpotList.menuInquiry, systemImage: "questionmark.circle")
@@ -1276,6 +1491,9 @@ private struct SpotListRowView: View {
         }
         .sheet(isPresented: $showShare) {
             SpotSharePreviewSheet(spot: spot, course: course)
+        }
+        .sheet(isPresented: $showFolderPicker) {
+            FolderPickerSheet(spot: spot)
         }
     }
 }

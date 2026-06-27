@@ -566,6 +566,23 @@
 "spotList.menu.inquiry" = "問い合わせ";
 "spotList.menu.addFolder" = "フォルダ追加";
 "spotList.menu.share" = "共有";
+"spotList.mode.folder" = "フォルダ";
+"spotList.mode.folder.short" = "フォルダ";
+"spotList.noFolder" = "このフォルダにスポットがありません";
+
+// MARK: - Folder（フォルダ機能）
+"folder.defaultName" = "フォルダ";
+"folder.title" = "フォルダに追加";
+"folder.new" = "新しいフォルダを作成";
+"folder.namePlaceholder" = "フォルダ名";
+"folder.create" = "作成";
+"folder.rename" = "名前を変更";
+"folder.delete" = "削除";
+"folder.deleteConfirm" = "このフォルダを削除しますか？";
+"folder.deleteConfirmMessage" = "フォルダ内のスポットは削除されません。";
+"folder.select" = "フォルダを選択";
+"folder.added" = "追加済み";
+"folder.removeFromFolder" = "フォルダから削除";
 
 // MARK: - Inquiry（問い合わせ）
 "inquiry.title" = "問い合わせ";

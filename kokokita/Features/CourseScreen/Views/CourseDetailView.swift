@@ -1304,8 +1304,10 @@ private struct SpotListRowView: View {
     var tourTypewriterCount: Int? = nil
 
     @Environment(\.spotFavoriteStore) private var favoriteStore
+    @Environment(\.spotFolderStore) private var folderStore
     @State private var showInquiry = false
     @State private var showShare = false
+    @State private var showFolderPicker = false
 
     private var distanceText: String? {
         guard let d = distance else { return nil }
@@ -1414,7 +1416,7 @@ private struct SpotListRowView: View {
                 VStack(spacing: 6) {
                     // 3点メニューボタン
                     Menu {
-                        Button { } label: {
+                        Button { showFolderPicker = true } label: {
                             Label(L.SpotList.menuAddFolder, systemImage: "folder.badge.plus")
                         }
                         Button { showInquiry = true } label: {
@@ -1482,6 +1484,9 @@ private struct SpotListRowView: View {
         }
         .sheet(isPresented: $showShare) {
             SpotSharePreviewSheet(spot: spot, course: course)
+        }
+        .sheet(isPresented: $showFolderPicker) {
+            FolderPickerSheet(spot: spot)
         }
     }
 }

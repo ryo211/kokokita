@@ -27,6 +27,7 @@ struct KokokitaApp: App {
 
     @State private var uiState = AppUIState()
     @State private var spotFavoriteStore = SpotFavoriteStore()
+    @State private var spotFolderStore = SpotFolderStore()
     @Environment(\.scenePhase) private var scenePhase
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
 
@@ -36,6 +37,7 @@ struct KokokitaApp: App {
                 .environment(uiState)
                 .environment(\.managedObjectContext, CoreDataStack.shared.context)
                 .environment(\.spotFavoriteStore, spotFavoriteStore)
+                .environment(\.spotFolderStore, spotFolderStore)
                 .task {
                     // ブック初期化後に AppUIState へ反映
                     uiState.currentBook = AppContainer.shared.currentBook

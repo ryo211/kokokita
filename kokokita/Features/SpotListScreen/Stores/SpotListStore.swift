@@ -7,12 +7,14 @@ enum SpotListMode: CaseIterable, Hashable {
     case nearby      // 近くのスポット（有効コースの全スポット・距離順）
     case favorites   // お気に入りスポット
     case visited     // 行ったスポット（達成済み）
+    case folder      // フォルダ内スポット
 
     var title: String {
         switch self {
         case .nearby:    return L.SpotList.modeNearby
         case .favorites: return L.SpotList.modeFavorites
         case .visited:   return L.SpotList.modeVisited
+        case .folder:    return L.SpotList.modeFolder
         }
     }
 
@@ -21,6 +23,7 @@ enum SpotListMode: CaseIterable, Hashable {
         case .nearby:    return L.SpotList.modeNearbyShort
         case .favorites: return L.SpotList.modeFavoritesShort
         case .visited:   return L.SpotList.modeVisitedShort
+        case .folder:    return L.SpotList.modeFolderShort
         }
     }
 
@@ -29,6 +32,7 @@ enum SpotListMode: CaseIterable, Hashable {
         case .nearby:    return "location.north.line.fill"
         case .favorites: return "heart.fill"
         case .visited:   return "checkmark.seal.fill"
+        case .folder:    return "folder.fill"
         }
     }
 }
@@ -65,6 +69,8 @@ final class SpotListStore {
     var prefectureFilter: String? = nil
     /// お気に入りID（View から同期）
     var favoriteSpotIds: Set<UUID> = []
+    /// フォルダ内スポットID（View から同期、順序保持）
+    var folderSpotIds: [UUID] = []
     var isLoading = false
     var errorMessage: String?
 
@@ -87,6 +93,10 @@ final class SpotListStore {
             return active.filter { course in
                 course.spots.contains { $0.isCheckedIn }
             }
+        case .folder:
+            return active.filter { course in
+                course.spots.contains { folderSpotIds.contains($0.id) }
+            }
         }
     }
 
@@ -100,6 +110,7 @@ final class SpotListStore {
                 case .nearby:    return valid
                 case .favorites: return valid.filter { favoriteSpotIds.contains($0.id) }
                 case .visited:   return valid.filter { $0.isCheckedIn }
+                case .folder:    return valid.filter { folderSpotIds.contains($0.id) }
                 }
             }
             .count
@@ -132,6 +143,7 @@ final class SpotListStore {
             case .nearby:    spots = course.spots
             case .favorites: spots = course.spots.filter { favoriteSpotIds.contains($0.id) }
             case .visited:   spots = course.spots.filter { $0.isCheckedIn }
+            case .folder:    spots = course.spots.filter { folderSpotIds.contains($0.id) }
             }
             for spot in spots {
                 if let pref = Self.extractPrefecture(from: spot.address) {
@@ -140,6 +152,17 @@ final class SpotListStore {
             }
         }
         return Self.prefectureList.filter { seen.contains($0) }
+    }
+
+    // MARK: - 都道府県ユーティリティ（availablePrefectures の spotフィルター分岐）
+
+    private func spotsForPrefectureFilter(course: Course) -> [CourseSpot] {
+        switch listMode {
+        case .nearby:    return course.spots
+        case .favorites: return course.spots.filter { favoriteSpotIds.contains($0.id) }
+        case .visited:   return course.spots.filter { $0.isCheckedIn }
+        case .folder:    return course.spots.filter { folderSpotIds.contains($0.id) }
+        }
     }
 
     private let repo: CourseRepository
@@ -194,6 +217,8 @@ final class SpotListStore {
             recalculateFavorites()
         case .visited:
             recalculateVisited()
+        case .folder:
+            recalculateFolder()
         }
     }
 
@@ -241,6 +266,32 @@ final class SpotListStore {
         case .distance:
             nearbySpots = results.sorted { $0.distance < $1.distance }
         }
+    }
+
+    /// フォルダモード: フォルダ内スポットを登録順（folderSpotIds の順序）で全件表示
+    private func recalculateFolder() {
+        let fromLocation = selectedCoordinate.map { CLLocation(latitude: $0.latitude, longitude: $0.longitude) }
+        var spotMap: [UUID: (course: Course, spot: CourseSpot)] = [:]
+
+        for course in courses where !excludedCourseIds.contains(course.id) && (!course.isUserCreated || course.isEnabled) {
+            for spot in course.spots where spot.hasValidCoordinate && folderSpotIds.contains(spot.id) {
+                if let pref = prefectureFilter,
+                   Self.extractPrefecture(from: spot.address) != pref { continue }
+                spotMap[spot.id] = (course, spot)
+            }
+        }
+
+        // folderSpotIds の登録順を維持しつつ結果を構築
+        var results: [(course: Course, spot: CourseSpot, distance: Double)] = []
+        for spotId in folderSpotIds {
+            guard let entry = spotMap[spotId] else { continue }
+            let distance = fromLocation.map {
+                CLLocation(latitude: entry.spot.latitude, longitude: entry.spot.longitude).distance(from: $0)
+            } ?? 0
+            results.append((entry.course, entry.spot, distance))
+        }
+
+        nearbySpots = results
     }
 
     /// 行ったスポットモード: 達成済みスポットを追加順（チェックイン日時降順）または距離順で全件表示

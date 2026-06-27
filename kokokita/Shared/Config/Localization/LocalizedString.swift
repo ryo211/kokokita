@@ -628,6 +628,25 @@ enum L {
         static let menuInquiry = localized("spotList.menu.inquiry")
         static let menuAddFolder = localized("spotList.menu.addFolder")
         static let menuShare = localized("spotList.menu.share")
+        static let modeFolder = localized("spotList.mode.folder")
+        static let modeFolderShort = localized("spotList.mode.folder.short")
+        static let noFolder = localized("spotList.noFolder")
+    }
+
+    // MARK: - Folder（フォルダ機能）
+    enum Folder {
+        static let defaultName = localized("folder.defaultName")
+        static let title = localized("folder.title")
+        static let new = localized("folder.new")
+        static let namePlaceholder = localized("folder.namePlaceholder")
+        static let create = localized("folder.create")
+        static let rename = localized("folder.rename")
+        static let delete = localized("folder.delete")
+        static let deleteConfirm = localized("folder.deleteConfirm")
+        static let deleteConfirmMessage = localized("folder.deleteConfirmMessage")
+        static let select = localized("folder.select")
+        static let added = localized("folder.added")
+        static let removeFromFolder = localized("folder.removeFromFolder")
     }
 
     // MARK: - TaxonomyList（タクソノミー一覧ソート）
