@@ -698,7 +698,7 @@ struct VisitSharePreviewSheet: View {
     private func generateMapSnapshot() async {
         guard let coord = data.coordinate else { return }
         let region = MKCoordinateRegion(center: coord, latitudinalMeters: 1000, longitudinalMeters: 1000)
-        mapImage = await makeShareMapSnapshot(region: region, spots: [], orderNumbers: [:])
+        mapImage = await makeShareMapSnapshot(region: region, spots: [], orderNumbers: [:], pinCoordinate: coord)
     }
 
     @MainActor
@@ -819,7 +819,7 @@ struct ShareMapEditorSheet: View {
     private func captureAndConfirm() async {
         isCapturing = true
         let orderMap = Dictionary(uniqueKeysWithValues: spots.enumerated().map { ($0.offset, $0.offset + 1) })
-        if let image = await makeShareMapSnapshot(region: currentRegion, spots: spots, orderNumbers: orderMap) {
+        if let image = await makeShareMapSnapshot(region: currentRegion, spots: spots, orderNumbers: orderMap, pinCoordinate: visitCoordinate) {
             onConfirm(image)
         }
         dismiss()
@@ -873,7 +873,8 @@ private struct AppStoreBadgeView: View {
 private func makeShareMapSnapshot(
     region: MKCoordinateRegion,
     spots: [CourseSpot],
-    orderNumbers: [Int: Int]
+    orderNumbers: [Int: Int],
+    pinCoordinate: CLLocationCoordinate2D? = nil
 ) async -> UIImage? {
     let options = MKMapSnapshotter.Options()
     options.region = region
@@ -886,14 +887,22 @@ private func makeShareMapSnapshot(
     let renderer = UIGraphicsImageRenderer(size: size)
     return renderer.image { _ in
         snapshot.image.draw(at: .zero)
+        // コーススポットのピン
         for (_, spot) in spots.enumerated() {
             guard spot.hasValidCoordinate else { continue }
             let coord = CLLocationCoordinate2D(latitude: spot.latitude, longitude: spot.longitude)
             let point = snapshot.point(for: coord)
-            // スナップショット外のピンはスキップ
             guard point.x >= 0, point.x <= size.width,
                   point.y >= 0, point.y <= size.height else { continue }
             drawSpotPin(at: point)
+        }
+        // 単一座標ピン（訪問記録共有用）
+        if let coord = pinCoordinate {
+            let point = snapshot.point(for: coord)
+            if point.x >= 0, point.x <= size.width,
+               point.y >= 0, point.y <= size.height {
+                drawSpotPin(at: point)
+            }
         }
     }
 }
