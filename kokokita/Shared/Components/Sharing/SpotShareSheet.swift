@@ -771,14 +771,14 @@ struct ShareMapEditorSheet: View {
     var body: some View {
         NavigationStack {
             Map(position: $cameraPosition) {
-                ForEach(Array(spots.enumerated()), id: \.element.id) { index, spot in
+                ForEach(spots, id: \.id) { spot in
                     if spot.hasValidCoordinate {
                         Annotation(
                             "",
                             coordinate: CLLocationCoordinate2D(latitude: spot.latitude, longitude: spot.longitude),
-                            anchor: .center
+                            anchor: .bottom
                         ) {
-                            ShareMapPinView(orderNumber: index + 1, isCheckedIn: spot.isCheckedIn)
+                            ShareMapPinView()
                         }
                     }
                 }
@@ -826,38 +826,14 @@ struct ShareMapEditorSheet: View {
     }
 }
 
-// MARK: - 地図エディター用ピンビュー（SpotPinView と同デザイン）
+// MARK: - 地図エディター用ピンビュー（近くモードの任意ピンと同デザイン）
 
 private struct ShareMapPinView: View {
-    let orderNumber: Int
-    let isCheckedIn: Bool
-
     var body: some View {
-        ZStack {
-            Circle()
-                .fill(Color.white)
-                .frame(width: 22, height: 22)
-                .shadow(color: .black.opacity(0.25), radius: 3, x: 0, y: 2)
-            ZStack {
-                Circle()
-                    .fill(Color.indigo)
-                    .frame(width: 17, height: 17)
-                Text("\(orderNumber)")
-                    .font(.system(size: 8, weight: .bold))
-                    .foregroundStyle(.white)
-            }
-            .overlay(alignment: .bottomTrailing) {
-                if isCheckedIn {
-                    ZStack {
-                        Circle().fill(Color.white).frame(width: 8, height: 8)
-                        Image(systemName: "checkmark")
-                            .font(.system(size: 4, weight: .bold))
-                            .foregroundStyle(Color.indigo)
-                    }
-                    .offset(x: 2, y: 2)
-                }
-            }
-        }
+        Image(systemName: "mappin")
+            .font(.system(size: 28))
+            .foregroundStyle(.indigo)
+            .shadow(radius: 3)
     }
 }
 
@@ -908,61 +884,38 @@ private func makeShareMapSnapshot(
     guard let snapshot = try? await MKMapSnapshotter(options: options).start() else { return nil }
     let size = options.size
     let renderer = UIGraphicsImageRenderer(size: size)
-    return renderer.image { ctx in
+    return renderer.image { _ in
         snapshot.image.draw(at: .zero)
-        for (index, spot) in spots.enumerated() {
+        for (_, spot) in spots.enumerated() {
             guard spot.hasValidCoordinate else { continue }
             let coord = CLLocationCoordinate2D(latitude: spot.latitude, longitude: spot.longitude)
             let point = snapshot.point(for: coord)
             // スナップショット外のピンはスキップ
             guard point.x >= 0, point.x <= size.width,
                   point.y >= 0, point.y <= size.height else { continue }
-            let orderNumber = orderNumbers[index] ?? (index + 1)
-            drawSpotPin(in: ctx.cgContext, at: point, orderNumber: orderNumber)
+            drawSpotPin(at: point)
         }
     }
 }
 
-/// SpotPinView と同デザインのピンを CoreGraphics で描画する（白リング + インディゴ円 + 番号）
-private func drawSpotPin(in ctx: CGContext, at point: CGPoint, orderNumber: Int) {
-    let outerDiameter: CGFloat = 24
-    let innerDiameter: CGFloat = 19
-    let center = CGPoint(x: point.x, y: point.y - outerDiameter / 2)
-
-    // 白い外縁リング（影付き）
+/// 近くモードの任意ピンと同デザインの mappin SF Symbol を描画する
+private func drawSpotPin(at point: CGPoint) {
+    let config = UIImage.SymbolConfiguration(pointSize: 28, weight: .regular)
+    guard let pinImage = UIImage(systemName: "mappin", withConfiguration: config)?
+        .withTintColor(.systemIndigo, renderingMode: .alwaysOriginal) else { return }
+    let pinSize = pinImage.size
+    guard let ctx = UIGraphicsGetCurrentContext() else { return }
     ctx.saveGState()
-    ctx.setShadow(offset: CGSize(width: 0, height: 2), blur: 3, color: UIColor.black.withAlphaComponent(0.3).cgColor)
-    ctx.setFillColor(UIColor.white.cgColor)
-    ctx.fillEllipse(in: CGRect(
-        x: center.x - outerDiameter / 2,
-        y: center.y - outerDiameter / 2,
-        width: outerDiameter,
-        height: outerDiameter
+    ctx.setShadow(offset: CGSize(width: 0, height: 2), blur: 4,
+                  color: UIColor.black.withAlphaComponent(0.35).cgColor)
+    // mappin の先端(下端中央)が point に来るよう配置
+    pinImage.draw(in: CGRect(
+        x: point.x - pinSize.width / 2,
+        y: point.y - pinSize.height,
+        width: pinSize.width,
+        height: pinSize.height
     ))
     ctx.restoreGState()
-
-    // インディゴの内円
-    ctx.setFillColor(UIColor.systemIndigo.cgColor)
-    ctx.fillEllipse(in: CGRect(
-        x: center.x - innerDiameter / 2,
-        y: center.y - innerDiameter / 2,
-        width: innerDiameter,
-        height: innerDiameter
-    ))
-
-    // 番号テキスト
-    let label = "\(orderNumber)"
-    let attrs: [NSAttributedString.Key: Any] = [
-        .font: UIFont.systemFont(ofSize: 9, weight: .bold),
-        .foregroundColor: UIColor.white
-    ]
-    let textSize = label.size(withAttributes: attrs)
-    label.draw(in: CGRect(
-        x: center.x - textSize.width / 2,
-        y: center.y - textSize.height / 2,
-        width: textSize.width,
-        height: textSize.height
-    ), withAttributes: attrs)
 }
 
 // MARK: - 全スポットを収めるリージョン計算
