@@ -784,7 +784,7 @@ struct ShareMapEditorSheet: View {
                 }
                 if let coord = visitCoordinate {
                     Marker("", coordinate: coord)
-                        .tint(.indigo)
+                        .tint(.blue)
                 }
             }
             .mapStyle(.standard(emphasis: .muted))
@@ -896,22 +896,22 @@ private func makeShareMapSnapshot(
                   point.y >= 0, point.y <= size.height else { continue }
             drawSpotPin(at: point)
         }
-        // 単一座標ピン（訪問記録共有用）
+        // 単一座標ピン（訪問記録共有用：青）
         if let coord = pinCoordinate {
             let point = snapshot.point(for: coord)
             if point.x >= 0, point.x <= size.width,
                point.y >= 0, point.y <= size.height {
-                drawSpotPin(at: point)
+                drawSpotPin(at: point, color: .systemBlue)
             }
         }
     }
 }
 
 /// 近くモードの任意ピンと同デザインの mappin SF Symbol を描画する
-private func drawSpotPin(at point: CGPoint) {
+private func drawSpotPin(at point: CGPoint, color: UIColor = .systemIndigo) {
     let config = UIImage.SymbolConfiguration(pointSize: 28, weight: .regular)
     guard let pinImage = UIImage(systemName: "mappin", withConfiguration: config)?
-        .withTintColor(.systemIndigo, renderingMode: .alwaysOriginal) else { return }
+        .withTintColor(color, renderingMode: .alwaysOriginal) else { return }
     let pinSize = pinImage.size
     guard let ctx = UIGraphicsGetCurrentContext() else { return }
     ctx.saveGState()
