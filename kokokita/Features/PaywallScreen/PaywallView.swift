@@ -50,34 +50,46 @@ struct PaywallView: View {
     // MARK: - Hero
 
     private var heroSection: some View {
-        VStack(spacing: 12) {
-            ZStack {
-                Circle()
-                    .fill(
-                        LinearGradient(
-                            colors: [.orange, .yellow],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .frame(width: 80, height: 80)
-                    .shadow(color: .orange.opacity(0.35), radius: 12, x: 0, y: 4)
-                Image(systemName: "crown.fill")
-                    .font(.system(size: 36))
-                    .foregroundStyle(.white)
+        ZStack(alignment: .bottom) {
+            // 上からフェードするグラデーション背景
+            LinearGradient(
+                colors: [
+                    Color.blue.opacity(0.14),
+                    Color.indigo.opacity(0.06),
+                    Color(uiColor: .systemBackground).opacity(0)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .frame(maxWidth: .infinity)
+            .frame(height: 260)
+
+            VStack(spacing: 16) {
+                // kokokita_prp 画像（アプリアイコン風カード）
+                Image("kokokita_prp")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 130, height: 130)
+                    .background(Color.white)
+                    .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
+                    .shadow(color: Color.blue.opacity(0.22), radius: 24, x: 0, y: 10)
+                    .shadow(color: Color.black.opacity(0.08), radius: 6,  x: 0, y: 3)
+                    .padding(.top, 36)
+
+                VStack(spacing: 6) {
+                    Text(L.Paywall.title)
+                        .font(.title2.bold())
+
+                    Text(L.Paywall.subtitle)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                }
+                .padding(.horizontal, 24)
+                .padding(.bottom, 20)
             }
-            .padding(.top, 24)
-
-            Text(L.Paywall.title)
-                .font(.title2.bold())
-
-            Text(L.Paywall.subtitle)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
         }
-        .padding(.horizontal, 24)
-        .padding(.bottom, 24)
+        .padding(.bottom, 8)
     }
 
     // MARK: - 機能リスト
