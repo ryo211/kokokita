@@ -7,10 +7,15 @@ struct SettingsSheet: View {
     @State private var showCandidateReview = false
     @State private var showExcludedLocations = false
     @State private var pendingCandidateCount: Int = 0
+    @State private var showPaywall = false
+    private var premiumManager = PremiumManager.shared
 
     var body: some View {
         NavigationStack {
             List {
+                // プレミアム
+                premiumSection
+
                 // 自動記録
                 Section {
                     Toggle(isOn: $autoRecordSettings.isEnabled) {
@@ -137,7 +142,80 @@ struct SettingsSheet: View {
                 AutoRecordCandidateReviewScreen()
                     .onDisappear { loadPendingCount() }
             }
+            .sheet(isPresented: $showPaywall) {
+                PaywallView()
+            }
             .onAppear { loadPendingCount() }
+        }
+    }
+
+    // MARK: - Premium Section
+
+    private var premiumSection: some View {
+        Section {
+            if premiumManager.isPremium {
+                // 購入済み：ステータス表示
+                HStack(spacing: 14) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .fill(Color.orange.opacity(0.12))
+                            .frame(width: 36, height: 36)
+                        Image("kokokita_prp")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 28, height: 28)
+                    }
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(L.SettingsSheet.premiumActive)
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(.orange)
+                        Text(L.SettingsSheet.premiumActiveDescription)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    Image(systemName: "checkmark.seal.fill")
+                        .foregroundStyle(.orange)
+                }
+                .padding(.vertical, 4)
+            } else {
+                // 未購入：アップグレードCTA
+                Button {
+                    showPaywall = true
+                } label: {
+                    HStack(spacing: 14) {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                .fill(
+                                    LinearGradient(
+                                        colors: [.orange.opacity(0.18), .yellow.opacity(0.12)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .frame(width: 36, height: 36)
+                            Image("kokokita_prp")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 28, height: 28)
+                        }
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(L.SettingsSheet.premiumUpgrade)
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(.primary)
+                            Text(L.SettingsSheet.premiumUpgradeDescription)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(.vertical, 4)
+                }
+                .buttonStyle(.plain)
+            }
         }
     }
 

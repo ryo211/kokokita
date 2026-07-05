@@ -449,6 +449,10 @@ enum L {
         static let reviewApp = localized("settingssheet.reviewApp")
         static let developerTools = localized("settingssheet.developerTools")
         static let version = localized("settingssheet.version")
+        static let premiumUpgrade = localized("settingssheet.premiumUpgrade")
+        static let premiumUpgradeDescription = localized("settingssheet.premiumUpgradeDescription")
+        static let premiumActive = localized("settingssheet.premiumActive")
+        static let premiumActiveDescription = localized("settingssheet.premiumActiveDescription")
     }
 
     // MARK: - Course Screen

@@ -325,6 +325,10 @@
 "settingssheet.reviewApp" = "このアプリをレビューする";
 "settingssheet.developerTools" = "開発者ツール";
 "settingssheet.version" = "バージョン";
+"settingssheet.premiumUpgrade" = "プレミアムにアップグレード";
+"settingssheet.premiumUpgradeDescription" = "広告非表示・複数ブック・コース再生";
+"settingssheet.premiumActive" = "プレミアム会員";
+"settingssheet.premiumActiveDescription" = "すべてのプレミアム機能をご利用中です";
 
 // MARK: - Course Screen
 "course.title" = "コース";
@@ -714,7 +718,7 @@
 "courseDetail.menu.spotPhotoSize" = "スポット写真";
 
 // MARK: - Paywall（課金ペイウォール）
-"paywall.title" = "ккокита プレミアム";
+"paywall.title" = "ココキタ プレミアム";
 "paywall.subtitle" = "もっと深く、もっと自由に";
 "paywall.feature.noAds" = "広告を非表示";
 "paywall.feature.noAdsDesc" = "広告なしでスッキリ使える";

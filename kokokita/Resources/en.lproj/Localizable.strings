@@ -323,6 +323,10 @@
 "settingssheet.reviewApp" = "Review This App";
 "settingssheet.developerTools" = "Developer Tools";
 "settingssheet.version" = "Version";
+"settingssheet.premiumUpgrade" = "Upgrade to Premium";
+"settingssheet.premiumUpgradeDescription" = "No ads · Multiple books · Course playback";
+"settingssheet.premiumActive" = "Premium Member";
+"settingssheet.premiumActiveDescription" = "You have access to all premium features";
 
 // MARK: - Course Screen
 "course.title" = "Course";
