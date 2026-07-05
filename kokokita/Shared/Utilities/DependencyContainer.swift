@@ -25,6 +25,7 @@ final class AppContainer {
     lazy var retroactiveService: CourseRetroactiveRecognitionService = CourseRetroactiveRecognitionService(courseRepo: courseRepo)
     lazy var courseJSONService: CourseJSONService = CourseJSONService(repo: courseRepo)
     lazy var courseStoreService: CourseStoreService = CourseStoreService()
+    lazy var courseAutoSyncService: CourseAutoSyncService = CourseAutoSyncService()
 
     /// 現在選択中のブック（UI参照用）
     var currentBook: Book? = nil

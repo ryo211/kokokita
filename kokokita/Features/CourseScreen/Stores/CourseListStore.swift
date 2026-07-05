@@ -8,18 +8,26 @@ final class CourseListStore {
     var courses: [Course] = []
     var showError: Bool = false
     var errorMessage: String?
-    /// 新規ダウンロードされたコースのID（コース一覧でハイライト表示に使用）
+    /// 自動同期中フラグ（ツールバーのインジケーター表示用）
+    var isSyncing: Bool = false
+    /// 新規追加されたコースのID（コース一覧でNEWバッジ表示に使用）
     var newlyAddedCourseIds: Set<UUID> = []
 
     private let repo: CourseRepository
-    /// addObserver の戻り値トークンを保持しないとオブザーバーが即座に解放されるため保存
+    private let autoSyncService: CourseAutoSyncService
     private var observers: [NSObjectProtocol] = []
 
-    init(repo: CourseRepository = AppContainer.shared.courseRepo) {
+    init(
+        repo: CourseRepository = AppContainer.shared.courseRepo,
+        autoSyncService: CourseAutoSyncService = AppContainer.shared.courseAutoSyncService
+    ) {
         self.repo = repo
+        self.autoSyncService = autoSyncService
 
         // チェックイン変更を監視して一覧を再ロード
-        let courseObserver = NotificationCenter.default.addObserver(forName: .courseChanged, object: nil, queue: .main) { [weak self] _ in
+        let courseObserver = NotificationCenter.default.addObserver(
+            forName: .courseChanged, object: nil, queue: .main
+        ) { [weak self] _ in
             guard let self else { return }
             Task { @MainActor [weak self] in
                 guard let self else { return }
@@ -27,8 +35,10 @@ final class CourseListStore {
             }
         }
 
-        // 新規ダウンロードを監視してハイライトIDを追加
-        let downloadObserver = NotificationCenter.default.addObserver(forName: .courseDownloaded, object: nil, queue: .main) { [weak self] notification in
+        // 新規ダウンロードを監視してNEWバッジIDを追加
+        let downloadObserver = NotificationCenter.default.addObserver(
+            forName: .courseDownloaded, object: nil, queue: .main
+        ) { [weak self] notification in
             guard let self else { return }
             guard let courseId = notification.object as? UUID else { return }
             Task { @MainActor [weak self] in
@@ -38,7 +48,9 @@ final class CourseListStore {
         }
 
         // 自作コース有効化を監視してNEWバッジIDを追加
-        let enabledObserver = NotificationCenter.default.addObserver(forName: .courseEnabled, object: nil, queue: .main) { [weak self] notification in
+        let enabledObserver = NotificationCenter.default.addObserver(
+            forName: .courseEnabled, object: nil, queue: .main
+        ) { [weak self] notification in
             guard let self else { return }
             guard let courseId = notification.object as? UUID else { return }
             Task { @MainActor [weak self] in
@@ -51,14 +63,17 @@ final class CourseListStore {
         observers = [courseObserver, downloadObserver, enabledObserver]
     }
 
+    // MARK: - ロード
+
     /// コース一覧を読み込む
-    /// - bundled / downloaded コースは常に表示
-    /// - isUserCreated == true のコースは isEnabled == true のみ表示
+    /// - isHidden=true のコースは除外
+    /// - isUserCreated=true のコースは isEnabled=true のもののみ表示
     func load() async {
         do {
             let all = try repo.fetchAll()
             courses = all.filter { course in
-                !course.isUserCreated || course.isEnabled
+                guard !course.isHidden else { return false }
+                return !course.isUserCreated || course.isEnabled
             }
         } catch {
             Logger.error("コース一覧読み込みエラー", error: error)
@@ -67,12 +82,25 @@ final class CourseListStore {
         }
     }
 
-    /// コースを削除する
-    /// - 自作コース（isUserCreated）: isEnabled = false に設定するだけ（マイリストには残す）
-    /// - それ以外（bundled / downloaded）: 物理削除
-    func delete(_ courseId: UUID) async {
+    /// 自動同期してからコース一覧を読み込む（画面初期表示時に呼ぶ）
+    func syncAndLoad() async {
+        isSyncing = true
+        await autoSyncService.sync()
+        isSyncing = false
+        await load()
+    }
+
+    // MARK: - 非表示・削除
+
+    /// コースをコース一覧から取り除く
+    /// - isUserCreated: isEnabled=false に設定（マイリストには残す）
+    /// - downloaded: isHidden=true に設定（自動同期でも復活しない）
+    /// - bundled: 何もしない（UIレベルで非表示ボタンを出さない）
+    func hide(_ courseId: UUID) async {
         do {
-            if let course = try repo.fetch(id: courseId), course.isUserCreated {
+            guard let course = try repo.fetch(id: courseId) else { return }
+
+            if course.isUserCreated {
                 // 自作コースはコース一覧から非表示にするだけで実体は残す
                 let disabled = Course(
                     id: course.id,
@@ -85,6 +113,7 @@ final class CourseListStore {
                     recognitionRadiusMeters: course.recognitionRadiusMeters,
                     everEnabled: course.everEnabled,
                     isEnabled: false,
+                    isHidden: false,
                     allowRetroactive: course.allowRetroactive,
                     detailUrl: course.detailUrl,
                     coverImageUrl: course.coverImageUrl,
@@ -96,13 +125,16 @@ final class CourseListStore {
                     sections: course.sections
                 )
                 try repo.save(disabled)
-            } else {
-                try repo.delete(courseId)
+            } else if course.source == .downloaded {
+                // ダウンロードコースは非表示フラグを立てる（自動同期でも復活しない）
+                try repo.hide(courseId)
             }
+            // bundled コースは操作しない
+
             courses.removeAll { $0.id == courseId }
             NotificationCenter.default.post(name: .courseChanged, object: nil)
         } catch {
-            Logger.error("コース削除エラー", error: error)
+            Logger.error("コース非表示エラー", error: error)
             errorMessage = error.localizedDescription
             showError = true
         }

@@ -2,7 +2,6 @@ import SwiftUI
 
 // 記録モードのコースタブ（CourseListViewのラッパー）
 // ストアを所有し、navigationDestination をルートに配置
-// 遡り判定シートはここに配置（NavigationStack 外）して CourseStoreSheet との競合を回避
 struct CourseScreen: View {
     /// 外部から注入されるストア（nilの場合は内部で生成）
     var externalStore: CourseListStore? = nil
@@ -56,11 +55,14 @@ private struct CategoryCourseListView: View {
                     NavigationLink(value: course.id) {
                         CourseRowView(course: course, isNew: isNew)
                     }
+                    // bundled コースはユーザーが非表示にできない
                     .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                        Button(role: .destructive) {
-                            Task { await store.delete(course.id) }
-                        } label: {
-                            Label(L.Common.delete, systemImage: "trash")
+                        if course.source != .bundled {
+                            Button(role: .destructive) {
+                                Task { await store.hide(course.id) }
+                            } label: {
+                                Label(L.Course.hide, systemImage: "eye.slash")
+                            }
                         }
                     }
                 }

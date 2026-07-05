@@ -478,8 +478,10 @@ enum L {
         static let categoryAnime           = localized("course.category.anime")
         static let categoryUserCreated     = localized("course.category.user_created")
         static let newBadge = localized("course.newBadge")
+        static let newSectionTitle = localized("course.newSectionTitle")
         static let achieved = localized("course.achieved")
         static let addHint = localized("course.addHint")
+        static let hide = localized("course.hide")
         static let notVisited = localized("course.notVisited")
         static let noAddress = localized("course.noAddress")
         static func visitedOn(_ dateString: String) -> String { String(format: localized("course.visitedOn"), dateString) }

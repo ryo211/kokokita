@@ -72,6 +72,7 @@ enum CourseJSONParser {
             recognitionRadiusMeters: json.recognitionRadiusMeters,
             everEnabled: existing?.everEnabled ?? false,
             isEnabled: existing?.isEnabled ?? true,
+            isHidden: existing?.isHidden ?? false,
             allowRetroactive: existing?.allowRetroactive ?? false,
             detailUrl: json.detailUrl,
             coverImageUrl: json.coverImageUrl,

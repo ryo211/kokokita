@@ -16,6 +16,8 @@ struct Course: Identifiable, Equatable {
     let everEnabled: Bool
     /// コース一覧への表示・達成判定の有効/無効
     let isEnabled: Bool
+    /// ユーザーがコース一覧から非表示にしたかどうか（自動同期でも復活しない）
+    let isHidden: Bool
     /// 旧仕様との互換用に保持しているフラグ（現行の遡り判定では未使用）
     let allowRetroactive: Bool
     let detailUrl: String?

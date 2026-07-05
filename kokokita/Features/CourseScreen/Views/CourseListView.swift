@@ -4,11 +4,9 @@ import SwiftUI
 // navigationDestination は呼び出し元の NavigationStack ルートに配置すること
 struct CourseListView: View {
     @Bindable var store: CourseListStore
-    @State private var showCourseStore = false
-    @State private var storeSheetStore = CourseStoreSheetStore()
     @State private var searchText: String = ""
     @FocusState private var isSearchFocused: Bool
-    @AppStorage("courseListAddHintDismissed") private var hintDismissed: Bool = false
+    @State private var isNewSectionDismissed: Bool = false
 
     // カテゴリに属するコースを返す
     private func courses(for category: CourseCategory) -> [Course] {
@@ -24,6 +22,11 @@ struct CourseListView: View {
     private var searchResults: [Course] {
         guard !searchText.isEmpty else { return [] }
         return store.courses.filter { $0.title.localizedCaseInsensitiveContains(searchText) }
+    }
+
+    // 新着コース（今回の同期で追加されたもの）
+    private var newCourses: [Course] {
+        store.courses.filter { store.newlyAddedCourseIds.contains($0.id) }
     }
 
     var body: some View {
@@ -60,35 +63,39 @@ struct CourseListView: View {
                         )
                         .padding(.top, 60)
                     } else {
-                        LazyVGrid(
-                            columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)],
-                            spacing: 12
-                        ) {
-                            ForEach(availableCategories, id: \.rawValue) { category in
-                                NavigationLink(value: category) {
-                                    CategoryGridCard(
-                                        category: category,
-                                        courses: courses(for: category)
-                                    )
+                        VStack(spacing: 0) {
+                            // 新着コースセクション
+                            if !newCourses.isEmpty && !isNewSectionDismissed {
+                                NewCoursesSection(courses: newCourses) {
+                                    withAnimation(.easeOut(duration: 0.25)) {
+                                        isNewSectionDismissed = true
+                                    }
                                 }
-                                .buttonStyle(.plain)
+                                .transition(.opacity.combined(with: .move(edge: .top)))
                             }
+
+                            LazyVGrid(
+                                columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)],
+                                spacing: 12
+                            ) {
+                                ForEach(availableCategories, id: \.rawValue) { category in
+                                    NavigationLink(value: category) {
+                                        CategoryGridCard(
+                                            category: category,
+                                            courses: courses(for: category)
+                                        )
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                            }
+                            .padding(.horizontal, 16)
+                            .padding(.top, 16)
+                            .padding(.bottom, 8)
                         }
-                        .padding(.horizontal, 16)
-                        .padding(.top, 16)
-                        .padding(.bottom, 8)
                     }
                 }
             }
         }
-        .overlay(alignment: .topTrailing) {
-            if !hintDismissed {
-                AddCourseHintCallout()
-                    .offset(x: -23, y: -11)
-                    .transition(.opacity.combined(with: .scale(scale: 0.85, anchor: .topTrailing)))
-            }
-        }
-        .animation(.easeInOut(duration: 0.2), value: hintDismissed)
         .safeAreaInset(edge: .bottom) {
             CourseSearchBar(searchText: $searchText, isFocused: $isSearchFocused)
         }
@@ -104,24 +111,9 @@ struct CourseListView: View {
                 }
             }
             ToolbarItem(placement: .navigationBarTrailing) {
-                Button {
-                    showCourseStore = true
-                    hintDismissed = true
-                } label: {
-                    Image(systemName: "plus")
-                        .overlay(alignment: .center) {
-                            if !hintDismissed {
-                                PulseRing()
-                            }
-                        }
-                        .overlay(alignment: .topTrailing) {
-                            if storeSheetStore.hasNewArrivals {
-                                Circle()
-                                    .fill(Color.red)
-                                    .frame(width: 8, height: 8)
-                                    .offset(x: 6, y: -6)
-                            }
-                        }
+                if store.isSyncing {
+                    ProgressView()
+                        .controlSize(.small)
                 }
             }
         }
@@ -131,75 +123,162 @@ struct CourseListView: View {
             Text(store.errorMessage ?? "")
         }
         .task {
-            await store.load()
-        }
-        .task {
-            await storeSheetStore.loadIndex()
-        }
-        .sheet(isPresented: $showCourseStore) {
-            CourseStoreSheet(store: storeSheetStore)
+            await store.syncAndLoad()
         }
     }
 }
 
-// MARK: - コース追加オンボーディング: ヒント吹き出し
+// MARK: - 新着コースセクション
 
-private struct AddCourseHintCallout: View {
-    var body: some View {
-        VStack(alignment: .trailing, spacing: 0) {
-            HintTriangle()
-                .fill(Color.indigo)
-                .frame(width: 12, height: 7)
-                .padding(.trailing, 14)
-
-            Text(L.Course.addHint)
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(.white)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-                .background(Color.indigo, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-                .shadow(color: .indigo.opacity(0.3), radius: 6, x: 0, y: 3)
-        }
-        .allowsHitTesting(false)
-    }
-}
-
-private struct HintTriangle: Shape {
-    func path(in rect: CGRect) -> Path {
-        var p = Path()
-        p.move(to: CGPoint(x: rect.midX, y: rect.minY))
-        p.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
-        p.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
-        p.closeSubpath()
-        return p
-    }
-}
-
-// MARK: - コース追加オンボーディング: パルスリング
-
-private struct PulseRing: View {
-    @State private var scale: CGFloat = 1.0
-    @State private var opacity: Double = 0.8
+private struct NewCoursesSection: View {
+    let courses: [Course]
+    let onDismiss: () -> Void
 
     var body: some View {
-        Circle()
-            .stroke(Color.indigo, lineWidth: 2)
-            .frame(width: 28, height: 28)
-            .scaleEffect(scale, anchor: .center)
-            .opacity(opacity)
-            .allowsHitTesting(false)
-            .onAppear {
-                // onAppear を即時実行するとツールバー初期レイアウトのアニメーションに
-                // 乗って「＋」が動いて見える。1フレーム遅らせて回避する。
-                Task { @MainActor in
-                    withAnimation(.easeOut(duration: 1.1).repeatForever(autoreverses: false)) {
-                        scale = 2.0
-                        opacity = 0
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .center) {
+                Label(L.Course.newSectionTitle, systemImage: "sparkles")
+                    .font(.subheadline.bold())
+                    .foregroundStyle(.indigo)
+                Spacer()
+                Button(action: onDismiss) {
+                    Image(systemName: "xmark")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                        .frame(width: 28, height: 28)
+                        .background(Color(.tertiarySystemFill), in: Circle())
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.horizontal, 16)
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 12) {
+                    ForEach(courses) { course in
+                        NavigationLink(value: course.id) {
+                            NewCourseCard(course: course)
+                        }
+                        .buttonStyle(.plain)
                     }
                 }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 2)
             }
+        }
+        .padding(.top, 16)
+        .padding(.bottom, 8)
     }
 }
+
+private struct NewCourseCard: View {
+    let course: Course
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            // カバー画像
+            ZStack(alignment: .topTrailing) {
+                coverImage
+                    .frame(height: 96)
+                    .clipped()
+
+                Text(L.Course.newBadge)
+                    .font(.caption2.bold())
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 3)
+                    .background(Color.indigo, in: Capsule())
+                    .padding(8)
+            }
+
+            // タイトル + スポット数
+            VStack(alignment: .leading, spacing: 3) {
+                Text(course.title)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.primary)
+                    .lineLimit(2)
+
+                if course.totalSpotCount > 0 {
+                    Text("\(course.totalSpotCount)\(L.Course.spotsCount)")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 8)
+        }
+        .frame(width: 136)
+        .background(Color(.secondarySystemBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .shadow(color: .black.opacity(0.08), radius: 5, y: 2)
+    }
+
+    @ViewBuilder
+    private var coverImage: some View {
+        if let path = course.localCoverImagePath,
+           let uiImage = LocalImageStorage.shared.load(from: path) {
+            Color.clear.overlay {
+                Image(uiImage: uiImage).resizable().scaledToFill()
+            }
+        } else if let urlStr = course.coverImageUrl, let url = URL(string: urlStr) {
+            AsyncImage(url: url) { phase in
+                if case .success(let image) = phase {
+                    Color.clear.overlay { image.resizable().scaledToFill() }
+                } else {
+                    cardPlaceholder
+                }
+            }
+        } else {
+            cardPlaceholder
+        }
+    }
+
+    private var cardPlaceholder: some View {
+        ZStack {
+            Color.indigo.opacity(0.12)
+            Image(systemName: course.categories.first?.iconName ?? "map")
+                .font(.system(size: 30, weight: .thin))
+                .foregroundStyle(.indigo.opacity(0.5))
+        }
+    }
+}
+
+// MARK: - 検索バー（画面下部固定）
+
+struct CourseSearchBar: View {
+    @Binding var searchText: String
+    var isFocused: FocusState<Bool>.Binding
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "magnifyingglass")
+                .foregroundStyle(.secondary)
+                .font(.system(size: 15))
+
+            TextField(L.CourseStore.searchPlaceholder, text: $searchText)
+                .focused(isFocused)
+                .font(.body)
+                .submitLabel(.search)
+
+            Button {
+                searchText = ""
+                isFocused.wrappedValue = false
+            } label: {
+                Image(systemName: "xmark.circle.fill")
+                    .foregroundStyle(searchText.isEmpty ? Color.secondary.opacity(0.4) : Color.secondary)
+                    .font(.system(size: 16))
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 9)
+        .background(Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+        .background(.bar)
+    }
+}
+
+// MARK: - 背景レイヤー
 
 private struct CourseListBackground: View {
     var body: some View {
