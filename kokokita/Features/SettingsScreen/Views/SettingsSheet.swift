@@ -155,16 +155,14 @@ struct SettingsSheet: View {
         Section {
             if premiumManager.isPremium {
                 // 購入済み：ステータス表示
-                HStack(spacing: 14) {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .fill(Color.orange.opacity(0.12))
-                            .frame(width: 36, height: 36)
-                        Image("kokokita_prp")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 28, height: 28)
-                    }
+                HStack(spacing: 12) {
+                    Image("kokokita_prp")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 44, height: 44)
+                        .background(Color.white)
+                        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                        .shadow(color: Color.black.opacity(0.08), radius: 4, x: 0, y: 2)
                     VStack(alignment: .leading, spacing: 2) {
                         Text(L.SettingsSheet.premiumActive)
                             .font(.subheadline.weight(.semibold))
@@ -183,22 +181,14 @@ struct SettingsSheet: View {
                 Button {
                     showPaywall = true
                 } label: {
-                    HStack(spacing: 14) {
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                .fill(
-                                    LinearGradient(
-                                        colors: [.orange.opacity(0.18), .yellow.opacity(0.12)],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                )
-                                .frame(width: 36, height: 36)
-                            Image("kokokita_prp")
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 28, height: 28)
-                        }
+                    HStack(spacing: 12) {
+                        Image("kokokita_prp")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 44, height: 44)
+                            .background(Color.white)
+                            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                            .shadow(color: Color.black.opacity(0.08), radius: 4, x: 0, y: 2)
                         VStack(alignment: .leading, spacing: 2) {
                             Text(L.SettingsSheet.premiumUpgrade)
                                 .font(.subheadline.weight(.semibold))
