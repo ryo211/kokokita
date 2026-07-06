@@ -195,6 +195,133 @@ struct CourseShareCard: View {
     }
 }
 
+// MARK: - 訪問記録共有カード（ImageRenderer用）
+
+struct VisitShareCard: View {
+    let data: VisitDetailData
+    let coverImage: UIImage?
+    let mapImage: UIImage?
+
+    static let cardWidth: CGFloat = 390
+
+    var body: some View {
+        VStack(spacing: 0) {
+            heroSection
+            if let mapImg = mapImage { mapSection(mapImg) }
+            if hasDetails { detailSection }
+            footerSection
+        }
+        .frame(width: Self.cardWidth)
+        .background(Color(.systemBackground))
+    }
+
+    private var hasDetails: Bool {
+        !(data.address ?? "").isEmpty || !(data.memo ?? "").isEmpty
+    }
+
+    // MARK: - ヒーロー（写真 or グラデーション + タイトル・日付）
+
+    private var heroSection: some View {
+        ZStack(alignment: .bottomLeading) {
+            Group {
+                if let img = coverImage {
+                    Image(uiImage: img).resizable().scaledToFill()
+                } else {
+                    LinearGradient(
+                        colors: [Color.blue.opacity(0.55), Color.blue],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                }
+            }
+            .frame(width: Self.cardWidth, height: 200)
+            .clipped()
+
+            LinearGradient(
+                colors: [.clear, .black.opacity(0.7)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .frame(width: Self.cardWidth, height: 200)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(data.timestamp.kokokitaVisitString)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.white.opacity(0.85))
+                Text(data.title)
+                    .font(.system(size: 22, weight: .bold))
+                    .foregroundStyle(.white)
+                    .lineLimit(2)
+            }
+            .padding(.horizontal, 16)
+            .padding(.bottom, 16)
+        }
+        .frame(width: Self.cardWidth, height: 200)
+        .clipped()
+    }
+
+    // MARK: - 地図（全幅埋め込み）
+
+    private func mapSection(_ img: UIImage) -> some View {
+        Image(uiImage: img)
+            .resizable()
+            .scaledToFill()
+            .frame(width: Self.cardWidth, height: 155)
+            .clipped()
+    }
+
+    // MARK: - 詳細（住所・メモ）
+
+    private var detailSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            if let address = data.address, !address.isEmpty {
+                HStack(spacing: 6) {
+                    Image(systemName: "mappin.circle.fill")
+                        .font(.caption)
+                        .foregroundStyle(.blue)
+                    Text(address)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(2)
+                }
+            }
+            if let memo = data.memo, !memo.isEmpty {
+                Text(memo)
+                    .font(.caption)
+                    .foregroundStyle(.primary)
+                    .lineLimit(3)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .frame(width: Self.cardWidth, alignment: .leading)
+    }
+
+    // MARK: - フッター（鳥ロゴ + アプリ名 + App Store バッジ）
+
+    private var footerSection: some View {
+        VStack(spacing: 0) {
+            Divider()
+            HStack(spacing: 0) {
+                Image("kokokita_irodori_blue")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 28, height: 28)
+                Text(L.App.name)
+                    .font(.system(size: 13, weight: .semibold, design: .rounded))
+                    .tracking(0.8)
+                    .foregroundStyle(.blue)
+                    .padding(.leading, 6)
+                Spacer()
+                AppStoreBadgeView()
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
+        }
+    }
+}
+
 // MARK: - スポット共有プレビューシート
 
 struct SpotSharePreviewSheet: View {
@@ -575,9 +702,9 @@ private enum Sharing {
 
 struct VisitSharePreviewSheet: View {
     let data: VisitDetailData
-    let labelColorMap: [String: Color]
     @Environment(\.dismiss) private var dismiss
 
+    @State private var coverImage: UIImage? = nil
     @State private var mapImage: UIImage? = nil
     @State private var renderedShareImage: UIImage? = nil
     @State private var isRendering = false
@@ -604,7 +731,7 @@ struct VisitSharePreviewSheet: View {
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
-                        presentShareSheet(buildShareItems())
+                        presentShareSheet([editableText as Any] + (renderedShareImage.map { [$0] } ?? []))
                     } label: {
                         Image(systemName: "square.and.arrow.up")
                             .fontWeight(.semibold)
@@ -627,8 +754,12 @@ struct VisitSharePreviewSheet: View {
         }
         .task {
             editableText = VisitDetailDataBuilder.shareText(data: data)
+            loadCoverImage()
             await generateMapSnapshot()
-            await renderShareImage()
+            await renderVisitCard()
+        }
+        .onChange(of: mapImage) { _, _ in
+            Task { await renderVisitCard() }
         }
     }
 
@@ -687,11 +818,9 @@ struct VisitSharePreviewSheet: View {
         }
     }
 
-    private func buildShareItems() -> [Any] {
-        var items: [Any] = [editableText]
-        if let img = renderedShareImage { items.append(img) }
-        if let map = mapImage { items.append(map) }
-        return items
+    private func loadCoverImage() {
+        guard let path = data.photoPaths.first, !path.isEmpty else { return }
+        coverImage = ImageStore.load(path)
     }
 
     @MainActor
@@ -702,30 +831,13 @@ struct VisitSharePreviewSheet: View {
     }
 
     @MainActor
-    private func renderShareImage() async {
+    private func renderVisitCard() async {
         isRendering = true
         defer { isRendering = false }
-        let currentLabelColorMap = labelColorMap
-        let content = VStack(spacing: 0) {
-            VisitDetailContent(
-                data: data,
-                mapSnapshot: nil,
-                isSharing: true,
-                nearbyVisits: [],
-                nearbyVisitsData: [],
-                sameGroupVisits: [],
-                sameGroupVisitsData: [],
-                currentGroupName: nil,
-                labelColorMap: currentLabelColorMap,
-                photoFullScreenIndex: .constant(nil)
-            )
-            .padding(.all, UIConstants.Spacing.xxLarge)
-        }
-        renderedShareImage = ShareImageRenderer.renderWidth(
-            content,
-            width: AppConfig.shareImageLogicalWidth,
-            scale: AppConfig.shareImageScale
-        )
+        let card = VisitShareCard(data: data, coverImage: coverImage, mapImage: mapImage)
+        let renderer = ImageRenderer(content: card)
+        renderer.scale = 3.0
+        renderedShareImage = renderer.uiImage
     }
 }
 
@@ -896,15 +1008,33 @@ private func makeShareMapSnapshot(
                   point.y >= 0, point.y <= size.height else { continue }
             drawSpotPin(at: point)
         }
-        // 単一座標ピン（訪問記録共有用：青）
+        // 単一座標ピン（訪問記録共有用：鳥ロゴ）
         if let coord = pinCoordinate {
             let point = snapshot.point(for: coord)
             if point.x >= 0, point.x <= size.width,
                point.y >= 0, point.y <= size.height {
-                drawSpotPin(at: point, color: .systemBlue)
+                drawBirdPin(at: point)
             }
         }
     }
+}
+
+/// 鳥ロゴ画像をピンとして描画する（訪問記録共有用）
+private func drawBirdPin(at point: CGPoint) {
+    let size: CGFloat = 40
+    let birdImage = UIImage(named: "kokokita_irodori_blue_for_map")
+                    ?? UIImage(named: "kokokita_irodori_blue")
+    guard let birdImage else {
+        drawSpotPin(at: point, color: .systemBlue)
+        return
+    }
+    guard let ctx = UIGraphicsGetCurrentContext() else { return }
+    ctx.saveGState()
+    ctx.setShadow(offset: CGSize(width: 0, height: 3), blur: 6,
+                  color: UIColor.black.withAlphaComponent(0.3).cgColor)
+    // アイコン形状なので中心を座標に合わせる
+    birdImage.draw(in: CGRect(x: point.x - size / 2, y: point.y - size / 2, width: size, height: size))
+    ctx.restoreGState()
 }
 
 /// 近くモードの任意ピンと同デザインの mappin SF Symbol を描画する

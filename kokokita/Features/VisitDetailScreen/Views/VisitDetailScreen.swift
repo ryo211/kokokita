@@ -123,7 +123,7 @@ struct VisitDetailScreen: View {
         }
 
         .sheet(isPresented: $showSharePreview) {
-            VisitSharePreviewSheet(data: data, labelColorMap: store.labelColorMap)
+            VisitSharePreviewSheet(data: data)
         }
         // タクソノミー詳細画面への遷移
         .navigationDestination(item: $store.selectedLabel) { label in
