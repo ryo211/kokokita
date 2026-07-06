@@ -181,6 +181,17 @@ final class CoreDataVisitRepository {
         try ctx.save()
     }
 
+    /// 記録を別のブックへ移動する
+    func updateBookId(id: UUID, bookId: UUID) throws {
+        guard let v = try fetchVisitEntity(id: id) else {
+            Logger.warning("Visit not found for bookId update: \(id)")
+            return
+        }
+        v.bookId = bookId
+        try ctx.save()
+        Logger.info("ブックを移動しました: \(id) → \(bookId)")
+    }
+
     func updateDetails(id: UUID, transform: (inout VisitDetails) -> Void) throws {
         guard let v = try fetchVisitEntity(id: id) else {
             Logger.warning("Visit not found for update: \(id)")
@@ -726,7 +737,7 @@ final class CoreDataVisitRepository {
             photoPaths: photoPaths
         )
 
-        return VisitAggregate(id: id, visit: visit, details: details, deletedAt: v.deletedAt)
+        return VisitAggregate(id: id, visit: visit, details: details, deletedAt: v.deletedAt, bookId: v.bookId)
     }
 
 

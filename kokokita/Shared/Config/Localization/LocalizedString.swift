@@ -52,6 +52,8 @@ enum L {
         static let recordDateTime = localized("visit.edit.recordDateTime")
         static let copyFromOtherVisit = localized("visit.edit.copyFromOtherVisit")
         static let selectVisitToCopy = localized("visit.edit.selectVisitToCopy")
+        static let bookSection = localized("visit.edit.bookSection")
+        static let selectBook = localized("visit.edit.selectBook")
     }
 
     // MARK: - Photo

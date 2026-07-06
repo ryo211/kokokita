@@ -47,6 +47,8 @@
 "visit.edit.recordDateTime" = "記録日時";
 "visit.edit.copyFromOtherVisit" = "過去の記録からコピー";
 "visit.edit.selectVisitToCopy" = "コピー元を選択";
+"visit.edit.bookSection" = "ブック";
+"visit.edit.selectBook" = "ブックを選択";
 
 // MARK: - Photo
 "photo.photo" = "写真";
@@ -325,10 +327,10 @@
 "settingssheet.reviewApp" = "このアプリをレビューする";
 "settingssheet.developerTools" = "開発者ツール";
 "settingssheet.version" = "バージョン";
-"settingssheet.premiumUpgrade" = "プレミアムにアップグレード";
+"settingssheet.premiumUpgrade" = "Premiumにアップグレード";
 "settingssheet.premiumUpgradeDescription" = "広告非表示・複数ブック・コース再生";
-"settingssheet.premiumActive" = "プレミアム会員";
-"settingssheet.premiumActiveDescription" = "すべてのプレミアム機能をご利用中です";
+"settingssheet.premiumActive" = "Premium会員";
+"settingssheet.premiumActiveDescription" = "すべてのPremium機能をご利用中です";
 
 // MARK: - Course Screen
 "course.title" = "コース";
@@ -671,8 +673,8 @@
 "book.pickerTitle" = "ブック";
 "book.newBook" = "新しいブック";
 "book.namePlaceholder" = "ブック名";
-"book.premiumTitle" = "プレミアム機能";
-"book.premiumDescription" = "複数のブックを作成するには\nプレミアムプランが必要です。";
+"book.premiumTitle" = "Premium機能";
+"book.premiumDescription" = "複数のブックを作成するには\nPremiumプランが必要です。";
 "book.premiumUpgrade" = "アップグレード";
 "book.deleteConfirm" = "このブックを削除しますか？";
 "book.deleteDescription" = "ブック内のすべての記録・ラベル・グループ・メンバーが削除されます。この操作は元に戻せません。";
@@ -718,7 +720,7 @@
 "courseDetail.menu.spotPhotoSize" = "スポット写真";
 
 // MARK: - Paywall（課金ペイウォール）
-"paywall.title" = "ココキタ プレミアム";
+"paywall.title" = "ココキタPro";
 "paywall.subtitle" = "もっと深く、もっと自由に";
 "paywall.feature.noAds" = "広告を非表示";
 "paywall.feature.noAdsDesc" = "広告なしでスッキリ使える";
@@ -737,14 +739,14 @@
 "paywall.terms" = "利用規約";
 "paywall.privacy" = "プライバシーポリシー";
 "paywall.loadingProducts" = "価格を読み込み中...";
-"paywall.courseGateTitle" = "プレミアム機能です";
-"paywall.courseGateMessage" = "ツアーモードと動画モードはプレミアムプランでご利用いただけます。";
+"paywall.courseGateTitle" = "Premium機能です";
+"paywall.courseGateMessage" = "ツアーモードと動画モードはPremiumプランでご利用いただけます。";
 "paywall.restoreSuccess" = "購入を復元しました";
 "paywall.restoreFailed" = "復元できる購入が見つかりませんでした";
 "paywall.purchaseError" = "購入できませんでした";
-"paywall.alreadyPremium" = "プレミアム会員";
-"paywall.debugOverrideOn" = "デバッグ: プレミアム強制ON";
-"paywall.debugOverrideOff" = "デバッグ: プレミアム強制OFF";
+"paywall.alreadyPremium" = "Premium会員";
+"paywall.debugOverrideOn" = "デバッグ: Premium強制ON";
+"paywall.debugOverrideOff" = "デバッグ: Premium強制OFF";
 "paywall.debugOverrideNone" = "デバッグ: 実際の課金状態を使用";
 
 // MARK: - CourseDetail メニュー（追加）

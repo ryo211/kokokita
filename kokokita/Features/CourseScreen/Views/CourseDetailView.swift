@@ -81,7 +81,7 @@ struct CourseDetailView: View {
     @State private var isShowingTourEndPromotion = false
     // シネマモード（programmatic navigation）
     @State private var showCinemaMode = false
-    // ペイウォール（プレミアムゲート）
+    // ペイウォール（Premiumゲート）
     @State private var showPaywall = false
     // コース共有プレビュー
     @State private var showCourseShare = false

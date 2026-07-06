@@ -7,4 +7,6 @@ struct VisitAggregate: Identifiable, Codable, Equatable {
     var details: VisitDetails
     /// ゴミ箱に移動された日時（nil の場合はゴミ箱外）
     var deletedAt: Date?
+    /// 所属ブックID
+    var bookId: UUID?
 }

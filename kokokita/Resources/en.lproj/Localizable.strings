@@ -47,6 +47,8 @@
 "visit.edit.recordDateTime" = "Record Date/Time";
 "visit.edit.copyFromOtherVisit" = "Copy from Another Visit";
 "visit.edit.selectVisitToCopy" = "Select Source to Copy";
+"visit.edit.bookSection" = "Book";
+"visit.edit.selectBook" = "Select Book";
 
 // MARK: - Photo
 "photo.photo" = "Photo";
