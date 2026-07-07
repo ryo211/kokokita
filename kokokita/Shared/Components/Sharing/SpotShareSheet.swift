@@ -198,9 +198,13 @@ struct CourseShareCard: View {
 // MARK: - 訪問記録共有カード（ImageRenderer用）
 
 struct VisitShareCard: View {
+    enum HeroLayout: Hashable { case photo, map }
+
     let data: VisitDetailData
     let coverImage: UIImage?
     let mapImage: UIImage?
+    var heroLayout: HeroLayout = .photo
+    var showSubThumbnail: Bool = true
 
     static let cardWidth: CGFloat = 390
     private static let heroHeight: CGFloat = 240
@@ -240,12 +244,23 @@ struct VisitShareCard: View {
 
     @ViewBuilder
     private var heroSection: some View {
-        if let img = coverImage {
-            photoHeroSection(img)
-        } else if let mapImg = mapImage {
-            mapHeroSection(mapImg)
-        } else {
-            gradientHeroSection
+        switch heroLayout {
+        case .photo:
+            if let img = coverImage {
+                photoHeroSection(img)
+            } else if let mapImg = mapImage {
+                mapHeroSection(mapImg)
+            } else {
+                gradientHeroSection
+            }
+        case .map:
+            if let mapImg = mapImage {
+                mapHeroWithPhotoSection(mapImg)
+            } else if let img = coverImage {
+                photoHeroSection(img)
+            } else {
+                gradientHeroSection
+            }
         }
     }
 
@@ -274,7 +289,7 @@ struct VisitShareCard: View {
             .clipped()
 
             // 右上: 小地図サムネイル（日本全体が見えるスケール）
-            if let mapImg = mapImage {
+            if showSubThumbnail, let mapImg = mapImage {
                 smallMapThumbnail(mapImg)
                     .padding(14)
             }
@@ -302,6 +317,40 @@ struct VisitShareCard: View {
             titleDateStack
                 .padding(.horizontal, 16)
                 .padding(.bottom, 16)
+        }
+        .frame(width: Self.cardWidth, height: Self.heroHeight)
+        .clipped()
+    }
+
+    // 地図メイン + 右上に小写真サムネイル
+    private func mapHeroWithPhotoSection(_ mapImg: UIImage) -> some View {
+        ZStack(alignment: .topTrailing) {
+            ZStack(alignment: .bottomLeading) {
+                Image(uiImage: mapImg)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: Self.cardWidth, height: Self.heroHeight)
+                    .clipped()
+
+                LinearGradient(
+                    colors: [.clear, .black.opacity(0.6)],
+                    startPoint: .center,
+                    endPoint: .bottom
+                )
+                .frame(width: Self.cardWidth, height: Self.heroHeight)
+
+                titleDateStack
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 16)
+            }
+            .frame(width: Self.cardWidth, height: Self.heroHeight)
+            .clipped()
+
+            // 右上: 小写真サムネイル
+            if showSubThumbnail, let img = coverImage {
+                smallMapThumbnail(img)
+                    .padding(14)
+            }
         }
         .frame(width: Self.cardWidth, height: Self.heroHeight)
         .clipped()
@@ -786,18 +835,26 @@ struct VisitSharePreviewSheet: View {
     let data: VisitDetailData
     @Environment(\.dismiss) private var dismiss
 
-    @State private var coverImage: UIImage? = nil
+    @State private var photoImages: [UIImage] = []
+    @State private var selectedPhotoIndex: Int = 0
+    @State private var heroLayout: VisitShareCard.HeroLayout = .photo
+    @State private var showSubThumbnail: Bool = true
     @State private var mapImage: UIImage? = nil
     @State private var renderedShareImage: UIImage? = nil
     @State private var isRendering = false
     @State private var editableText: String = ""
     @State private var showMapEditor = false
 
+    private var currentCoverImage: UIImage? {
+        selectedPhotoIndex < photoImages.count ? photoImages[selectedPhotoIndex] : nil
+    }
+
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
                     textPreviewSection
+                    layoutSettingsSection
                     imagePreviewSection
                     if data.coordinate != nil {
                         mapPreviewSection
@@ -835,11 +892,20 @@ struct VisitSharePreviewSheet: View {
         }
         .task {
             editableText = VisitDetailDataBuilder.shareText(data: data)
-            loadCoverImage()
+            await loadPhotos()
             await generateMapSnapshot()
             await renderVisitCard()
         }
         .onChange(of: mapImage) { _, _ in
+            Task { await renderVisitCard() }
+        }
+        .onChange(of: heroLayout) { _, _ in
+            Task { await renderVisitCard() }
+        }
+        .onChange(of: showSubThumbnail) { _, _ in
+            Task { await renderVisitCard() }
+        }
+        .onChange(of: selectedPhotoIndex) { _, _ in
             Task { await renderVisitCard() }
         }
     }
@@ -855,6 +921,65 @@ struct VisitSharePreviewSheet: View {
                 .padding(10)
                 .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 10))
                 .scrollContentBackground(.hidden)
+        }
+        .padding(.horizontal)
+    }
+
+    // MARK: - レイアウト設定
+
+    private var layoutSettingsSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label(L.Share.layoutLabel, systemImage: "rectangle.stack")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+
+            Picker("", selection: $heroLayout) {
+                Text(L.Share.layoutPhoto).tag(VisitShareCard.HeroLayout.photo)
+                Text(L.Share.layoutMap).tag(VisitShareCard.HeroLayout.map)
+            }
+            .pickerStyle(.segmented)
+
+            Toggle(isOn: $showSubThumbnail) {
+                Text(L.Share.showSubThumbnail)
+                    .font(.subheadline)
+            }
+
+            // 写真選択（2枚以上、かつ写真が表示に使われる場合）
+            let showPhotoSelector = data.photoPaths.count >= 2
+                && (heroLayout == .photo || showSubThumbnail)
+            if showPhotoSelector && !photoImages.isEmpty {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(L.Share.selectPhoto)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 8) {
+                            ForEach(Array(photoImages.enumerated()), id: \.offset) { index, img in
+                                Button {
+                                    selectedPhotoIndex = index
+                                } label: {
+                                    Image(uiImage: img)
+                                        .resizable()
+                                        .scaledToFill()
+                                        .frame(width: 64, height: 64)
+                                        .clipped()
+                                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 8)
+                                                .stroke(
+                                                    selectedPhotoIndex == index ? Color.blue : Color.clear,
+                                                    lineWidth: 3
+                                                )
+                                        )
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                        .padding(.horizontal, 1)
+                    }
+                }
+            }
         }
         .padding(.horizontal)
     }
@@ -899,9 +1024,16 @@ struct VisitSharePreviewSheet: View {
         }
     }
 
-    private func loadCoverImage() {
-        guard let path = data.photoPaths.first, !path.isEmpty else { return }
-        coverImage = ImageStore.load(path)
+    @MainActor
+    private func loadPhotos() async {
+        photoImages = data.photoPaths.compactMap { path in
+            guard !path.isEmpty else { return nil }
+            return ImageStore.load(path)
+        }
+        // 写真がない場合は地図メインにデフォルト設定
+        if photoImages.isEmpty {
+            heroLayout = .map
+        }
     }
 
     @MainActor
@@ -919,7 +1051,13 @@ struct VisitSharePreviewSheet: View {
     private func renderVisitCard() async {
         isRendering = true
         defer { isRendering = false }
-        let card = VisitShareCard(data: data, coverImage: coverImage, mapImage: mapImage)
+        let card = VisitShareCard(
+            data: data,
+            coverImage: currentCoverImage,
+            mapImage: mapImage,
+            heroLayout: heroLayout,
+            showSubThumbnail: showSubThumbnail
+        )
         let renderer = ImageRenderer(content: card)
         renderer.scale = 3.0
         renderedShareImage = renderer.uiImage

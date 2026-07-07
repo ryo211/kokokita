@@ -760,3 +760,8 @@
 "share.spotCountLabel" = "%d spots";
 "share.mapEditHint" = "Tap to adjust";
 "share.mapEditorTitle" = "Adjust Map";
+"share.layoutLabel" = "Layout";
+"share.layoutPhoto" = "Photo First";
+"share.layoutMap" = "Map First";
+"share.showSubThumbnail" = "Show Thumbnail";
+"share.selectPhoto" = "Select Photo";

@@ -764,3 +764,8 @@
 "share.spotCountLabel" = "%d スポット";
 "share.mapEditHint" = "タップして調整";
 "share.mapEditorTitle" = "地図を調整";
+"share.layoutLabel" = "レイアウト";
+"share.layoutPhoto" = "写真メイン";
+"share.layoutMap" = "地図メイン";
+"share.showSubThumbnail" = "サブサムネイルを表示";
+"share.selectPhoto" = "写真を選択";
