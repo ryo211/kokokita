@@ -222,6 +222,7 @@ struct CourseDetailView: View {
             reloadCourse()
             // 詳細を開いたコースを新着リストから除去
             courseListStore?.markAsOpened(courseId)
+            AppReviewService.shared.courseDetailViewOpened()
             if showSummaryOnAppear {
                 showSummary = true
             }

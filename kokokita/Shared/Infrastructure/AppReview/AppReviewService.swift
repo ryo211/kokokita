@@ -12,11 +12,15 @@ final class AppReviewService {
     /// レビュー誘導を表示するまでの記録数
     private let reviewTriggerCount = 5
 
+    /// 巡礼モード：レビュー誘導を表示するまでのコース詳細閲覧回数
+    private let courseDetailTriggerCount = 3
+
     /// UserDefaultsのキー
     private enum Keys {
         static let recordCount = "appReview.recordCount"
         static let hasRequestedReview = "appReview.hasRequestedReview"
         static let lastReviewRequestVersion = "appReview.lastReviewRequestVersion"
+        static let courseDetailOpenCount = "appReview.courseDetailOpenCount"
     }
 
     private init() {}
@@ -45,9 +49,22 @@ final class AppReviewService {
     /// 記録シートが閉じた時に呼ばれる
     /// 条件を満たしていればレビュー誘導を表示
     func onRecordSheetDismissed() {
-        guard shouldRequestReview() else { return }
+        guard shouldRequestReview(triggerCount: reviewTriggerCount, countKey: Keys.recordCount) else { return }
 
-        // 少し遅延を入れてからレビュー誘導を表示（UX改善）
+        Task {
+            try? await Task.sleep(for: .milliseconds(500))
+            requestReview()
+        }
+    }
+
+    /// コース詳細画面が開かれた時に呼ばれる（巡礼モード）
+    /// 条件を満たしていればレビュー誘導を表示
+    func courseDetailViewOpened() {
+        let currentCount = UserDefaults.standard.integer(forKey: Keys.courseDetailOpenCount)
+        UserDefaults.standard.set(currentCount + 1, forKey: Keys.courseDetailOpenCount)
+
+        guard shouldRequestReview(triggerCount: courseDetailTriggerCount, countKey: Keys.courseDetailOpenCount) else { return }
+
         Task {
             try? await Task.sleep(for: .milliseconds(500))
             requestReview()
@@ -57,16 +74,11 @@ final class AppReviewService {
     // MARK: - Private Methods
 
     /// レビュー誘導を表示すべきかどうか
-    private func shouldRequestReview() -> Bool {
-        let recordCount = UserDefaults.standard.integer(forKey: Keys.recordCount)
+    private func shouldRequestReview(triggerCount: Int, countKey: String) -> Bool {
+        let count = UserDefaults.standard.integer(forKey: countKey)
+        guard count >= triggerCount else { return false }
 
-        // 記録数がトリガー数に達しているか
-        guard recordCount >= reviewTriggerCount else { return false }
-
-        // 現在のアプリバージョン
         let currentVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
-
-        // このバージョンで既にリクエスト済みか
         let lastRequestedVersion = UserDefaults.standard.string(forKey: Keys.lastReviewRequestVersion)
         if lastRequestedVersion == currentVersion {
             return false
@@ -110,6 +122,7 @@ final class AppReviewService {
         UserDefaults.standard.removeObject(forKey: Keys.recordCount)
         UserDefaults.standard.removeObject(forKey: Keys.hasRequestedReview)
         UserDefaults.standard.removeObject(forKey: Keys.lastReviewRequestVersion)
+        UserDefaults.standard.removeObject(forKey: Keys.courseDetailOpenCount)
         Logger.info("App review state reset for debug")
     }
 
