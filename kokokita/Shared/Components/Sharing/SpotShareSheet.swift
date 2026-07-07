@@ -203,71 +203,153 @@ struct VisitShareCard: View {
     let mapImage: UIImage?
 
     static let cardWidth: CGFloat = 390
+    private static let heroHeight: CGFloat = 240
 
     var body: some View {
         VStack(spacing: 0) {
             heroSection
-            if let mapImg = mapImage { mapSection(mapImg) }
             if hasDetails { detailSection }
             footerSection
         }
         .frame(width: Self.cardWidth)
         .background(Color(.systemBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        // 証明書感のあるグラデーションボーダー
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .strokeBorder(
+                    LinearGradient(
+                        colors: [
+                            Color.blue.opacity(0.75),
+                            Color(red: 0.25, green: 0.35, blue: 0.9).opacity(0.45),
+                            Color.blue.opacity(0.75)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: 2.5
+                )
+        )
     }
 
     private var hasDetails: Bool {
         !(data.address ?? "").isEmpty || !(data.memo ?? "").isEmpty
     }
 
-    // MARK: - ヒーロー（写真 or グラデーション + タイトル・日付）
+    // MARK: - ヒーロー（写真+小地図 or 地図メイン or グラデーション）
 
+    @ViewBuilder
     private var heroSection: some View {
-        ZStack(alignment: .bottomLeading) {
-            Group {
-                if let img = coverImage {
-                    Image(uiImage: img).resizable().scaledToFill()
-                } else {
-                    LinearGradient(
-                        colors: [Color.blue.opacity(0.55), Color.blue],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                }
+        if let img = coverImage {
+            photoHeroSection(img)
+        } else if let mapImg = mapImage {
+            mapHeroSection(mapImg)
+        } else {
+            gradientHeroSection
+        }
+    }
+
+    // 写真メイン + 右上に小地図サムネイル
+    private func photoHeroSection(_ img: UIImage) -> some View {
+        ZStack(alignment: .topTrailing) {
+            ZStack(alignment: .bottomLeading) {
+                Image(uiImage: img)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: Self.cardWidth, height: Self.heroHeight)
+                    .clipped()
+
+                LinearGradient(
+                    colors: [.clear, .black.opacity(0.65)],
+                    startPoint: .center,
+                    endPoint: .bottom
+                )
+                .frame(width: Self.cardWidth, height: Self.heroHeight)
+
+                titleDateStack
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 16)
             }
-            .frame(width: Self.cardWidth, height: 200)
+            .frame(width: Self.cardWidth, height: Self.heroHeight)
             .clipped()
 
-            LinearGradient(
-                colors: [.clear, .black.opacity(0.7)],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .frame(width: Self.cardWidth, height: 200)
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text(data.timestamp.kokokitaVisitString)
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(.white.opacity(0.85))
-                Text(data.title)
-                    .font(.system(size: 22, weight: .bold))
-                    .foregroundStyle(.white)
-                    .lineLimit(2)
+            // 右上: 小地図サムネイル（日本全体が見えるスケール）
+            if let mapImg = mapImage {
+                smallMapThumbnail(mapImg)
+                    .padding(14)
             }
-            .padding(.horizontal, 16)
-            .padding(.bottom, 16)
         }
-        .frame(width: Self.cardWidth, height: 200)
+        .frame(width: Self.cardWidth, height: Self.heroHeight)
         .clipped()
     }
 
-    // MARK: - 地図（全幅埋め込み）
+    // 地図メイン（写真なし）
+    private func mapHeroSection(_ mapImg: UIImage) -> some View {
+        ZStack(alignment: .bottomLeading) {
+            Image(uiImage: mapImg)
+                .resizable()
+                .scaledToFill()
+                .frame(width: Self.cardWidth, height: Self.heroHeight)
+                .clipped()
 
-    private func mapSection(_ img: UIImage) -> some View {
+            LinearGradient(
+                colors: [.clear, .black.opacity(0.6)],
+                startPoint: .center,
+                endPoint: .bottom
+            )
+            .frame(width: Self.cardWidth, height: Self.heroHeight)
+
+            titleDateStack
+                .padding(.horizontal, 16)
+                .padding(.bottom, 16)
+        }
+        .frame(width: Self.cardWidth, height: Self.heroHeight)
+        .clipped()
+    }
+
+    // グラデーション（写真・地図ともになし）
+    private var gradientHeroSection: some View {
+        ZStack(alignment: .bottomLeading) {
+            LinearGradient(
+                colors: [Color.blue.opacity(0.55), Color.blue],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .frame(width: Self.cardWidth, height: Self.heroHeight)
+
+            titleDateStack
+                .padding(.horizontal, 16)
+                .padding(.bottom, 16)
+        }
+        .frame(width: Self.cardWidth, height: Self.heroHeight)
+    }
+
+    // タイトル + 日付テキスト（共通）
+    private var titleDateStack: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(data.timestamp.kokokitaVisitString)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.white.opacity(0.85))
+            Text(data.title)
+                .font(.system(size: 22, weight: .bold))
+                .foregroundStyle(.white)
+                .lineLimit(2)
+        }
+    }
+
+    // 小地図サムネイル（写真右上オーバーレイ）
+    private func smallMapThumbnail(_ img: UIImage) -> some View {
         Image(uiImage: img)
             .resizable()
             .scaledToFill()
-            .frame(width: Self.cardWidth, height: 155)
+            .frame(width: 115, height: 88)
             .clipped()
+            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .stroke(Color.white, lineWidth: 2)
+            )
+            .shadow(color: .black.opacity(0.35), radius: 6, x: 0, y: 3)
     }
 
     // MARK: - 詳細（住所・メモ）
@@ -743,9 +825,8 @@ struct VisitSharePreviewSheet: View {
         .sheet(isPresented: $showMapEditor) {
             if let coord = data.coordinate {
                 let region = MKCoordinateRegion(
-                    center: coord,
-                    latitudinalMeters: 1000,
-                    longitudinalMeters: 1000
+                    center: CLLocationCoordinate2D(latitude: 36.5, longitude: 138.5),
+                    span: MKCoordinateSpan(latitudeDelta: 24.0, longitudeDelta: 22.0)
                 )
                 ShareMapEditorSheet(visitCoordinate: coord, initialRegion: region) { image in
                     mapImage = image
@@ -826,7 +907,11 @@ struct VisitSharePreviewSheet: View {
     @MainActor
     private func generateMapSnapshot() async {
         guard let coord = data.coordinate else { return }
-        let region = MKCoordinateRegion(center: coord, latitudinalMeters: 1000, longitudinalMeters: 1000)
+        // 日本全体が見えるズームレベル（証明書感のある「ここに来た」表現）
+        let region = MKCoordinateRegion(
+            center: CLLocationCoordinate2D(latitude: 36.5, longitude: 138.5),
+            span: MKCoordinateSpan(latitudeDelta: 24.0, longitudeDelta: 22.0)
+        )
         mapImage = await makeShareMapSnapshot(region: region, spots: [], orderNumbers: [:], pinCoordinate: coord)
     }
 
