@@ -370,6 +370,8 @@
 "course.favoriteSectionTitle" = "Favorites";
 "course.favoriteToggleAdd" = "Add to Favorites";
 "course.favoriteToggleRemove" = "Remove from Favorites";
+"course.favoriteViewAll" = "See All";
+"course.favoriteEmptyDescription" = "Add courses to favorites and they will appear here";
 "course.achieved" = "done";
 "course.addHint" = "Add a course here";
 

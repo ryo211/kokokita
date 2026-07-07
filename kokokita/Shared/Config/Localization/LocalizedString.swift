@@ -488,6 +488,8 @@ enum L {
         static let favoriteSectionTitle = localized("course.favoriteSectionTitle")
         static let favoriteToggleAdd = localized("course.favoriteToggleAdd")
         static let favoriteToggleRemove = localized("course.favoriteToggleRemove")
+        static let favoriteViewAll = localized("course.favoriteViewAll")
+        static let favoriteEmptyDescription = localized("course.favoriteEmptyDescription")
         static let achieved = localized("course.achieved")
         static let addHint = localized("course.addHint")
 

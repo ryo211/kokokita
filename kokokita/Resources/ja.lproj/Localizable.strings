@@ -374,6 +374,8 @@
 "course.favoriteSectionTitle" = "お気に入り";
 "course.favoriteToggleAdd" = "お気に入りに追加";
 "course.favoriteToggleRemove" = "お気に入りから削除";
+"course.favoriteViewAll" = "すべて見る";
+"course.favoriteEmptyDescription" = "コースをお気に入りに追加すると、ここに表示されます";
 "course.achieved" = "達成";
 "course.addHint" = "コースを追加できます";
 

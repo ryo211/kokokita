@@ -269,6 +269,12 @@ private struct FavoriteCoursesSection: View {
                     .font(.subheadline.bold())
                     .foregroundStyle(.indigo)
                 Spacer()
+                NavigationLink(value: FavoritesNavTarget()) {
+                    Text(L.Course.favoriteViewAll)
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(.indigo)
+                }
+                .buttonStyle(.plain)
             }
             .padding(.horizontal, 16)
 
