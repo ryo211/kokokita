@@ -51,7 +51,7 @@ private struct CategoryCourseListView: View {
                 .listRowSeparator(.hidden)
             } else {
                 ForEach(filteredCourses) { course in
-                    let isNew = store.newlyAddedCourseIds.contains(course.id)
+                    let isNew = store.isNew(course.id)
                     NavigationLink(value: course.id) {
                         CourseRowView(course: course, isNew: isNew)
                     }

@@ -74,11 +74,7 @@ struct PilgrimageRootTabView: View {
                                 tab = newTab
                                 if newTab == .map {
                                     // コースタブに入ったら赤ポチだけ消す
-                                    // コース一覧のNEWバッジはそのまま表示し続ける
                                     withAnimation { showCourseTabBadge = false }
-                                } else if prev == .map {
-                                    // コースタブから離れたらNEWバッジをクリア
-                                    courseStore.newlyAddedCourseIds.removeAll()
                                 }
                             },
                             onRecord: {

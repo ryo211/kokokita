@@ -24,9 +24,9 @@ struct CourseListView: View {
         return store.courses.filter { $0.title.localizedCaseInsensitiveContains(searchText) }
     }
 
-    // 新着コース（今回の同期で追加されたもの）
+    // 新着コース（未視認 or 視認から24時間以内）
     private var newCourses: [Course] {
-        store.courses.filter { store.newlyAddedCourseIds.contains($0.id) }
+        store.courses.filter { store.isNew($0.id) }
     }
 
     var body: some View {
@@ -44,7 +44,7 @@ struct CourseListView: View {
                 } else {
                     List {
                         ForEach(searchResults) { course in
-                            let isNew = store.newlyAddedCourseIds.contains(course.id)
+                            let isNew = store.isNew(course.id)
                             NavigationLink(value: course.id) {
                                 CourseRowView(course: course, isNew: isNew)
                             }
@@ -70,6 +70,9 @@ struct CourseListView: View {
                                     withAnimation(.easeOut(duration: 0.25)) {
                                         isNewSectionDismissed = true
                                     }
+                                }
+                                .onAppear {
+                                    store.markAsSeen(ids: newCourses.map { $0.id })
                                 }
                                 .transition(.opacity.combined(with: .move(edge: .top)))
                             }
@@ -190,17 +193,19 @@ private struct NewCourseCard: View {
                     .padding(8)
             }
 
-            // タイトル + スポット数
-            VStack(alignment: .leading, spacing: 3) {
+            // タイトル + カテゴリラベル
+            VStack(alignment: .leading, spacing: 4) {
                 Text(course.title)
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(.primary)
                     .lineLimit(2)
 
-                if course.totalSpotCount > 0 {
-                    Text("\(course.totalSpotCount)\(L.Course.spotsCount)")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
+                if !course.categories.isEmpty {
+                    FlowLayout(spacing: 4) {
+                        ForEach(course.categories, id: \.rawValue) { category in
+                            CourseCategoryTag(category: category)
+                        }
+                    }
                 }
             }
             .padding(.horizontal, 10)

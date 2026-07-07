@@ -220,8 +220,8 @@ struct CourseDetailView: View {
         // 画面表示のたびに最新データを取得（CoreDataキャッシュを確実に反映）
         .task {
             reloadCourse()
-            // ハイライトを解除（詳細を開いたことで「新規」状態を消費）
-            courseListStore?.newlyAddedCourseIds.remove(courseId)
+            // 詳細を開いたコースを新着リストから除去
+            courseListStore?.markAsOpened(courseId)
             if showSummaryOnAppear {
                 showSummary = true
             }
