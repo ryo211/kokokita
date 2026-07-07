@@ -23,7 +23,6 @@ final class AppContainer {
     let integ = DefaultIntegrityService()
     lazy var courseRecognitionService: CourseRecognitionService = CourseRecognitionService(repo: courseRepo)
     lazy var retroactiveService: CourseRetroactiveRecognitionService = CourseRetroactiveRecognitionService(courseRepo: courseRepo)
-    lazy var courseJSONService: CourseJSONService = CourseJSONService(repo: courseRepo)
     lazy var courseStoreService: CourseStoreService = CourseStoreService()
     lazy var courseAutoSyncService: CourseAutoSyncService = CourseAutoSyncService()
 

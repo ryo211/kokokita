@@ -54,11 +54,9 @@ enum CourseJSONParser {
     // MARK: - ビルドロジック
 
     /// JSON から Course ドメインモデルを構築する
-    /// - sourceOverride: nil の場合は JSON の source フィールドをそのまま使用
     static func buildCourse(
         from json: CourseJSON,
-        existing: Course?,
-        sourceOverride: CourseSource? = nil
+        existing: Course?
     ) -> Course {
         let sections = buildSections(from: json, existing: existing)
         return Course(
@@ -66,13 +64,12 @@ enum CourseJSONParser {
             courseType: CourseType(rawValue: json.courseType) ?? .myList,
             title: json.title,
             summary: json.summary,
-            source: sourceOverride ?? (CourseSource(rawValue: json.source) ?? .bundled),
+            source: .downloaded,
             isUserCreated: json.isUserCreated,
             version: json.version,
             recognitionRadiusMeters: json.recognitionRadiusMeters,
             everEnabled: existing?.everEnabled ?? false,
             isEnabled: existing?.isEnabled ?? true,
-            isHidden: existing?.isHidden ?? false,
             allowRetroactive: existing?.allowRetroactive ?? false,
             detailUrl: json.detailUrl,
             coverImageUrl: json.coverImageUrl,

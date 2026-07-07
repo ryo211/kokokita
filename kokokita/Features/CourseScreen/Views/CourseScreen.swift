@@ -55,16 +55,6 @@ private struct CategoryCourseListView: View {
                     NavigationLink(value: course.id) {
                         CourseRowView(course: course, isNew: isNew)
                     }
-                    // bundled コースはユーザーが非表示にできない
-                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                        if course.source != .bundled {
-                            Button(role: .destructive) {
-                                Task { await store.hide(course.id) }
-                            } label: {
-                                Label(L.Course.hide, systemImage: "eye.slash")
-                            }
-                        }
-                    }
                 }
             }
         }

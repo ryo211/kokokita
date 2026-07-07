@@ -157,8 +157,7 @@ final class CourseListStore {
         do {
             let all = try repo.fetchAll()
             courses = all.filter { course in
-                guard !course.isHidden else { return false }
-                return !course.isUserCreated || course.isEnabled
+                !course.isUserCreated || course.isEnabled
             }
         } catch {
             Logger.error("コース一覧読み込みエラー", error: error)
@@ -177,53 +176,6 @@ final class CourseListStore {
 
     // MARK: - 非表示・削除
 
-    /// コースをコース一覧から取り除く
-    /// - isUserCreated: isEnabled=false に設定（マイリストには残す）
-    /// - downloaded: isHidden=true に設定（自動同期でも復活しない）
-    /// - bundled: 何もしない（UIレベルで非表示ボタンを出さない）
-    func hide(_ courseId: UUID) async {
-        do {
-            guard let course = try repo.fetch(id: courseId) else { return }
-
-            if course.isUserCreated {
-                // 自作コースはコース一覧から非表示にするだけで実体は残す
-                let disabled = Course(
-                    id: course.id,
-                    courseType: course.courseType,
-                    title: course.title,
-                    summary: course.summary,
-                    source: course.source,
-                    isUserCreated: course.isUserCreated,
-                    version: course.version,
-                    recognitionRadiusMeters: course.recognitionRadiusMeters,
-                    everEnabled: course.everEnabled,
-                    isEnabled: false,
-                    isHidden: false,
-                    allowRetroactive: course.allowRetroactive,
-                    detailUrl: course.detailUrl,
-                    coverImageUrl: course.coverImageUrl,
-                    imageCredit: course.imageCredit,
-                    localCoverImagePath: course.localCoverImagePath,
-                    createdAt: course.createdAt,
-                    updatedAt: Date(),
-                    categories: course.categories,
-                    sections: course.sections
-                )
-                try repo.save(disabled)
-            } else if course.source == .downloaded {
-                // ダウンロードコースは非表示フラグを立てる（自動同期でも復活しない）
-                try repo.hide(courseId)
-            }
-            // bundled コースは操作しない
-
-            courses.removeAll { $0.id == courseId }
-            NotificationCenter.default.post(name: .courseChanged, object: nil)
-        } catch {
-            Logger.error("コース非表示エラー", error: error)
-            errorMessage = error.localizedDescription
-            showError = true
-        }
-    }
 }
 
 // 遡り判定結果（sheet 表示用の Identifiable ラッパー）

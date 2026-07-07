@@ -487,7 +487,7 @@ enum L {
         static let newSectionTitle = localized("course.newSectionTitle")
         static let achieved = localized("course.achieved")
         static let addHint = localized("course.addHint")
-        static let hide = localized("course.hide")
+
         static let notVisited = localized("course.notVisited")
         static let noAddress = localized("course.noAddress")
         static func visitedOn(_ dateString: String) -> String { String(format: localized("course.visitedOn"), dateString) }

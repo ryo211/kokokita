@@ -244,7 +244,6 @@ final class RecordingController {
                     recognitionRadiusMeters: result.course.recognitionRadiusMeters,
                     everEnabled: result.course.everEnabled,
                     isEnabled: result.course.isEnabled,
-                    isHidden: result.course.isHidden,
                     allowRetroactive: result.course.allowRetroactive,
                     detailUrl: result.course.detailUrl,
                     coverImageUrl: result.course.coverImageUrl,

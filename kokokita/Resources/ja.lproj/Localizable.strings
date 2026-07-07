@@ -373,7 +373,7 @@
 "course.newSectionTitle" = "新着コース";
 "course.achieved" = "達成";
 "course.addHint" = "コースを追加できます";
-"course.hide" = "非表示にする";
+
 "course.notVisited" = "未訪問";
 "course.noAddress" = "住所未登録";
 "course.visitedOn" = "%@に巡礼済み";

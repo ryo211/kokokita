@@ -369,7 +369,7 @@
 "course.newSectionTitle" = "New Courses";
 "course.achieved" = "done";
 "course.addHint" = "Add a course here";
-"course.hide" = "Hide";
+
 "course.notVisited" = "Not Visited";
 "course.noAddress" = "No Address";
 "course.visitedOn" = "Visited on %@";

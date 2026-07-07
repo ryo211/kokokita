@@ -256,7 +256,6 @@ final class CourseEditorViewModel {
             recognitionRadiusMeters: recognitionRadiusMeters,
             everEnabled: originalCourse?.everEnabled ?? false,
             isEnabled: isEnabled,
-            isHidden: originalCourse?.isHidden ?? false,
             allowRetroactive: originalCourse?.allowRetroactive ?? true,
             detailUrl: nil,
             coverImageUrl: coverImageUrl,

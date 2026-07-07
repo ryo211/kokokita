@@ -4,7 +4,6 @@ import Foundation
 // - 新規コース: 自動ダウンロードして保存
 // - バージョン更新コース: 自動更新（チェックイン状態は保持）
 // - index.jsonから消えたコース: 削除（自作コースは除く）
-// - isHidden=true のコース: 自動同期でも復活させない
 final class CourseAutoSyncService {
     private let storeService: CourseStoreService
     private let courseRepo: CourseRepository
@@ -34,11 +33,6 @@ final class CourseAutoSyncService {
             for summary in index.courses {
                 let courseId = CourseJSONParser.uuidFromString(summary.id)
                 let existing = localDownloaded[courseId]
-
-                // ユーザーが非表示にしたコースはスキップ（自動同期で復活させない）
-                if let existing, existing.isHidden {
-                    continue
-                }
 
                 // 新規 or バージョンアップがある場合のみダウンロード
                 let needsDownload = existing == nil || existing!.version < summary.version

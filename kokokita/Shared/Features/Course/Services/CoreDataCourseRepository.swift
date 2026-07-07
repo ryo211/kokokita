@@ -78,13 +78,6 @@ final class CoreDataCourseRepository: CourseRepository {
         ctx.refreshAllObjects()
     }
 
-    func hide(_ courseId: UUID) throws {
-        guard let entity = try fetchEntity(id: courseId) else { return }
-        entity.isHidden = NSNumber(value: true)
-        entity.updatedAt = Date()
-        try ctx.save()
-    }
-
     func delete(_ courseId: UUID) throws {
         guard let entity = try fetchEntity(id: courseId) else { return }
         ctx.delete(entity)
@@ -117,7 +110,6 @@ final class CoreDataCourseRepository: CourseRepository {
         entity.recognitionRadiusMeters = course.recognitionRadiusMeters
         entity.everEnabled = NSNumber(value: course.everEnabled)
         entity.isEnabled = NSNumber(value: course.isEnabled)
-        entity.isHidden = NSNumber(value: course.isHidden)
         entity.allowRetroactive = NSNumber(value: course.allowRetroactive)
         entity.detailUrl = course.detailUrl
         entity.coverImageUrl = course.coverImageUrl
@@ -221,13 +213,12 @@ final class CoreDataCourseRepository: CourseRepository {
             courseType: CourseType(rawValue: entity.courseType ?? "") ?? .myList,
             title: entity.title ?? "",
             summary: entity.summary,
-            source: CourseSource(rawValue: entity.source ?? "") ?? .bundled,
+            source: { let s = CourseSource(rawValue: entity.source ?? "") ?? .downloaded; return s == .bundled ? .downloaded : s }(),
             isUserCreated: entity.isUserCreated?.boolValue ?? false,
             version: Int(entity.version),
             recognitionRadiusMeters: entity.recognitionRadiusMeters,
             everEnabled: entity.everEnabled?.boolValue ?? false,
             isEnabled: entity.isEnabled?.boolValue ?? false,
-            isHidden: entity.isHidden?.boolValue ?? false,
             allowRetroactive: entity.allowRetroactive?.boolValue ?? false,
             detailUrl: entity.detailUrl,
             coverImageUrl: entity.coverImageUrl,
