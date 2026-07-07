@@ -485,6 +485,9 @@ enum L {
         static let categoryUserCreated     = localized("course.category.user_created")
         static let newBadge = localized("course.newBadge")
         static let newSectionTitle = localized("course.newSectionTitle")
+        static let favoriteSectionTitle = localized("course.favoriteSectionTitle")
+        static let favoriteToggleAdd = localized("course.favoriteToggleAdd")
+        static let favoriteToggleRemove = localized("course.favoriteToggleRemove")
         static let achieved = localized("course.achieved")
         static let addHint = localized("course.addHint")
 

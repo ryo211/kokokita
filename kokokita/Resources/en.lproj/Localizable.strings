@@ -367,6 +367,9 @@
 "course.category.user_created" = "My Courses";
 "course.newBadge" = "NEW";
 "course.newSectionTitle" = "New Courses";
+"course.favoriteSectionTitle" = "Favorites";
+"course.favoriteToggleAdd" = "Add to Favorites";
+"course.favoriteToggleRemove" = "Remove from Favorites";
 "course.achieved" = "done";
 "course.addHint" = "Add a course here";
 

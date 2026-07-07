@@ -4,6 +4,7 @@ import SwiftUI
 // navigationDestination は呼び出し元の NavigationStack ルートに配置すること
 struct CourseListView: View {
     @Bindable var store: CourseListStore
+    @Environment(\.courseFavoriteStore) private var favoriteStore
     @State private var searchText: String = ""
     @FocusState private var isSearchFocused: Bool
     @State private var isNewSectionDismissed: Bool = false
@@ -27,6 +28,13 @@ struct CourseListView: View {
     // 新着コース（未視認 or 視認から24時間以内）
     private var newCourses: [Course] {
         store.courses.filter { store.isNew($0.id) }
+    }
+
+    // お気に入りコース（追加した順、新しい順）
+    private var favoriteCourses: [Course] {
+        favoriteStore.orderedFavoriteIds
+            .reversed()
+            .compactMap { id in store.courses.first(where: { $0.id == id }) }
     }
 
     var body: some View {
@@ -75,6 +83,11 @@ struct CourseListView: View {
                                     store.markAsSeen(ids: newCourses.map { $0.id })
                                 }
                                 .transition(.opacity.combined(with: .move(edge: .top)))
+                            }
+
+                            // お気に入りコースセクション
+                            if !favoriteCourses.isEmpty {
+                                FavoriteCoursesSection(courses: favoriteCourses)
                             }
 
                             LazyVGrid(
@@ -225,12 +238,106 @@ private struct NewCourseCard: View {
                 Image(uiImage: uiImage).resizable().scaledToFill()
             }
         } else if let urlStr = course.coverImageUrl, let url = URL(string: urlStr) {
-            AsyncImage(url: url) { phase in
-                if case .success(let image) = phase {
-                    Color.clear.overlay { image.resizable().scaledToFill() }
-                } else {
-                    cardPlaceholder
+            ZStack {
+                cardPlaceholder
+                CachedCourseImage(url: url)
+            }
+        } else {
+            cardPlaceholder
+        }
+    }
+
+    private var cardPlaceholder: some View {
+        ZStack {
+            Color.indigo.opacity(0.12)
+            Image(systemName: course.categories.first?.iconName ?? "map")
+                .font(.system(size: 30, weight: .thin))
+                .foregroundStyle(.indigo.opacity(0.5))
+        }
+    }
+}
+
+// MARK: - お気に入りコースセクション
+
+private struct FavoriteCoursesSection: View {
+    let courses: [Course]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .center) {
+                Label(L.Course.favoriteSectionTitle, systemImage: "heart.fill")
+                    .font(.subheadline.bold())
+                    .foregroundStyle(.indigo)
+                Spacer()
+            }
+            .padding(.horizontal, 16)
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 12) {
+                    ForEach(courses) { course in
+                        NavigationLink(value: course.id) {
+                            FavoriteCourseCard(course: course)
+                        }
+                        .buttonStyle(.plain)
+                    }
                 }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 2)
+            }
+        }
+        .padding(.top, 4)
+        .padding(.bottom, 8)
+    }
+}
+
+private struct FavoriteCourseCard: View {
+    let course: Course
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            // カバー画像
+            coverImage
+                .frame(height: 96)
+                .clipped()
+
+            // タイトル + 達成率
+            VStack(alignment: .leading, spacing: 4) {
+                Text(course.title)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.primary)
+                    .lineLimit(2)
+
+                if course.totalSpotCount > 0 {
+                    HStack(spacing: 6) {
+                        ProgressView(value: Double(course.checkedInCount), total: Double(course.totalSpotCount))
+                            .tint(.indigo)
+                        Text("\(course.checkedInCount)/\(course.totalSpotCount)")
+                            .font(.caption2.bold())
+                            .foregroundStyle(course.isCompleted ? Color.indigo : Color.secondary)
+                            .monospacedDigit()
+                    }
+                }
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 8)
+        }
+        .frame(width: 136)
+        .background(Color(.secondarySystemBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .shadow(color: .black.opacity(0.08), radius: 5, y: 2)
+    }
+
+    @ViewBuilder
+    private var coverImage: some View {
+        if let path = course.localCoverImagePath,
+           let uiImage = LocalImageStorage.shared.load(from: path) {
+            Color.clear.overlay {
+                Image(uiImage: uiImage).resizable().scaledToFill()
+            }
+        } else if let urlStr = course.coverImageUrl, let url = URL(string: urlStr) {
+            ZStack {
+                cardPlaceholder
+                CachedCourseImage(url: url)
             }
         } else {
             cardPlaceholder
@@ -379,9 +486,7 @@ private struct CategoryGridCard: View {
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 
-    // 画像レイヤー（ローカル → リモート → プレースホルダーの順）
-    // scaledToFill はレイアウトサイズを超えて報告してしまうため
-    // Color.clear.overlay { image }.clipped() パターンで確実に封じる
+    // 画像レイヤー（ローカル → キャッシュ付きリモート → プレースホルダーの順）
     @ViewBuilder
     private var backgroundLayer: some View {
         if let path = representativeCourse?.localCoverImagePath,
@@ -394,15 +499,9 @@ private struct CategoryGridCard: View {
             .clipped()
         } else if let urlStr = representativeCourse?.coverImageUrl,
                   let url = URL(string: urlStr) {
-            AsyncImage(url: url) { phase in
-                if case .success(let image) = phase {
-                    Color.clear.overlay {
-                        image.resizable().scaledToFill()
-                    }
-                    .clipped()
-                } else {
-                    placeholderBackground
-                }
+            ZStack {
+                placeholderBackground
+                CachedCourseImage(url: url)
             }
         } else {
             placeholderBackground
@@ -426,31 +525,16 @@ private struct CategoryGridCard: View {
 struct CourseRowView: View {
     let course: Course
     var isNew: Bool = false
+    @Environment(\.courseFavoriteStore) private var favoriteStore
 
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
             // サムネイル
-            // ローカル保存画像 → リモートURL → プレースホルダーの順で優先
-            Group {
-                if let path = course.localCoverImagePath,
-                   let uiImage = LocalImageStorage.shared.load(from: path) {
-                    Image(uiImage: uiImage)
-                        .resizable()
-                        .scaledToFill()
-                } else if let urlStr = course.coverImageUrl, let url = URL(string: urlStr) {
-                    AsyncImage(url: url) { phase in
-                        if case .success(let image) = phase {
-                            image.resizable().scaledToFill()
-                        } else {
-                            thumbnailPlaceholder
-                        }
-                    }
-                } else {
-                    thumbnailPlaceholder
-                }
-            }
-            .frame(width: 96, height: 64)
-            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+            // scaledToFill はレイアウトサイズを超えて報告するため
+            // Color.clear.overlay { image }.clipped() パターンで確実に封じる
+            thumbnailImage
+                .frame(width: 96, height: 64)
+                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
 
             // 中: タイトル + タグ（残り幅を確保し折り返し）
             VStack(alignment: .leading, spacing: 6) {
@@ -476,9 +560,9 @@ struct CourseRowView: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
-            // 右: X/Y + 横プログレスバー
-            if course.totalSpotCount > 0 {
-                VStack(alignment: .trailing, spacing: 4) {
+            // 右: X/Y + 横プログレスバー + お気に入りボタン
+            VStack(alignment: .trailing, spacing: 4) {
+                if course.totalSpotCount > 0 {
                     Text("\(course.checkedInCount)/\(course.totalSpotCount)")
                         .font(.caption2.bold())
                         .foregroundStyle(course.isCompleted ? Color.indigo : Color.secondary)
@@ -487,9 +571,40 @@ struct CourseRowView: View {
                         .tint(.indigo)
                         .frame(width: 60)
                 }
+
+                let isFavorite = favoriteStore.isFavorite(course.id)
+                Button {
+                    favoriteStore.toggle(course.id)
+                } label: {
+                    Image(systemName: isFavorite ? "heart.fill" : "heart")
+                        .font(.system(size: 18))
+                        .foregroundStyle(isFavorite ? Color.indigo : Color.secondary)
+                        .frame(width: 32, height: 32)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(isFavorite ? L.Course.favoriteToggleRemove : L.Course.favoriteToggleAdd)
             }
         }
         .padding(.vertical, 4)
+    }
+
+    @ViewBuilder
+    private var thumbnailImage: some View {
+        if let path = course.localCoverImagePath,
+           let uiImage = LocalImageStorage.shared.load(from: path) {
+            Color.clear.overlay {
+                Image(uiImage: uiImage).resizable().scaledToFill()
+            }
+            .clipped()
+        } else if let urlStr = course.coverImageUrl, let url = URL(string: urlStr) {
+            ZStack {
+                thumbnailPlaceholder
+                CachedCourseImage(url: url)
+            }
+        } else {
+            thumbnailPlaceholder
+        }
     }
 
     private var thumbnailPlaceholder: some View {

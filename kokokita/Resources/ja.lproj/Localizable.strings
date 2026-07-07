@@ -371,6 +371,9 @@
 "course.category.user_created" = "自作コース";
 "course.newBadge" = "NEW";
 "course.newSectionTitle" = "新着コース";
+"course.favoriteSectionTitle" = "お気に入り";
+"course.favoriteToggleAdd" = "お気に入りに追加";
+"course.favoriteToggleRemove" = "お気に入りから削除";
 "course.achieved" = "達成";
 "course.addHint" = "コースを追加できます";
 
