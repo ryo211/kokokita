@@ -17,6 +17,18 @@ struct SpotShareCard: View {
         }
         .frame(width: Self.cardWidth)
         .background(Color(.systemBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .strokeBorder(
+                    LinearGradient(
+                        colors: [Color.indigo.opacity(0.75), Color.indigo.opacity(0.45), Color.indigo.opacity(0.75)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: 2.5
+                )
+        )
     }
 
     private var photoSection: some View {
@@ -120,6 +132,18 @@ struct CourseShareCard: View {
         }
         .frame(width: Self.cardWidth)
         .background(Color(.systemBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .strokeBorder(
+                    LinearGradient(
+                        colors: [Color.indigo.opacity(0.75), Color.indigo.opacity(0.45), Color.indigo.opacity(0.75)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: 2.5
+                )
+        )
     }
 
     private var photoSection: some View {
@@ -938,6 +962,7 @@ struct VisitSharePreviewSheet: View {
                 Text(L.Share.layoutMap).tag(VisitShareCard.HeroLayout.map)
             }
             .pickerStyle(.segmented)
+            .disabled(photoImages.isEmpty)
 
             Toggle(isOn: $showSubThumbnail) {
                 Text(L.Share.showSubThumbnail)
@@ -1231,33 +1256,15 @@ private func makeShareMapSnapshot(
                   point.y >= 0, point.y <= size.height else { continue }
             drawSpotPin(at: point)
         }
-        // 単一座標ピン（訪問記録共有用：鳥ロゴ）
+        // 単一座標ピン（訪問記録共有用：青）
         if let coord = pinCoordinate {
             let point = snapshot.point(for: coord)
             if point.x >= 0, point.x <= size.width,
                point.y >= 0, point.y <= size.height {
-                drawBirdPin(at: point)
+                drawSpotPin(at: point, color: .systemBlue)
             }
         }
     }
-}
-
-/// 鳥ロゴ画像をピンとして描画する（訪問記録共有用）
-private func drawBirdPin(at point: CGPoint) {
-    let size: CGFloat = 40
-    let birdImage = UIImage(named: "kokokita_irodori_blue_for_map")
-                    ?? UIImage(named: "kokokita_irodori_blue")
-    guard let birdImage else {
-        drawSpotPin(at: point, color: .systemBlue)
-        return
-    }
-    guard let ctx = UIGraphicsGetCurrentContext() else { return }
-    ctx.saveGState()
-    ctx.setShadow(offset: CGSize(width: 0, height: 3), blur: 6,
-                  color: UIColor.black.withAlphaComponent(0.3).cgColor)
-    // アイコン形状なので中心を座標に合わせる
-    birdImage.draw(in: CGRect(x: point.x - size / 2, y: point.y - size / 2, width: size, height: size))
-    ctx.restoreGState()
 }
 
 /// 近くモードの任意ピンと同デザインの mappin SF Symbol を描画する
