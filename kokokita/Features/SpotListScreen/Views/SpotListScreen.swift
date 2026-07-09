@@ -89,7 +89,8 @@ struct SpotListScreen: View {
 
     /// 地点選択が有効かどうか（近くのスポットモード、または距離ソート時）
     private var isLocationSelectionActive: Bool {
-        store.listMode == .nearby || store.sortType == .distance
+        guard store.listMode != .prefecture else { return false }
+        return store.listMode == .nearby || store.sortType == .distance
     }
 
     /// 現在選択中のフォルダ
@@ -190,7 +191,6 @@ struct SpotListScreen: View {
                 cameraPosition = .region(MKCoordinateRegion(center: center, span: visibleMapSpan))
             }
         }
-        .onChange(of: store.prefectureFilter) { _, _ in fitAllPoints() }
         .onChange(of: store.excludedCourseIds) { _, _ in fitAllPoints() }
         .sheet(isPresented: $showMapSettings) {
             CourseMapSettingsSheet(
@@ -379,10 +379,10 @@ struct SpotListScreen: View {
     // MARK: - モード切替タブ（左側付箋UI）
 
     private var spotModeTabsView: some View {
-        let mainModes: [SpotListMode] = [.nearby, .favorites, .visited]
+        let mainModes: [SpotListMode] = [.nearby, .favorites, .visited, .prefecture]
         let allModes = SpotListMode.allCases
         return VStack(alignment: .leading, spacing: 4) {
-            // 近く・お気に入り・行った
+            // 近く・お気に入り・行った・都道府県
             ForEach(Array(mainModes.enumerated()), id: \.element) { index, mode in
                 let isSelected = store.listMode == mode
                 SpotModeTabButton(mode: mode, isSelected: isSelected) {
@@ -412,6 +412,10 @@ struct SpotListScreen: View {
         // フォルダモードに切り替える際はスポットIDを同期
         if mode == .folder {
             store.folderSpotIds = currentFolderSpotIds
+        }
+        // 都道府県モードに切り替える際はページを先頭に戻す
+        if mode == .prefecture {
+            store.prefecturePage = 1
         }
         withAnimation(.spring(response: 0.3, dampingFraction: 0.75)) {
             selectedSpotId = nil
@@ -818,7 +822,7 @@ struct SpotListScreen: View {
                 .background(Color.indigo, in: Circle())
                 .shadow(color: Color.indigo.opacity(0.45), radius: 8, x: 0, y: 4)
                 .overlay(alignment: .topTrailing) {
-                    if !store.excludedCourseIds.isEmpty || store.prefectureFilter != nil {
+                    if !store.excludedCourseIds.isEmpty {
                         Circle().fill(Color.white).frame(width: 10, height: 10)
                             .overlay { Circle().fill(Color.indigo.opacity(0.7)).frame(width: 7, height: 7) }
                             .offset(x: 2, y: -2)
@@ -856,6 +860,8 @@ struct SpotListScreen: View {
                 return L.SpotList.locationUnavailable
             }
             return L.SpotList.noVisited
+        case .prefecture:
+            return L.SpotList.noPrefectureSpots
         case .folder:
             return L.SpotList.noFolder
         }
@@ -943,25 +949,29 @@ struct SpotListScreen: View {
     // MARK: - レイアウト切替バー
 
     private var layoutStrip: some View {
-        HStack(alignment: .center, spacing: 8) {
-            // 左側: モードに応じたコンテンツ
-            if isLocationSelectionActive {
-                locationAreaContent
+        Group {
+            if store.listMode == .prefecture {
+                prefectureControlContent
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
             } else {
-                totalCountContent
-            }
-
-            Spacer()
-
-            // 右側: 近くのスポットは件数設定、その他はソートタイプ選択
-            if store.listMode == .nearby {
-                spotCountButton
-            } else {
-                sortTypeSelector
+                HStack(alignment: .center, spacing: 8) {
+                    if isLocationSelectionActive {
+                        locationAreaContent
+                    } else {
+                        totalCountContent
+                    }
+                    Spacer()
+                    if store.listMode == .nearby {
+                        spotCountButton
+                    } else {
+                        sortTypeSelector
+                    }
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 8)
         .contentShape(Rectangle())
         .gesture(
             DragGesture(minimumDistance: 5, coordinateSpace: .local)
@@ -977,6 +987,119 @@ struct SpotListScreen: View {
                 }
                 .onEnded { _ in layoutSwipeConsumed = false }
         )
+    }
+
+    // 都道府県別モード用コントロール帯
+    private var prefectureControlContent: some View {
+        VStack(spacing: 6) {
+            HStack(spacing: 8) {
+                // 総スポット数
+                HStack(spacing: 4) {
+                    Image(systemName: "mappin.and.ellipse")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.indigo)
+                    Text("全\(store.prefectureTotalCount)件")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.primary)
+                        .monospacedDigit()
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 5)
+                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .strokeBorder(Color.indigo.opacity(0.2), lineWidth: 0.8)
+                }
+                .shadow(color: .black.opacity(0.07), radius: 3, x: 0, y: 1)
+
+                Spacer()
+
+                // 都道府県選択ドロップダウン
+                Menu {
+                    ForEach(SpotListStore.prefectureList, id: \.self) { pref in
+                        Button {
+                            store.selectedPrefecture = pref
+                            store.prefecturePage = 1
+                            store.recalculateNearbySpots()
+                            selectedSpotId = nil
+                            fitAllPoints()
+                        } label: {
+                            if store.selectedPrefecture == pref {
+                                Label(pref, systemImage: "checkmark")
+                            } else {
+                                Text(pref)
+                            }
+                        }
+                    }
+                } label: {
+                    HStack(spacing: 4) {
+                        Text(store.selectedPrefecture)
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(.indigo)
+                        Image(systemName: "chevron.up.chevron.down")
+                            .font(.system(size: 9, weight: .semibold))
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(Color.indigo.opacity(0.10), in: Capsule())
+                }
+                .buttonStyle(.plain)
+            }
+
+            HStack(spacing: 8) {
+                // 現在の表示範囲テキスト（例: 1〜50件）
+                let start = store.prefectureTotalCount > 0 ? (store.prefecturePage - 1) * store.prefecturePageSize + 1 : 0
+                let end = min(store.prefecturePage * store.prefecturePageSize, store.prefectureTotalCount)
+                Text(store.prefectureTotalCount > 0 ? "\(start)〜\(end)件表示" : "0件")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .monospacedDigit()
+
+                Spacer()
+
+                // ページ移動ボタン群
+                HStack(spacing: 4) {
+                    Button {
+                        guard store.prefecturePage > 1 else { return }
+                        store.prefecturePage -= 1
+                        store.recalculateNearbySpots()
+                        selectedSpotId = nil
+                        fitAllPoints()
+                    } label: {
+                        Image(systemName: "chevron.left")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(store.prefecturePage > 1 ? Color.indigo : Color.secondary.opacity(0.4))
+                            .frame(width: 28, height: 28)
+                            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 7, style: .continuous))
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(store.prefecturePage <= 1)
+
+                    Text("\(store.prefecturePage) / \(store.prefecturePageCount)")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                        .monospacedDigit()
+                        .frame(minWidth: 44)
+
+                    Button {
+                        guard store.prefecturePage < store.prefecturePageCount else { return }
+                        store.prefecturePage += 1
+                        store.recalculateNearbySpots()
+                        selectedSpotId = nil
+                        fitAllPoints()
+                    } label: {
+                        Image(systemName: "chevron.right")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(store.prefecturePage < store.prefecturePageCount ? Color.indigo : Color.secondary.opacity(0.4))
+                            .frame(width: 28, height: 28)
+                            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 7, style: .continuous))
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(store.prefecturePage >= store.prefecturePageCount)
+                }
+            }
+        }
     }
 
     // 住所カード（近くのスポットモード or 近い順ソート時）
@@ -1825,63 +1948,6 @@ private struct SpotFilterPanel: View {
             }
             .padding(.horizontal, 16)
             .padding(.bottom, 10)
-
-            Divider()
-
-            // 都道府県フィルター
-            HStack {
-                Text(L.SpotList.filterPrefecture)
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(.secondary)
-                Spacer()
-                Menu {
-                    if !store.availablePrefectures.isEmpty {
-                        ForEach(store.availablePrefectures, id: \.self) { pref in
-                            Button {
-                                store.prefectureFilter = pref
-                                store.recalculateNearbySpots()
-                            } label: {
-                                if store.prefectureFilter == pref {
-                                    Label(pref, systemImage: "checkmark")
-                                } else {
-                                    Text(pref)
-                                }
-                            }
-                        }
-                        Divider()
-                    }
-                    Button {
-                        store.prefectureFilter = nil
-                        store.recalculateNearbySpots()
-                    } label: {
-                        if store.prefectureFilter == nil {
-                            Label(L.SpotList.filterAllPrefectures, systemImage: "checkmark")
-                        } else {
-                            Text(L.SpotList.filterAllPrefectures)
-                        }
-                    }
-                } label: {
-                    HStack(spacing: 4) {
-                        Text(store.prefectureFilter ?? L.SpotList.filterAllPrefectures)
-                            .font(.subheadline.weight(.medium))
-                            .foregroundStyle(store.prefectureFilter != nil ? Color.indigo : Color.primary)
-                        Image(systemName: "chevron.up.chevron.down")
-                            .font(.system(size: 9, weight: .semibold))
-                            .foregroundStyle(.secondary)
-                    }
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
-                    .background(
-                        store.prefectureFilter != nil
-                            ? Color.indigo.opacity(0.12)
-                            : Color.secondary.opacity(0.10),
-                        in: Capsule()
-                    )
-                }
-                .buttonStyle(.plain)
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 10)
 
             Divider()
 

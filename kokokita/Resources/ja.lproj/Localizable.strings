@@ -568,8 +568,11 @@
 "spotList.mode.favorites.short" = "お気に入り";
 "spotList.mode.visited" = "行ったスポット";
 "spotList.mode.visited.short" = "行った";
+"spotList.mode.prefecture" = "都道府県別";
+"spotList.mode.prefecture.short" = "都道府県";
 "spotList.noFavorites" = "お気に入りのスポットがありません";
 "spotList.noVisited" = "行ったスポットはありません";
+"spotList.noPrefectureSpots" = "この都道府県にスポットがありません";
 "spotList.sortType.added" = "追加順";
 "spotList.nearbySubtitle" = "から近いスポット";
 "spotList.distanceSubtitle" = "から近い順";

@@ -7,32 +7,36 @@ enum SpotListMode: CaseIterable, Hashable {
     case nearby      // 近くのスポット（有効コースの全スポット・距離順）
     case favorites   // お気に入りスポット
     case visited     // 行ったスポット（達成済み）
+    case prefecture  // 都道府県別スポット
     case folder      // フォルダ内スポット
 
     var title: String {
         switch self {
-        case .nearby:    return L.SpotList.modeNearby
-        case .favorites: return L.SpotList.modeFavorites
-        case .visited:   return L.SpotList.modeVisited
-        case .folder:    return L.SpotList.modeFolder
+        case .nearby:      return L.SpotList.modeNearby
+        case .favorites:   return L.SpotList.modeFavorites
+        case .visited:     return L.SpotList.modeVisited
+        case .prefecture:  return L.SpotList.modePrefecture
+        case .folder:      return L.SpotList.modeFolder
         }
     }
 
     var shortTitle: String {
         switch self {
-        case .nearby:    return L.SpotList.modeNearbyShort
-        case .favorites: return L.SpotList.modeFavoritesShort
-        case .visited:   return L.SpotList.modeVisitedShort
-        case .folder:    return L.SpotList.modeFolderShort
+        case .nearby:      return L.SpotList.modeNearbyShort
+        case .favorites:   return L.SpotList.modeFavoritesShort
+        case .visited:     return L.SpotList.modeVisitedShort
+        case .prefecture:  return L.SpotList.modePrefectureShort
+        case .folder:      return L.SpotList.modeFolderShort
         }
     }
 
     var systemImage: String {
         switch self {
-        case .nearby:    return "location.north.line.fill"
-        case .favorites: return "heart.fill"
-        case .visited:   return "checkmark.seal.fill"
-        case .folder:    return "folder.fill"
+        case .nearby:      return "location.north.line.fill"
+        case .favorites:   return "heart.fill"
+        case .visited:     return "checkmark.seal.fill"
+        case .prefecture:  return "map.fill"
+        case .folder:      return "folder.fill"
         }
     }
 }
@@ -65,8 +69,14 @@ final class SpotListStore {
     var displayLimit: Int = 10
     /// フィルターで除外するコースID（空 = すべて表示）
     var excludedCourseIds: Set<UUID> = []
-    /// 都道府県フィルター（nil = すべて表示）
-    var prefectureFilter: String? = nil
+    /// 都道府県別モードで選択中の都道府県（デフォルト: 東京都）
+    var selectedPrefecture: String = "東京都"
+    /// 都道府県別モードの現在ページ（1始まり）
+    var prefecturePage: Int = 1
+    /// 都道府県別モードの1ページあたりの件数
+    let prefecturePageSize: Int = 50
+    /// 都道府県別モードのスポット総件数（ページネーション用）
+    private(set) var prefectureTotalCount: Int = 0
     /// お気に入りID（View から同期）
     var favoriteSpotIds: Set<UUID> = []
     /// フォルダ内スポットID（View から同期、順序保持）
@@ -79,7 +89,6 @@ final class SpotListStore {
     private var courses: [Course] = []
 
     /// フィルターパネル用: 現在のモードに関連するコース一覧
-    /// 近く=全有効コース、お気に入り=お気に入りスポットを持つコース、行った=達成スポットを持つコース
     var relevantCourses: [Course] {
         let active = courses.filter { !$0.isUserCreated || $0.isEnabled }
         switch listMode {
@@ -92,6 +101,10 @@ final class SpotListStore {
         case .visited:
             return active.filter { course in
                 course.spots.contains { $0.isCheckedIn }
+            }
+        case .prefecture:
+            return active.filter { course in
+                course.spots.contains { Self.extractPrefecture(from: $0.address) == selectedPrefecture }
             }
         case .folder:
             return active.filter { course in
@@ -107,18 +120,24 @@ final class SpotListStore {
             .flatMap { course -> [CourseSpot] in
                 let valid = course.spots.filter { $0.hasValidCoordinate }
                 switch listMode {
-                case .nearby:    return valid
-                case .favorites: return valid.filter { favoriteSpotIds.contains($0.id) }
-                case .visited:   return valid.filter { $0.isCheckedIn }
-                case .folder:    return valid.filter { folderSpotIds.contains($0.id) }
+                case .nearby:      return valid
+                case .favorites:   return valid.filter { favoriteSpotIds.contains($0.id) }
+                case .visited:     return valid.filter { $0.isCheckedIn }
+                case .prefecture:  return valid.filter { Self.extractPrefecture(from: $0.address) == selectedPrefecture }
+                case .folder:      return valid.filter { folderSpotIds.contains($0.id) }
                 }
             }
             .count
     }
 
+    /// 都道府県別モードの総ページ数
+    var prefecturePageCount: Int {
+        max(1, Int(ceil(Double(prefectureTotalCount) / Double(prefecturePageSize))))
+    }
+
     // MARK: - 都道府県ユーティリティ
 
-    private static let prefectureList: [String] = [
+    static let prefectureList: [String] = [
         "北海道", "青森県", "岩手県", "宮城県", "秋田県", "山形県", "福島県",
         "茨城県", "栃木県", "群馬県", "埼玉県", "千葉県", "東京都", "神奈川県",
         "新潟県", "富山県", "石川県", "福井県", "山梨県", "長野県", "岐阜県",
@@ -131,38 +150,6 @@ final class SpotListStore {
     static func extractPrefecture(from address: String?) -> String? {
         guard let address else { return nil }
         return prefectureList.first { address.contains($0) }
-    }
-
-    /// 現在のモード・コースフィルターに基づいてスポットに登場する都道府県の一覧を返す
-    var availablePrefectures: [String] {
-        let active = courses.filter { !$0.isUserCreated || $0.isEnabled }
-        var seen = Set<String>()
-        for course in active where !excludedCourseIds.contains(course.id) {
-            let spots: [CourseSpot]
-            switch listMode {
-            case .nearby:    spots = course.spots
-            case .favorites: spots = course.spots.filter { favoriteSpotIds.contains($0.id) }
-            case .visited:   spots = course.spots.filter { $0.isCheckedIn }
-            case .folder:    spots = course.spots.filter { folderSpotIds.contains($0.id) }
-            }
-            for spot in spots {
-                if let pref = Self.extractPrefecture(from: spot.address) {
-                    seen.insert(pref)
-                }
-            }
-        }
-        return Self.prefectureList.filter { seen.contains($0) }
-    }
-
-    // MARK: - 都道府県ユーティリティ（availablePrefectures の spotフィルター分岐）
-
-    private func spotsForPrefectureFilter(course: Course) -> [CourseSpot] {
-        switch listMode {
-        case .nearby:    return course.spots
-        case .favorites: return course.spots.filter { favoriteSpotIds.contains($0.id) }
-        case .visited:   return course.spots.filter { $0.isCheckedIn }
-        case .folder:    return course.spots.filter { folderSpotIds.contains($0.id) }
-        }
     }
 
     private let repo: CourseRepository
@@ -217,6 +204,8 @@ final class SpotListStore {
             recalculateFavorites()
         case .visited:
             recalculateVisited()
+        case .prefecture:
+            recalculatePrefecture()
         case .folder:
             recalculateFolder()
         }
@@ -234,8 +223,6 @@ final class SpotListStore {
             where !excludedCourseIds.contains(course.id)
                && (!course.isUserCreated || course.isEnabled) {
             for spot in course.spots where spot.hasValidCoordinate {
-                if let pref = prefectureFilter,
-                   Self.extractPrefecture(from: spot.address) != pref { continue }
                 let spotLocation = CLLocation(latitude: spot.latitude, longitude: spot.longitude)
                 results.append((course, spot, fromLocation.distance(from: spotLocation)))
             }
@@ -250,8 +237,6 @@ final class SpotListStore {
 
         for course in courses where !excludedCourseIds.contains(course.id) && (!course.isUserCreated || course.isEnabled) {
             for spot in course.spots where spot.hasValidCoordinate && favoriteSpotIds.contains(spot.id) {
-                if let pref = prefectureFilter,
-                   Self.extractPrefecture(from: spot.address) != pref { continue }
                 let distance = fromLocation.map {
                     CLLocation(latitude: spot.latitude, longitude: spot.longitude).distance(from: $0)
                 } ?? 0
@@ -261,7 +246,6 @@ final class SpotListStore {
 
         switch sortType {
         case .added:
-            // コース・スポット順（ロード順 = 追加順に準じる）
             nearbySpots = results
         case .distance:
             nearbySpots = results.sorted { $0.distance < $1.distance }
@@ -275,8 +259,6 @@ final class SpotListStore {
 
         for course in courses where !excludedCourseIds.contains(course.id) && (!course.isUserCreated || course.isEnabled) {
             for spot in course.spots where spot.hasValidCoordinate && folderSpotIds.contains(spot.id) {
-                if let pref = prefectureFilter,
-                   Self.extractPrefecture(from: spot.address) != pref { continue }
                 spotMap[spot.id] = (course, spot)
             }
         }
@@ -301,8 +283,6 @@ final class SpotListStore {
 
         for course in courses where !excludedCourseIds.contains(course.id) && (!course.isUserCreated || course.isEnabled) {
             for spot in course.spots where spot.hasValidCoordinate && spot.isCheckedIn {
-                if let pref = prefectureFilter,
-                   Self.extractPrefecture(from: spot.address) != pref { continue }
                 let distance = fromLocation.map {
                     CLLocation(latitude: spot.latitude, longitude: spot.longitude).distance(from: $0)
                 } ?? 0
@@ -319,6 +299,22 @@ final class SpotListStore {
         case .distance:
             nearbySpots = results.sorted { $0.distance < $1.distance }
         }
+    }
+
+    /// 都道府県別モード: 選択した都道府県のスポットを50件ページネーションで表示
+    private func recalculatePrefecture() {
+        let active = courses.filter { !$0.isUserCreated || $0.isEnabled }
+        var results: [(course: Course, spot: CourseSpot, distance: Double)] = []
+        for course in active where !excludedCourseIds.contains(course.id) {
+            for spot in course.spots where spot.hasValidCoordinate {
+                guard Self.extractPrefecture(from: spot.address) == selectedPrefecture else { continue }
+                results.append((course, spot, 0))
+            }
+        }
+        prefectureTotalCount = results.count
+        let startIndex = (prefecturePage - 1) * prefecturePageSize
+        let endIndex = min(startIndex + prefecturePageSize, results.count)
+        nearbySpots = startIndex < results.count ? Array(results[startIndex..<endIndex]) : []
     }
 
     // MARK: - 地点選択

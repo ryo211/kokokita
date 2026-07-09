@@ -564,8 +564,11 @@
 "spotList.mode.favorites.short" = "Fav";
 "spotList.mode.visited" = "Visited Spots";
 "spotList.mode.visited.short" = "Visited";
+"spotList.mode.prefecture" = "By Prefecture";
+"spotList.mode.prefecture.short" = "Pref.";
 "spotList.noFavorites" = "No favorite spots";
 "spotList.noVisited" = "No visited spots yet";
+"spotList.noPrefectureSpots" = "No spots in this prefecture";
 "spotList.sortType.added" = "Added";
 "spotList.nearbySubtitle" = "Nearest from";
 "spotList.distanceSubtitle" = "Nearest from";
