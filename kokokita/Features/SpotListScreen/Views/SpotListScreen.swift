@@ -1016,6 +1016,7 @@ struct SpotListScreen: View {
 
                 // 都道府県選択ドロップダウン
                 Menu {
+                    let counts = store.prefectureSpotCounts
                     ForEach(SpotListStore.prefectureList, id: \.self) { pref in
                         Button {
                             store.selectedPrefecture = pref
@@ -1024,10 +1025,12 @@ struct SpotListScreen: View {
                             selectedSpotId = nil
                             fitAllPoints()
                         } label: {
+                            let count = counts[pref] ?? 0
+                            let label = count > 0 ? "\(pref)（\(count)件）" : pref
                             if store.selectedPrefecture == pref {
-                                Label(pref, systemImage: "checkmark")
+                                Label(label, systemImage: "checkmark")
                             } else {
-                                Text(pref)
+                                Text(label)
                             }
                         }
                     }

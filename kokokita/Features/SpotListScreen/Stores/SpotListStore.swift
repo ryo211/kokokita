@@ -135,6 +135,20 @@ final class SpotListStore {
         max(1, Int(ceil(Double(prefectureTotalCount) / Double(prefecturePageSize))))
     }
 
+    /// 都道府県ごとのスポット件数（ドロップダウン表示用）
+    /// 有効コースの全スポットを一度走査するだけなので軽量
+    var prefectureSpotCounts: [String: Int] {
+        let active = courses.filter { !$0.isUserCreated || $0.isEnabled }
+        var counts: [String: Int] = [:]
+        for course in active {
+            for spot in course.spots where spot.hasValidCoordinate {
+                guard let pref = Self.extractPrefecture(from: spot.address) else { continue }
+                counts[pref, default: 0] += 1
+            }
+        }
+        return counts
+    }
+
     // MARK: - 都道府県ユーティリティ
 
     static let prefectureList: [String] = [
