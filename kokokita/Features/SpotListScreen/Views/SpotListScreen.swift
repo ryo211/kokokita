@@ -1037,13 +1037,13 @@ struct SpotListScreen: View {
                 } label: {
                     HStack(spacing: 4) {
                         Text(store.selectedPrefecture)
-                            .font(.subheadline.weight(.semibold))
+                            .font(.caption.weight(.semibold))
                             .foregroundStyle(.indigo)
                         Image(systemName: "chevron.up.chevron.down")
                             .font(.system(size: 9, weight: .semibold))
                             .foregroundStyle(.secondary)
                     }
-                    .padding(.horizontal, 10)
+                    .padding(.horizontal, 14)
                     .padding(.vertical, 6)
                     .background(Color.indigo.opacity(0.10), in: Capsule())
                 }
