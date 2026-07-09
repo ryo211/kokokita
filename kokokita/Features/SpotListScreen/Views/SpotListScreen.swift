@@ -1524,6 +1524,14 @@ private struct SpotListRowView: View {
                         }
                     }
 
+                    if let desc = spot.spotDescription {
+                        Text(desc)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(isSelected ? nil : 2)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+
                     if let text = distanceText {
                         HStack(spacing: 2) {
                             Image(systemName: "location.fill").font(.caption2)
