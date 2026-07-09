@@ -1832,6 +1832,16 @@ private struct SpotRowBackdropView: View {
                         endPoint: .trailing
                     )
                 }
+                if spot.isCheckedIn {
+                    Image("kokokita_hanko")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: min(geo.size.width * 0.42, 172))
+                        .opacity(isSelected ? 0.48 : 0.40)
+                        .rotationEffect(.degrees(-10))
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
+                        .offset(x: -8, y: isSelected ? 6 : 2)
+                }
                 if isSelected { Color.indigo.opacity(selectedTintOpacity) }
             }
             .frame(width: geo.size.width, height: geo.size.height)
