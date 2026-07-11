@@ -5,6 +5,7 @@ struct SliderTabBarItem<Tab: Hashable>: Identifiable {
     let id: Tab
     let icon: String
     let title: String
+    var showBadge: Bool = false
 }
 
 // 汎用スライダータブバー（RootTab / PilgrimageTab どちらでも使える）
@@ -153,7 +154,7 @@ struct SliderTabBar<Tab: Hashable>: View {
                 // ボタンラベル
                 HStack(spacing: 0) {
                     ForEach(items) { item in
-                        tabButton(icon: item.icon, title: item.title, tab: item.id, width: tabWidth)
+                        tabButton(item: item, width: tabWidth)
                     }
                 }
                 .padding(6)
@@ -162,21 +163,31 @@ struct SliderTabBar<Tab: Hashable>: View {
         .frame(height: 64)
     }
 
-    private func tabButton(icon: String, title: String, tab: Tab, width: CGFloat) -> some View {
+    private func tabButton(item: SliderTabBarItem<Tab>, width: CGFloat) -> some View {
         Button {
-            onSelect(tab)
+            onSelect(item.id)
         } label: {
-            VStack(spacing: 3) {
-                Image(systemName: icon)
-                    .font(.title3)
-                    .fontWeight(current == tab ? .semibold : .regular)
-                Text(title)
-                    .font(.caption2)
-                    .fontWeight(current == tab ? .semibold : .regular)
+            ZStack {
+                VStack(spacing: 3) {
+                    Image(systemName: item.icon)
+                        .font(.title3)
+                        .fontWeight(current == item.id ? .semibold : .regular)
+                    Text(item.title)
+                        .font(.caption2)
+                        .fontWeight(current == item.id ? .semibold : .regular)
+                }
+                .foregroundStyle(current == item.id ? selectedForeground : inactiveForeground)
+                .frame(width: width)
+                .contentShape(Rectangle())
+
+                if item.showBadge {
+                    Circle()
+                        .fill(Color.red)
+                        .frame(width: 8, height: 8)
+                        .offset(x: 10, y: -12)
+                        .transition(.scale.combined(with: .opacity))
+                }
             }
-            .foregroundStyle(current == tab ? selectedForeground : inactiveForeground)
-            .frame(width: width)
-            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
     }

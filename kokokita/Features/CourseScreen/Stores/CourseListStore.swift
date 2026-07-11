@@ -77,6 +77,14 @@ final class CourseListStore {
 
     // MARK: - 新着判定
 
+    /// 一度も表示されていない新着コースが存在するか（タブバッジ表示用）
+    var hasUnseenCourses: Bool {
+        newlyAddedCourses.values.contains { state in
+            if case .unseen = state { return true }
+            return false
+        }
+    }
+
     func isNew(_ id: UUID) -> Bool {
         guard let state = newlyAddedCourses[id] else { return false }
         switch state {

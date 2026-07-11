@@ -476,6 +476,7 @@ enum L {
         static let typePilgrimage = localized("course.type.pilgrimage")
         static let typeStampRally = localized("course.type.stampRally")
         static let typeMyList = localized("course.type.myList")
+        static let categoryAll             = localized("course.category.all")
         static let categoryHistoryCulture  = localized("course.category.history_culture")
         static let categoryNature          = localized("course.category.nature")
         static let categoryArtEntertainment = localized("course.category.art_entertainment")
@@ -502,6 +503,8 @@ enum L {
         static let sortNearby = localized("course.sort.nearby")
         static let sortDefault  = localized("course.sort.default")
         static let sortDistance = localized("course.sort.distance")
+        static let sortUpdatedAt = localized("course.sort.updatedAt")
+        static let sortSpotCount = localized("course.sort.spotCount")
     }
 
     // MARK: - Course Store（コースダウンロード）

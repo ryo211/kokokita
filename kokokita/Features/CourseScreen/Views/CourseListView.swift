@@ -94,6 +94,12 @@ struct CourseListView: View {
                                 columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)],
                                 spacing: 12
                             ) {
+                                // 先頭に「すべて」カードを表示
+                                NavigationLink(value: AllCoursesNavTarget()) {
+                                    AllCoursesGridCard(courses: store.courses)
+                                }
+                                .buttonStyle(.plain)
+
                                 ForEach(availableCategories, id: \.rawValue) { category in
                                     NavigationLink(value: category) {
                                         CategoryGridCard(
@@ -433,6 +439,82 @@ private struct CourseListBackground: View {
             )
         }
         .ignoresSafeArea()
+    }
+}
+
+// MARK: - すべてのコースグリッドカード
+
+private struct AllCoursesGridCard: View {
+    let courses: [Course]
+
+    // 画像を持つコースからシード乱数で1件を決定的に選択
+    private var representativeCourse: Course? {
+        let withImages = courses.filter { $0.coverImageUrl != nil || $0.localCoverImagePath != nil }
+        guard !withImages.isEmpty else { return courses.first }
+        let seed = courses.first.map { UInt64(bitPattern: Int64($0.id.hashValue)) } ?? UInt64(courses.count)
+        var rng = CourseSeededRandom(state: seed == 0 ? 12345 : seed)
+        let index = Int(rng.next() % UInt64(withImages.count))
+        return withImages[index]
+    }
+
+    var body: some View {
+        ZStack(alignment: .bottomLeading) {
+            backgroundLayer
+
+            LinearGradient(
+                colors: [Color.black.opacity(0.08), Color.black.opacity(0.60)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+
+            VStack(alignment: .leading, spacing: 5) {
+                HStack(spacing: 5) {
+                    Image(systemName: "square.grid.2x2")
+                        .font(.caption.weight(.semibold))
+                    Text(L.Course.categoryAll)
+                        .font(.subheadline.bold())
+                }
+                .foregroundStyle(.white)
+
+                Text("\(courses.count)コース")
+                    .font(.caption2)
+                    .foregroundStyle(.white.opacity(0.80))
+            }
+            .padding(12)
+        }
+        .frame(height: 148)
+        .frame(maxWidth: .infinity)
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+
+    @ViewBuilder
+    private var backgroundLayer: some View {
+        if let path = representativeCourse?.localCoverImagePath,
+           let uiImage = LocalImageStorage.shared.load(from: path) {
+            Color.clear.overlay {
+                Image(uiImage: uiImage)
+                    .resizable()
+                    .scaledToFill()
+            }
+            .clipped()
+        } else if let urlStr = representativeCourse?.coverImageUrl,
+                  let url = URL(string: urlStr) {
+            ZStack {
+                placeholderBackground
+                CachedCourseImage(url: url)
+            }
+        } else {
+            placeholderBackground
+        }
+    }
+
+    private var placeholderBackground: some View {
+        ZStack {
+            Color(white: 0.68)
+            Image(systemName: "square.grid.2x2")
+                .font(.system(size: 52, weight: .thin))
+                .foregroundStyle(Color.white.opacity(0.45))
+        }
     }
 }
 

@@ -118,8 +118,15 @@ struct PilgrimageRootTabView: View {
             guard let _ = notification.object as? UUID else { return }
             triggerCourseEnabledEffect()
         }
+        .onReceive(NotificationCenter.default.publisher(for: .courseDownloaded)) { _ in
+            withAnimation(.spring(duration: 0.4)) { showCourseTabBadge = true }
+        }
         .onAppear {
             refreshAutoRecordCandidateBadge()
+            // 起動時に未視認の新着コースがあればバッジを表示
+            if courseStore.hasUnseenCourses {
+                showCourseTabBadge = true
+            }
         }
         .onReceive(NotificationCenter.default.publisher(for: .autoRecordCandidatesChanged)) { _ in
             Task { @MainActor in

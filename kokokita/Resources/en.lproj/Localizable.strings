@@ -360,6 +360,7 @@
 "course.type.pilgrimage" = "Pilgrimage";
 "course.type.stampRally" = "Stamp Rally";
 "course.type.myList" = "My List";
+"course.category.all" = "All";
 "course.category.history_culture" = "History & Culture";
 "course.category.nature" = "Nature";
 "course.category.art_entertainment" = "Art & Entertainment";
@@ -384,6 +385,8 @@
 "course.sort.nearby" = "Nearest first";
 "course.sort.default" = "Default";
 "course.sort.distance" = "Nearest";
+"course.sort.updatedAt" = "Updated Date";
+"course.sort.spotCount" = "Spot Count";
 
 // MARK: - Mode Selection
 "modeSelection.title" = "Choose Your Mode";

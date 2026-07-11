@@ -362,6 +362,7 @@
 "course.type.pilgrimage" = "巡礼";
 "course.type.stampRally" = "スタンプラリー";
 "course.type.myList" = "マイリスト";
+"course.category.all" = "すべて";
 "course.category.history_culture" = "歴史・文化";
 "course.category.nature" = "自然";
 "course.category.art_entertainment" = "アート・エンタメ";
@@ -388,6 +389,8 @@
 "course.sort.nearby" = "現在地から近い順";
 "course.sort.default" = "デフォルト順";
 "course.sort.distance" = "近い順";
+"course.sort.updatedAt" = "更新日";
+"course.sort.spotCount" = "スポット数";
 
 // MARK: - Mode Selection
 "modeSelection.title" = "モードを選んでください";

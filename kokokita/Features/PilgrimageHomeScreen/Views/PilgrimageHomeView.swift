@@ -307,7 +307,30 @@ struct PilgrimageHomeView: View {
                 )
 
                 HStack {
+                    // 現在地更新ボタン（左）
+                    Button {
+                        Task { await refreshNearbySpots() }
+                    } label: {
+                        HStack(spacing: 4) {
+                            if isRefreshingNearbySpots {
+                                ProgressView()
+                                    .controlSize(.mini)
+                                    .tint(spotPanelAccentColor)
+                            } else {
+                                Image(systemName: "arrow.clockwise")
+                                    .font(.system(size: 11, weight: .semibold))
+                            }
+                            Text(L.PilgrimageHome.nearbyRefresh)
+                                .font(.system(size: 13, weight: .medium))
+                        }
+                        .foregroundStyle(spotPanelAccentColor)
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(isRefreshingNearbySpots)
+
                     Spacer()
+
+                    // すべてを見るボタン（右）
                     NavigationLink(value: PilgrimageHomeRoute.spotPanelList(kind: .nearby)) {
                         HStack(spacing: 3) {
                             Text(L.PilgrimageHome.seeAll)

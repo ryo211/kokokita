@@ -29,6 +29,8 @@ struct CreateScreenData: Identifiable {
 struct RootTabView: View {
     @State private var tab: RootTab = .home
     @State private var recording = RecordingController()
+    @State private var courseStore = CourseListStore()
+    @State private var showCourseTabBadge = false
     @Environment(AppUIState.self) private var ui
     @Environment(AppModeManager.self) private var modeManager
     #if DEBUG
@@ -67,10 +69,9 @@ struct RootTabView: View {
                     .opacity(tab == .records ? 1 : 0)
                     .zIndex(tab == .records ? 1 : 0)
 
-                // CourseScreen は一時的に非表示（リリース後に復活予定）
-                // CourseScreen()
-                //     .opacity(tab == .course ? 1 : 0)
-                //     .zIndex(tab == .course ? 1 : 0)
+                CourseScreen(externalStore: courseStore)
+                    .opacity(tab == .course ? 1 : 0)
+                    .zIndex(tab == .course ? 1 : 0)
 
                 NavigationStack { SettingsHomeScreen() }
                     .opacity(tab == .menu ? 1 : 0)
@@ -90,7 +91,7 @@ struct RootTabView: View {
 
             // ===== フッター領域（バナー + カスタムタブバー） =====
             VStack(spacing: 0) {
-                // 固定バナー（プレミアム会員には非表示）
+                // 固定バナー（Premium会員には非表示）
                 #if DEBUG
                 if debugSettings.isAdDisplayEnabled && !PremiumManager.shared.isPremium {
                     BannerAdView(adUnitID: bannerAdUnitID)
@@ -108,7 +109,13 @@ struct RootTabView: View {
                 if !ui.isTabBarHidden {
                     CustomBottomBar(
                         current: tab,
-                        onSelect: { tab = $0 },
+                        showCourseTabBadge: showCourseTabBadge,
+                        onSelect: { newTab in
+                            tab = newTab
+                            if newTab == .course {
+                                withAnimation { showCourseTabBadge = false }
+                            }
+                        },
                         onCenterTap: {
                             recording.checkLocationPermissionAndCreate()
                         },
@@ -143,6 +150,14 @@ struct RootTabView: View {
         // アプリ起動時にレビュー誘導の記録数を初期化（既存ユーザー対応）
         .task {
             await initializeAppReviewService()
+            // 起動時に未視認の新着コースがあればバッジを表示
+            if courseStore.hasUnseenCourses {
+                showCourseTabBadge = true
+            }
+        }
+        // 新着コースダウンロード時にバッジを表示
+        .onReceive(NotificationCenter.default.publisher(for: .courseDownloaded)) { _ in
+            withAnimation(.spring(duration: 0.4)) { showCourseTabBadge = true }
         }
     }
 
@@ -162,6 +177,7 @@ struct RootTabView: View {
 
 private struct CustomBottomBar: View {
     let current: RootTab
+    let showCourseTabBadge: Bool
     let onSelect: (RootTab) -> Void
     let onCenterTap: () -> Void
     let onModeSwitch: () -> Void
@@ -195,11 +211,12 @@ private struct CustomBottomBar: View {
                     action: onCenterTap
                 )
 
-                // スライディングタブバー（記録モードの3タブ）
+                // スライディングタブバー（記録モードの4タブ）
                 SliderTabBar(
                     items: [
                         SliderTabBarItem(id: RootTab.home, icon: "house.fill", title: L.Tab.home),
                         SliderTabBarItem(id: RootTab.records, icon: "list.bullet", title: L.Tab.records),
+                        SliderTabBarItem(id: RootTab.course, icon: "map", title: L.Tab.course, showBadge: showCourseTabBadge),
                         SliderTabBarItem(id: RootTab.menu, icon: "ellipsis.circle.fill", title: L.Tab.menu),
                     ],
                     current: current,
