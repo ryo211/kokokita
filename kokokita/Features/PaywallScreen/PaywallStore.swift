@@ -9,7 +9,7 @@ final class PaywallStore {
     private(set) var isPurchasing = false
     private(set) var alertTitle: String? = nil
     private(set) var alertMessage: String? = nil
-    var selectedProductId: String = PremiumProduct.yearlyId
+    var selectedProductId: String = PremiumProduct.monthlyId
 
     var products: [Product] { PremiumManager.shared.products }
 
@@ -28,9 +28,7 @@ final class PaywallStore {
         guard products.isEmpty else { return }
         isLoading = true
         await PremiumManager.shared.loadProducts()
-        // 年額をデフォルト選択（お得感を訴求）
-        if products.first(where: { $0.id == PremiumProduct.yearlyId }) == nil,
-           let first = products.first {
+        if let first = products.first {
             selectedProductId = first.id
         }
         isLoading = false

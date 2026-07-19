@@ -22,9 +22,9 @@ final class DebugSettings {
         }
     }
 
-    /// プレミアム状態のオーバーライド
+    /// Premium状態のオーバーライド
     /// - nil: 実際のStoreKit課金状態を使用
-    /// - true: 強制プレミアム（有料機能をすべて開放）
+    /// - true: 強制Premium（有料機能をすべて開放）
     /// - false: 強制フリー（課金済みでも有料機能をロック）
     var premiumOverride: Bool? {
         get { PremiumManager.shared.debugOverride }

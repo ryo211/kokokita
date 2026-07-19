@@ -1,7 +1,7 @@
 import SwiftUI
 import StoreKit
 
-/// プレミアムプランのペイウォール画面
+/// Premiumプランのペイウォール画面
 struct PaywallView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var store = PaywallStore()
@@ -248,7 +248,6 @@ private struct PlanCard: View {
     private var planLabel: String {
         switch product.id {
         case PremiumProduct.monthlyId:  return L.Paywall.monthly
-        case PremiumProduct.yearlyId:   return L.Paywall.yearly
         case PremiumProduct.lifetimeId: return L.Paywall.lifetime
         default:                        return product.displayName
         }
@@ -256,7 +255,6 @@ private struct PlanCard: View {
 
     private var badge: String? {
         switch product.id {
-        case PremiumProduct.yearlyId:   return L.Paywall.yearlyBadge
         case PremiumProduct.lifetimeId: return L.Paywall.lifetimeBadge
         default:                        return nil
         }

@@ -732,13 +732,13 @@
 
 // MARK: - Paywall（課金ペイウォール）
 "paywall.title" = "ココキタPro";
-"paywall.subtitle" = "もっと深く、もっと自由に";
+"paywall.subtitle" = "ココキタをもっと便利に";
 "paywall.feature.noAds" = "広告を非表示";
 "paywall.feature.noAdsDesc" = "広告なしでスッキリ使える";
 "paywall.feature.multiBook" = "複数ブック";
 "paywall.feature.multiBookDesc" = "テーマ別にブックを作成して整理できる";
 "paywall.feature.coursePlayback" = "コース再生";
-"paywall.feature.coursePlaybackDesc" = "ツアーモード・動画モードが使える";
+"paywall.feature.coursePlaybackDesc" = "再生機能（ツアーモード・シネマモード）が使える";
 "paywall.monthly" = "月額";
 "paywall.yearly" = "年額";
 "paywall.yearlyBadge" = "お得";

@@ -61,7 +61,7 @@ struct DeveloperToolsScreen: View {
                 Text(L.Settings.developerTest)
             }
 
-            // MARK: - プレミアム状態のデバッグ制御
+            // MARK: - Premium状態のデバッグ制御
             Section {
                 // 現在の状態表示
                 HStack {
@@ -83,7 +83,7 @@ struct DeveloperToolsScreen: View {
                 }
 
                 // オーバーライドの3択ピッカー
-                Picker("プレミアムオーバーライド", selection: Binding(
+                Picker("Premiumオーバーライド", selection: Binding(
                     get: {
                         switch premiumManager.debugOverride {
                         case .none:  return 0
