@@ -23,6 +23,8 @@ final class VisitFormStore {
     var labelIds: Set<UUID> = []
     var groupId: UUID?
     var memberIds: Set<UUID> = []
+    /// 編集中の所属ブックID（編集モードのみ使用）
+    var selectedBookId: UUID?
 
     // MARK: - UI State
     var alert: String?
@@ -140,6 +142,7 @@ final class VisitFormStore {
         groupId   = agg.details.groupId
         memberIds = Set(agg.details.memberIds)
         addressLine = agg.details.resolvedAddress
+        selectedBookId = agg.bookId
 
         #if DEBUG
         // デバッグモード：元のタイムスタンプと位置情報フラグを保存
@@ -346,6 +349,11 @@ final class VisitFormStore {
                 }
                 // 写真はEffectsから取得
                 cur.photoPaths = photoEffects.getCurrentPaths()
+            }
+
+            // ブック変更の保存
+            if let newBookId = selectedBookId {
+                try repo.updateBookId(id: id, bookId: newBookId)
             }
 
             // 写真編集を確定

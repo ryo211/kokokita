@@ -47,6 +47,8 @@
 "visit.edit.recordDateTime" = "記録日時";
 "visit.edit.copyFromOtherVisit" = "過去の記録からコピー";
 "visit.edit.selectVisitToCopy" = "コピー元を選択";
+"visit.edit.bookSection" = "ブック";
+"visit.edit.selectBook" = "ブックを選択";
 
 // MARK: - Photo
 "photo.photo" = "写真";
@@ -60,8 +62,8 @@
 "home.filter.group" = "旅行";
 "home.filter.period" = "期間";
 "home.search.placeholder" = "検索";
-"home.deleteConfirmTitle" = "この記録を削除しますか？";
-"home.deleteConfirmMessage" = "この操作は取り消せません。";
+"home.deleteConfirmTitle" = "ゴミ箱へ移動";
+"home.deleteConfirmMessage" = "削除した記録はゴミ箱に30日間保存されます。";
 "home.noTitle" = "No Title";
 "home.itemsCount" = "件";
 "home.switchToMap" = "地図に切り替え";
@@ -80,10 +82,10 @@
 "detail.group" = "旅行";
 "detail.memo" = "メモ";
 "detail.facility" = "施設情報";
-"detail.deleteConfirmTitle" = "この記録を削除しますか？";
-"detail.deleteConfirmMessage" = "この操作は取り消せません。";
-"detail.deleteVisitTitle" = "記録を削除";
-"detail.deleteVisitMessage" = "この記録を削除しますか？";
+"detail.deleteConfirmTitle" = "ゴミ箱へ移動";
+"detail.deleteConfirmMessage" = "削除した記録はゴミ箱に30日間保存されます。";
+"detail.deleteVisitTitle" = "ゴミ箱へ移動";
+"detail.deleteVisitMessage" = "削除した記録はゴミ箱に30日間保存されます。";
 "detail.nearbyPastRecords" = "近くの記録";
 "detail.sameGroupRecords" = "同じ旅行の記録";
 
@@ -305,8 +307,8 @@
 "confirmation.noInternet" = "インターネットに接続されていないため、周辺施設情報を取得できません。";
 "confirmation.noPOIFound" = "周辺に施設が見つかりませんでした";
 "confirmation.selectFacility" = "候補のスポットから選択";
-"confirmation.deleteConfirmTitle" = "この記録を削除しますか？";
-"confirmation.deleteConfirmMessage" = "この操作は取り消せません。";
+"confirmation.deleteConfirmTitle" = "ゴミ箱へ移動";
+"confirmation.deleteConfirmMessage" = "削除した記録はゴミ箱に30日間保存されます。";
 "confirmation.recentVisitsHeader" = "この近くで過去に記録した場所";
 "confirmation.nearbyPlacesHeader" = "周辺の施設";
 
@@ -325,6 +327,10 @@
 "settingssheet.reviewApp" = "このアプリをレビューする";
 "settingssheet.developerTools" = "開発者ツール";
 "settingssheet.version" = "バージョン";
+"settingssheet.premiumUpgrade" = "Premiumにアップグレード";
+"settingssheet.premiumUpgradeDescription" = "広告非表示・複数ブック・コース再生";
+"settingssheet.premiumActive" = "Premium会員";
+"settingssheet.premiumActiveDescription" = "すべてのPremium機能をご利用中です";
 
 // MARK: - Course Screen
 "course.title" = "コース";
@@ -342,6 +348,7 @@
 "courseStore.filter.available" = "未入手";
 "courseStore.filter.installed" = "追加済み";
 "courseStore.filter.all" = "すべて";
+"courseStore.searchPlaceholder" = "コースを検索";
 "course.emptyTitle" = "コースがありません";
 "course.emptyDescription" = "右上の＋からコースを追加できます";
 "course.enable" = "有効にする";
@@ -355,6 +362,7 @@
 "course.type.pilgrimage" = "巡礼";
 "course.type.stampRally" = "スタンプラリー";
 "course.type.myList" = "マイリスト";
+"course.category.all" = "すべて";
 "course.category.history_culture" = "歴史・文化";
 "course.category.nature" = "自然";
 "course.category.art_entertainment" = "アート・エンタメ";
@@ -363,7 +371,15 @@
 "course.category.anime" = "アニメ・漫画";
 "course.category.user_created" = "自作コース";
 "course.newBadge" = "NEW";
+"course.newSectionTitle" = "新着コース";
+"course.favoriteSectionTitle" = "お気に入り";
+"course.favoriteToggleAdd" = "お気に入りに追加";
+"course.favoriteToggleRemove" = "お気に入りから削除";
+"course.favoriteViewAll" = "すべて見る";
+"course.favoriteEmptyDescription" = "コースをお気に入りに追加すると、ここに表示されます";
 "course.achieved" = "達成";
+"course.addHint" = "コースを追加できます";
+
 "course.notVisited" = "未訪問";
 "course.noAddress" = "住所未登録";
 "course.visitedOn" = "%@に巡礼済み";
@@ -373,6 +389,8 @@
 "course.sort.nearby" = "現在地から近い順";
 "course.sort.default" = "デフォルト順";
 "course.sort.distance" = "近い順";
+"course.sort.updatedAt" = "更新日";
+"course.sort.spotCount" = "スポット数";
 
 // MARK: - Mode Selection
 "modeSelection.title" = "モードを選んでください";
@@ -553,13 +571,212 @@
 "spotList.mode.favorites.short" = "お気に入り";
 "spotList.mode.visited" = "行ったスポット";
 "spotList.mode.visited.short" = "行った";
+"spotList.mode.prefecture" = "都道府県別";
+"spotList.mode.prefecture.short" = "都道府県";
 "spotList.noFavorites" = "お気に入りのスポットがありません";
 "spotList.noVisited" = "行ったスポットはありません";
+"spotList.noPrefectureSpots" = "この都道府県にスポットがありません";
 "spotList.sortType.added" = "追加順";
 "spotList.nearbySubtitle" = "から近いスポット";
 "spotList.distanceSubtitle" = "から近い順";
 "spotList.totalCount" = "全%d件";
+"spotList.filter.prefecture" = "都道府県";
+"spotList.filter.allPrefectures" = "すべて";
+"spotList.menu.inquiry" = "問い合わせ";
+"spotList.menu.addFolder" = "フォルダ追加";
+"spotList.menu.share" = "共有";
+"spotList.mode.folder" = "フォルダ";
+"spotList.mode.folder.short" = "フォルダ";
+"spotList.noFolder" = "このフォルダにスポットがありません";
+
+// MARK: - Folder（フォルダ機能）
+"folder.defaultName" = "フォルダ";
+"folder.title" = "フォルダに追加";
+"folder.new" = "新しいフォルダを作成";
+"folder.namePlaceholder" = "フォルダ名";
+"folder.create" = "作成";
+"folder.rename" = "名前を変更";
+"folder.delete" = "削除";
+"folder.deleteConfirm" = "このフォルダを削除しますか？";
+"folder.deleteConfirmMessage" = "フォルダ内のスポットは削除されません。";
+"folder.select" = "フォルダを選択";
+"folder.added" = "追加済み";
+"folder.removeFromFolder" = "フォルダから削除";
+
+// MARK: - Inquiry（問い合わせ）
+"inquiry.title" = "問い合わせ";
+"inquiry.sectionTarget" = "問い合わせ対象";
+"inquiry.sectionCategory" = "カテゴリ";
+"inquiry.sectionContent" = "内容";
+"inquiry.category.provideInfo" = "画像や情報の提供";
+"inquiry.category.reportError" = "誤りの報告";
+"inquiry.category.request" = "要望";
+"inquiry.category.question" = "質問";
+"inquiry.category.other" = "その他";
+"inquiry.sendButton" = "問い合わせをする";
+"inquiry.sendNote" = "メーラーが開きます";
+"inquiry.email.labelCourse" = "コース";
+"inquiry.email.labelSpot" = "スポット";
+"inquiry.email.labelCategory" = "カテゴリ";
+"inquiry.email.labelContent" = "内容";
+"inquiry.email.subject" = "[問い合わせ] %@ - %@";
+"inquiry.email.subjectCourse" = "[問い合わせ] %@";
 
 // MARK: - TaxonomyList（ソート）
 "taxonomyList.sortNewest" = "新しい順";
 "taxonomyList.sortCount" = "多い順";
+
+// MARK: - AutoRecord（自動記録）
+"autoRecord.badge.title" = "自動記録";
+"autoRecord.badge.countFormat" = "%d件の候補";
+"autoRecord.review.title" = "自動記録の候補";
+"autoRecord.review.subtitle" = "OSが検知した訪問記録候補を確認してください";
+"autoRecord.review.empty" = "未確認の候補はありません";
+"autoRecord.review.approve" = "記録する";
+"autoRecord.review.dismiss" = "却下";
+"autoRecord.review.dismissAll" = "すべて却下";
+"autoRecord.review.arrivalDate" = "到着";
+"autoRecord.review.stayDuration" = "滞在時間";
+"autoRecord.review.stayDurationFormat" = "%d分";
+"autoRecord.review.accuracy" = "精度";
+"autoRecord.review.accuracyFormat" = "±%dm";
+"autoRecord.review.loadingPlace" = "地名を取得中…";
+"autoRecord.settings.title" = "自動記録";
+"autoRecord.settings.toggle" = "自動記録を有効にする";
+"autoRecord.settings.toggleDescription" = "バックグラウンドで訪問を自動検知し、承認後に記録します";
+"autoRecord.permission.title" = "常に位置情報を使用";
+"autoRecord.permission.message" = "自動記録には「常に許可」の位置情報権限が必要です。訪れた場所を後から確認・記録するために使用します。";
+"autoRecord.permission.openSettings" = "設定を開く";
+"autoRecord.dismiss.confirmTitle" = "候補を却下";
+"autoRecord.dismiss.confirmMessage" = "この候補を削除します。元に戻せません。";
+"autoRecord.dismissAll.confirmTitle" = "すべての候補を却下";
+"autoRecord.dismissAll.confirmMessage" = "%d件の候補をすべて削除します。元に戻せません。";
+"autoRecord.home.pendingBanner" = "自動記録の候補が%d件あります";
+"autoRecord.settings.reviewCandidates" = "記録候補を確認する";
+"autoRecord.exclude" = "この場所を自動検知しない";
+"autoRecord.exclude.title" = "場所を除外する";
+"autoRecord.exclude.message" = "この場所の周辺（約%dm以内）を自動記録から除外します。名前を付けておくと管理しやすくなります。";
+"autoRecord.exclude.labelPlaceholder" = "例：自宅、職場（省略可）";
+"autoRecord.exclude.confirm" = "除外する";
+"autoRecord.excludedLocations.title" = "除外した場所";
+"autoRecord.excludedLocations.empty" = "除外した場所はありません。\n自動記録の候補から「この場所を自動検知しない」を選ぶと追加されます。";
+"autoRecord.excludedLocations.footer" = "左にスワイプすると除外を解除できます";
+"autoRecord.excludedLocations.radius" = "半径%dm";
+
+// MARK: - Trash（ゴミ箱）
+"trash.title" = "ゴミ箱";
+"trash.empty" = "ゴミ箱は空です";
+"trash.emptyDescription" = "削除した記録は30日間ここに保存されます";
+"trash.restore" = "復元";
+"trash.permanentlyDelete" = "完全削除";
+"trash.emptyTrash" = "ゴミ箱を空にする";
+"trash.emptyTrashConfirmTitle" = "ゴミ箱を空にしますか？";
+"trash.emptyTrashConfirmMessage" = "%d件の記録が完全に削除されます。この操作は元に戻せません。";
+"trash.permanentlyDeleteConfirmTitle" = "完全に削除しますか？";
+"trash.permanentlyDeleteConfirmMessage" = "この操作は元に戻せません。";
+"trash.deletedAt" = "削除日: %@";
+"trash.expiresIn" = "あと%d日で自動削除";
+"trash.expiresToday" = "本日自動削除されます";
+"trash.count" = "%d件";
+
+// MARK: - Book
+"book.myBook" = "マイブック";
+"book.pickerTitle" = "ブック";
+"book.newBook" = "新しいブック";
+"book.namePlaceholder" = "ブック名";
+"book.premiumTitle" = "Premium機能";
+"book.premiumDescription" = "複数のブックを作成するには\nPremiumプランが必要です。";
+"book.premiumUpgrade" = "アップグレード";
+"book.deleteConfirm" = "このブックを削除しますか？";
+"book.deleteDescription" = "ブック内のすべての記録・ラベル・グループ・メンバーが削除されます。この操作は元に戻せません。";
+"book.rename" = "名前を変更";
+"book.colorLabel" = "カバーカラー";
+"book.currentLabel" = "使用中";
+
+// MARK: - SlideShow（シネマモード）
+"slideShow.menuLabel" = "シネマモード";
+"slideShow.toolbarButton" = "シネマモード";
+"slideShow.noPlayableSpots" = "表示できるスポットがありません";
+"slideShow.noPlayableSpotsDesc" = "写真付きのスポットがないため\nシネマモードを利用できません";
+"slideShow.settings.title" = "再生設定";
+"slideShow.settings.interval" = "スポット表示時間";
+"slideShow.settings.intervalSec" = "%.1f 秒";
+"slideShow.settings.minSec" = "0.5秒";
+"slideShow.settings.maxSec" = "3秒";
+"slideShow.settings.animationSpeed" = "切り替えアニメーション";
+"slideShow.settings.speed.slow" = "ゆっくり";
+"slideShow.settings.speed.medium" = "普通";
+"slideShow.settings.speed.fast" = "キビキビ";
+
+// MARK: - TourMode（ツアーモード）
+"tourMode.title" = "ツアーモード";
+"tourMode.menuLabel" = "ツアーモード";
+"tourMode.toolbarButton" = "ツアーモード";
+"tourMode.settings.intervalLabel" = "スポット表示時間";
+"tourMode.settings.intervalSec" = "%.1f 秒";
+"tourMode.settings.intervalMin" = "0.5秒";
+"tourMode.settings.intervalMax" = "5秒";
+"tourMode.startButton" = "再生開始";
+"tourMode.settings.photoSpotsOnly" = "写真があるスポットのみ";
+"tourMode.settings.typewriter" = "説明文タイプライター演出";
+"tourMode.settings.typewriterDesc" = "説明文を一文字ずつ表示します。ONにするとスポット切り替え時間は無効になります。";
+
+// MARK: - CourseDetail メニュー
+"courseDetail.menu.courseInfo" = "コース概要";
+"courseDetail.menu.sectionMapSettings" = "地図設定";
+"courseDetail.menu.sectionPlayback" = "再生機能";
+"courseDetail.menu.zoomOnFocus" = "フォーカスズーム";
+"courseDetail.menu.zoomOnFocusOn" = "フォーカスズーム: ON";
+"courseDetail.menu.zoomOnFocusOff" = "フォーカスズーム: OFF";
+"courseDetail.menu.spotPhotoSize" = "スポット写真";
+
+// MARK: - Paywall（課金ペイウォール）
+"paywall.title" = "ココキタPremium";
+"paywall.subtitle" = "ココキタをもっと便利に";
+"paywall.feature.noAds" = "広告を非表示";
+"paywall.feature.noAdsDesc" = "広告なしでスッキリ使える";
+"paywall.feature.multiBook" = "複数ブック";
+"paywall.feature.multiBookDesc" = "テーマ別にブックを作成して整理できる";
+"paywall.feature.coursePlayback" = "コース再生";
+"paywall.feature.coursePlaybackDesc" = "再生機能（ツアーモード・シネマモード）が使える";
+"paywall.monthly" = "月額";
+"paywall.yearly" = "年額";
+"paywall.yearlyBadge" = "お得";
+"paywall.lifetime" = "買い切り";
+"paywall.lifetimeBadge" = "永続";
+"paywall.ctaSubscribe" = "はじめる";
+"paywall.ctaLifetime" = "購入する";
+"paywall.restore" = "購入を復元";
+"paywall.terms" = "利用規約";
+"paywall.privacy" = "プライバシーポリシー";
+"paywall.loadingProducts" = "価格を読み込み中...";
+"paywall.courseGateTitle" = "Premium機能です";
+"paywall.courseGateMessage" = "ツアーモードと動画モードはPremiumプランでご利用いただけます。";
+"paywall.restoreSuccess" = "購入を復元しました";
+"paywall.restoreFailed" = "復元できる購入が見つかりませんでした";
+"paywall.purchaseError" = "購入できませんでした";
+"paywall.alreadyPremium" = "Premium会員";
+"paywall.debugOverrideOn" = "デバッグ: Premium強制ON";
+"paywall.debugOverrideOff" = "デバッグ: Premium強制OFF";
+"paywall.debugOverrideNone" = "デバッグ: 実際の課金状態を使用";
+
+// MARK: - CourseDetail メニュー（追加）
+"courseDetail.menu.share" = "共有";
+
+// MARK: - Share（共有プレビュー）
+"share.previewTitle" = "共有プレビュー";
+"share.button" = "共有する";
+"share.imageSection" = "共有画像";
+"share.mapTitle" = "地図";
+"share.textLabel" = "テキスト";
+"share.appStoreLabel" = "Available on the App Store";
+"share.spotShareText" = "%@ の「%@」\n#ココキタ";
+"share.courseShareText" = "%@ \n#ココキタ";
+"share.spotCountLabel" = "%d スポット";
+"share.mapEditHint" = "タップして調整";
+"share.mapEditorTitle" = "地図を調整";
+"share.layoutLabel" = "レイアウト";
+"share.layoutPhoto" = "写真メイン";
+"share.layoutMap" = "地図メイン";
+"share.showSubThumbnail" = "サブサムネイルを表示";
+"share.selectPhoto" = "写真を選択";

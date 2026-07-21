@@ -47,6 +47,8 @@
 "visit.edit.recordDateTime" = "Record Date/Time";
 "visit.edit.copyFromOtherVisit" = "Copy from Another Visit";
 "visit.edit.selectVisitToCopy" = "Select Source to Copy";
+"visit.edit.bookSection" = "Book";
+"visit.edit.selectBook" = "Select Book";
 
 // MARK: - Photo
 "photo.photo" = "Photo";
@@ -60,8 +62,8 @@
 "home.filter.group" = "Trip";
 "home.filter.period" = "Period";
 "home.search.placeholder" = "Search";
-"home.deleteConfirmTitle" = "Delete this record?";
-"home.deleteConfirmMessage" = "This action cannot be undone.";
+"home.deleteConfirmTitle" = "Move to Trash";
+"home.deleteConfirmMessage" = "Deleted records are saved in the Trash for 30 days.";
 "home.noTitle" = "No Title";
 "home.itemsCount" = "items";
 "home.switchToMap" = "Switch to Map";
@@ -80,10 +82,10 @@
 "detail.group" = "Trip";
 "detail.memo" = "Memo";
 "detail.facility" = "Facility Info";
-"detail.deleteConfirmTitle" = "Delete this record?";
-"detail.deleteConfirmMessage" = "This action cannot be undone.";
-"detail.deleteVisitTitle" = "Delete Record";
-"detail.deleteVisitMessage" = "Delete this record?";
+"detail.deleteConfirmTitle" = "Move to Trash";
+"detail.deleteConfirmMessage" = "Deleted records are saved in the Trash for 30 days.";
+"detail.deleteVisitTitle" = "Move to Trash";
+"detail.deleteVisitMessage" = "Deleted records are saved in the Trash for 30 days.";
 "detail.nearbyPastRecords" = "Nearby Records";
 "detail.sameGroupRecords" = "Records in This Trip";
 
@@ -303,8 +305,8 @@
 "confirmation.noInternet" = "Cannot fetch nearby places without an internet connection.";
 "confirmation.noPOIFound" = "No places found nearby";
 "confirmation.selectFacility" = "Choose from Candidate Spots";
-"confirmation.deleteConfirmTitle" = "Delete this record?";
-"confirmation.deleteConfirmMessage" = "This action cannot be undone.";
+"confirmation.deleteConfirmTitle" = "Move to Trash";
+"confirmation.deleteConfirmMessage" = "Deleted records are saved in the Trash for 30 days.";
 "confirmation.recentVisitsHeader" = "Past Records Nearby";
 "confirmation.nearbyPlacesHeader" = "Nearby Places";
 
@@ -323,6 +325,10 @@
 "settingssheet.reviewApp" = "Review This App";
 "settingssheet.developerTools" = "Developer Tools";
 "settingssheet.version" = "Version";
+"settingssheet.premiumUpgrade" = "Upgrade to Premium";
+"settingssheet.premiumUpgradeDescription" = "No ads · Multiple books · Course playback";
+"settingssheet.premiumActive" = "Premium Member";
+"settingssheet.premiumActiveDescription" = "You have access to all premium features";
 
 // MARK: - Course Screen
 "course.title" = "Course";
@@ -340,6 +346,7 @@
 "courseStore.filter.available" = "Available";
 "courseStore.filter.installed" = "Installed";
 "courseStore.filter.all" = "All";
+"courseStore.searchPlaceholder" = "Search courses";
 "course.emptyTitle" = "No Courses";
 "course.emptyDescription" = "Tap + in the top right to add a course";
 "course.enable" = "Enable";
@@ -353,13 +360,22 @@
 "course.type.pilgrimage" = "Pilgrimage";
 "course.type.stampRally" = "Stamp Rally";
 "course.type.myList" = "My List";
+"course.category.all" = "All";
 "course.category.history_culture" = "History & Culture";
 "course.category.nature" = "Nature";
 "course.category.art_entertainment" = "Art & Entertainment";
 "course.category.anime" = "Anime & Manga";
 "course.category.user_created" = "My Courses";
 "course.newBadge" = "NEW";
+"course.newSectionTitle" = "New Courses";
+"course.favoriteSectionTitle" = "Favorites";
+"course.favoriteToggleAdd" = "Add to Favorites";
+"course.favoriteToggleRemove" = "Remove from Favorites";
+"course.favoriteViewAll" = "See All";
+"course.favoriteEmptyDescription" = "Add courses to favorites and they will appear here";
 "course.achieved" = "done";
+"course.addHint" = "Add a course here";
+
 "course.notVisited" = "Not Visited";
 "course.noAddress" = "No Address";
 "course.visitedOn" = "Visited on %@";
@@ -369,6 +385,8 @@
 "course.sort.nearby" = "Nearest first";
 "course.sort.default" = "Default";
 "course.sort.distance" = "Nearest";
+"course.sort.updatedAt" = "Updated Date";
+"course.sort.spotCount" = "Spot Count";
 
 // MARK: - Mode Selection
 "modeSelection.title" = "Choose Your Mode";
@@ -549,13 +567,212 @@
 "spotList.mode.favorites.short" = "Fav";
 "spotList.mode.visited" = "Visited Spots";
 "spotList.mode.visited.short" = "Visited";
+"spotList.mode.prefecture" = "By Prefecture";
+"spotList.mode.prefecture.short" = "Pref.";
 "spotList.noFavorites" = "No favorite spots";
 "spotList.noVisited" = "No visited spots yet";
+"spotList.noPrefectureSpots" = "No spots in this prefecture";
 "spotList.sortType.added" = "Added";
 "spotList.nearbySubtitle" = "Nearest from";
 "spotList.distanceSubtitle" = "Nearest from";
 "spotList.totalCount" = "Total %d";
+"spotList.filter.prefecture" = "Prefecture";
+"spotList.filter.allPrefectures" = "All";
+"spotList.menu.inquiry" = "Inquiry";
+"spotList.menu.addFolder" = "Add to Folder";
+"spotList.menu.share" = "Share";
+"spotList.mode.folder" = "Folders";
+"spotList.mode.folder.short" = "Folders";
+"spotList.noFolder" = "No spots in this folder";
+
+// MARK: - Folder
+"folder.defaultName" = "Folder";
+"folder.title" = "Add to Folder";
+"folder.new" = "Create New Folder";
+"folder.namePlaceholder" = "Folder Name";
+"folder.create" = "Create";
+"folder.rename" = "Rename";
+"folder.delete" = "Delete";
+"folder.deleteConfirm" = "Delete this folder?";
+"folder.deleteConfirmMessage" = "Spots inside will not be deleted.";
+"folder.select" = "Select Folder";
+"folder.added" = "Added";
+"folder.removeFromFolder" = "Remove from Folder";
+
+// MARK: - Inquiry
+"inquiry.title" = "Inquiry";
+"inquiry.sectionTarget" = "Target";
+"inquiry.sectionCategory" = "Category";
+"inquiry.sectionContent" = "Details";
+"inquiry.category.provideInfo" = "Provide image or info";
+"inquiry.category.reportError" = "Report an error";
+"inquiry.category.request" = "Request";
+"inquiry.category.question" = "Question";
+"inquiry.category.other" = "Other";
+"inquiry.sendButton" = "Send Inquiry";
+"inquiry.sendNote" = "This will open your mail app";
+"inquiry.email.labelCourse" = "Course";
+"inquiry.email.labelSpot" = "Spot";
+"inquiry.email.labelCategory" = "Category";
+"inquiry.email.labelContent" = "Details";
+"inquiry.email.subject" = "[Inquiry] %@ - %@";
+"inquiry.email.subjectCourse" = "[Inquiry] %@";
 
 // MARK: - TaxonomyList (sort)
 "taxonomyList.sortNewest" = "Newest first";
 "taxonomyList.sortCount" = "Most visits";
+
+// MARK: - AutoRecord
+"autoRecord.badge.title" = "Auto Record";
+"autoRecord.badge.countFormat" = "%d candidates";
+"autoRecord.review.title" = "Auto-Recorded Visits";
+"autoRecord.review.subtitle" = "Review visits detected automatically by your device";
+"autoRecord.review.empty" = "No pending candidates";
+"autoRecord.review.approve" = "Record";
+"autoRecord.review.dismiss" = "Dismiss";
+"autoRecord.review.dismissAll" = "Dismiss All";
+"autoRecord.review.arrivalDate" = "Arrival";
+"autoRecord.review.stayDuration" = "Stay duration";
+"autoRecord.review.stayDurationFormat" = "%d min";
+"autoRecord.review.accuracy" = "Accuracy";
+"autoRecord.review.accuracyFormat" = "±%dm";
+"autoRecord.review.loadingPlace" = "Loading place name…";
+"autoRecord.settings.title" = "Auto Record";
+"autoRecord.settings.toggle" = "Enable Auto Record";
+"autoRecord.settings.toggleDescription" = "Automatically detect visits in the background and let you confirm them later";
+"autoRecord.permission.title" = "Always Allow Location";
+"autoRecord.permission.message" = "Auto Record requires Always On location permission to detect visits in the background.";
+"autoRecord.permission.openSettings" = "Open Settings";
+"autoRecord.dismiss.confirmTitle" = "Dismiss Candidate";
+"autoRecord.dismiss.confirmMessage" = "This candidate will be deleted and cannot be undone.";
+"autoRecord.dismissAll.confirmTitle" = "Dismiss All Candidates";
+"autoRecord.dismissAll.confirmMessage" = "All %d candidates will be deleted and cannot be undone.";
+"autoRecord.home.pendingBanner" = "%d auto-recorded visit(s) pending";
+"autoRecord.settings.reviewCandidates" = "Review Candidates";
+"autoRecord.exclude" = "Don't Detect This Place";
+"autoRecord.exclude.title" = "Exclude This Place";
+"autoRecord.exclude.message" = "Auto-recording will be disabled within approximately %dm of this location. Adding a name makes it easier to manage.";
+"autoRecord.exclude.labelPlaceholder" = "e.g. Home, Work (optional)";
+"autoRecord.exclude.confirm" = "Exclude";
+"autoRecord.excludedLocations.title" = "Excluded Places";
+"autoRecord.excludedLocations.empty" = "No excluded places.\nTap \"Don't Detect This Place\" on a candidate to add one.";
+"autoRecord.excludedLocations.footer" = "Swipe left to remove an exclusion";
+"autoRecord.excludedLocations.radius" = "%dm radius";
+
+// MARK: - Trash
+"trash.title" = "Trash";
+"trash.empty" = "Trash Is Empty";
+"trash.emptyDescription" = "Deleted records are saved here for 30 days";
+"trash.restore" = "Restore";
+"trash.permanentlyDelete" = "Delete Permanently";
+"trash.emptyTrash" = "Empty Trash";
+"trash.emptyTrashConfirmTitle" = "Empty Trash?";
+"trash.emptyTrashConfirmMessage" = "%d records will be permanently deleted. This cannot be undone.";
+"trash.permanentlyDeleteConfirmTitle" = "Delete Permanently?";
+"trash.permanentlyDeleteConfirmMessage" = "This action cannot be undone.";
+"trash.deletedAt" = "Deleted: %@";
+"trash.expiresIn" = "Auto-deletes in %d day(s)";
+"trash.expiresToday" = "Auto-deletes today";
+"trash.count" = "%d items";
+
+// MARK: - Book
+"book.myBook" = "My Book";
+"book.pickerTitle" = "Book";
+"book.newBook" = "New Book";
+"book.namePlaceholder" = "Book Name";
+"book.premiumTitle" = "Premium Feature";
+"book.premiumDescription" = "Creating multiple books requires\na premium plan.";
+"book.premiumUpgrade" = "Upgrade";
+"book.deleteConfirm" = "Delete this book?";
+"book.deleteDescription" = "All records, labels, groups, and members in this book will be deleted. This cannot be undone.";
+"book.rename" = "Rename";
+"book.colorLabel" = "Cover Color";
+"book.currentLabel" = "In Use";
+
+// MARK: - SlideShow (Cinema Mode)
+"slideShow.menuLabel" = "Cinema Mode";
+"slideShow.toolbarButton" = "Cinema Mode";
+"slideShow.noPlayableSpots" = "No spots available";
+"slideShow.noPlayableSpotsDesc" = "No spots with photos found.\nCinema Mode is unavailable.";
+"slideShow.settings.title" = "Playback Settings";
+"slideShow.settings.interval" = "Display Duration";
+"slideShow.settings.intervalSec" = "%.1f sec";
+"slideShow.settings.minSec" = "0.5 sec";
+"slideShow.settings.maxSec" = "3 sec";
+"slideShow.settings.animationSpeed" = "Transition Animation";
+"slideShow.settings.speed.slow" = "Slow";
+"slideShow.settings.speed.medium" = "Normal";
+"slideShow.settings.speed.fast" = "Fast";
+
+// MARK: - TourMode (Tour Mode)
+"tourMode.title" = "Tour Mode";
+"tourMode.menuLabel" = "Tour Mode";
+"tourMode.toolbarButton" = "Tour Mode";
+"tourMode.settings.intervalLabel" = "Display Duration";
+"tourMode.settings.intervalSec" = "%.1f sec";
+"tourMode.settings.intervalMin" = "0.5 sec";
+"tourMode.settings.intervalMax" = "5 sec";
+"tourMode.startButton" = "Start";
+"tourMode.settings.photoSpotsOnly" = "Photo spots only";
+"tourMode.settings.typewriter" = "Typewriter Effect";
+"tourMode.settings.typewriterDesc" = "Reveals the description one character at a time. When ON, the auto-advance timer is disabled.";
+
+// MARK: - CourseDetail Menu
+"courseDetail.menu.courseInfo" = "Course Info";
+"courseDetail.menu.sectionMapSettings" = "Map Settings";
+"courseDetail.menu.sectionPlayback" = "Playback";
+"courseDetail.menu.zoomOnFocus" = "Focus Zoom";
+"courseDetail.menu.zoomOnFocusOn" = "Focus Zoom: ON";
+"courseDetail.menu.zoomOnFocusOff" = "Focus Zoom: OFF";
+"courseDetail.menu.spotPhotoSize" = "Spot Photo";
+
+// MARK: - Paywall
+"paywall.title" = "Kokokita Premium";
+"paywall.subtitle" = "More freedom, deeper memories";
+"paywall.feature.noAds" = "No Ads";
+"paywall.feature.noAdsDesc" = "Enjoy a clean, ad-free experience";
+"paywall.feature.multiBook" = "Multiple Books";
+"paywall.feature.multiBookDesc" = "Organize visits with themed books";
+"paywall.feature.coursePlayback" = "Course Playback";
+"paywall.feature.coursePlaybackDesc" = "Tour mode & movie mode unlocked";
+"paywall.monthly" = "Monthly";
+"paywall.yearly" = "Yearly";
+"paywall.yearlyBadge" = "Best Value";
+"paywall.lifetime" = "Lifetime";
+"paywall.lifetimeBadge" = "One-time";
+"paywall.ctaSubscribe" = "Get Started";
+"paywall.ctaLifetime" = "Purchase";
+"paywall.restore" = "Restore Purchases";
+"paywall.terms" = "Terms of Service";
+"paywall.privacy" = "Privacy Policy";
+"paywall.loadingProducts" = "Loading prices...";
+"paywall.courseGateTitle" = "Premium Feature";
+"paywall.courseGateMessage" = "Tour mode and movie mode are available with a premium plan.";
+"paywall.restoreSuccess" = "Purchases restored successfully";
+"paywall.restoreFailed" = "No restorable purchases found";
+"paywall.purchaseError" = "Purchase failed";
+"paywall.alreadyPremium" = "Premium Member";
+"paywall.debugOverrideOn" = "Debug: Premium forced ON";
+"paywall.debugOverrideOff" = "Debug: Premium forced OFF";
+"paywall.debugOverrideNone" = "Debug: Using real purchase state";
+
+// MARK: - CourseDetail menu (added)
+"courseDetail.menu.share" = "Share";
+
+// MARK: - Share (share preview)
+"share.previewTitle" = "Share Preview";
+"share.button" = "Share";
+"share.imageSection" = "Share Image";
+"share.mapTitle" = "Map";
+"share.textLabel" = "Text";
+"share.appStoreLabel" = "Available on the App Store";
+"share.spotShareText" = "%@ — \"%@\"\n#kokokita";
+"share.courseShareText" = "Explore spots in %@!\n#kokokita";
+"share.spotCountLabel" = "%d spots";
+"share.mapEditHint" = "Tap to adjust";
+"share.mapEditorTitle" = "Adjust Map";
+"share.layoutLabel" = "Layout";
+"share.layoutPhoto" = "Photo First";
+"share.layoutMap" = "Map First";
+"share.showSubThumbnail" = "Show Thumbnail";
+"share.selectPhoto" = "Select Photo";

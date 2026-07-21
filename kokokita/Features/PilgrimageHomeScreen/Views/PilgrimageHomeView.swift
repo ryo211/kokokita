@@ -179,7 +179,7 @@ struct PilgrimageHomeView: View {
                     }
                 case .courseDetailSummary(let courseId):
                     if let course = store.courses.first(where: { $0.id == courseId }) {
-                        CourseDetailView(course: course, showSummaryOnAppear: true)
+                        CourseDetailView(course: course)
                     }
                 case .spotPanelList(let kind):
                     SpotListScreen(initialMode: kind.spotListMode, isEmbedded: true)
@@ -188,7 +188,7 @@ struct PilgrimageHomeView: View {
             // コース詳細への遷移（CourseListView が非ルートのためここで処理）
             .navigationDestination(item: $selectedCourseDetailRoute) { route in
                 if let course = store.courses.first(where: { $0.id == route.id }) {
-                    CourseDetailView(course: course, showSummaryOnAppear: true)
+                    CourseDetailView(course: course)
                 }
             }
         }
@@ -307,7 +307,30 @@ struct PilgrimageHomeView: View {
                 )
 
                 HStack {
+                    // 現在地更新ボタン（左）
+                    Button {
+                        Task { await refreshNearbySpots() }
+                    } label: {
+                        HStack(spacing: 4) {
+                            if isRefreshingNearbySpots {
+                                ProgressView()
+                                    .controlSize(.mini)
+                                    .tint(spotPanelAccentColor)
+                            } else {
+                                Image(systemName: "arrow.clockwise")
+                                    .font(.system(size: 11, weight: .semibold))
+                            }
+                            Text(L.PilgrimageHome.nearbyRefresh)
+                                .font(.system(size: 13, weight: .medium))
+                        }
+                        .foregroundStyle(spotPanelAccentColor)
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(isRefreshingNearbySpots)
+
                     Spacer()
+
+                    // すべてを見るボタン（右）
                     NavigationLink(value: PilgrimageHomeRoute.spotPanelList(kind: .nearby)) {
                         HStack(spacing: 3) {
                             Text(L.PilgrimageHome.seeAll)

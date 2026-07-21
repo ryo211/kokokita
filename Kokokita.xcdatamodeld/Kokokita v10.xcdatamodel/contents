@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="24411" systemVersion="25B78" minimumToolsVersion="Automatic" sourceLanguage="Swift" userDefinedModelVersionIdentifier="">
+    <entity name="CourseEntity" representedClassName="CourseEntity" syncable="YES" codeGenerationType="class">
+        <attribute name="allowRetroactive" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="NO"/>
+        <attribute name="categories" optional="YES" attributeType="String"/>
+        <attribute name="courseType" attributeType="String"/>
+        <attribute name="coverImageUrl" optional="YES" attributeType="String"/>
+        <attribute name="createdAt" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="detailUrl" optional="YES" attributeType="String"/>
+        <attribute name="everEnabled" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="NO"/>
+        <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="imageCredit" optional="YES" attributeType="String"/>
+        <attribute name="isEnabled" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="NO"/>
+        <attribute name="isUserCreated" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="NO"/>
+        <attribute name="localCoverImagePath" optional="YES" attributeType="String"/>
+        <attribute name="recognitionRadiusMeters" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <attribute name="source" attributeType="String"/>
+        <attribute name="summary" optional="YES" attributeType="String"/>
+        <attribute name="title" attributeType="String"/>
+        <attribute name="updatedAt" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="version" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
+        <relationship name="sections" optional="YES" toMany="YES" deletionRule="Cascade" ordered="YES" destinationEntity="CourseSectionEntity" inverseName="course" inverseEntity="CourseSectionEntity"/>
+        <relationship name="spots" optional="YES" toMany="YES" deletionRule="Cascade" ordered="YES" destinationEntity="CourseSpotEntity" inverseName="course" inverseEntity="CourseSpotEntity"/>
+    </entity>
+    <entity name="CourseSectionEntity" representedClassName="CourseSectionEntity" syncable="YES" codeGenerationType="class">
+        <attribute name="coverImageUrl" optional="YES" attributeType="String"/>
+        <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="name" attributeType="String" defaultValueString=""/>
+        <attribute name="orderIndex" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="sectionDescription" optional="YES" attributeType="String"/>
+        <attribute name="sectionId" optional="YES" attributeType="String"/>
+        <relationship name="course" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="CourseEntity" inverseName="sections" inverseEntity="CourseEntity"/>
+        <relationship name="spots" optional="YES" toMany="YES" deletionRule="Cascade" ordered="YES" destinationEntity="CourseSpotEntity" inverseName="section" inverseEntity="CourseSpotEntity"/>
+    </entity>
+    <entity name="CourseSpotEntity" representedClassName="CourseSpotEntity" syncable="YES" codeGenerationType="class">
+        <attribute name="address" optional="YES" attributeType="String"/>
+        <attribute name="coverImageUrl" optional="YES" attributeType="String"/>
+        <attribute name="firstCheckedInAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="imageCredit" optional="YES" attributeType="String"/>
+        <attribute name="isCheckedIn" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="NO"/>
+        <attribute name="latitude" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <attribute name="localCoverImagePath" optional="YES" attributeType="String"/>
+        <attribute name="longitude" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <attribute name="name" attributeType="String"/>
+        <attribute name="orderIndex" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="recognitionRadiusMeters" optional="YES" attributeType="Double" usesScalarValueType="NO"/>
+        <attribute name="spotDescription" optional="YES" attributeType="String"/>
+        <attribute name="spotId" attributeType="String"/>
+        <relationship name="course" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="CourseEntity" inverseName="spots" inverseEntity="CourseEntity"/>
+        <relationship name="section" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="CourseSectionEntity" inverseName="spots" inverseEntity="CourseSectionEntity"/>
+        <relationship name="visits" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="VisitDetailsEntity" inverseName="courseSpots" inverseEntity="VisitDetailsEntity"/>
+    </entity>
+    <entity name="GroupEntity" representedClassName="GroupEntity" syncable="YES" codeGenerationType="class">
+        <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="name" attributeType="String"/>
+    </entity>
+    <entity name="LabelEntity" representedClassName="LabelEntity" syncable="YES" codeGenerationType="class">
+        <attribute name="colorId" optional="YES" attributeType="String"/>
+        <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="name" attributeType="String"/>
+        <relationship name="visits" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="VisitDetailsEntity" inverseName="labels" inverseEntity="VisitDetailsEntity"/>
+    </entity>
+    <entity name="MemberEntity" representedClassName="MemberEntity" syncable="YES" codeGenerationType="class">
+        <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="name" attributeType="String"/>
+        <relationship name="visits" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="VisitDetailsEntity" inverseName="members" inverseEntity="VisitDetailsEntity"/>
+    </entity>
+    <entity name="VisitCandidateEntity" representedClassName="VisitCandidateEntity" syncable="YES" codeGenerationType="none">
+        <attribute name="arrivalDate" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="departureDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="detectedAt" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="horizontalAccuracy" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="latitude" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <attribute name="longitude" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <attribute name="placeName" optional="YES" attributeType="String"/>
+        <attribute name="status" attributeType="String" defaultValueString="pending"/>
+    </entity>
+    <entity name="VisitDetailsEntity" representedClassName="VisitDetailsEntity" syncable="YES" codeGenerationType="class">
+        <attribute name="comment" optional="YES" attributeType="String"/>
+        <attribute name="courseRecognizedDistance" optional="YES" attributeType="Double" usesScalarValueType="NO"/>
+        <attribute name="facilityAddress" optional="YES" attributeType="String"/>
+        <attribute name="facilityCategory" optional="YES" attributeType="String"/>
+        <attribute name="facilityName" optional="YES" attributeType="String"/>
+        <attribute name="groupId" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="placeText" optional="YES" attributeType="String"/>
+        <attribute name="resolvedAddress" optional="YES" attributeType="String"/>
+        <attribute name="title" optional="YES" attributeType="String"/>
+        <relationship name="courseSpots" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="CourseSpotEntity" inverseName="visits" inverseEntity="CourseSpotEntity"/>
+        <relationship name="labels" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="LabelEntity" inverseName="visits" inverseEntity="LabelEntity"/>
+        <relationship name="members" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="MemberEntity" inverseName="visits" inverseEntity="MemberEntity"/>
+        <relationship name="photos" optional="YES" toMany="YES" deletionRule="Cascade" ordered="YES" destinationEntity="VisitPhotoEntity" inverseName="details" inverseEntity="VisitPhotoEntity"/>
+        <relationship name="visit" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="VisitEntity" inverseName="details" inverseEntity="VisitEntity"/>
+    </entity>
+    <entity name="VisitEntity" representedClassName="VisitEntity" syncable="YES" codeGenerationType="class">
+        <attribute name="horizontalAccuracy" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="NO"/>
+        <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="integrityAlgo" optional="YES" attributeType="String"/>
+        <attribute name="integrityCreatedAtUTC" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="integrityPayloadHash" optional="YES" attributeType="String"/>
+        <attribute name="integrityPubRaw" optional="YES" attributeType="String"/>
+        <attribute name="integritySigDER" optional="YES" attributeType="String"/>
+        <attribute name="isManualEntry" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="NO"/>
+        <attribute name="isProducedByAccessory" optional="YES" attributeType="Boolean" usesScalarValueType="NO"/>
+        <attribute name="isSimulatedBySoftware" optional="YES" attributeType="Boolean" usesScalarValueType="NO"/>
+        <attribute name="latitude" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <attribute name="longitude" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <attribute name="timestampUTC" attributeType="Date" usesScalarValueType="NO"/>
+        <relationship name="details" optional="YES" maxCount="1" deletionRule="Cascade" destinationEntity="VisitDetailsEntity" inverseName="visit" inverseEntity="VisitEntity"/>
+    </entity>
+    <entity name="VisitPhotoEntity" representedClassName="VisitPhotoEntity" syncable="YES" codeGenerationType="class">
+        <attribute name="createdAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="filePath" attributeType="String"/>
+        <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="orderIndex" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <relationship name="details" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="VisitDetailsEntity" inverseName="photos" inverseEntity="VisitDetailsEntity"/>
+    </entity>
+</model>

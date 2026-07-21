@@ -4,6 +4,8 @@ import CoreData
 /// Label と Group のCRUD操作を担当するリポジトリ
 final class CoreDataTaxonomyRepository {
     private let ctx: NSManagedObjectContext
+    /// 現在選択中のブックID（AppContainer.setCurrentBook() で更新される）
+    var currentBookId: UUID = UUID()
 
     init(context: NSManagedObjectContext = CoreDataStack.shared.context) {
         self.ctx = context
@@ -13,6 +15,7 @@ final class CoreDataTaxonomyRepository {
 
     func allLabels() throws -> [LabelTag] {
         let req: NSFetchRequest<LabelEntity> = LabelEntity.fetchRequest()
+        req.predicate = NSPredicate(format: "bookId == %@", currentBookId as NSUUID)
         req.sortDescriptors = [NSSortDescriptor(key: #keyPath(LabelEntity.name), ascending: true)]
         return try ctx.fetch(req).compactMap { row in
             guard let id = row.id, let name = row.name else {
@@ -25,6 +28,7 @@ final class CoreDataTaxonomyRepository {
 
     func allGroups() throws -> [GroupTag] {
         let req: NSFetchRequest<GroupEntity> = GroupEntity.fetchRequest()
+        req.predicate = NSPredicate(format: "bookId == %@", currentBookId as NSUUID)
         req.sortDescriptors = [NSSortDescriptor(key: #keyPath(GroupEntity.name), ascending: true)]
         return try ctx.fetch(req).compactMap { row in
             guard let id = row.id, let name = row.name else {
@@ -37,6 +41,7 @@ final class CoreDataTaxonomyRepository {
 
     func allMembers() throws -> [MemberTag] {
         let req: NSFetchRequest<MemberEntity> = MemberEntity.fetchRequest()
+        req.predicate = NSPredicate(format: "bookId == %@", currentBookId as NSUUID)
         req.sortDescriptors = [NSSortDescriptor(key: #keyPath(MemberEntity.name), ascending: true)]
         return try ctx.fetch(req).compactMap { row in
             guard let id = row.id, let name = row.name else {
@@ -117,6 +122,7 @@ final class CoreDataTaxonomyRepository {
         e.id = newId
         e.name = trimmed
         e.colorId = colorId
+        e.bookId = currentBookId
         try ctx.save()
         guard let savedId = e.id else {
             Logger.error("Label entity ID is nil after save")
@@ -136,6 +142,7 @@ final class CoreDataTaxonomyRepository {
         let newId = UUID()
         e.id = newId
         e.name = trimmed
+        e.bookId = currentBookId
         try ctx.save()
         guard let savedId = e.id else {
             Logger.error("Group entity ID is nil after save")
@@ -155,6 +162,7 @@ final class CoreDataTaxonomyRepository {
         let newId = UUID()
         e.id = newId
         e.name = trimmed
+        e.bookId = currentBookId
         try ctx.save()
         guard let savedId = e.id else {
             Logger.error("Member entity ID is nil after save")

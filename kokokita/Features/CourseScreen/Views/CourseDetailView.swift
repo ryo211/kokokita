@@ -41,11 +41,13 @@ struct CourseDetailView: View {
     private let courseId: UUID
     var showTitle: Bool = true
     private let showSummaryOnAppear: Bool
+    @Environment(AppUIState.self) private var appUIState
     @State private var course: Course
 
     @State private var selectedSpotId: UUID? = nil
     @State private var cameraPosition: MapCameraPosition
     @State private var showSummary = false
+    @State private var showCourseInquiry = false
     /// 遡り判定結果（この画面を開いたタイミングで表示）
     @State private var pendingRetroactiveResult: RetroactiveResultItem? = nil
     /// コース一覧ストア（遡り判定結果の取得に使用）
@@ -58,7 +60,6 @@ struct CourseDetailView: View {
     /// スポットフォーカス時に地図をズームするか
     @AppStorage(Self.zoomOnSpotFocusKey) private var zoomOnSpotFocus = false
     @AppStorage(Self.spotPhotoSizeKey) private var spotPhotoSizeRaw = CourseSpotPhotoSize.large.rawValue
-    @State private var showCourseMapSettings = false
     @State private var visibleMapSpan = MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
     /// フォーカス中スポットのスクリーン座標（リーダーライン描画用）
     @State private var selectedSpotScreenPoint: CGPoint? = nil
@@ -68,6 +69,35 @@ struct CourseDetailView: View {
     @State private var expandedImageCredit: String? = nil
     /// 進捗バースワイプの二重発火防止フラグ
     @State private var progressSwipeConsumed = false
+
+    // MARK: - ツアーモード状態
+    @AppStorage("tourMode.intervalSeconds") private var tourIntervalSeconds: Double = 3.0
+    @AppStorage("tourMode.photoSpotsOnly") private var tourPhotoSpotsOnly = false
+    @State private var isTourPlaying = false
+    @State private var isTourPaused = false
+    @State private var tourSpotIndex = 0
+    @State private var tourTask: Task<Void, Never>?
+    @State private var showTourSettings = false
+    @State private var isShowingTourEndPromotion = false
+    // シネマモード（programmatic navigation）
+    @State private var showCinemaMode = false
+    // ペイウォール（Premiumゲート）
+    @State private var showPaywall = false
+    // コース共有プレビュー
+    @State private var showCourseShare = false
+    // タイプライター演出
+    @AppStorage("tourMode.typewriterEnabled") private var tourTypewriterEnabled = false
+    @State private var typewriterCount: Int = 0
+    @State private var typewriterTask: Task<Void, Never>? = nil
+
+    /// ツアーで巡るスポット（写真フィルタを反映）
+    private var tourSpots: [CourseSpot] {
+        guard tourPhotoSpotsOnly else { return course.spots }
+        return course.spots.filter { $0.coverImageUrl != nil || $0.localCoverImagePath != nil }
+    }
+
+    /// ツアー中（再生中 or 終了プロモーション表示中）
+    private var isTourActive: Bool { isTourPlaying || isShowingTourEndPromotion }
 
     init(
         course: Course,
@@ -111,41 +141,88 @@ struct CourseDetailView: View {
 
     var body: some View {
         GeometryReader { geo in
-            VStack(spacing: 0) {
-                // 地図エリア（mapFull: 全画面 / split: 50% / listFull: 非表示）
-                if viewLayout == .mapFull {
-                    mapArea
-                } else if viewLayout == .split {
-                    mapArea
-                        .frame(height: geo.size.height * 0.50)
+            ZStack {
+                VStack(spacing: 0) {
+                    // 地図エリア（mapFull: 全画面 / split: 50% / listFull: 非表示）
+                    if viewLayout == .mapFull {
+                        mapArea
+                    } else if viewLayout == .split {
+                        mapArea
+                            .frame(height: geo.size.height * 0.50)
+                    }
+
+                    // 進捗バー＋レイアウト切替ボタン（ツアーモード中は非表示）
+                    if !isTourActive {
+                        progressStrip
+
+                        Divider()
+                    }
+
+                    // リストエリア（mapFull: 非表示 / split: 50% / listFull: 全画面）
+                    if viewLayout != .mapFull {
+                        SpotListAreaView(
+                            course: course,
+                            userLocation: userLocation,
+                            selectedSpotId: selectedSpotId,
+                            isTourPlaying: isTourActive,
+                            typewriterCount: typewriterCount,
+                            isTypewriterActive: isTourActive && tourTypewriterEnabled,
+                            onSpotTapped: focusSpot,
+                            onLayoutSwipe: switchLayout
+                        )
+                        .equatable()
+                    }
                 }
+                .animation(.easeInOut(duration: 0.3), value: viewLayout)
 
-                // 進捗バー＋レイアウト切替ボタン（常時表示）
-                progressStrip
-
-                Divider()
-
-                // リストエリア（mapFull: 非表示 / split: 50% / listFull: 全画面）
-                if viewLayout != .mapFull {
-                    SpotListAreaView(
-                        course: course,
-                        userLocation: userLocation,
-                        selectedSpotId: selectedSpotId,
-                        onSpotTapped: focusSpot,
-                        onLayoutSwipe: switchLayout
+                // ツアー終了プロモーション画面（タップで解除）
+                if isShowingTourEndPromotion {
+                    KokokitaEndPromotionStage(
+                        safeTop: 0,
+                        safeBottom: geo.safeAreaInsets.bottom
                     )
-                    .equatable()
+                    .contentShape(Rectangle())
+                    .onTapGesture { stopTour() }
+                    .transition(.opacity)
                 }
+
             }
-            .animation(.easeInOut(duration: 0.3), value: viewLayout)
+            .animation(.easeInOut(duration: 0.4), value: isShowingTourEndPromotion)
         }
         .navigationTitle(showTitle ? course.title : "")
         .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(isTourActive)
+        .onChange(of: isTourPlaying) { _, playing in
+            if playing { appUIState.isTabBarHidden = true }
+        }
+        .onChange(of: isShowingTourEndPromotion) { _, showing in
+            if !showing && !isTourPlaying {
+                appUIState.isTabBarHidden = false
+            }
+        }
+        .onDisappear {
+            if isTourActive {
+                tourTask?.cancel()
+                isTourPlaying = false
+                isShowingTourEndPromotion = false
+                appUIState.isTabBarHidden = false
+            }
+        }
+        .sheet(isPresented: $showTourSettings) {
+            SpotTourSettingsSheet(
+                intervalSeconds: $tourIntervalSeconds,
+                photoSpotsOnly: $tourPhotoSpotsOnly,
+                typewriterEnabled: $tourTypewriterEnabled
+            ) {
+                startTour()
+            }
+        }
         // 画面表示のたびに最新データを取得（CoreDataキャッシュを確実に反映）
         .task {
             reloadCourse()
-            // ハイライトを解除（詳細を開いたことで「新規」状態を消費）
-            courseListStore?.newlyAddedCourseIds.remove(courseId)
+            // 詳細を開いたコースを新着リストから除去
+            courseListStore?.markAsOpened(courseId)
+            AppReviewService.shared.courseDetailViewOpened()
             if showSummaryOnAppear {
                 showSummary = true
             }
@@ -169,23 +246,93 @@ struct CourseDetailView: View {
                 cameraPosition = .region(MKCoordinateRegion(center: center, span: visibleMapSpan))
             }
         }
+        .navigationDestination(isPresented: $showCinemaMode) {
+            CourseSlideShowView(course: course)
+        }
         .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button {
-                    showSummary = true
-                } label: {
-                    Image(systemName: "info.circle")
+            if !isTourActive {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Menu {
+                        Button { showSummary = true } label: {
+                            Label(L.CourseDetail.menuCourseInfo, systemImage: "info.circle")
+                        }
+                        Button { showCourseInquiry = true } label: {
+                            Label(L.Inquiry.title, systemImage: "questionmark.circle")
+                        }
+                        Button { showCourseShare = true } label: {
+                            Label(L.CourseDetail.menuShare, systemImage: "square.and.arrow.up")
+                        }
+
+                        Section(L.CourseDetail.menuSectionMapSettings) {
+                            Button {
+                                zoomOnSpotFocus.toggle()
+                            } label: {
+                                Label(
+                                    zoomOnSpotFocus
+                                        ? L.CourseDetail.menuZoomOnFocusOn
+                                        : L.CourseDetail.menuZoomOnFocusOff,
+                                    systemImage: zoomOnSpotFocus
+                                        ? "viewfinder.circle.fill"
+                                        : "viewfinder.circle"
+                                )
+                            }
+                            Menu {
+                                ForEach(CourseSpotPhotoSize.allCases, id: \.rawValue) { size in
+                                    Button {
+                                        spotPhotoSizeRaw = size.rawValue
+                                    } label: {
+                                        if spotPhotoSize == size {
+                                            Label(size.title, systemImage: "checkmark")
+                                        } else {
+                                            Text(size.title)
+                                        }
+                                    }
+                                }
+                            } label: {
+                                Label(
+                                    "\(L.CourseDetail.menuSpotPhotoSize): \(spotPhotoSize.title)",
+                                    systemImage: "photo.on.rectangle"
+                                )
+                            }
+                        }
+
+                        Section(L.CourseDetail.menuSectionPlayback) {
+                            Button {
+                                if PremiumManager.shared.isPremium {
+                                    showTourSettings = true
+                                } else {
+                                    showPaywall = true
+                                }
+                            } label: {
+                                Label(L.TourMode.menuLabel, systemImage: "scope")
+                            }
+                            Button {
+                                if PremiumManager.shared.isPremium {
+                                    showCinemaMode = true
+                                } else {
+                                    showPaywall = true
+                                }
+                            } label: {
+                                Label(L.SlideShow.menuLabel, systemImage: "play.rectangle")
+                            }
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis.circle")
+                    }
                 }
             }
         }
         .sheet(isPresented: $showSummary) {
             CourseSummarySheet(course: course)
         }
-        .sheet(isPresented: $showCourseMapSettings) {
-            CourseMapSettingsSheet(
-                zoomOnSpotFocus: $zoomOnSpotFocus,
-                spotPhotoSizeRaw: $spotPhotoSizeRaw
-            )
+        .sheet(isPresented: $showCourseInquiry) {
+            SpotInquirySheet(courseName: course.title)
+        }
+        .sheet(isPresented: $showPaywall) {
+            PaywallView()
+        }
+        .sheet(isPresented: $showCourseShare) {
+            CourseSharePreviewSheet(course: course)
         }
         // 遡り判定結果シート（ストアシートとの競合を避けるためここに配置）
         .sheet(item: $pendingRetroactiveResult) { result in
@@ -237,6 +384,29 @@ struct CourseDetailView: View {
         CourseSpotPhotoSize(rawValue: spotPhotoSizeRaw) ?? .large
     }
 
+    private var tourActiveBadge: some View {
+        HStack(spacing: 5) {
+            Image(systemName: "waveform")
+                .font(.system(size: 11, weight: .semibold))
+                .symbolEffect(.variableColor.iterative, options: .repeating)
+            Text("ココキタ")
+                .font(.system(size: 13, weight: .bold, design: .rounded))
+            Image("kokokita-app-icon-clearBlueDeep")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 18, height: 18)
+                .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
+        }
+        .foregroundStyle(.white)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 5)
+        .background {
+            Capsule()
+                .fill(Color.indigo)
+        }
+        .contentShape(Capsule())
+    }
+
     // MARK: - 遡り判定
 
     /// コース詳細を開いたタイミングで遡り判定を直接実行し、結果をシートで表示する
@@ -264,8 +434,8 @@ struct CourseDetailView: View {
     private var mapArea: some View {
         MapReader { proxy in
             Map(position: $cameraPosition) {
+                // 非選択ピンを先に描画（z-order: 下）
                 ForEach(Array(course.spots.enumerated()), id: \.element.id) { index, spot in
-                    // 不正な座標のスポットはピンを立てない
                     if spot.hasValidCoordinate {
                         Annotation(
                             "",
@@ -275,23 +445,23 @@ struct CourseDetailView: View {
                             SpotPinView(
                                 orderNumber: index + 1,
                                 isCheckedIn: spot.isCheckedIn,
-                                isSelected: selectedSpotId == spot.id
+                                isSelected: false
                             )
-                            .onTapGesture {
-                                focusSpot(spot)
-                            }
-                        }
-
-                        // フォーカス中スポットのチェックイン有効範囲を表示
-                        if selectedSpotId == spot.id, spot.hasValidCoordinate {
-                            MapCircle(
-                                center: CLLocationCoordinate2D(latitude: spot.latitude, longitude: spot.longitude),
-                                radius: spot.recognitionRadiusMeters ?? course.recognitionRadiusMeters
-                            )
-                            .foregroundStyle(Color.indigo.opacity(0.08))
-                            .stroke(Color.indigo.opacity(0.5), lineWidth: 1.5)
+                            .onTapGesture { focusSpot(spot) }
                         }
                     }
+                }
+
+                // 認識半径サークル（選択時のみ）
+                // 選択ピン自体は Map 外の SwiftUI overlay で描画（z-order 保証のため）
+                if let selectedId = selectedSpotId,
+                   let entry = course.spots.enumerated().first(where: { $0.element.id == selectedId }),
+                   entry.element.hasValidCoordinate {
+                    let spot = entry.element
+                    let coord = CLLocationCoordinate2D(latitude: spot.latitude, longitude: spot.longitude)
+                    MapCircle(center: coord, radius: spot.recognitionRadiusMeters ?? course.recognitionRadiusMeters)
+                        .foregroundStyle(Color.indigo.opacity(0.08))
+                        .stroke(Color.indigo.opacity(0.5), lineWidth: 1.5)
                 }
 
                 // 現在地ピン
@@ -352,31 +522,47 @@ struct CourseDetailView: View {
                 guard selectedSpotScreenPoint != nil else { return }
                 updateSpotScreenPoint(proxy: proxy)
             }
-            .overlay(alignment: .topTrailing) {
-                courseMapSettingsButton
-                    .padding(12)
-            }
             .overlay {
                 leaderLineOverlay
             }
+            // 選択ピンを SwiftUI overlay として最前面に描画（MapKit z-order に依存しない）
+            .overlay {
+                if let spotPoint = selectedSpotScreenPoint,
+                   let entry = course.spots.enumerated().first(where: { $0.element.id == selectedSpotId }),
+                   entry.element.hasValidCoordinate {
+                    SpotPinView(
+                        orderNumber: entry.offset + 1,
+                        isCheckedIn: entry.element.isCheckedIn,
+                        isSelected: true
+                    )
+                    .onTapGesture { focusSpot(entry.element) }
+                    .position(spotPoint)
+                }
+            }
             .overlay(alignment: .bottomTrailing) {
-                locationButton
-                    .padding([.trailing, .bottom], 12)
+                if isTourActive {
+                    HStack(spacing: 10) {
+                        Button {
+                            isTourPaused ? resumeTour() : pauseTour()
+                        } label: {
+                            Image(systemName: isTourPaused ? "play.fill" : "pause.fill")
+                                .font(.system(size: 12, weight: .bold))
+                                .foregroundStyle(.white)
+                                .frame(width: 28, height: 28)
+                                .background(Color.indigo, in: Circle())
+                        }
+                        .buttonStyle(.plain)
+
+                        tourActiveBadge
+                            .onTapGesture { stopTour() }
+                    }
+                    .padding([.trailing, .bottom], 16)
+                } else {
+                    locationButton
+                        .padding([.trailing, .bottom], 12)
+                }
             }
         }
-    }
-
-    private var courseMapSettingsButton: some View {
-        Button {
-            showCourseMapSettings = true
-        } label: {
-            Image(systemName: "slider.horizontal.3")
-                .font(.system(size: 14, weight: .medium))
-                .frame(width: 36, height: 36)
-                .background(.regularMaterial, in: Circle())
-                .shadow(color: .black.opacity(0.15), radius: 4, x: 0, y: 2)
-        }
-        .buttonStyle(.plain)
     }
 
     /// フォーカス中スポットのスクリーン座標を MapProxy で更新する
@@ -595,6 +781,110 @@ struct CourseDetailView: View {
         )
     }
 
+    // MARK: - スポット巡りモード
+
+    private func startTour() {
+        let spots = tourSpots
+        guard !spots.isEmpty else { return }
+        // 地図が見えていないレイアウトの場合は split に切り替え
+        if viewLayout == .listFull {
+            withAnimation(.easeInOut(duration: 0.3)) { viewLayout = .split }
+        }
+        isTourPlaying = true
+        isTourPaused = false
+        isShowingTourEndPromotion = false
+        tourSpotIndex = 0
+        tourFocusSpot(spots[0])
+        scheduleOrTypewriter(for: spots[0])
+    }
+
+    private func stopTour() {
+        tourTask?.cancel()
+        typewriterTask?.cancel()
+        typewriterCount = 0
+        isTourPlaying = false
+        isTourPaused = false
+        isShowingTourEndPromotion = false
+        appUIState.isTabBarHidden = false
+    }
+
+    private func pauseTour() {
+        isTourPaused = true
+        tourTask?.cancel()
+        typewriterTask?.cancel()
+    }
+
+    private func resumeTour() {
+        isTourPaused = false
+        let spots = tourSpots
+        guard tourSpotIndex < spots.count else { return }
+        scheduleOrTypewriter(for: spots[tourSpotIndex])
+    }
+
+    private func scheduleTourAdvance() {
+        tourTask?.cancel()
+        tourTask = Task {
+            try? await Task.sleep(nanoseconds: UInt64(tourIntervalSeconds * 1_000_000_000))
+            guard !Task.isCancelled else { return }
+            await MainActor.run { advanceTour() }
+        }
+    }
+
+    /// タイプライターON → タイプライター演出、OFF → タイマー自動進行
+    private func scheduleOrTypewriter(for spot: CourseSpot) {
+        if tourTypewriterEnabled {
+            startTypewriter(for: spot)
+        } else {
+            scheduleTourAdvance()
+        }
+    }
+
+    /// タイトル → 説明文の順に1文字ずつ太字化し、完了後に余韻を残してから次のスポットへ進む
+    private func startTypewriter(for spot: CourseSpot) {
+        typewriterTask?.cancel()
+        typewriterCount = 0
+        let totalChars = spot.name.count + (spot.spotDescription?.count ?? 0)
+        guard totalChars > 0 else { scheduleTourAdvance(); return }
+        typewriterTask = Task {
+            for _ in 0..<totalChars {
+                try? await Task.sleep(nanoseconds: 20_000_000) // 40ms/文字
+                guard !Task.isCancelled else { return }
+                await MainActor.run { typewriterCount += 1 }
+            }
+            // 全文字太字化後、余韻として1秒待ってから次のスポットへ
+            try? await Task.sleep(nanoseconds: 500_000_000)
+            guard !Task.isCancelled else { return }
+            await MainActor.run { advanceTour() }
+        }
+    }
+
+    private func advanceTour() {
+        let spots = tourSpots
+        let nextIndex = tourSpotIndex + 1
+        if nextIndex < spots.count {
+            tourSpotIndex = nextIndex
+            tourFocusSpot(spots[nextIndex])
+            scheduleOrTypewriter(for: spots[nextIndex])
+        } else {
+            // 全スポット終了 → プロモーション画面へ
+            tourTask?.cancel()
+            isTourPlaying = false
+            withAnimation(.easeInOut(duration: 0.5)) {
+                isShowingTourEndPromotion = true
+            }
+        }
+    }
+
+    private func tourFocusSpot(_ spot: CourseSpot) {
+        withAnimation(.easeInOut(duration: 0.6)) {
+            selectedSpotId = spot.id
+            guard spot.hasValidCoordinate else { return }
+            // ズームは変えずに現在のスパンのままスポットを中心に移動
+            let center = focusCenter(for: spot, span: visibleMapSpan)
+            cameraPosition = .region(MKCoordinateRegion(center: center, span: visibleMapSpan))
+        }
+    }
+
     // MARK: - 全スポットフィット計算
 
     /// recognitionRadiusMeters の円が地図上に収まるズームスパンを返す。
@@ -661,96 +951,91 @@ struct CourseDetailView: View {
     }
 }
 
-struct CourseMapSettingsSheet: View {
-    @Binding var zoomOnSpotFocus: Bool
-    @Binding var spotPhotoSizeRaw: String
-    @Environment(\.dismiss) private var dismiss
+// MARK: - スポット巡りモード設定シート
 
-    private var selectedPhotoSize: CourseSpotPhotoSize {
-        CourseSpotPhotoSize(rawValue: spotPhotoSizeRaw) ?? .large
+struct SpotTourSettingsSheet: View {
+    @Binding var intervalSeconds: Double
+    @Binding var photoSpotsOnly: Bool
+    @Binding var typewriterEnabled: Bool
+    @Environment(\.dismiss) private var dismiss
+    let onStart: () -> Void
+
+    private var clampedInterval: Double {
+        min(max(0.5, intervalSeconds), 5.0)
     }
 
     var body: some View {
         NavigationStack {
-            VStack(alignment: .leading, spacing: 22) {
+            VStack(alignment: .leading, spacing: 24) {
+                // スポット表示時間（タイプライターON時は無効）
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Text(L.TourMode.settingsIntervalLabel)
+                            .font(.headline)
+                        Spacer()
+                        Text(L.TourMode.settingsIntervalSec(clampedInterval))
+                            .font(.subheadline.monospacedDigit())
+                            .foregroundStyle(.secondary)
+                    }
+
+                    Slider(value: $intervalSeconds, in: 0.5...5, step: 0.5)
+                        .tint(.indigo)
+
+                    HStack {
+                        Text(L.TourMode.settingsIntervalMin)
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        Text(L.TourMode.settingsIntervalMax)
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .disabled(typewriterEnabled)
+                .opacity(typewriterEnabled ? 0.35 : 1)
+
+                Toggle(L.TourMode.settingsPhotoSpotsOnly, isOn: $photoSpotsOnly)
+                    .font(.headline)
+                    .tint(.indigo)
+
+                // タイプライター演出
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("スポットフォーカス時のズーム")
+                    Toggle(L.TourMode.settingsTypewriter, isOn: $typewriterEnabled)
                         .font(.headline)
-                    Text("スポットを選択したときに、地図をスポット中心へ移動しながらズームインするかを切り替えます。")
-                        .font(.subheadline)
+                        .tint(.indigo)
+                    Text(L.TourMode.settingsTypewriterDesc)
+                        .font(.caption)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
 
-                HStack(spacing: 0) {
-                    toggleButton(title: "ON", isSelected: zoomOnSpotFocus) {
-                        withAnimation(.easeInOut(duration: 0.18)) {
-                            zoomOnSpotFocus = true
-                        }
-                    }
-
-                    toggleButton(title: "OFF", isSelected: !zoomOnSpotFocus) {
-                        withAnimation(.easeInOut(duration: 0.18)) {
-                            zoomOnSpotFocus = false
-                        }
-                    }
-                }
-                .padding(4)
-                .background(Color.secondary.opacity(0.12), in: Capsule())
-
-                VStack(alignment: .leading, spacing: 10) {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("スポット写真の大きさ")
-                            .font(.headline)
-                        Text("地図上に表示するスポット写真のサイズを選べます。")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                    }
-
-                    HStack(spacing: 0) {
-                        ForEach(CourseSpotPhotoSize.allCases, id: \.rawValue) { size in
-                            toggleButton(title: size.title, isSelected: selectedPhotoSize == size) {
-                                withAnimation(.easeInOut(duration: 0.18)) {
-                                    spotPhotoSizeRaw = size.rawValue
-                                }
-                            }
-                        }
-                    }
-                    .padding(4)
-                    .background(Color.secondary.opacity(0.12), in: Capsule())
+                Button {
+                    dismiss()
+                    onStart()
+                } label: {
+                    Label(L.TourMode.startButton, systemImage: "play.fill")
+                        .font(.headline)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .background(Color.indigo, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                        .foregroundStyle(.white)
                 }
 
                 Spacer()
             }
             .padding(20)
-            .navigationTitle("地図設定")
+            .navigationTitle(L.TourMode.title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(L.Common.done) { dismiss() }
-                        .fontWeight(.semibold)
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button(L.Common.cancel) { dismiss() }
                 }
             }
         }
-        .presentationDetents([.height(340)])
-    }
-
-    private func toggleButton(
-        title: String,
-        isSelected: Bool,
-        action: @escaping () -> Void
-    ) -> some View {
-        Button(action: action) {
-            Text(title)
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(isSelected ? Color.white : Color.primary)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 9)
-                .background(isSelected ? Color.indigo : Color.clear, in: Capsule())
-        }
-        .buttonStyle(.plain)
+        .presentationDetents([.height(440)])
     }
 }
+
 
 // MARK: - スポットリストエリア
 
@@ -760,6 +1045,12 @@ private struct SpotListAreaView: View, Equatable {
     let course: Course
     let userLocation: CLLocationCoordinate2D?
     let selectedSpotId: UUID?
+    /// ツアー再生中は達成済スポットを非表示にしてソートチップも隠す
+    var isTourPlaying: Bool = false
+    /// タイプライター演出で太字化済みの文字数（タイトル + 説明文を合算）
+    var typewriterCount: Int = 0
+    /// タイプライター演出が有効かどうか
+    var isTypewriterActive: Bool = false
     let onSpotTapped: (CourseSpot) -> Void
     /// 上スワイプ=true / 下スワイプ=false でレイアウト切替を親に通知
     var onLayoutSwipe: (Bool) -> Void = { _ in }
@@ -771,6 +1062,9 @@ private struct SpotListAreaView: View, Equatable {
     static func == (lhs: Self, rhs: Self) -> Bool {
         lhs.course == rhs.course &&
         lhs.selectedSpotId == rhs.selectedSpotId &&
+        lhs.isTourPlaying == rhs.isTourPlaying &&
+        lhs.typewriterCount == rhs.typewriterCount &&
+        lhs.isTypewriterActive == rhs.isTypewriterActive &&
         lhs.userLocation?.latitude == rhs.userLocation?.latitude &&
         lhs.userLocation?.longitude == rhs.userLocation?.longitude
     }
@@ -794,51 +1088,56 @@ private struct SpotListAreaView: View, Equatable {
 
     var body: some View {
         VStack(spacing: 0) {
-            // ソートヘッダー
-            HStack(spacing: 8) {
-                SortChip(label: L.Course.sortDefault, isSelected: !sortByDistance) {
-                    sortByDistance = false
-                }
-                SortChip(label: L.Course.sortDistance, isSelected: sortByDistance) {
-                    sortByDistance = true
-                }
-                .disabled(userLocation == nil)
-                .opacity(userLocation == nil ? 0.4 : 1)
-                Spacer()
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
-            .contentShape(Rectangle())
-            .gesture(
-                DragGesture(minimumDistance: 5, coordinateSpace: .local)
-                    .onChanged { value in
-                        guard !sortHeaderSwipeConsumed else { return }
-                        if value.translation.height < -15 {
-                            sortHeaderSwipeConsumed = true
-                            onLayoutSwipe(true)
-                        } else if value.translation.height > 15 {
-                            sortHeaderSwipeConsumed = true
-                            onLayoutSwipe(false)
-                        }
+            // ソートヘッダー（ツアー中は非表示）
+            if !isTourPlaying {
+                HStack(spacing: 8) {
+                    SortChip(label: L.Course.sortDefault, isSelected: !sortByDistance) {
+                        sortByDistance = false
                     }
-                    .onEnded { _ in sortHeaderSwipeConsumed = false }
-            )
+                    SortChip(label: L.Course.sortDistance, isSelected: sortByDistance) {
+                        sortByDistance = true
+                    }
+                    .disabled(userLocation == nil)
+                    .opacity(userLocation == nil ? 0.4 : 1)
+                    Spacer()
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .contentShape(Rectangle())
+                .gesture(
+                    DragGesture(minimumDistance: 5, coordinateSpace: .local)
+                        .onChanged { value in
+                            guard !sortHeaderSwipeConsumed else { return }
+                            if value.translation.height < -15 {
+                                sortHeaderSwipeConsumed = true
+                                onLayoutSwipe(true)
+                            } else if value.translation.height > 15 {
+                                sortHeaderSwipeConsumed = true
+                                onLayoutSwipe(false)
+                            }
+                        }
+                        .onEnded { _ in sortHeaderSwipeConsumed = false }
+                )
 
-            Divider()
+                Divider()
+            }
 
             ScrollViewReader { proxy in
                 ScrollView {
                     VStack(spacing: 0) {
                         let indexMap = globalSpotIndex
-                        if sortByDistance {
+                        if sortByDistance && !isTourPlaying {
                             // 距離順フラットリスト（セクション無視）
                             let sorted = distanceSortedSpots
                             ForEach(sorted, id: \.spot.id) { item in
                                 SpotListRowView(
                                     spot: item.spot,
+                                    course: course,
+                                    courseName: course.title,
                                     orderNumber: (indexMap[item.spot.id] ?? 0) + 1,
                                     isSelected: selectedSpotId == item.spot.id,
-                                    distance: item.distance
+                                    distance: item.distance,
+                                    tourTypewriterCount: (isTypewriterActive && selectedSpotId == item.spot.id) ? typewriterCount : nil
                                 )
                                 .id(item.spot.id)
                                 .onTapGesture { onSpotTapped(item.spot) }
@@ -848,31 +1147,39 @@ private struct SpotListAreaView: View, Equatable {
                                 }
                             }
                         } else {
-                            // デフォルト: セクション別
+                            // デフォルト: セクション別（ツアー中は達成済スポットを非表示）
                             ForEach(course.sections) { section in
-                                if section.hasName {
-                                    CourseSectionHeaderView(section: section)
-                                }
-                                ForEach(section.spots) { spot in
-                                    let distance: Double? = userLocation.map { loc in
-                                        CLLocation(latitude: loc.latitude, longitude: loc.longitude)
-                                            .distance(from: CLLocation(latitude: spot.latitude, longitude: spot.longitude))
+                                let visibleSpots = isTourPlaying
+                                    ? section.spots.filter { !$0.isCheckedIn }
+                                    : section.spots
+                                if !visibleSpots.isEmpty {
+                                    if section.hasName {
+                                        CourseSectionHeaderView(section: section)
                                     }
-                                    SpotListRowView(
-                                        spot: spot,
-                                        orderNumber: (indexMap[spot.id] ?? 0) + 1,
-                                        isSelected: selectedSpotId == spot.id,
-                                        distance: distance
-                                    )
-                                    .id(spot.id)
-                                    .onTapGesture { onSpotTapped(spot) }
+                                    ForEach(visibleSpots) { spot in
+                                        let distance: Double? = userLocation.map { loc in
+                                            CLLocation(latitude: loc.latitude, longitude: loc.longitude)
+                                                .distance(from: CLLocation(latitude: spot.latitude, longitude: spot.longitude))
+                                        }
+                                        SpotListRowView(
+                                            spot: spot,
+                                            course: course,
+                                            courseName: course.title,
+                                            orderNumber: (indexMap[spot.id] ?? 0) + 1,
+                                            isSelected: selectedSpotId == spot.id,
+                                            distance: distance,
+                                            tourTypewriterCount: (isTypewriterActive && selectedSpotId == spot.id) ? typewriterCount : nil
+                                        )
+                                        .id(spot.id)
+                                        .onTapGesture { onSpotTapped(spot) }
 
-                                    if spot.id != section.spots.last?.id {
-                                        Divider().padding(.leading, 52)
+                                        if spot.id != visibleSpots.last?.id {
+                                            Divider().padding(.leading, 52)
+                                        }
                                     }
-                                }
-                                if section.id != course.sections.last?.id {
-                                    Divider()
+                                    if section.id != course.sections.last?.id {
+                                        Divider()
+                                    }
                                 }
                             }
                         }
@@ -938,28 +1245,50 @@ private struct SpotPinView: View {
     let isCheckedIn: Bool
     let isSelected: Bool
 
-    private var pinColor: Color { isCheckedIn ? .indigo : Color(uiColor: .systemGray3) }
-    private var size: CGFloat { isSelected ? 18 : 14 }
+    private var size: CGFloat { isSelected ? 20 : 14 }
 
     var body: some View {
         ZStack {
-            // 縁（通常: 白 / 選択: オレンジ）+ 影でピンを浮かせる
+            // フォーカス時のスポットライト（背後からの照射グロー）
             Circle()
-                .fill(isSelected ? Color.indigo : .white)
+                .fill(Color.indigo.opacity(0.38))
+                .frame(width: 42, height: 42)
+                .blur(radius: 9)
+                .scaleEffect(isSelected ? 1 : 0.01)
+                .opacity(isSelected ? 1 : 0)
+
+            // 外縁（白リング + 影）
+            Circle()
+                .fill(Color.white)
                 .frame(width: size + 5, height: size + 5)
-                .shadow(color: .black.opacity(0.35), radius: 4, x: 0, y: 2)
+                .shadow(color: .black.opacity(isSelected ? 0.4 : 0.25),
+                        radius: isSelected ? 6 : 3, x: 0, y: 2)
 
-            // ピン本体
-            Circle()
-                .fill(pinColor)
-                .frame(width: size, height: size)
-
-            // 番号ラベル
-            Text("\(orderNumber)")
-                .font(.system(size: isSelected ? 8 : 6, weight: .bold))
-                .foregroundStyle(.white)
+            // インディゴ + 番号（達成済みも同色）
+            ZStack {
+                Circle()
+                    .fill(Color.indigo)
+                    .frame(width: size, height: size)
+                Text("\(orderNumber)")
+                    .font(.system(size: isSelected ? 9 : 6, weight: .bold))
+                    .foregroundStyle(.white)
+            }
+            .overlay(alignment: .bottomTrailing) {
+                if isCheckedIn {
+                    // 達成済み：右下に小チェックバッジ
+                    ZStack {
+                        Circle()
+                            .fill(Color.white)
+                            .frame(width: isSelected ? 9 : 7, height: isSelected ? 9 : 7)
+                        Image(systemName: "checkmark")
+                            .font(.system(size: isSelected ? 5 : 4, weight: .bold))
+                            .foregroundStyle(Color.indigo)
+                    }
+                    .offset(x: isSelected ? 3 : 2, y: isSelected ? 3 : 2)
+                }
+            }
         }
-        .animation(.easeInOut(duration: 0.15), value: isSelected)
+        .animation(.easeOut(duration: 0.2), value: isSelected)
     }
 }
 
@@ -967,35 +1296,83 @@ private struct SpotPinView: View {
 
 private struct SpotListRowView: View {
     let spot: CourseSpot
+    let course: Course
+    let courseName: String
     let orderNumber: Int
     let isSelected: Bool
     var distance: Double? = nil
+    /// タイプライター演出で太字化済みの文字数（nil = 演出なし）
+    var tourTypewriterCount: Int? = nil
 
     @Environment(\.spotFavoriteStore) private var favoriteStore
+    @Environment(\.spotFolderStore) private var folderStore
+    @State private var showInquiry = false
+    @State private var showShare = false
+    @State private var showFolderPicker = false
 
     private var distanceText: String? {
         guard let d = distance else { return nil }
         return d < 1000 ? String(format: "%.0fm", d) : String(format: "%.1fkm", d / 1000)
     }
 
+    /// 全文を表示しつつ前から boldCount 文字を太字・primaryカラーにした AttributedString を返す
+    private func makeTypewriterAttributedText(full: String, boldCount: Int, boldFont: Font, dimFont: Font) -> AttributedString {
+        var result = AttributedString(full)
+        let clampedCount = min(boldCount, full.count)
+        let boldEnd = result.index(result.startIndex, offsetByCharacters: clampedCount)
+
+        if result.startIndex < boldEnd {
+            result[result.startIndex..<boldEnd].font = boldFont
+            result[result.startIndex..<boldEnd].foregroundColor = Color.primary
+        }
+        if boldEnd < result.endIndex {
+            result[boldEnd..<result.endIndex].font = dimFont
+            result[boldEnd..<result.endIndex].foregroundColor = Color.secondary
+        }
+        return result
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             // メイン行
             HStack(spacing: 12) {
-                // 番号バッジ
+                // 番号バッジ（インディゴ統一 / 達成済みは右下チェックバッジ付き）
                 ZStack {
                     Circle()
-                        .fill(spot.isCheckedIn ? Color.indigo : Color(uiColor: .systemGray4))
+                        .fill(Color.indigo)
                         .frame(width: 32, height: 32)
                     Text("\(orderNumber)")
                         .font(.caption.bold())
                         .foregroundStyle(.white)
                 }
+                .overlay(alignment: .bottomTrailing) {
+                    if spot.isCheckedIn {
+                        ZStack {
+                            Circle()
+                                .fill(Color.white)
+                                .frame(width: 14, height: 14)
+                            Image(systemName: "checkmark")
+                                .font(.system(size: 8, weight: .bold))
+                                .foregroundStyle(Color.indigo)
+                        }
+                        .offset(x: 4, y: 4)
+                    }
+                }
 
                 VStack(alignment: .leading, spacing: 2) {
                     HStack(spacing: 6) {
-                        Text(spot.name)
-                            .font(.body)
+                        if let count = tourTypewriterCount {
+                            // タイプライター演出中: タイトルも薄い → 太字へ
+                            Text(makeTypewriterAttributedText(
+                                full: spot.name,
+                                boldCount: count,
+                                boldFont: .body.bold(),
+                                dimFont: .body
+                            ))
+                        } else {
+                            Text(spot.name)
+                                .font(.body)
+                        }
 
                         if spot.isCheckedIn {
                             Image(systemName: "checkmark.circle.fill")
@@ -1004,7 +1381,17 @@ private struct SpotListRowView: View {
                         }
                     }
 
-                    if let desc = spot.spotDescription {
+                    if let count = tourTypewriterCount, let desc = spot.spotDescription {
+                        // タイプライター演出中: 説明文は title.count 分を差し引いた残りでboldCount計算
+                        let descBoldCount = max(0, count - spot.name.count)
+                        Text(makeTypewriterAttributedText(
+                            full: desc,
+                            boldCount: descBoldCount,
+                            boldFont: .caption.bold(),
+                            dimFont: .caption
+                        ))
+                        .lineLimit(nil)
+                    } else if let desc = spot.spotDescription {
                         Text(desc)
                             .font(.caption)
                             .foregroundStyle(.secondary)
@@ -1027,20 +1414,58 @@ private struct SpotListRowView: View {
 
                 Spacer()
 
-                // ハートボタン（お気に入り）
-                Button {
-                    favoriteStore.toggle(spot.id)
-                } label: {
-                    Image(systemName: favoriteStore.isFavorite(spot.id) ? "heart.fill" : "heart")
-                        .font(.body.weight(.semibold))
-                        .foregroundStyle(
-                            favoriteStore.isFavorite(spot.id)
-                                ? Color(red: 1.0, green: 0.42, blue: 0.62)
-                                : Color.secondary.opacity(0.88)
-                        )
-                        .shadow(color: Color(uiColor: .systemBackground).opacity(0.9), radius: 1.5, x: 0, y: 0)
+                VStack(spacing: 6) {
+                    // 3点メニューボタン
+                    Menu {
+                        Button { showFolderPicker = true } label: {
+                            Label(L.SpotList.menuAddFolder, systemImage: "folder.badge.plus")
+                        }
+                        Button { showInquiry = true } label: {
+                            Label(L.SpotList.menuInquiry, systemImage: "questionmark.circle")
+                        }
+                        Button { showShare = true } label: {
+                            Label(L.SpotList.menuShare, systemImage: "square.and.arrow.up")
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundStyle(Color.secondary)
+                            .frame(width: 36, height: 36)
+                            .background(Color(uiColor: .systemBackground).opacity(0.35), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                            .overlay {
+                                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                    .strokeBorder(Color.secondary.opacity(0.18), lineWidth: 0.8)
+                            }
+                    }
+                    .buttonStyle(.plain)
+
+                    // ハートボタン（お気に入り）
+                    Button {
+                        favoriteStore.toggle(spot.id)
+                    } label: {
+                        let isFav = favoriteStore.isFavorite(spot.id)
+                        Image(systemName: isFav ? "heart.fill" : "heart")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(
+                                isFav
+                                    ? Color(red: 1.0, green: 0.42, blue: 0.62)
+                                    : Color.secondary
+                            )
+                            .frame(width: 36, height: 36)
+                            .background(Color(uiColor: .systemBackground).opacity(0.35), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                            .overlay {
+                                if isFav {
+                                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                        .fill(Color(red: 1.0, green: 0.42, blue: 0.62).opacity(0.12))
+                                }
+                            }
+                            .overlay {
+                                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                    .strokeBorder(Color.secondary.opacity(0.18), lineWidth: 0.8)
+                            }
+                    }
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 10)
@@ -1055,6 +1480,15 @@ private struct SpotListRowView: View {
             SpotRowBackdropView(spot: spot, isSelected: isSelected)
         }
         .animation(.easeInOut(duration: 0.2), value: isSelected)
+        .sheet(isPresented: $showInquiry) {
+            SpotInquirySheet(courseName: courseName, spotName: spot.name)
+        }
+        .sheet(isPresented: $showShare) {
+            SpotSharePreviewSheet(spot: spot, course: course)
+        }
+        .sheet(isPresented: $showFolderPicker) {
+            FolderPickerSheet(spot: spot)
+        }
     }
 }
 
@@ -1347,11 +1781,21 @@ struct SpotLeaderLineView: View {
             let lineEnd = lineEnd(imageCenter: imgCenter, imageSize: imageSize)
 
             ZStack {
-                // リーダーライン（スポット中心 → 画像端）
+                // リーダーライン（ピン外縁 → 画像端）
                 Canvas { ctx, _ in
+                    // ピン外縁半径分オフセット（番号が見えるようピンの裏から線を出す）
+                    let pinOuterRadius: CGFloat = 13
+                    let dx = lineEnd.x - spotPoint.x
+                    let dy = lineEnd.y - spotPoint.y
+                    let dist = sqrt(dx * dx + dy * dy)
+                    let lineStart: CGPoint = dist > 0
+                        ? CGPoint(x: spotPoint.x + dx / dist * pinOuterRadius,
+                                  y: spotPoint.y + dy / dist * pinOuterRadius)
+                        : spotPoint
+
                     let path: Path = {
                         var p = Path()
-                        p.move(to: spotPoint)
+                        p.move(to: lineStart)
                         p.addLine(to: lineEnd)
                         return p
                     }()
@@ -1361,16 +1805,6 @@ struct SpotLeaderLineView: View {
                     // 本体（白い線）
                     ctx.stroke(path, with: .color(.white.opacity(0.95)),
                                style: StrokeStyle(lineWidth: 2.5, lineCap: .round))
-                    // スポット側の始点ドット（シャドウ）
-                    ctx.fill(
-                        Path(ellipseIn: CGRect(x: spotPoint.x - 4.5, y: spotPoint.y - 4.5, width: 9, height: 9)),
-                        with: .color(.black.opacity(0.25))
-                    )
-                    // スポット側の始点ドット（本体）
-                    ctx.fill(
-                        Path(ellipseIn: CGRect(x: spotPoint.x - 3.5, y: spotPoint.y - 3.5, width: 7, height: 7)),
-                        with: .color(.white.opacity(0.95))
-                    )
                 }
                 .allowsHitTesting(false)
 
@@ -1529,3 +1963,92 @@ private struct CourseSummarySheet: View {
         .iPadSheetSize(iPhoneDetents: [.medium, .large])
     }
 }
+
+// MARK: - 地図設定シート（SpotListScreen と共有）
+
+struct CourseMapSettingsSheet: View {
+    @Binding var zoomOnSpotFocus: Bool
+    @Binding var spotPhotoSizeRaw: String
+    @Environment(\.dismiss) private var dismiss
+
+    private var selectedPhotoSize: CourseSpotPhotoSize {
+        CourseSpotPhotoSize(rawValue: spotPhotoSizeRaw) ?? .large
+    }
+
+    var body: some View {
+        NavigationStack {
+            VStack(alignment: .leading, spacing: 22) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("スポットフォーカス時のズーム")
+                        .font(.headline)
+                    Text("スポットを選択したときに、地図をスポット中心へ移動しながらズームインするかを切り替えます。")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                HStack(spacing: 0) {
+                    toggleButton(title: "ON", isSelected: zoomOnSpotFocus) {
+                        withAnimation(.easeInOut(duration: 0.18)) { zoomOnSpotFocus = true }
+                    }
+                    toggleButton(title: "OFF", isSelected: !zoomOnSpotFocus) {
+                        withAnimation(.easeInOut(duration: 0.18)) { zoomOnSpotFocus = false }
+                    }
+                }
+                .padding(4)
+                .background(Color.secondary.opacity(0.12), in: Capsule())
+
+                VStack(alignment: .leading, spacing: 10) {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("スポット写真の大きさ")
+                            .font(.headline)
+                        Text("地図上に表示するスポット写真のサイズを選べます。")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+
+                    HStack(spacing: 0) {
+                        ForEach(CourseSpotPhotoSize.allCases, id: \.rawValue) { size in
+                            toggleButton(title: size.title, isSelected: selectedPhotoSize == size) {
+                                withAnimation(.easeInOut(duration: 0.18)) {
+                                    spotPhotoSizeRaw = size.rawValue
+                                }
+                            }
+                        }
+                    }
+                    .padding(4)
+                    .background(Color.secondary.opacity(0.12), in: Capsule())
+                }
+
+                Spacer()
+            }
+            .padding(20)
+            .navigationTitle("地図設定")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(L.Common.done) { dismiss() }
+                        .fontWeight(.semibold)
+                }
+            }
+        }
+        .presentationDetents([.height(340)])
+    }
+
+    private func toggleButton(
+        title: String,
+        isSelected: Bool,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(isSelected ? Color.white : Color.primary)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 9)
+                .background(isSelected ? Color.indigo : Color.clear, in: Capsule())
+        }
+        .buttonStyle(.plain)
+    }
+}
+

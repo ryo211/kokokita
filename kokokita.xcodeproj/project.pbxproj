@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		45536FDA300CC801009AEE84 /* kokokita.storekit in Resources */ = {isa = PBXBuildFile; fileRef = 45536FD9300CC801009AEE84 /* kokokita.storekit */; };
 		45B215842E7EF0B70004B944 /* Kokokita.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 45B215822E7EF0B70004B944 /* Kokokita.xcdatamodeld */; };
 		45DF36A02E975A2200B6526D /* GoogleMobileAds in Frameworks */ = {isa = PBXBuildFile; productRef = 45DF369F2E975A2200B6526D /* GoogleMobileAds */; };
 		45EDE1BD2EC7163100DCDCF7 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 45EDE1BC2EC7163100DCDCF7 /* FirebaseAnalytics */; };
@@ -15,15 +16,21 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		45536FD9300CC801009AEE84 /* kokokita.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; name = kokokita.storekit; path = kokokita/Resources/kokokita.storekit; sourceTree = "<group>"; };
 		456100792F71A452005C3728 /* Kokokita v6.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = "Kokokita v6.xcdatamodel"; sourceTree = "<group>"; };
 		45B214B72E7EDB560004B944 /* kokokita.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = kokokita.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		45B215832E7EF0B70004B944 /* Kokokita.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = Kokokita.xcdatamodel; sourceTree = "<group>"; };
 		839241C028E14D72997A5066 /* Kokokita v2.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = "Kokokita v2.xcdatamodel"; sourceTree = "<group>"; };
 		A1B2C3D4E5F6789012345678 /* Kokokita v3.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = "Kokokita v3.xcdatamodel"; sourceTree = "<group>"; };
+		A4B5C6D7E8F901234567890A /* Kokokita v10.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = "Kokokita v10.xcdatamodel"; sourceTree = "<group>"; };
 		B2C3D4E5F6789012345678AB /* Kokokita v4.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = "Kokokita v4.xcdatamodel"; sourceTree = "<group>"; };
+		B5C6D7E8F9012345678901AB /* Kokokita v11.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = "Kokokita v11.xcdatamodel"; sourceTree = "<group>"; };
 		C3D4E5F6789012345678ABCD /* Kokokita v5.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = "Kokokita v5.xcdatamodel"; sourceTree = "<group>"; };
+		C6D7E8F9012345678901ABCD /* Kokokita v12.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = "Kokokita v12.xcdatamodel"; sourceTree = "<group>"; };
 		D1E2F3A4B5C6789012345678 /* Kokokita v7.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = "Kokokita v7.xcdatamodel"; sourceTree = "<group>"; };
+		D7E8F9012345678901BCDEF0 /* Kokokita v13.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = "Kokokita v13.xcdatamodel"; sourceTree = "<group>"; };
 		E2F3A4B5C6789012345678CD /* Kokokita v8.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = "Kokokita v8.xcdatamodel"; sourceTree = "<group>"; };
+		E8F901234567890123CDEF01 /* Kokokita v14.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = "Kokokita v14.xcdatamodel"; sourceTree = "<group>"; };
 		F3A4B5C6D7890123456789DE /* Kokokita v9.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = "Kokokita v9.xcdatamodel"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -66,6 +73,7 @@
 		45B214AE2E7EDB560004B944 = {
 			isa = PBXGroup;
 			children = (
+				45536FD9300CC801009AEE84 /* kokokita.storekit */,
 				45B215822E7EF0B70004B944 /* Kokokita.xcdatamodeld */,
 				45B214B92E7EDB560004B944 /* kokokita */,
 				45B214B82E7EDB560004B944 /* Products */,
@@ -155,6 +163,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				45536FDA300CC801009AEE84 /* kokokita.storekit in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -252,7 +261,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
-				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = NO;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -312,7 +321,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
-				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = NO;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
@@ -328,7 +337,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 24;
+				CURRENT_PROJECT_VERSION = 27;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_ASSET_PATHS = "\"kokokita/Preview Content\"";
 				DEVELOPMENT_TEAM = G3W2XG2N42;
@@ -338,19 +347,19 @@
 				INFOPLIST_KEY_CFBundleDisplayName = "ココキタ";
 				INFOPLIST_KEY_LSApplicationCategoryType = "";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Kokokita uses the camera to take photos that can be attached to your visit records. For example, you can capture a photo of a location you visited and save it with your record. Photos are stored locally on your device.";
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "Kokokita uses your location in the background to automatically detect places you visit and save them as record candidates. You can review and confirm these candidates later. Location data is stored locally on your device and never shared without your permission.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Kokokita uses your location to record where you have been. For example, when you tap the \"Kokokita\" button, the app captures your current GPS coordinates and saves them with a tamper-proof digital signature. Location data is stored locally on your device and never shared without your permission.";
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "画像をフォトライブラリに保存します。";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Kokokita accesses your photo library to let you attach existing photos to your visit records. For example, you can select a photo from your library and add it to a location record. Photos are stored locally on your device.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 3.3.1;
+				MARKETING_VERSION = 3.5.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.irodori.kokokita.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -365,7 +374,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 24;
+				CURRENT_PROJECT_VERSION = 27;
 				DEVELOPMENT_ASSET_PATHS = "\"kokokita/Preview Content\"";
 				DEVELOPMENT_TEAM = G3W2XG2N42;
 				ENABLE_PREVIEWS = YES;
@@ -374,19 +383,19 @@
 				INFOPLIST_KEY_CFBundleDisplayName = "ココキタ";
 				INFOPLIST_KEY_LSApplicationCategoryType = "";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Kokokita uses the camera to take photos that can be attached to your visit records. For example, you can capture a photo of a location you visited and save it with your record. Photos are stored locally on your device.";
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "Kokokita uses your location in the background to automatically detect places you visit and save them as record candidates. You can review and confirm these candidates later. Location data is stored locally on your device and never shared without your permission.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Kokokita uses your location to record where you have been. For example, when you tap the \"Kokokita\" button, the app captures your current GPS coordinates and saves them with a tamper-proof digital signature. Location data is stored locally on your device and never shared without your permission.";
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "画像をフォトライブラリに保存します。";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Kokokita accesses your photo library to let you attach existing photos to your visit records. For example, you can select a photo from your library and add it to a location record. Photos are stored locally on your device.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 3.3.1;
+				MARKETING_VERSION = 3.5.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.irodori.kokokita.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -476,13 +485,18 @@
 				D1E2F3A4B5C6789012345678 /* Kokokita v7.xcdatamodel */,
 				E2F3A4B5C6789012345678CD /* Kokokita v8.xcdatamodel */,
 				F3A4B5C6D7890123456789DE /* Kokokita v9.xcdatamodel */,
+				A4B5C6D7E8F901234567890A /* Kokokita v10.xcdatamodel */,
+				B5C6D7E8F9012345678901AB /* Kokokita v11.xcdatamodel */,
+				C6D7E8F9012345678901ABCD /* Kokokita v12.xcdatamodel */,
+				D7E8F9012345678901BCDEF0 /* Kokokita v13.xcdatamodel */,
+				E8F901234567890123CDEF01 /* Kokokita v14.xcdatamodel */,
 				45B215832E7EF0B70004B944 /* Kokokita.xcdatamodel */,
 				839241C028E14D72997A5066 /* Kokokita v2.xcdatamodel */,
 				A1B2C3D4E5F6789012345678 /* Kokokita v3.xcdatamodel */,
 				B2C3D4E5F6789012345678AB /* Kokokita v4.xcdatamodel */,
 				C3D4E5F6789012345678ABCD /* Kokokita v5.xcdatamodel */,
 			);
-			currentVersion = F3A4B5C6D7890123456789DE /* Kokokita v9.xcdatamodel */;
+			currentVersion = E8F901234567890123CDEF01 /* Kokokita v14.xcdatamodel */;
 			path = Kokokita.xcdatamodeld;
 			sourceTree = "<group>";
 			versionGroupType = wrapper.xcdatamodel;

@@ -1,0 +1,3431 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>コース管理 | kokokita</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .line-clamp-3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    .fade-in { animation: fadeInUp 0.15s ease-out forwards; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spin { animation: spin 0.7s linear infinite; }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    .slide-up { animation: slideUp 0.2s ease-out forwards; }
+    .drop-zone-active { border-color: #3b82f6 !important; background-color: #eff6ff !important; }
+  </style>
+</head>
+<body class="bg-slate-50 min-h-screen font-sans antialiased">
+
+  <!-- ヘッダー -->
+  <header class="bg-white border-b border-gray-200 sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto px-4 sm:px-5 h-14 flex items-center gap-2 sm:gap-3">
+      <button id="backBtn" onclick="goBack()"
+        class="hidden items-center gap-1 text-blue-600 hover:text-blue-700 text-sm font-medium transition-colors flex-shrink-0 py-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+        一覧に戻る
+      </button>
+      <div class="flex items-center gap-2">
+        <span class="text-base font-bold text-gray-900">📍 コース管理</span>
+      </div>
+      <div id="courseIdBadge"
+        class="ml-auto text-xs text-gray-400 bg-gray-100 px-2 py-1.5 rounded font-mono hidden truncate max-w-[120px] sm:max-w-xs">
+      </div>
+      <button onclick="logout()"
+        class="ml-2 sm:ml-3 text-xs text-gray-400 hover:text-gray-600 flex-shrink-0 hidden py-2 px-1" id="logoutBtn">
+        ログアウト
+      </button>
+    </div>
+  </header>
+
+  <!-- アップロードモーダル -->
+  <div id="uploadModal"
+    class="fixed inset-0 bg-black/60 z-[100] hidden items-center justify-center p-4 backdrop-blur-sm"
+    onclick="onModalBackdropClick(event)">
+    <div id="modalContent" class="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+      <!-- JS でレンダリング -->
+    </div>
+  </div>
+
+  <!-- スポット編集モーダル -->
+  <div id="spotEditModal"
+    class="fixed inset-0 bg-black/60 z-[100] hidden items-center justify-center p-4 backdrop-blur-sm"
+    onclick="onSpotEditModalBackdropClick(event)">
+    <div id="spotEditModalContent" class="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+    </div>
+  </div>
+
+  <!-- 新規コース追加モーダル -->
+  <div id="newCourseModal"
+    class="fixed inset-0 bg-black/60 z-[100] hidden items-center justify-center p-4 backdrop-blur-sm"
+    onclick="onNewCourseModalBackdropClick(event)">
+    <div id="newCourseModalContent" class="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+      <!-- JS でレンダリング -->
+    </div>
+  </div>
+
+  <!-- スポット追加モーダル -->
+  <div id="addSpotModal"
+    class="fixed inset-0 bg-black/60 z-[100] hidden items-center justify-center p-4 backdrop-blur-sm"
+    onclick="onAddSpotModalBackdropClick(event)">
+    <div id="addSpotModalContent" class="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+    </div>
+  </div>
+
+  <!-- ジオコーディングモーダル -->
+  <div id="geocodeModal"
+    class="fixed inset-0 bg-black/60 z-[100] hidden items-center justify-center p-4 backdrop-blur-sm">
+    <div id="geocodeModalContent" class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+    </div>
+  </div>
+
+  <!-- コース設定編集モーダル -->
+  <div id="courseEditModal"
+    class="fixed inset-0 bg-black/60 z-[100] hidden items-center justify-center p-4 backdrop-blur-sm"
+    onclick="onCourseEditModalBackdropClick(event)">
+    <div id="courseEditModalContent" class="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+    </div>
+  </div>
+
+  <!-- JSON アップロードモーダル -->
+  <div id="jsonModal"
+    class="fixed inset-0 bg-black/60 z-[100] hidden items-center justify-center p-4 backdrop-blur-sm"
+    onclick="onJsonModalBackdropClick(event)">
+    <div id="jsonModalContent" class="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+      <!-- JS でレンダリング -->
+    </div>
+  </div>
+
+  <!-- トースト通知 -->
+  <div id="toast" class="fixed bottom-5 right-5 z-[200] flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- コンテンツ -->
+  <main id="root" class="max-w-6xl mx-auto px-4 sm:px-5 py-5 sm:py-6">
+    <div class="flex items-center justify-center py-24">
+      <svg class="w-7 h-7 text-blue-500 spin" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+      </svg>
+    </div>
+  </main>
+
+  <script>
+  (() => {
+    'use strict';
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // 設定
+    // ──────────────────────────────────────────────────────────────────────────
+    const BASE_URL     = 'https://kokokita-app.irodoriq.com/course/';
+    // Lambda API Gateway の URL と管理シークレットを設定してください
+    // const API_BASE_URL   = 'https://aikquzning.execute-api.ap-northeast-1.amazonaws.com/prod';
+    const API_BASE_URL   = 'https://32geew526zqluybtf5km7zitui0etoee.lambda-url.ap-northeast-1.on.aws'
+    const ADMIN_SECRET   = 'aa5c36329c4d6b482bbf6d1b6a89f6c31258394d31c394778e205161932024b0';  // sam deploy で設定した AdminSecret と同じ値
+
+    // パスワードの SHA-256 ハッシュ（変更方法: echo -n "パスワード" | shasum -a 256）
+    const PASSWORD_HASH  = 'b7ed6e0f6fc03ce33bc7c589c1d8f4ec9571949599a713a3f9daa1a9ea28fa74'; // 例: echo -n "kokokita-admin" | shasum -a 256
+
+    const API_CONFIGURED = !API_BASE_URL.includes('YOUR-API');
+
+    // Google Maps Geocoding API キー（localStorage から読み込む。未設定なら空文字）
+    let gmApiKey = localStorage.getItem('gm_api_key') || '';
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // 定数
+    // ──────────────────────────────────────────────────────────────────────────
+    const CAT = {
+      history_culture:    { label: '歴史・文化',      cls: 'bg-amber-100 text-amber-800' },
+      nature:             { label: '自然',            cls: 'bg-emerald-100 text-emerald-800' },
+      art_entertainment:  { label: 'アート・エンタメ',  cls: 'bg-purple-100 text-purple-800' },
+      movie_drama:        { label: '映画・ドラマ',     cls: 'bg-rose-100 text-rose-800' },
+      travel_sightseeing: { label: '旅行・観光',      cls: 'bg-sky-100 text-sky-800' },
+      anime:              { label: 'アニメ・漫画',     cls: 'bg-blue-100 text-blue-800' },
+    };
+
+    const SRC = {
+      bundled:    { label: '同梱',     cls: 'bg-slate-100 text-slate-600' },
+      downloaded: { label: 'ストア',   cls: 'bg-indigo-100 text-indigo-700' },
+      user:       { label: 'ユーザー', cls: 'bg-pink-100 text-pink-700' },
+    };
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // 状態
+    // ──────────────────────────────────────────────────────────────────────────
+    const state = {
+      courses:        [],    // store/index.json の courses 配列
+      detail:         null,  // 現在表示中のコース全 JSON（本番）
+      draft:          null,  // ドラフト JSON（存在しない場合は null）
+      currentSummary: null,  // 現在表示中のコースの store/index.json エントリ
+      view:           'list',
+      catFilter:      'all',
+      statusFilter:   'all',  // 'all' | 'published' | 'unpublished'
+    };
+
+    // 画像アップロードモーダルの状態
+    const modal = {
+      target:      null,  // アップロード対象情報
+      file:        null,  // 選択されたファイル
+      previewUrl:  null,  // 変換後のプレビュー URL
+      status:      'idle', // 'idle' | 'uploading' | 'success' | 'error'
+      progress:    0,
+      result:      null,
+      error:       null,
+      imageCredit: null,  // Wikimedia クレジット文字列（手動アップ時は null）
+      wm: {               // Wikimedia 検索状態
+        open:      false,
+        query:     '',
+        limit:     5,
+        searching: false,
+        results:   [],
+        error:     null,
+      },
+    };
+
+    // セッション中にアップロードされたドラフットを管理（courseId → draft データ）
+    const draftMap = new Map();
+
+    // スポット編集モーダルの状態
+    const sem = { spotId: null };
+
+    // 新規コース追加モーダルの状態
+    const ncm = {
+      file:     null,
+      parsed:   null,
+      parseErr: null,
+      jsonPath: '',   // S3 保存先パス（例: courses/my-course-001.json）
+      status:   'idle', // 'idle' | 'uploading' | 'success' | 'error'
+      error:    null,
+    };
+
+    // JSON アップロードモーダルの状態
+    const jm = {
+      summary:  null,   // 対象コースの store/index エントリ
+      file:     null,   // 選択された .json ファイル
+      parsed:   null,   // パース済み JSON オブジェクト
+      parseErr: null,   // パースエラーメッセージ
+      status:   'idle', // 'idle' | 'uploading' | 'success' | 'error'
+      error:    null,
+    };
+
+    // アップロードログ（セッション内のみ）
+    const uploadLog = [];
+
+    // ブラウザキャッシュ破壊用（アップロード後の画像を即時反映するため）
+    const cacheBustMap = new Map();
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // 初期化
+    // ──────────────────────────────────────────────────────────────────────────
+    async function init() {
+      // ログアウトボタンを表示
+      document.getElementById('logoutBtn').classList.remove('hidden');
+      mount(loadingHTML());
+      try {
+        // store/index.json と /list-drafts を並列取得
+        const storeResProm = fetch(`${BASE_URL}store/index.json?_t=${Date.now()}`);
+        const draftsResProm = API_CONFIGURED
+          ? fetch(`${API_BASE_URL}/list-drafts`, {
+              method:  'POST',
+              headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': ADMIN_SECRET },
+              body:    JSON.stringify({}),
+            })
+          : Promise.resolve(null);
+
+        const [storeRes, draftsRes] = await Promise.all([storeResProm, draftsResProm]);
+        if (!storeRes.ok) throw new Error(`HTTP ${storeRes.status}: store/index.json`);
+        const data = await storeRes.json();
+        state.courses = data.courses || [];
+
+        // ドラフット一覧を処理
+        if (draftsRes && draftsRes.ok) {
+          const draftsData = await draftsRes.json();
+          for (const d of (draftsData.drafts || [])) {
+            if (d.isNew) {
+              // 未公開の新規コース → 仮エントリを追加（_isNew フラグ付き）
+              const alreadyExists = state.courses.some(c => c.id === d.id);
+              if (!alreadyExists) {
+                state.courses.push({
+                  id:            d.id,
+                  title:         d.title,
+                  summary:       d.summary,
+                  categories:    d.categories || [],
+                  version:       d.version,
+                  coverImageUrl: d.coverImageUrl,
+                  spotCount:     d.spotCount,
+                  spotImgCount:  d.spotImgCount,
+                  jsonPath:      d.courseJsonPath,
+                  updatedAt:     null,
+                  _isNew:        true,
+                });
+              }
+            } else {
+              // 既存コースのドラフット → draftMap に記録（バッジ表示用）
+              draftMap.set(d.id, { _metaOnly: true, courseJsonPath: d.courseJsonPath });
+            }
+          }
+        }
+
+        renderList();
+      } catch (err) {
+        renderError('コース一覧を読み込めませんでした', err.message);
+      }
+    }
+    window.init = init;
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // ヘッダー
+    // ──────────────────────────────────────────────────────────────────────────
+    function setHeader(showBack, courseId) {
+      const btn   = document.getElementById('backBtn');
+      const badge = document.getElementById('courseIdBadge');
+      btn.classList.toggle('hidden', !showBack);
+      btn.classList.toggle('flex', showBack);
+      if (courseId) {
+        badge.textContent = courseId;
+        badge.classList.remove('hidden');
+      } else {
+        badge.textContent = '';
+        badge.classList.add('hidden');
+      }
+    }
+
+    window.goBack = function () {
+      state.view           = 'list';
+      state.detail         = null;
+      state.draft          = null;
+      state.currentSummary = null;
+      setHeader(false);
+      renderList();
+    };
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // コース一覧
+    // ──────────────────────────────────────────────────────────────────────────
+    function renderList() {
+      state.view = 'list';
+      setHeader(false);
+
+      let filtered = state.catFilter === 'all'
+        ? state.courses
+        : state.courses.filter(c => (c.categories || []).includes(state.catFilter));
+      if (state.statusFilter === 'published')   filtered = filtered.filter(c => !c._isNew);
+      if (state.statusFilter === 'unpublished') filtered = filtered.filter(c => c._isNew);
+
+      mount(`
+        <div class="fade-in">
+          ${!API_CONFIGURED ? apiWarningBanner() : ''}
+          <div class="flex items-start justify-between gap-3 mb-5">
+            <div class="flex flex-col gap-2">
+              <div class="flex flex-wrap gap-1.5">${statusFilterChips()}</div>
+              <div class="flex flex-wrap gap-1.5">${filterChips()}</div>
+            </div>
+            ${API_CONFIGURED ? `
+              <button onclick="openNewCourse()"
+                class="flex items-center gap-1.5 text-sm font-medium bg-blue-600 text-white
+                       px-3.5 py-2 rounded-xl hover:bg-blue-700 transition-colors flex-shrink-0 shadow-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                新規コース追加
+              </button>` : ''}
+          </div>
+          ${courseSummaryBar(filtered)}
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            ${filtered.map(courseCard).join('')}
+          </div>
+        </div>
+      `);
+    }
+
+    function courseSummaryBar(filtered) {
+      const total      = filtered.length;
+      const published  = filtered.filter(c => !c._isNew).length;
+      const draft      = filtered.filter(c => c._isNew).length;
+      const withDraft  = filtered.filter(c => !c._isNew && draftMap.has(c.id)).length;
+      const totalSpots = filtered.reduce((sum, c) => sum + (c.spotCount || 0), 0);
+
+      // カテゴリ別件数（複数カテゴリ持ちは各カテゴリに加算）
+      const catCount = {};
+      for (const c of filtered) {
+        for (const cat of (c.categories || [])) {
+          catCount[cat] = (catCount[cat] || 0) + 1;
+        }
+      }
+      const catEntries = Object.entries(CAT)
+        .map(([id, meta]) => ({ id, meta, count: catCount[id] || 0 }))
+        .filter(e => e.count > 0)
+        .sort((a, b) => b.count - a.count);
+      const noCat = filtered.filter(c => !(c.categories || []).length).length;
+
+      return `
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm px-5 py-4 mb-5">
+          <!-- 上段: 合計 / リリース済み / 未公開 -->
+          <div class="flex flex-wrap gap-x-6 gap-y-2 items-center mb-3 pb-3 border-b border-gray-100">
+            <div class="flex items-baseline gap-3">
+              <div class="flex items-baseline gap-1.5">
+                <span class="text-2xl font-bold text-gray-900">${total}</span>
+                <span class="text-xs text-gray-400">コース</span>
+              </div>
+              <div class="flex items-baseline gap-1.5">
+                <span class="text-xl font-bold text-indigo-600">${totalSpots.toLocaleString()}</span>
+                <span class="text-xs text-gray-400">スポット</span>
+              </div>
+            </div>
+            <div class="flex flex-wrap gap-4 text-sm">
+              <span class="flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 inline-block"></span>
+                <span class="text-gray-500">リリース済み</span>
+                <span class="font-semibold text-gray-800">${published}</span>
+              </span>
+              ${withDraft > 0 ? `
+              <span class="flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-amber-400 inline-block"></span>
+                <span class="text-gray-500">ドラフットあり</span>
+                <span class="font-semibold text-amber-700">${withDraft}</span>
+              </span>` : ''}
+              ${draft > 0 ? `
+              <span class="flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-gray-300 inline-block"></span>
+                <span class="text-gray-500">未公開</span>
+                <span class="font-semibold text-gray-600">${draft}</span>
+              </span>` : ''}
+            </div>
+          </div>
+          <!-- 下段: カテゴリ別件数 -->
+          <div class="flex flex-wrap gap-2">
+            ${catEntries.map(({ id, meta, count }) => `
+              <button onclick="setCatFilter('${id}')"
+                class="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs
+                       ${meta.cls} hover:opacity-80 transition-opacity">
+                <span class="font-medium">${meta.label}</span>
+                <span class="font-bold">${count}</span>
+              </button>`).join('')}
+            ${noCat > 0 ? `
+              <span class="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs
+                           bg-gray-100 text-gray-500">
+                <span>未分類</span>
+                <span class="font-bold">${noCat}</span>
+              </span>` : ''}
+          </div>
+        </div>`;
+    }
+
+    function apiWarningBanner() {
+      return `
+        <div class="mb-5 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm text-amber-800">
+          ⚠️ <strong>API 未設定</strong>:
+          index.html の <code class="bg-amber-100 px-1 rounded">API_BASE_URL</code> と
+          <code class="bg-amber-100 px-1 rounded">API_KEY</code> を設定するまで、
+          画像アップロードは利用できません。
+        </div>`;
+    }
+
+    function statusFilterChips() {
+      const items = [
+        { id: 'all',         label: '全て',   icon: '' },
+        { id: 'published',   label: '公開済み', icon: '🟢 ' },
+        { id: 'unpublished', label: '未公開',   icon: '🟡 ' },
+      ];
+      return items.map(({ id, label, icon }) => {
+        const active = state.statusFilter === id;
+        return `
+          <button onclick="setStatusFilter('${id}')"
+            class="px-3 py-1 rounded-full text-xs font-medium transition-colors
+              ${active
+                ? 'bg-gray-800 text-white shadow-sm'
+                : 'bg-white text-gray-500 border border-gray-200 hover:bg-gray-50'}">
+            ${icon}${label}
+          </button>`;
+      }).join('');
+    }
+
+    function filterChips() {
+      const items = [
+        { id: 'all', label: '全て' },
+        ...Object.entries(CAT).map(([id, m]) => ({ id, label: m.label })),
+      ];
+      return items.map(({ id, label }) => {
+        const active = state.catFilter === id;
+        return `
+          <button onclick="setCatFilter('${id}')"
+            class="px-3.5 py-1.5 rounded-full text-sm font-medium transition-colors
+              ${active
+                ? 'bg-blue-600 text-white shadow-sm'
+                : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'}">
+            ${label}
+          </button>`;
+      }).join('');
+    }
+
+    function courseCard(c) {
+      const cats    = (c.categories || []).map(id => badge(id, CAT)).join('');
+      const date    = c.updatedAt
+        ? new Date(c.updatedAt).toLocaleDateString('ja-JP',
+            { year: 'numeric', month: 'short', day: 'numeric' })
+        : '–';
+      const imgSrc  = getDisplayUrl(c.coverImageUrl);
+      const imgId   = getCourseImageId(c);
+
+      return `
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden
+                    cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all group relative"
+             onclick="openCourse('${e(c.id)}')">
+
+          <!-- カバー画像 -->
+          <div class="relative h-44 bg-gray-100 flex items-center justify-center overflow-hidden">
+            ${imgSrc
+              ? `<img src="${e(imgSrc)}" alt="${e(c.title)}"
+                     class="absolute inset-0 w-full h-full object-cover
+                            group-hover:scale-105 transition-transform duration-300"
+                     onerror="this.style.display='none'">`
+              : ''}
+            ${svgImgIcon('absolute w-8 h-8 text-gray-300 pointer-events-none')}
+            <div class="absolute top-2 right-2 flex flex-wrap gap-1 justify-end">${cats}</div>
+
+            <!-- カメラボタン（ホバー時表示） -->
+            ${API_CONFIGURED ? `
+              <button onclick="event.stopPropagation(); openUpload({
+                type: 'course',
+                label: '${e(c.title)}',
+                imageId: '${e(imgId)}',
+                courseJsonPath: '${e(c.jsonPath)}',
+                courseId: '${e(c.id)}',
+                spotId: null,
+                currentImageUrl: '${e(getDisplayUrl(c.coverImageUrl) || '')}'
+              })"
+                class="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity
+                       bg-black/60 hover:bg-black/80 text-white rounded-lg px-2.5 py-1.5
+                       text-xs flex items-center gap-1.5 backdrop-blur-sm">
+                ${svgCamera('w-3.5 h-3.5')}
+                画像を設定
+              </button>` : ''}
+          </div>
+
+          <!-- テキスト -->
+          <div class="p-4">
+            <h3 class="font-bold text-gray-900 text-sm mb-1 line-clamp-2">${e(c.title)}</h3>
+            <p class="text-xs text-gray-500 line-clamp-2 mb-3">${e(c.summary || '')}</p>
+            <div class="flex items-center justify-between text-xs text-gray-400">
+              <div class="flex items-center gap-2">
+                <span>📍 ${c.spotCount} スポット</span>
+                ${(c.spotImgCount != null && c.spotCount > 0) ? (() => {
+                  const pct = Math.round(c.spotImgCount / c.spotCount * 100);
+                  const col = pct === 100 ? 'text-emerald-600' : pct >= 50 ? 'text-amber-500' : 'text-orange-400';
+                  return `<span class="${col}">🖼 ${c.spotImgCount}/${c.spotCount}</span>`;
+                })() : ''}</div>
+              <div class="flex items-center gap-2">
+                <span>${date}</span>
+                ${API_CONFIGURED ? `
+                  <button onclick="event.stopPropagation(); openJsonUpload('${e(c.id)}')"
+                    title="JSON をアップロード"
+                    class="text-gray-400 hover:text-blue-600 transition-colors p-1.5 rounded touch-manipulation">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                    </svg>
+                  </button>` : ''}
+              </div>
+            </div>
+            ${(draftMap.has(c.id) || c._isNew) ? `
+              <div class="mt-2 pt-2 border-t border-amber-100 flex items-center gap-2">
+                <span class="text-xs text-amber-600 font-medium flex-1">${c._isNew ? '未公開（ドラフットのみ）' : 'ドラフットあり'}</span>
+                <button onclick="event.stopPropagation(); doPublishFromList('${e(c.id)}')"
+                  class="text-xs bg-amber-500 hover:bg-amber-600 text-white
+                         px-2.5 py-1 rounded-lg transition-colors font-medium">
+                  本番に反映
+                </button>
+              </div>` : ''}
+          </div>
+
+        </div>`;
+    }
+
+    window.setCatFilter = function (id) {
+      state.catFilter = id;
+      renderList();
+    };
+
+    window.setStatusFilter = function (id) {
+      state.statusFilter = id;
+      renderList();
+    };
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // コース詳細を開く
+    // ──────────────────────────────────────────────────────────────────────────
+    window.openCourse = async function (courseId) {
+      const summary = state.courses.find(c => c.id === courseId);
+      if (!summary) return;
+
+      state.view           = 'detail';
+      state.currentSummary = summary;
+      state.draft          = null;
+      setHeader(true, summary.id);
+      mount(loadingHTML());
+
+      try {
+        // 新規追加コースは本番 JSON が存在しないため、ドラフットを取得して使用
+        if (summary._isNew) {
+          // セッション内でアップロード済みの場合は draftMap を優先
+          if (draftMap.has(summary.id) && !draftMap.get(summary.id)._metaOnly) {
+            const draftData = draftMap.get(summary.id);
+            state.detail = draftData;
+            state.draft  = draftData;
+            renderDetail();
+            return;
+          }
+          // それ以外（ページリロード後等）は /get-draft から取得
+          if (API_CONFIGURED) {
+            const res = await fetch(`${API_BASE_URL}/get-draft`, {
+              method:  'POST',
+              headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': ADMIN_SECRET },
+              body:    JSON.stringify({ courseJsonPath: summary.jsonPath }),
+            });
+            if (res.ok) {
+              const draftData = await res.json();
+              if (draftData.exists) {
+                state.detail = draftData.draft;
+                state.draft  = draftData.draft;
+                renderDetail();
+                return;
+              }
+            }
+          }
+          renderError('コース詳細を読み込めませんでした', 'ドラフットが見つかりません');
+          return;
+        }
+
+        const detailProm = fetch(`${BASE_URL}${summary.jsonPath}?_t=${Date.now()}`);
+        const draftProm  = API_CONFIGURED
+          ? fetch(`${API_BASE_URL}/get-draft`, {
+              method:  'POST',
+              headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': ADMIN_SECRET },
+              body:    JSON.stringify({ courseJsonPath: summary.jsonPath }),
+            })
+          : Promise.resolve(null);
+
+        const [detailRes, draftRes] = await Promise.all([detailProm, draftProm]);
+        if (!detailRes.ok) throw new Error(`HTTP ${detailRes.status}: ${summary.jsonPath}`);
+        state.detail = await detailRes.json();
+
+        if (draftRes && draftRes.ok) {
+          const draftData = await draftRes.json();
+          state.draft = draftData.exists ? draftData.draft : null;
+        }
+
+        renderDetail();
+      } catch (err) {
+        renderError('コース詳細を読み込めませんでした', err.message);
+      }
+    };
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // コース詳細レンダリング
+    // ──────────────────────────────────────────────────────────────────────────
+    function renderDetail() {
+      const d       = state.detail;
+      const spots   = allSpots(d);
+      const withImg = spots.filter(s => s.coverImageUrl).length;
+      const noImg   = spots.length - withImg;
+      const pct     = spots.length ? Math.round(withImg / spots.length * 100) : 0;
+      const hasSec  = Array.isArray(d.sections) && d.sections.length > 0;
+      const summary = state.currentSummary;
+
+      mount(`
+        <div class="fade-in">
+
+          <!-- ドラフトバナー -->
+          ${state.draft ? draftBanner() : ''}
+
+          <!-- コースヘッダー -->
+          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-5">
+            <div class="flex flex-col md:flex-row">
+              <div class="md:w-60 h-48 md:h-auto bg-gray-100 flex items-center justify-center
+                          overflow-hidden flex-shrink-0 relative group">
+                ${renderCourseCoverImg(d)}
+                ${svgImgIcon('w-10 h-10 text-gray-300')}
+                ${API_CONFIGURED ? `
+                  <button onclick="openUpload({
+                    type: 'course',
+                    label: '${e(d.title)}',
+                    imageId: '${e(getCourseImageId(summary))}',
+                    courseJsonPath: '${e(summary.jsonPath)}',
+                    courseId: '${e(d.id)}',
+                    spotId: null,
+                    currentImageUrl: '${e(getDisplayUrl(d.coverImageUrl) || '')}'
+                  })"
+                    class="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity
+                           bg-black/60 hover:bg-black/80 text-white rounded-lg px-2.5 py-1.5
+                           text-xs flex items-center gap-1.5">
+                    ${svgCamera('w-3.5 h-3.5')} 画像を変更
+                  </button>` : ''}
+              </div>
+              <div class="p-5 flex-1 min-w-0">
+                <div class="flex flex-wrap gap-1.5 mb-2">
+                  ${(d.categories || []).map(id => badge(id, CAT)).join('')}
+                  ${d.source     ? simpleBadge(SRC[d.source] || { label: d.source,     cls: 'bg-gray-100 text-gray-600' }) : ''}
+                  ${d.courseType ? simpleBadge({ label: d.courseType, cls: 'bg-gray-100 text-gray-600' }) : ''}
+                </div>
+                <h2 class="text-xl font-bold text-gray-900 mb-1">${e(d.title)}</h2>
+                <p class="text-sm text-gray-500 mb-4 line-clamp-3">${e(d.summary || '')}</p>
+                <div class="grid grid-cols-3 gap-2">
+                  ${chip('スポット数', spots.length + ' 件')}
+                  ${chip('認識半径',   d.recognitionRadiusMeters + 'm')}
+                  ${chip('バージョン', 'v' + d.version)}
+                </div>
+                <div class="flex flex-wrap items-center gap-2 mt-3">
+                  ${API_CONFIGURED ? `
+                  <button onclick="openCourseEdit()"
+                    class="flex items-center gap-1.5 text-xs text-gray-600 hover:text-gray-900
+                           bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg transition-colors">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                    </svg>
+                    コース設定を編集
+                  </button>` : ''}
+                  ${API_CONFIGURED ? `
+                  <button onclick="openGeocode()"
+                    class="flex items-center gap-1.5 text-xs text-gray-600 hover:text-gray-900
+                           bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg transition-colors">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                    座標を自動補完
+                  </button>` : ''}
+                  <button onclick="downloadJson('live')"
+                    class="flex items-center gap-1.5 text-xs text-gray-600 hover:text-gray-900
+                           bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg transition-colors">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                    </svg>
+                    本番 JSON
+                  </button>
+                  ${state.draft ? `
+                  <button onclick="downloadJson('draft')"
+                    class="flex items-center gap-1.5 text-xs text-amber-700 hover:text-amber-900
+                           bg-amber-100 hover:bg-amber-200 px-3 py-1.5 rounded-lg transition-colors">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                    </svg>
+                    ドラフット JSON
+                  </button>` : ''}
+                  <div class="flex-1"></div>
+                  ${API_CONFIGURED ? `
+                  <button onclick="openJsonUpload('${e(summary.id)}')"
+                    class="flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-800
+                           border border-blue-200 hover:border-blue-400 hover:bg-blue-50
+                           px-3 py-1.5 rounded-lg transition-colors">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                    </svg>
+                    JSON を差し替え
+                  </button>` : ''}
+                  ${API_CONFIGURED ? `
+                  <button onclick="doDeleteCourse()"
+                    class="flex items-center gap-1.5 text-xs text-red-500 hover:text-red-700
+                           border border-red-200 hover:border-red-400 hover:bg-red-50
+                           px-3 py-1.5 rounded-lg transition-colors">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                    コースを削除
+                  </button>` : ''}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 画像統計 -->
+          <div class="grid grid-cols-3 gap-2 mb-4">
+            ${statCard('総スポット数',  spots.length, 'text-gray-900', '')}
+            ${statCard('画像設定済み',  withImg, 'text-emerald-600', 'border-emerald-100')}
+            ${statCard('画像未設定',    noImg,
+                noImg > 0 ? 'text-orange-500' : 'text-gray-300',
+                noImg > 0 ? 'border-orange-100' : '')}
+          </div>
+
+          <!-- カバー率プログレスバー -->
+          <div class="bg-white rounded-xl border border-gray-100 shadow-sm px-5 py-4 mb-6">
+            <div class="flex justify-between items-center text-sm mb-2">
+              <span class="font-medium text-gray-700">スポット画像 カバー率</span>
+              <span class="font-bold ${pct === 100 ? 'text-emerald-600' : 'text-orange-500'}">${pct}%</span>
+            </div>
+            <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
+              <div class="h-full rounded-full ${pct === 100 ? 'bg-emerald-500' : 'bg-orange-400'}"
+                   style="width: ${pct}%"></div>
+            </div>
+          </div>
+
+          <!-- スポット一覧 -->
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-semibold text-gray-800 text-sm">
+              スポット一覧
+              ${hasSec ? `<span class="ml-1 text-xs font-normal text-gray-400">(${d.sections.length} セクション)</span>` : ''}
+            </h3>
+            <div class="flex gap-2">
+              ${API_CONFIGURED ? `
+              <button onclick="openAddSpot()"
+                class="flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-medium
+                       bg-blue-600 text-white hover:bg-blue-700 transition-colors">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                スポットを追加
+              </button>` : ''}
+              <button id="fAll" onclick="filterSpots(false)"
+                class="px-3 py-1.5 rounded-full text-sm font-medium bg-white text-gray-600 border border-gray-200 hover:bg-gray-50">
+                全て (${spots.length})
+              </button>
+              <button id="fNoImg" onclick="filterSpots(true)"
+                class="px-3 py-1.5 rounded-full text-sm font-medium
+                       bg-white text-gray-600 border border-gray-200 hover:bg-gray-50">
+                画像なし (${noImg})
+              </button>
+            </div>
+          </div>
+
+          <div id="spotList">
+            ${hasSec
+              ? d.sections.slice().sort((a, b) => a.orderIndex - b.orderIndex).map(s => renderSection(s, summary)).join('')
+              : renderFlatSpots(d.spots || [], summary)
+            }
+          </div>
+
+          <!-- アップロードログ -->
+          ${uploadLog.length > 0 ? renderUploadLog() : ''}
+
+        </div>
+      `);
+    }
+
+    window.filterSpots = function (onlyNoImg) {
+      document.querySelectorAll('[data-has-img]').forEach(row => {
+        row.style.display = (onlyNoImg && row.dataset.hasImg === '1') ? 'none' : '';
+      });
+      document.querySelectorAll('[data-section]').forEach(sec => {
+        if (!onlyNoImg) { sec.style.display = ''; return; }
+        const visible = [...sec.querySelectorAll('[data-has-img]')]
+          .filter(r => r.style.display !== 'none').length;
+        sec.style.display = visible === 0 ? 'none' : '';
+      });
+      document.getElementById('fAll').className =
+        `px-3 py-1.5 rounded-full text-sm font-medium ${!onlyNoImg
+          ? 'bg-blue-600 text-white'
+          : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'}`;
+      document.getElementById('fNoImg').className =
+        `px-3 py-1.5 rounded-full text-sm font-medium ${onlyNoImg
+          ? 'bg-orange-500 text-white'
+          : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'}`;
+    };
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // セクション / スポット
+    // ──────────────────────────────────────────────────────────────────────────
+    function renderSection(sec, summary) {
+      const spots = (sec.spots || []).slice().sort((a, b) => a.orderIndex - b.orderIndex);
+      const wi    = spots.filter(s => s.coverImageUrl).length;
+      return `
+        <div class="mb-4" data-section="${e(sec.sectionId)}">
+          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <div class="px-5 py-3 bg-slate-50 border-b border-gray-100 flex items-start justify-between gap-4">
+              <div class="min-w-0">
+                <h4 class="font-semibold text-gray-800 text-sm">${e(sec.name)}</h4>
+                ${sec.sectionDescription
+                  ? `<p class="text-xs text-gray-400 mt-0.5 line-clamp-2">${e(sec.sectionDescription)}</p>`
+                  : ''}
+              </div>
+              <div class="text-xs text-right flex-shrink-0">
+                <div class="text-gray-400">${spots.length} スポット</div>
+                <div class="${wi < spots.length ? 'text-orange-400' : 'text-emerald-500'}">
+                  画像 ${wi}/${spots.length}
+                </div>
+              </div>
+            </div>
+            <div class="divide-y divide-slate-50">
+              ${spots.map(spot => renderSpotRow(spot, summary)).join('')}
+            </div>
+          </div>
+        </div>`;
+    }
+
+    function renderFlatSpots(spots, summary) {
+      const sorted = spots.slice().sort((a, b) => a.orderIndex - b.orderIndex);
+      return `
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          <div class="divide-y divide-slate-50">
+            ${sorted.map(spot => renderSpotRow(spot, summary)).join('')}
+          </div>
+        </div>`;
+    }
+
+    function renderSpotRow(spot, summary) {
+      const has            = !!spot.coverImageUrl;
+      const dispUrl        = has ? getDisplayUrl(spot.coverImageUrl) : null;
+      const draftSpot      = getDraftSpot(spot.spotId);
+      const hasDraftChange = !!(draftSpot && draftSpot.coverImageUrl !== spot.coverImageUrl);
+      const draftDispUrl   = hasDraftChange ? getDisplayUrl(draftSpot.coverImageUrl) : null;
+      const mapsUrl        = spot.latitude != null && spot.longitude != null
+        ? `https://www.google.com/maps?q=${spot.latitude},${spot.longitude}`
+        : null;
+      const imageId = getSpotImageId(spot);
+
+      // サムネイルクリックでアップロードモーダルを開くためのデータ属性
+      const uploadAttrs = API_CONFIGURED ? `
+        data-upload-type="spot"
+        data-upload-label="${e(spot.name)}"
+        data-upload-imgid="${e(imageId)}"
+        data-upload-jsonpath="${e(summary ? summary.jsonPath : '')}"
+        data-upload-spotid="${e(spot.spotId)}"
+        data-upload-courseid="${e(summary ? summary.id : '')}"
+        data-upload-current-url="${e(getDisplayUrl(spot.coverImageUrl) || '')}"
+        onclick="openUploadFromBtn(this)"
+      ` : '';
+
+      return `
+        <div class="flex items-start gap-3 px-4 py-3 hover:bg-slate-50/60 transition-colors group
+                    ${hasDraftChange ? 'bg-amber-50/40' : !has ? 'bg-orange-50/30' : ''}"
+             data-has-img="${has ? '1' : '0'}">
+
+          <!-- サムネイル（クリックで画像変更） -->
+          ${hasDraftChange
+            ? `<!-- ドラフット変更あり: 現在→変更後 を並べて表示、現在側はクリック可 -->
+               <div class="flex items-center gap-1 flex-shrink-0">
+                 <div class="relative w-12 h-8 rounded-lg overflow-hidden bg-gray-100
+                             flex items-center justify-center group/thumb
+                             ${API_CONFIGURED ? 'cursor-pointer' : ''}"
+                      ${uploadAttrs}>
+                   ${dispUrl ? `<img src="${e(dispUrl)}" class="absolute inset-0 w-full h-full object-cover" onerror="this.style.display='none'">` : svgImgIcon('w-3.5 h-3.5 text-gray-300')}
+                   ${API_CONFIGURED ? `
+                   <div class="absolute inset-0 bg-black/0 group-hover/thumb:bg-black/40 transition-colors
+                               flex items-center justify-center">
+                     ${svgCamera('w-3 h-3 text-white opacity-0 group-hover/thumb:opacity-100 transition-opacity')}
+                   </div>` : ''}
+                   <div class="absolute bottom-0 inset-x-0 bg-black/50 text-white text-[8px] text-center leading-[14px]">現在</div>
+                 </div>
+                 <svg class="w-3 h-3 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                 </svg>
+                 <div class="relative w-12 h-8 rounded-lg overflow-hidden bg-amber-50 ring-1 ring-amber-400 flex items-center justify-center">
+                   <img src="${e(draftDispUrl)}" class="absolute inset-0 w-full h-full object-cover" onerror="this.style.display='none'">
+                   <div class="absolute bottom-0 inset-x-0 bg-amber-500/80 text-white text-[8px] text-center leading-[14px]">変更後</div>
+                 </div>
+               </div>`
+            : `<div class="relative rounded-lg overflow-hidden bg-gray-100
+                           flex items-center justify-center flex-shrink-0 group/thumb
+                           ${API_CONFIGURED ? 'cursor-pointer' : ''}"
+                    style="width:96px;height:64px"
+                    ${uploadAttrs}>
+                 ${dispUrl
+                   ? `<img src="${e(dispUrl)}" alt="${e(spot.name)}"
+                          class="absolute inset-0 w-full h-full object-cover"
+                          onerror="this.style.display='none'">`
+                   : ''}
+                 ${svgImgIcon('w-5 h-5 text-gray-300')}
+                 ${API_CONFIGURED ? `
+                 <div class="absolute inset-0 bg-black/0 group-hover/thumb:bg-black/40 transition-colors
+                             flex flex-col items-center justify-center gap-0.5">
+                   ${svgCamera('w-4 h-4 text-white opacity-0 group-hover/thumb:opacity-100 transition-opacity')}
+                   <span class="text-white text-[10px] font-medium opacity-0 group-hover/thumb:opacity-100 transition-opacity">
+                     ${has ? '変更' : '設定'}
+                   </span>
+                 </div>` : ''}
+               </div>`
+          }
+
+          <!-- テキスト -->
+          <div class="flex-1 min-w-0">
+            <div class="flex items-start justify-between gap-2 mb-0.5">
+              <div class="flex items-center gap-1.5 flex-wrap min-w-0">
+                <span class="text-xs text-gray-400 flex-shrink-0">#${spot.orderIndex + 1}</span>
+                <span class="font-semibold text-gray-900 text-sm">${e(spot.name)}</span>
+                <button onclick="copyText('${e(spot.name)}')"
+                  title="コピー"
+                  class="text-gray-300 hover:text-gray-500 transition-colors flex-shrink-0">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2
+                         m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                  </svg>
+                </button>
+              </div>
+              ${hasDraftChange
+                ? `<span class="text-xs px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-700 font-medium flex-shrink-0">変更あり</span>`
+                : has
+                  ? `<span class="text-xs px-1.5 py-0.5 rounded-md bg-emerald-100 text-emerald-700 font-medium flex-shrink-0">画像あり</span>`
+                  : `<span class="text-xs px-1.5 py-0.5 rounded-md bg-orange-100 text-orange-600 font-medium flex-shrink-0">画像なし</span>`
+              }
+            </div>
+            ${spot.address ? `<p class="text-xs text-gray-400">📍 ${e(spot.address)}</p>` : ''}
+            ${spot.spotDescription
+              ? `<p class="text-xs text-gray-500 mt-0.5 line-clamp-2">${e(spot.spotDescription)}</p>`
+              : ''}
+            <div class="flex items-center gap-3 mt-1 text-xs text-gray-400 flex-wrap">
+              ${spot.latitude != null && spot.longitude != null
+                ? `<span class="font-mono">${spot.latitude.toFixed(5)}, ${spot.longitude.toFixed(5)}</span>`
+                : `<span class="text-orange-400">座標なし</span>`}
+              ${spot.recognitionRadiusMeters != null
+                ? `<span>半径 ${spot.recognitionRadiusMeters}m</span>` : ''}
+              ${mapsUrl
+                ? `<a href="${mapsUrl}" target="_blank" rel="noopener"
+                     class="text-blue-500 hover:text-blue-700 hover:underline">地図を開く →</a>`
+                : ''}
+            </div>
+            ${spot.imageCredit
+              ? `<p class="text-[10px] text-gray-400 mt-0.5 line-clamp-1" title="${e(spot.imageCredit)}">
+                   🏷 ${e(spot.imageCredit)}
+                 </p>`
+              : ''}
+          </div>
+
+          <!-- スポット操作ボタン（ホバー時表示） -->
+          ${API_CONFIGURED ? `
+            <div class="flex flex-col gap-1 flex-shrink-0 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity self-center">
+              <button onclick="openSpotEdit('${e(spot.spotId)}')"
+                title="スポット情報を編集"
+                class="text-gray-400 hover:text-blue-600 bg-gray-100 hover:bg-blue-50
+                       rounded-lg p-2.5 sm:p-1.5 touch-manipulation">
+                <svg class="w-4 h-4 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5
+                       m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                </svg>
+              </button>
+              <button onclick="doDeleteSpot('${e(spot.spotId)}')"
+                title="スポットを削除"
+                class="text-gray-400 hover:text-red-500 bg-gray-100 hover:bg-red-50
+                       rounded-lg p-2.5 sm:p-1.5 touch-manipulation">
+                <svg class="w-4 h-4 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                </svg>
+              </button>
+            </div>` : ''}
+
+        </div>`;
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // アップロードログ
+    // ──────────────────────────────────────────────────────────────────────────
+    function renderUploadLog() {
+      const entries = uploadLog.slice(0, 10);
+      return `
+        <div class="mt-8">
+          <h3 class="font-semibold text-gray-800 text-sm mb-3">
+            アップロード履歴
+            <span class="ml-1 text-xs font-normal text-gray-400">（セッション中）</span>
+          </h3>
+          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <div class="divide-y divide-slate-50">
+              ${entries.map(logEntry).join('')}
+            </div>
+          </div>
+        </div>`;
+    }
+
+    function logEntry(entry) {
+      const time = entry.ts.toLocaleTimeString('ja-JP');
+      return `
+        <div class="flex items-start gap-3 px-4 py-3">
+          <div class="w-5 h-5 rounded-full flex-shrink-0 flex items-center justify-center mt-0.5
+                      ${entry.success ? 'bg-emerald-100' : 'bg-red-100'}">
+            <svg class="w-3 h-3 ${entry.success ? 'text-emerald-600' : 'text-red-500'}"
+                 fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              ${entry.success
+                ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>'
+                : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>'}
+            </svg>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 text-xs">
+              <span class="font-medium text-gray-800">${e(entry.label)}</span>
+              <span class="text-gray-400">${time}</span>
+              <span class="${entry.type === 'course' ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-600'}
+                          px-1.5 py-0.5 rounded text-xs">
+                ${entry.type === 'course' ? 'コース画像' : 'スポット画像'}
+              </span>
+            </div>
+            ${entry.success
+              ? `<p class="text-xs text-gray-400 font-mono mt-0.5 truncate">${e(entry.publicUrl)}</p>
+                 <p class="text-xs text-gray-400 mt-0.5">CF無効化: ${(entry.invalidatedPaths || []).join(', ')}</p>`
+              : `<p class="text-xs text-red-400 mt-0.5">${e(entry.error || '')}</p>`
+            }
+          </div>
+        </div>`;
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // アップロードモーダル
+    // ──────────────────────────────────────────────────────────────────────────
+
+    /** スポット行のボタンから target を組み立てて openUpload を呼ぶ */
+    window.openUploadFromBtn = function (btn) {
+      openUpload({
+        type:            btn.dataset.uploadType,
+        label:           btn.dataset.uploadLabel,
+        imageId:         btn.dataset.uploadImgid,
+        courseJsonPath:  btn.dataset.uploadJsonpath,
+        courseId:        btn.dataset.uploadCourseid,
+        spotId:          btn.dataset.uploadSpotid || null,
+        currentImageUrl: btn.dataset.uploadCurrentUrl || null,
+      });
+    };
+
+    /** アップロードモーダルを開く */
+    window.openUpload = function (target) {
+      if (!API_CONFIGURED) {
+        showToast('API が未設定です。index.html の API_BASE_URL を設定してください。', 'error');
+        return;
+      }
+      Object.assign(modal, {
+        target, file: null, previewUrl: null,
+        status: 'idle', progress: 0, result: null, error: null,
+        imageCredit: null,
+        wm: { open: false, query: target.label || '', limit: parseInt(localStorage.getItem('wm_limit') || '5'), searching: false, results: [], error: null },
+      });
+      renderModal();
+      const el = document.getElementById('uploadModal');
+      el.classList.remove('hidden');
+      el.classList.add('flex');
+    };
+
+    window.onModalBackdropClick = function (event) {
+      // バツボタンでのみ閉じる（バックドロップクリックでは閉じない）
+    };
+
+    window.closeModal = function () {
+      const el = document.getElementById('uploadModal');
+      el.classList.add('hidden');
+      el.classList.remove('flex');
+      if (modal.result && state.view === 'detail') renderDetail();
+    };
+
+    function renderModal() {
+      const content = document.getElementById('modalContent');
+      const target  = modal.target;
+
+      if (modal.status === 'uploading') {
+        content.innerHTML = `
+          <div class="p-6 text-center">
+            <p class="font-semibold text-gray-800 mb-1">アップロード中...</p>
+            <p class="text-xs text-gray-400 mb-4">${e(target.label)}</p>
+            <div class="h-2 bg-gray-100 rounded-full overflow-hidden mb-2">
+              <div id="progressBar" class="h-full bg-blue-500 rounded-full transition-all"
+                   style="width: ${modal.progress}%"></div>
+            </div>
+            <p id="progressText" class="text-xs text-gray-400">${modal.progress}%</p>
+          </div>`;
+        return;
+      }
+
+      if (modal.status === 'success') {
+        const r = modal.result;
+        content.innerHTML = `
+          <div class="p-6">
+            <div class="flex items-center gap-2 mb-4">
+              <div class="w-7 h-7 rounded-full bg-emerald-100 flex items-center justify-center">
+                <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                </svg>
+              </div>
+              <h3 class="font-bold text-gray-900">アップロード完了</h3>
+            </div>
+            <img src="${e(r.publicUrl)}?v=${Date.now()}" alt="アップロード済み画像"
+                 class="w-full h-48 object-cover rounded-xl mb-4 bg-gray-100">
+            <div class="space-y-2 text-xs">
+              <div class="flex gap-2">
+                <span class="w-20 text-gray-400 flex-shrink-0">S3 パス</span>
+                <span class="font-mono text-gray-700 break-all">${e(r.publicUrl.replace('https://kokokita-app.irodoriq.com/course/', ''))}</span>
+              </div>
+              ${r.jsonUpdated
+                ? `<div class="flex gap-2">
+                     <span class="w-20 text-gray-400 flex-shrink-0">JSON 更新</span>
+                     <span class="text-emerald-600">coverImageUrl を更新しました</span>
+                   </div>` : ''}
+              ${(r.invalidatedPaths || []).length
+                ? `<div class="flex gap-2">
+                     <span class="w-20 text-gray-400 flex-shrink-0">CF 無効化</span>
+                     <span class="font-mono text-gray-700 break-all">${e((r.invalidatedPaths || []).join('\n'))}</span>
+                   </div>` : ''}
+              ${r.invalidationId
+                ? `<div class="flex gap-2">
+                     <span class="w-20 text-gray-400 flex-shrink-0">無効化 ID</span>
+                     <span class="font-mono text-gray-500">${e(r.invalidationId)}</span>
+                   </div>` : ''}
+            </div>
+            <button onclick="closeModal()"
+              class="mt-5 w-full py-2.5 bg-gray-900 text-white text-sm font-medium rounded-xl hover:bg-gray-700">
+              閉じる
+            </button>
+          </div>`;
+        return;
+      }
+
+      if (modal.status === 'error') {
+        content.innerHTML = `
+          <div class="p-6">
+            <div class="flex items-center gap-2 mb-4">
+              <div class="w-7 h-7 rounded-full bg-red-100 flex items-center justify-center">
+                <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+              </div>
+              <h3 class="font-bold text-gray-900">アップロード失敗</h3>
+            </div>
+            <p class="text-sm text-red-500 mb-5">${e(modal.error || '')}</p>
+            <div class="flex gap-3">
+              <button onclick="modal.status='idle'; renderModal()"
+                class="flex-1 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700">
+                やり直す
+              </button>
+              <button onclick="closeModal()"
+                class="flex-1 py-2.5 bg-gray-100 text-gray-700 text-sm font-medium rounded-xl hover:bg-gray-200">
+                閉じる
+              </button>
+            </div>
+          </div>`;
+        return;
+      }
+
+      // idle: ファイル選択画面
+      const typeLabel = target.type === 'course' ? 'コース画像' : 'スポット画像';
+      content.innerHTML = `
+        <div class="p-6">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h3 class="font-bold text-gray-900">画像をアップロード</h3>
+              <p class="text-xs text-gray-400 mt-0.5">
+                <span class="font-medium">${typeLabel}</span>: ${e(target.label)}
+              </p>
+              <p class="text-xs text-gray-300 font-mono mt-0.5">${e(target.imageId)}.jpg</p>
+            </div>
+            <button onclick="if(modal.status!=='uploading') closeModal()"
+              class="text-gray-400 hover:text-gray-600 p-1">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </button>
+          </div>
+
+          <!-- ドロップゾーン / プレビュー -->
+          <div id="dropZone"
+            class="relative border-2 rounded-xl overflow-hidden
+                   flex items-center justify-center cursor-pointer mb-4
+                   ${(modal.previewUrl || target.currentImageUrl) ? 'h-52 border-transparent' : 'h-44 border-dashed border-gray-200 hover:border-blue-400 hover:bg-blue-50/50'} transition-colors"
+            onclick="document.getElementById('fileInput').click()"
+            ondragover="event.preventDefault(); this.classList.add('drop-zone-active')"
+            ondragleave="this.classList.remove('drop-zone-active')"
+            ondrop="event.preventDefault(); this.classList.remove('drop-zone-active'); handleFileDrop(event)">
+            ${modal.previewUrl
+              ? `<!-- 新しい画像のプレビュー -->
+                 <img src="${e(modal.previewUrl)}" alt="プレビュー"
+                      class="absolute inset-0 w-full h-full object-cover">
+                 <div class="absolute inset-0 bg-black/0 hover:bg-black/20 transition-colors flex items-end justify-center pb-2">
+                   <span class="opacity-0 hover:opacity-100 text-white text-xs bg-black/60 px-2 py-1 rounded-lg transition-opacity">
+                     クリックで変更
+                   </span>
+                 </div>`
+              : target.currentImageUrl
+              ? `<!-- 設定済み画像 -->
+                 <img src="${e(target.currentImageUrl)}" alt="現在の画像"
+                      class="absolute inset-0 w-full h-full object-cover">
+                 <div class="absolute inset-0 bg-black/20 hover:bg-black/40 transition-colors flex flex-col items-center justify-center gap-1.5">
+                   ${svgCamera('w-6 h-6 text-white drop-shadow')}
+                   <span class="text-white text-xs font-medium drop-shadow">クリックまたはドラッグで画像を変更</span>
+                 </div>`
+              : `<div class="text-center">
+                   ${svgImgIcon('w-10 h-10 text-gray-300 mx-auto mb-2')}
+                   <p class="text-sm text-gray-400">クリックまたはドラッグ&ドロップ</p>
+                   <p class="text-xs text-gray-300 mt-1">JPEG / PNG / HEIC</p>
+                 </div>`}
+          </div>
+
+          <input id="fileInput" type="file" accept="image/*" class="hidden"
+                 onchange="handleFileInput(this)">
+
+          ${modal.file
+            ? `<div class="mb-4">
+                 <p class="text-xs text-gray-400">
+                   📎 ${e(modal.file.name)}
+                   (${(modal.file.size / 1024 / 1024).toFixed(1)} MB)
+                   <button onclick="document.getElementById('fileInput').click()"
+                     class="ml-2 text-blue-500 hover:text-blue-700">変更</button>
+                 </p>
+                 ${modal.imageCredit
+                   ? `<p class="text-xs text-emerald-600 mt-1">
+                        🏷 ${e(modal.imageCredit)}
+                      </p>`
+                   : ''}
+               </div>`
+            : ''}
+
+          <!-- Wikimedia Commons パネル -->
+          ${renderWikimediaPanel()}
+
+          <div class="flex gap-3 mt-4">
+            <button onclick="closeModal()"
+              class="flex-1 py-2.5 bg-gray-100 text-gray-700 text-sm font-medium rounded-xl hover:bg-gray-200">
+              キャンセル
+            </button>
+            <button onclick="doUpload()" ${!modal.file ? 'disabled' : ''}
+              class="flex-1 py-2.5 text-sm font-medium rounded-xl
+                     ${modal.file
+                       ? 'bg-blue-600 text-white hover:bg-blue-700'
+                       : 'bg-gray-100 text-gray-400 cursor-not-allowed'}">
+              アップロード
+            </button>
+          </div>
+        </div>`;
+      // innerHTML 置換後、ブラウザが selected 属性を無視するケースへの対策
+      requestAnimationFrame(() => {
+        const sel = document.getElementById('wm-limit');
+        if (sel) sel.value = String(modal.wm.limit || 5);
+      });
+    }
+
+    window.handleFileInput = function (input) {
+      if (input.files && input.files[0]) handleFileSelect(input.files[0]);
+    };
+
+    window.handleFileDrop = function (event) {
+      const file = event.dataTransfer.files[0];
+      if (file) handleFileSelect(file);
+    };
+
+    async function handleFileSelect(file) {
+      modal.file = file;
+      // プレビュー用 object URL を生成
+      if (modal.previewUrl) URL.revokeObjectURL(modal.previewUrl);
+      modal.previewUrl = URL.createObjectURL(file);
+      renderModal();
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // Wikimedia Commons 検索パネル
+    // ──────────────────────────────────────────────────────────────────────────
+    function renderWikimediaPanel() {
+      const wm = modal.wm;
+      const inputCls = 'flex-1 px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-400';
+
+      const resultsHtml = wm.error
+        ? `<p class="text-xs text-red-400 mt-2">${e(wm.error)}</p>`
+        : wm.searching
+          ? `<div class="flex items-center gap-2 mt-2 text-xs text-gray-400">
+               <svg class="w-3.5 h-3.5 spin" fill="none" viewBox="0 0 24 24">
+                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+               </svg>
+               検索中...
+             </div>`
+          : wm.results.length
+            ? (() => {
+                const selected = wm.results.findIndex(r => r.credit === modal.imageCredit);
+                const licenseOf = credit => {
+                  const parts = credit.split('/').map(s => s.trim());
+                  // "CC BY-SA 4.0" 相当の部分を抽出（"CC"または"Public"を含む要素）
+                  const lic = parts.find(p => p.startsWith('CC') || p.startsWith('Public'));
+                  return lic || parts[parts.length - 2] || credit;
+                };
+                return `<div class="grid grid-cols-2 gap-2 mt-3 sm:grid-cols-3">
+                 ${wm.results.map((r, i) => `
+                   <button onclick="selectWikimediaImage(${i})"
+                     title="${e(r.credit)}"
+                     class="relative rounded-xl overflow-hidden bg-gray-100 group border-2
+                            ${modal.imageCredit === r.credit ? 'border-blue-500 ring-2 ring-blue-200' : 'border-transparent hover:border-blue-300'}
+                            transition-all">
+                     <img src="${e(r.thumbUrl)}" alt="${e(r.title)}"
+                          class="w-full h-28 object-cover group-hover:opacity-90 transition-opacity"
+                          onerror="this.parentElement.style.display='none'">
+                     <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-1.5 py-1.5 text-[10px] text-white leading-tight">
+                       ${e(licenseOf(r.credit))}
+                     </div>
+                     ${modal.imageCredit === r.credit ? `
+                     <div class="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center">
+                       <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+                       </svg>
+                     </div>` : ''}
+                   </button>`).join('')}
+               </div>
+               ${selected >= 0 ? `
+               <div class="mt-2 px-3 py-2 bg-blue-50 rounded-xl text-[11px] text-blue-700 leading-snug break-all">
+                 🏷 ${e(wm.results[selected].credit)}
+               </div>` : ''}`;
+              })()
+            : wm.open
+              ? `<p class="text-xs text-gray-400 mt-2">「検索」を押して画像を探してください</p>`
+              : '';
+
+      return `
+        <div class="border border-gray-100 rounded-xl mb-1">
+          <button onclick="wmToggle()"
+            class="w-full flex items-center justify-between px-4 py-3 text-sm text-gray-600 hover:bg-gray-50 rounded-xl transition-colors">
+            <span class="flex items-center gap-2 font-medium">
+              <svg class="w-4 h-4 text-green-600" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/>
+              </svg>
+              Wikimedia Commons から取得
+            </span>
+            <svg class="w-4 h-4 transition-transform ${wm.open ? 'rotate-180' : ''}"
+                 fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+            </svg>
+          </button>
+          ${wm.open ? `
+          <div class="px-4 pb-4">
+            <div class="flex flex-wrap gap-2">
+              <input id="wm-query" type="text" value="${e(wm.query)}"
+                placeholder="スポット名・地名で検索"
+                class="flex-1 min-w-0 ${inputCls}"
+                onkeydown="if(event.key==='Enter') searchWikimedia()">
+              <select id="wm-limit" onchange="modal.wm.limit=+this.value; localStorage.setItem('wm_limit', this.value)"
+                class="flex-shrink-0 px-2 py-2 border border-gray-200 rounded-xl text-sm
+                       bg-white focus:outline-none focus:ring-2 focus:ring-blue-400">
+                <option value="5"  ${wm.limit===5  ? 'selected' : ''}>5件</option>
+                <option value="10" ${wm.limit===10 ? 'selected' : ''}>10件</option>
+                <option value="20" ${wm.limit===20 ? 'selected' : ''}>20件</option>
+              </select>
+              <button onclick="searchWikimedia()"
+                class="flex-shrink-0 px-3.5 py-2 bg-green-600 text-white text-sm font-medium
+                       rounded-xl hover:bg-green-700 transition-colors">
+                検索
+              </button>
+            </div>
+            ${resultsHtml}
+            <p class="text-[10px] text-gray-300 mt-2">
+              Wikimedia Commons のコンテンツはそれぞれのライセンスの下で提供されています。
+            </p>
+          </div>` : ''}
+        </div>`;
+    }
+
+    window.wmToggle = function () {
+      modal.wm.open = !modal.wm.open;
+      renderModal();
+      if (modal.wm.open) {
+        // 開いたら input にフォーカス
+        setTimeout(() => document.getElementById('wm-query')?.focus(), 50);
+      }
+    };
+
+    window.searchWikimedia = async function () {
+      const query = (document.getElementById('wm-query')?.value || '').trim();
+      // renderModal() 前に DOM から件数を確定取得（innerHTML 置換後の select 値ズレ対策）
+      const limitFromDom = parseInt(document.getElementById('wm-limit')?.value);
+      if (!isNaN(limitFromDom)) modal.wm.limit = limitFromDom;
+      if (!query) return;
+      modal.wm.query     = query;
+      modal.wm.searching = true;
+      modal.wm.results   = [];
+      modal.wm.error     = null;
+      renderModal();
+
+      try {
+        const params = new URLSearchParams({
+          action:       'query',
+          generator:    'search',
+          gsrnamespace: '6',
+          gsrsearch:    query,
+          gsrlimit:     String(modal.wm.limit || 5),
+          prop:         'imageinfo',
+          iiprop:       'url|extmetadata|size',
+          iiurlwidth:   '400',
+          format:       'json',
+          origin:       '*',
+        });
+        const res  = await fetch(`https://commons.wikimedia.org/w/api.php?${params}`);
+        const data = await res.json();
+        const pages = Object.values(data.query?.pages || {});
+
+        modal.wm.results = pages
+          .filter(p => p.imageinfo?.length)
+          .map(p => {
+            const info = p.imageinfo[0];
+            const meta = info.extmetadata || {};
+
+            // アーティスト名（HTML タグを除去）
+            const artistHtml  = meta.Artist?.value || '';
+            const artistText  = artistHtml.replace(/<[^>]+>/g, '').trim() || '不明';
+            const license     = meta.LicenseShortName?.value || '';
+            const credit      = `© ${artistText} / ${license} / Wikimedia Commons`;
+
+            return {
+              title:    p.title.replace('File:', ''),
+              thumbUrl: info.thumburl || info.url,
+              fullUrl:  info.url,
+              credit,
+            };
+          });
+
+        if (!modal.wm.results.length) {
+          modal.wm.error = '画像が見つかりませんでした。別のキーワードで試してください。';
+        }
+      } catch (err) {
+        modal.wm.error = `検索失敗: ${err.message}`;
+      } finally {
+        modal.wm.searching = false;
+        renderModal();
+      }
+    };
+
+    window.selectWikimediaImage = async function (index) {
+      const candidate = modal.wm.results[index];
+      if (!candidate) return;
+
+      showToast('画像を取得中...', 'info');
+      try {
+        // Wikimedia の画像を Blob で取得
+        const res = await fetch(candidate.fullUrl, { mode: 'cors' });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const blob = await res.blob();
+        const file = new File([blob], `${candidate.title}.jpg`, { type: blob.type || 'image/jpeg' });
+
+        modal.imageCredit = candidate.credit;
+        await handleFileSelect(file);  // プレビュー表示 + modal.file 設定（renderModal も呼ばれる）
+        showToast('画像を選択しました', 'success');
+      } catch (err) {
+        showToast(`画像の取得に失敗しました: ${err.message}`, 'error');
+      }
+    };
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // アップロード実行
+    // ──────────────────────────────────────────────────────────────────────────
+    window.doUpload = async function () {
+      if (!modal.file) return;
+
+      const target = modal.target;
+      modal.status   = 'uploading';
+      modal.progress = 0;
+      renderModal();
+
+      try {
+        // 1. JPEG に変換
+        setProgress(5, 'JPEG に変換中...');
+        const jpegBlob = await fileToJpeg(modal.file);
+
+        // 2. presigned URL を取得
+        setProgress(15, 'アップロード URL を取得中...');
+        const presignRes = await fetch(`${API_BASE_URL}/presigned-url`, {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': ADMIN_SECRET },
+          body:    JSON.stringify({ type: target.type, imageId: target.imageId }),
+        });
+        if (!presignRes.ok) throw new Error(`presigned-url: HTTP ${presignRes.status}`);
+        const { uploadUrl, publicUrl, cfPath } = await presignRes.json();
+
+        // 3. S3 に直接アップロード（XHR で進捗取得）
+        setProgress(20, 'S3 にアップロード中...');
+        await uploadToS3(uploadUrl, jpegBlob, (pct) => {
+          setProgress(20 + Math.round(pct * 0.6), `S3 にアップロード中... ${pct}%`);
+        });
+
+        // 4. 後処理（JSON 更新 + CF invalidation）
+        setProgress(85, 'キャッシュをクリア中...');
+        const completeRes = await fetch(`${API_BASE_URL}/complete-upload`, {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': ADMIN_SECRET },
+          body:    JSON.stringify({
+            type:           target.type,
+            imageId:        target.imageId,
+            courseJsonPath: target.courseJsonPath,
+            courseId:       target.courseId,
+            spotId:         target.spotId,
+            imageCredit:    modal.imageCredit || null,
+          }),
+        });
+        if (!completeRes.ok) throw new Error(`complete-upload: HTTP ${completeRes.status}`);
+        const result = await completeRes.json();
+
+        setProgress(100, '完了');
+
+        // 成功後にメモリ上の state も更新
+        cacheBustMap.set(publicUrl, Date.now());
+        updateStateAfterUpload(target, publicUrl);
+
+        // ログに追加
+        uploadLog.unshift({
+          ts: new Date(), label: target.label, type: target.type,
+          publicUrl, invalidatedPaths: result.invalidatedPaths,
+          invalidationId: result.invalidationId, success: true, error: null,
+        });
+
+        modal.status = 'success';
+        modal.result = result;
+        renderModal();
+        showToast(`✓ ${target.label} の画像をアップロードしました`, 'success');
+
+      } catch (err) {
+        modal.status = 'error';
+        modal.error  = err.message;
+        renderModal();
+        uploadLog.unshift({
+          ts: new Date(), label: target.label, type: target.type,
+          publicUrl: null, invalidatedPaths: [], success: false, error: err.message,
+        });
+        showToast(`アップロード失敗: ${err.message}`, 'error');
+      }
+    };
+
+    function setProgress(pct, text) {
+      modal.progress = pct;
+      const bar  = document.getElementById('progressBar');
+      const txt  = document.getElementById('progressText');
+      if (bar) bar.style.width = pct + '%';
+      if (txt) txt.textContent  = text || pct + '%';
+    }
+
+    /** XHR で S3 presigned URL に PUT アップロード（進捗コールバック付き）*/
+    function uploadToS3(url, blob, onProgress) {
+      return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('PUT', url, true);
+        xhr.setRequestHeader('Content-Type', 'image/jpeg');
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100));
+        };
+        xhr.onload  = () => (xhr.status >= 200 && xhr.status < 300) ? resolve() : reject(new Error(`S3 PUT ${xhr.status}`));
+        xhr.onerror = () => reject(new Error('S3 アップロードに失敗しました'));
+        xhr.send(blob);
+      });
+    }
+
+    /** 任意の画像ファイルを JPEG Blob に変換する（最大辺 2048px） */
+    function fileToJpeg(file, maxDim = 2048, quality = 0.92) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        const objUrl = URL.createObjectURL(file);
+        img.onload = () => {
+          let { naturalWidth: w, naturalHeight: h } = img;
+          if (w > maxDim || h > maxDim) {
+            if (w > h) { h = Math.round(h * maxDim / w); w = maxDim; }
+            else       { w = Math.round(w * maxDim / h); h = maxDim; }
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width  = w;
+          canvas.height = h;
+          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+          canvas.toBlob(blob => {
+            URL.revokeObjectURL(objUrl);
+            blob ? resolve(blob) : reject(new Error('JPEG 変換に失敗しました'));
+          }, 'image/jpeg', quality);
+        };
+        img.onerror = () => { URL.revokeObjectURL(objUrl); reject(new Error('画像の読み込みに失敗しました')); };
+        img.src = objUrl;
+      });
+    }
+
+    /** アップロード後に state.draft を更新して即時反映させる
+     *  complete-upload はドラフトのみ更新するため、本番の state.detail は変更しない */
+    function updateStateAfterUpload(target, publicUrl) {
+      // ドラフトがなければ本番 JSON を深コピーしてドラフトを作成
+      if (!state.draft && state.detail) {
+        state.draft = JSON.parse(JSON.stringify(state.detail));
+      }
+      if (!state.draft) return;
+
+      if (target.type === 'course') {
+        state.draft.coverImageUrl = publicUrl;
+        if (modal.imageCredit) state.draft.imageCredit = modal.imageCredit;
+      } else if (target.type === 'spot' && target.spotId) {
+        const updateSpot = (spots) => {
+          const spot = spots.find(s => s.spotId === target.spotId);
+          if (spot) {
+            spot.coverImageUrl = publicUrl;
+            if (modal.imageCredit) spot.imageCredit = modal.imageCredit;
+            else delete spot.imageCredit;
+            return true;
+          }
+          return false;
+        };
+        if (state.draft.sections) {
+          for (const sec of state.draft.sections) {
+            if (updateSpot(sec.spots || [])) break;
+          }
+        } else {
+          updateSpot(state.draft.spots || []);
+        }
+      }
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // トースト通知
+    // ──────────────────────────────────────────────────────────────────────────
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast');
+      const id = 'toast-' + Date.now();
+      const colors = {
+        success: 'bg-emerald-600 text-white',
+        error:   'bg-red-600 text-white',
+        info:    'bg-gray-800 text-white',
+      };
+      const div = document.createElement('div');
+      div.id        = id;
+      div.className = `${colors[type] || colors.info} px-4 py-2.5 rounded-xl text-sm shadow-lg slide-up pointer-events-auto max-w-sm`;
+      div.textContent = message;
+      container.appendChild(div);
+      setTimeout(() => div.remove(), 4000);
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // ユーティリティ
+    // ──────────────────────────────────────────────────────────────────────────
+
+    function allSpots(d) {
+      if (Array.isArray(d.sections) && d.sections.length > 0) {
+        return d.sections.flatMap(s => s.spots || []);
+      }
+      return d.spots || [];
+    }
+
+    /** coverImageUrl から imageId（拡張子なし）を取得する */
+    function getImageIdFromUrl(url) {
+      const filename = url.split('/').pop();
+      return filename.replace(/\.\w+$/, '');
+    }
+
+    /** コース画像の imageId（S3 ファイル名なし拡張子） */
+    function getCourseImageId(courseSummary) {
+      if (courseSummary.coverImageUrl) return getImageIdFromUrl(courseSummary.coverImageUrl);
+      // フォールバック: jsonPath のファイル名を使用
+      return courseSummary.jsonPath.split('/').pop().replace(/\.json$/, '');
+    }
+
+    /** スポット画像の imageId */
+    function getSpotImageId(spot) {
+      if (spot.coverImageUrl) return getImageIdFromUrl(spot.coverImageUrl);
+      return spot.spotId;
+    }
+
+    /** キャッシュバスト付き表示 URL を返す */
+    function getDisplayUrl(url) {
+      if (!url) return null;
+      const bust = cacheBustMap.get(url);
+      return bust ? `${url}?v=${bust}` : url;
+    }
+
+    function badge(id, map) {
+      const m = map[id] || { label: id, cls: 'bg-gray-100 text-gray-600' };
+      return `<span class="text-xs px-2 py-0.5 rounded-full font-medium ${m.cls}">${m.label}</span>`;
+    }
+    function simpleBadge(m) {
+      return `<span class="text-xs px-2 py-0.5 rounded-full font-medium ${m.cls}">${m.label}</span>`;
+    }
+    function chip(label, value) {
+      return `<div class="bg-slate-50 rounded-lg px-3 py-2">
+        <div class="text-xs text-gray-400">${label}</div>
+        <div class="text-sm font-bold text-gray-800">${value}</div>
+      </div>`;
+    }
+    function statCard(label, value, valCls, borderCls) {
+      return `<div class="bg-white rounded-xl border ${borderCls || 'border-gray-100'} shadow-sm p-3 sm:p-4 text-center">
+        <div class="text-xl sm:text-2xl font-bold ${valCls}">${value}</div>
+        <div class="text-[10px] sm:text-xs text-gray-500 mt-0.5">${label}</div>
+      </div>`;
+    }
+    function svgImgIcon(cls) {
+      return `<svg class="${cls}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+          d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828
+             0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+      </svg>`;
+    }
+    function svgCamera(cls) {
+      return `<svg class="${cls}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0
+             0118.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+      </svg>`;
+    }
+    function loadingHTML() {
+      return `<div class="flex items-center justify-center py-24">
+        <svg class="w-7 h-7 text-blue-500 spin" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+        </svg>
+      </div>`;
+    }
+    function renderError(title, detail) {
+      mount(`<div class="flex flex-col items-center justify-center py-24 gap-2">
+        <p class="font-semibold text-red-500">${e(title)}</p>
+        ${detail ? `<p class="text-sm text-gray-400 font-mono">${e(detail)}</p>` : ''}
+        <button onclick="init()"
+          class="mt-3 px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700">
+          再読み込み
+        </button>
+      </div>`);
+    }
+    function mount(html) { document.getElementById('root').innerHTML = html; }
+
+    /** テキストをクリップボードにコピーする */
+    window.copyText = async function (text) {
+      try {
+        await navigator.clipboard.writeText(text);
+        showToast(`コピーしました: ${text}`, 'info');
+      } catch {
+        // フォールバック
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity  = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        showToast(`コピーしました: ${text}`, 'info');
+      }
+    };
+
+    /** コース JSON をファイルとしてダウンロードする */
+    window.downloadJson = function (type) {
+      const data = type === 'draft' ? state.draft : state.detail;
+      if (!data) return;
+      const baseName = (state.currentSummary?.jsonPath || 'course.json').split('/').pop();
+      const filename = type === 'draft' ? `draft_${baseName}` : baseName;
+      const blob = new Blob(
+        [JSON.stringify(data, null, 2)],
+        { type: 'application/json' },
+      );
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    };
+
+    function e(s) {
+      return String(s ?? '')
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // JSON アップロードモーダル
+    // ──────────────────────────────────────────────────────────────────────────
+
+    window.openJsonUpload = function (courseId) {
+      if (!API_CONFIGURED) {
+        showToast('API が未設定です', 'error');
+        return;
+      }
+      const summary = state.courses.find(c => c.id === courseId);
+      if (!summary) return;
+      Object.assign(jm, {
+        summary, file: null, parsed: null, parseErr: null,
+        status: 'idle', error: null,
+      });
+      renderJsonModal();
+      const el = document.getElementById('jsonModal');
+      el.classList.remove('hidden');
+      el.classList.add('flex');
+    };
+
+    window.onJsonModalBackdropClick = function (event) {
+      // バツボタンでのみ閉じる
+    };
+
+    window.closeJsonModal = function () {
+      const el = document.getElementById('jsonModal');
+      el.classList.add('hidden');
+      el.classList.remove('flex');
+    };
+
+    function renderJsonModal() {
+      const content = document.getElementById('jsonModalContent');
+      const s = jm.summary;
+
+      if (jm.status === 'uploading') {
+        content.innerHTML = `
+          <div class="p-6 text-center">
+            <svg class="w-7 h-7 text-blue-500 spin mx-auto mb-3" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+            </svg>
+            <p class="font-semibold text-gray-800">アップロード中...</p>
+            <p class="text-xs text-gray-400 mt-1">${e(s.title)}</p>
+          </div>`;
+        return;
+      }
+
+      if (jm.status === 'success') {
+        content.innerHTML = `
+          <div class="p-6">
+            <div class="flex items-center gap-2 mb-4">
+              <div class="w-7 h-7 rounded-full bg-emerald-100 flex items-center justify-center">
+                <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                </svg>
+              </div>
+              <h3 class="font-bold text-gray-900">ドラフットに保存しました</h3>
+            </div>
+            <p class="text-sm text-gray-600 mb-5">
+              コース一覧の「本番に反映」ボタンを押すと本番に適用されます。
+            </p>
+            <button onclick="closeJsonModal()"
+              class="w-full py-2.5 bg-gray-900 text-white text-sm font-medium rounded-xl hover:bg-gray-700">
+              閉じる
+            </button>
+          </div>`;
+        return;
+      }
+
+      if (jm.status === 'error') {
+        content.innerHTML = `
+          <div class="p-6">
+            <div class="flex items-center gap-2 mb-4">
+              <div class="w-7 h-7 rounded-full bg-red-100 flex items-center justify-center">
+                <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+              </div>
+              <h3 class="font-bold text-gray-900">アップロード失敗</h3>
+            </div>
+            <p class="text-sm text-red-500 mb-5">${e(jm.error || '')}</p>
+            <div class="flex gap-3">
+              <button onclick="jm.status='idle'; renderJsonModal()"
+                class="flex-1 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700">
+                やり直す
+              </button>
+              <button onclick="closeJsonModal()"
+                class="flex-1 py-2.5 bg-gray-100 text-gray-700 text-sm font-medium rounded-xl hover:bg-gray-200">
+                閉じる
+              </button>
+            </div>
+          </div>`;
+        return;
+      }
+
+      // idle: ファイル選択画面
+      const p = jm.parsed;
+      const infoHtml = p ? `
+        <div class="mt-3 bg-slate-50 rounded-xl px-4 py-3 text-xs space-y-1">
+          <div class="flex gap-2"><span class="w-16 text-gray-400 flex-shrink-0">ID</span><span class="font-mono text-gray-700 break-all">${e(p.id || '–')}</span></div>
+          <div class="flex gap-2"><span class="w-16 text-gray-400 flex-shrink-0">タイトル</span><span class="text-gray-700">${e(p.title || '–')}</span></div>
+          <div class="flex gap-2"><span class="w-16 text-gray-400 flex-shrink-0">スポット数</span><span class="text-gray-700">${e(String(allSpotsFromData(p).length))}</span></div>
+          <div class="flex gap-2"><span class="w-16 text-gray-400 flex-shrink-0">バージョン</span><span class="text-gray-700">v${e(String(p.version ?? '–'))}</span></div>
+        </div>` : '';
+
+      content.innerHTML = `
+        <div class="p-6">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h3 class="font-bold text-gray-900">JSON をアップロード</h3>
+              <p class="text-xs text-gray-400 mt-0.5">${e(s.title)}</p>
+              <p class="text-xs text-gray-300 font-mono mt-0.5">${e(s.jsonPath)}</p>
+            </div>
+            <button onclick="closeJsonModal()"
+              class="text-gray-400 hover:text-gray-600 p-1">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </button>
+          </div>
+
+          <label class="block border-2 border-dashed rounded-xl px-4 py-8 text-center cursor-pointer
+                        ${jm.file ? 'border-blue-300 bg-blue-50/50' : 'border-gray-200 hover:border-blue-400 hover:bg-blue-50/50'}
+                        transition-colors">
+            <input type="file" accept=".json,application/json" class="hidden" onchange="handleJsonFileInput(this)">
+            <svg class="w-8 h-8 mx-auto mb-2 ${jm.file ? 'text-blue-400' : 'text-gray-300'}"
+                 fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            ${jm.file
+              ? `<p class="text-sm font-medium text-blue-700">${e(jm.file.name)}</p>
+                 <p class="text-xs text-gray-400 mt-0.5">${(jm.file.size / 1024).toFixed(1)} KB — クリックして変更</p>`
+              : `<p class="text-sm text-gray-400">クリックして .json ファイルを選択</p>`
+            }
+          </label>
+
+          ${jm.parseErr
+            ? `<p class="mt-2 text-xs text-red-500">⚠ ${e(jm.parseErr)}</p>`
+            : infoHtml}
+
+          <div class="flex gap-3 mt-4">
+            <button onclick="closeJsonModal()"
+              class="flex-1 py-2.5 bg-gray-100 text-gray-700 text-sm font-medium rounded-xl hover:bg-gray-200">
+              キャンセル
+            </button>
+            <button onclick="doJsonUpload()" ${(!jm.file || jm.parseErr) ? 'disabled' : ''}
+              class="flex-1 py-2.5 text-sm font-medium rounded-xl
+                     ${jm.file && !jm.parseErr
+                       ? 'bg-blue-600 text-white hover:bg-blue-700'
+                       : 'bg-gray-100 text-gray-400 cursor-not-allowed'}">
+              ドラフットに保存
+            </button>
+          </div>
+        </div>`;
+    }
+
+    window.handleJsonFileInput = function (input) {
+      const file = input.files && input.files[0];
+      if (!file) return;
+      jm.file = file;
+      jm.parsed = null;
+      jm.parseErr = null;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        try {
+          const data = JSON.parse(ev.target.result);
+          if (!data.id || !data.title) throw new Error('id または title フィールドがありません');
+          jm.parsed = data;
+        } catch (err) {
+          jm.parseErr = err.message;
+        }
+        renderJsonModal();
+      };
+      reader.readAsText(file);
+    };
+
+    window.doJsonUpload = async function () {
+      if (!jm.file || !jm.parsed || jm.parseErr) return;
+      jm.status = 'uploading';
+      renderJsonModal();
+      try {
+        const res = await fetch(`${API_BASE_URL}/upload-json`, {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': ADMIN_SECRET },
+          body:    JSON.stringify({
+            courseJsonPath: jm.summary.jsonPath,
+            jsonData:       jm.parsed,
+          }),
+        });
+        if (!res.ok) {
+          const errBody = await res.json().catch(() => ({}));
+          throw new Error(errBody.error || `HTTP ${res.status}`);
+        }
+        draftMap.set(jm.summary.id, jm.parsed);
+        jm.status = 'success';
+        renderJsonModal();
+        if (state.view === 'list') {
+          renderList();
+        } else if (state.view === 'detail' && state.currentSummary?.id === jm.summary.id) {
+          // 詳細画面から差し替えた場合はドラフットを即時反映
+          state.draft  = jm.parsed;
+          state.detail = jm.parsed;
+          closeJsonModal();
+          renderDetail();
+        }
+        showToast(`✓ ${jm.summary.title} のドラフットを保存しました`, 'success');
+      } catch (err) {
+        jm.status = 'error';
+        jm.error  = err.message;
+        renderJsonModal();
+        showToast(`アップロード失敗: ${err.message}`, 'error');
+      }
+    };
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // 一覧からのパブリッシュ
+    // ──────────────────────────────────────────────────────────────────────────
+    window.doPublishFromList = async function (courseId) {
+      const summary = state.courses.find(c => c.id === courseId);
+      if (!summary) return;
+      if (!confirm(`「${summary.title}」のドラフットを本番に適用しますか？`)) return;
+
+      showToast('本番に適用中...', 'info');
+      try {
+        const res = await fetch(`${API_BASE_URL}/publish`, {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': ADMIN_SECRET },
+          body:    JSON.stringify({ courseJsonPath: summary.jsonPath, courseId: summary.id }),
+        });
+        if (!res.ok) {
+          const errBody = await res.json().catch(() => ({}));
+          throw new Error(errBody.error || `HTTP ${res.status}`);
+        }
+        const result = await res.json();
+
+        // draftMap から取得（セッション内データが優先、_metaOnly の場合はスキップ）
+        const draftEntry = draftMap.get(courseId);
+        const draft = (draftEntry && !draftEntry._metaOnly) ? draftEntry : null;
+        summary.version   = result.newVersion;
+        summary.updatedAt = new Date().toISOString();
+        if (draft && draft.coverImageUrl) summary.coverImageUrl = draft.coverImageUrl;
+        if (draft) summary.spotCount = allSpotsFromData(draft).length;
+        delete summary._isNew;  // 本番 JSON が存在するようになったのでフラグを解除
+
+        draftMap.delete(courseId);
+        renderList();
+        showToast(`✓ 本番に適用しました（v${result.newVersion}）`, 'success');
+      } catch (err) {
+        showToast(`適用失敗: ${err.message}`, 'error');
+      }
+    };
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // コース削除
+    // ──────────────────────────────────────────────────────────────────────────
+    window.doDeleteCourse = async function () {
+      if (!state.currentSummary) return;
+      const { title, jsonPath, id } = state.currentSummary;
+      if (!confirm(`「${title}」を削除しますか？\n本番 JSON・ドラフット JSON・store/index.json のエントリが削除されます。\nこの操作は取り消せません。`)) return;
+
+      showToast('削除中...', 'info');
+      try {
+        const res = await fetch(`${API_BASE_URL}/delete-course`, {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': ADMIN_SECRET },
+          body:    JSON.stringify({ courseJsonPath: jsonPath, courseId: id }),
+        });
+        if (!res.ok) {
+          const errBody = await res.json().catch(() => ({}));
+          throw new Error(errBody.error || `HTTP ${res.status}`);
+        }
+        state.courses = state.courses.filter(c => c.id !== id);
+        draftMap.delete(id);
+        showToast(`「${title}」を削除しました`, 'success');
+        goBack();
+      } catch (err) {
+        showToast(`削除失敗: ${err.message}`, 'error');
+      }
+    };
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // スポット編集モーダル
+    // ──────────────────────────────────────────────────────────────────────────
+
+    /** spotId でスポットを検索する（sections / flat 両対応）*/
+    function findSpotById(data, spotId) {
+      if (data.sections) {
+        for (const sec of data.sections) {
+          const s = (sec.spots || []).find(s => s.spotId === spotId);
+          if (s) return s;
+        }
+        return null;
+      }
+      return (data.spots || []).find(s => s.spotId === spotId) || null;
+    }
+
+    window.openSpotEdit = function (spotId) {
+      sem.spotId = spotId;
+      renderSpotEditModal();
+      const el = document.getElementById('spotEditModal');
+      el.classList.remove('hidden');
+      el.classList.add('flex');
+    };
+
+    window.onSpotEditModalBackdropClick = function (event) {
+      // バツボタンでのみ閉じる
+    };
+
+    window.closeSpotEditModal = function () {
+      const el = document.getElementById('spotEditModal');
+      el.classList.add('hidden');
+      el.classList.remove('flex');
+    };
+
+    function renderSpotEditModal() {
+      const source = state.draft || state.detail;
+      const spot   = source ? findSpotById(source, sem.spotId) : null;
+      if (!spot) { closeSpotEditModal(); return; }
+
+      document.getElementById('spotEditModalContent').innerHTML = `
+        <div class="p-6">
+          <div class="flex items-center justify-between mb-5">
+            <div>
+              <h3 class="font-bold text-gray-900 text-base">スポット情報を編集</h3>
+              <p class="text-xs text-gray-400 mt-0.5 font-mono">${e(spot.spotId)}</p>
+            </div>
+            <button onclick="closeSpotEditModal()" class="text-gray-400 hover:text-gray-600 p-1">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="space-y-4">
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1.5">
+                スポット名 <span class="text-red-400">*</span>
+              </label>
+              <input id="sem-name" type="text" value="${e(spot.name || '')}"
+                class="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm
+                       focus:outline-none focus:ring-2 focus:ring-blue-400">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1.5">説明</label>
+              <textarea id="sem-desc" rows="3"
+                class="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm
+                       focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none"
+              >${e(spot.spotDescription || '')}</textarea>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1.5">住所</label>
+              <input id="sem-addr" type="text" value="${e(spot.address || '')}"
+                class="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm
+                       focus:outline-none focus:ring-2 focus:ring-blue-400">
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1.5">緯度</label>
+                <input id="sem-lat" type="number" step="any"
+                  value="${spot.latitude != null ? spot.latitude : ''}"
+                  class="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm font-mono
+                         focus:outline-none focus:ring-2 focus:ring-blue-400">
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1.5">経度</label>
+                <input id="sem-lon" type="number" step="any"
+                  value="${spot.longitude != null ? spot.longitude : ''}"
+                  class="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm font-mono
+                         focus:outline-none focus:ring-2 focus:ring-blue-400">
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1.5">認識半径 (m)</label>
+              <input id="sem-rad" type="number" min="1"
+                value="${spot.recognitionRadiusMeters != null ? spot.recognitionRadiusMeters : ''}"
+                class="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm
+                       focus:outline-none focus:ring-2 focus:ring-blue-400">
+            </div>
+          </div>
+
+          <p class="text-xs text-gray-400 mt-4">
+            保存するとドラフットに記録されます。詳細画面の「本番に反映」で本番に適用できます。
+          </p>
+
+          <div class="flex gap-3 mt-4">
+            <button onclick="closeSpotEditModal()"
+              class="flex-1 py-2.5 bg-gray-100 text-gray-700 text-sm font-medium rounded-xl hover:bg-gray-200">
+              キャンセル
+            </button>
+            <button id="sem-save-btn" onclick="doSaveSpotEdit()"
+              class="flex-1 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700">
+              保存
+            </button>
+          </div>
+        </div>`;
+    }
+
+    window.doSaveSpotEdit = async function () {
+      const nameVal = (document.getElementById('sem-name')?.value || '').trim();
+      if (!nameVal) { showToast('スポット名は必須です', 'error'); return; }
+
+      const btn = document.getElementById('sem-save-btn');
+      if (btn) { btn.disabled = true; btn.textContent = '保存中...'; }
+
+      try {
+        // ドラフット（なければ本番をディープコピー）に編集を適用
+        const draft = JSON.parse(JSON.stringify(state.draft || state.detail));
+
+        const descVal = (document.getElementById('sem-desc')?.value || '').trim();
+        const addrVal = (document.getElementById('sem-addr')?.value || '').trim();
+        const latRaw  = document.getElementById('sem-lat')?.value;
+        const lonRaw  = document.getElementById('sem-lon')?.value;
+        const radRaw  = document.getElementById('sem-rad')?.value;
+        const lat     = parseFloat(latRaw);
+        const lon     = parseFloat(lonRaw);
+        const rad     = parseInt(radRaw);
+
+        const applyEdit = (spot) => {
+          spot.name = nameVal;
+          if (descVal) spot.spotDescription = descVal; else delete spot.spotDescription;
+          if (addrVal) spot.address = addrVal;          else delete spot.address;
+          if (!isNaN(lat)) spot.latitude  = lat;
+          if (!isNaN(lon)) spot.longitude = lon;
+          if (!isNaN(rad) && rad > 0) spot.recognitionRadiusMeters = rad;
+        };
+
+        let found = false;
+        if (draft.sections) {
+          for (const sec of draft.sections) {
+            const spot = (sec.spots || []).find(s => s.spotId === sem.spotId);
+            if (spot) { applyEdit(spot); found = true; break; }
+          }
+        } else {
+          const spot = (draft.spots || []).find(s => s.spotId === sem.spotId);
+          if (spot) { applyEdit(spot); found = true; }
+        }
+        if (!found) throw new Error('スポットが見つかりません');
+
+        const res = await fetch(`${API_BASE_URL}/upload-json`, {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': ADMIN_SECRET },
+          body:    JSON.stringify({
+            courseJsonPath: state.currentSummary.jsonPath,
+            jsonData:       draft,
+          }),
+        });
+        if (!res.ok) {
+          const errBody = await res.json().catch(() => ({}));
+          throw new Error(errBody.error || `HTTP ${res.status}`);
+        }
+
+        state.draft = draft;
+        if (state.currentSummary?._isNew) state.detail = draft;
+        closeSpotEditModal();
+        renderDetail();
+        showToast('スポット情報を更新しました', 'success');
+      } catch (err) {
+        if (btn) { btn.disabled = false; btn.textContent = '保存'; }
+        showToast(`保存失敗: ${err.message}`, 'error');
+      }
+    };
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // スポット追加モーダル
+    // ──────────────────────────────────────────────────────────────────────────
+    window.openAddSpot = function () {
+      renderAddSpotModal();
+      const el = document.getElementById('addSpotModal');
+      el.classList.remove('hidden');
+      el.classList.add('flex');
+    };
+
+    window.onAddSpotModalBackdropClick = function (event) {
+      // バツボタンでのみ閉じる
+    };
+
+    window.closeAddSpotModal = function () {
+      const el = document.getElementById('addSpotModal');
+      el.classList.add('hidden');
+      el.classList.remove('flex');
+    };
+
+    function generateSpotId(draft) {
+      // コース ID から短縮プレフィックスを生成し、既存スポット数+1 で連番付与
+      const courseId = (draft.id || '').replace(/^course-/, '').replace(/-\d+$/, '');
+      const words    = courseId.split('-').slice(0, 3);
+      const prefix   = words.map(w => w.slice(0, 3)).join('-');
+      const existing = allSpotsFromData(draft);
+      const num      = String(existing.length + 1).padStart(3, '0');
+      return `${prefix}-${num}`;
+    }
+
+    function renderAddSpotModal() {
+      const source  = state.draft || state.detail;
+      const hasSec  = source && Array.isArray(source.sections) && source.sections.length > 0;
+      const sections = hasSec ? source.sections.slice().sort((a, b) => a.orderIndex - b.orderIndex) : [];
+      const suggestId = source ? generateSpotId(source) : '';
+
+      const inputCls = 'w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-400';
+
+      document.getElementById('addSpotModalContent').innerHTML = `
+        <div class="p-6">
+          <div class="flex items-center justify-between mb-5">
+            <h3 class="font-bold text-gray-900 text-base">スポットを追加</h3>
+            <button onclick="closeAddSpotModal()" class="text-gray-400 hover:text-gray-600 p-1">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="space-y-4">
+            ${hasSec ? `
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1.5">
+                追加先セクション <span class="text-red-400">*</span>
+              </label>
+              <select id="asm-section" class="${inputCls} bg-white">
+                ${sections.map(s => `<option value="${e(s.sectionId)}">${e(s.name)}</option>`).join('')}
+              </select>
+            </div>` : ''}
+
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1.5">
+                スポット名 <span class="text-red-400">*</span>
+              </label>
+              <input id="asm-name" type="text" placeholder="例: 法隆寺" class="${inputCls}">
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1.5">住所</label>
+              <input id="asm-addr" type="text" placeholder="例: 奈良県生駒郡斑鳩町法隆寺山内1-1" class="${inputCls}">
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1.5">説明</label>
+              <textarea id="asm-desc" rows="2" placeholder="スポットの説明（任意）"
+                class="${inputCls} resize-none"></textarea>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1.5">緯度</label>
+                <input id="asm-lat" type="number" step="any" placeholder="例: 34.6148"
+                  class="${inputCls} font-mono">
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1.5">経度</label>
+                <input id="asm-lon" type="number" step="any" placeholder="例: 135.7345"
+                  class="${inputCls} font-mono">
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1.5">認識半径 (m)
+                <span class="text-gray-400 font-normal ml-1">省略時はコース設定を使用</span>
+              </label>
+              <input id="asm-rad" type="number" min="1" placeholder="省略可"
+                class="${inputCls}">
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1.5">スポット ID
+                <span class="text-gray-400 font-normal ml-1">自動生成・変更可</span>
+              </label>
+              <input id="asm-id" type="text" value="${e(suggestId)}"
+                class="${inputCls} font-mono text-xs">
+            </div>
+          </div>
+
+          <p class="text-xs text-gray-400 mt-4">
+            保存するとドラフットに記録されます。詳細画面の「本番に反映」で本番に適用できます。
+          </p>
+
+          <div class="flex gap-3 mt-5">
+            <button onclick="closeAddSpotModal()"
+              class="flex-1 py-2.5 bg-gray-100 text-gray-700 text-sm font-medium rounded-xl hover:bg-gray-200">
+              キャンセル
+            </button>
+            <button id="asm-save-btn" onclick="doAddSpot()"
+              class="flex-1 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700">
+              追加
+            </button>
+          </div>
+        </div>`;
+    }
+
+    window.doAddSpot = async function () {
+      const nameVal = (document.getElementById('asm-name')?.value || '').trim();
+      const spotId  = (document.getElementById('asm-id')?.value   || '').trim();
+      if (!nameVal) { showToast('スポット名は必須です', 'error'); return; }
+      if (!spotId)  { showToast('スポット ID は必須です', 'error'); return; }
+
+      const source = state.draft || state.detail;
+      // 重複 ID チェック
+      if (source && allSpotsFromData(source).some(s => s.spotId === spotId)) {
+        showToast(`スポット ID "${spotId}" は既に使われています`, 'error'); return;
+      }
+
+      const addrVal = (document.getElementById('asm-addr')?.value || '').trim();
+      const descVal = (document.getElementById('asm-desc')?.value || '').trim();
+      const latRaw  = document.getElementById('asm-lat')?.value;
+      const lonRaw  = document.getElementById('asm-lon')?.value;
+      const radRaw  = document.getElementById('asm-rad')?.value;
+      const lat     = latRaw ? parseFloat(latRaw) : null;
+      const lon     = lonRaw ? parseFloat(lonRaw) : null;
+      const rad     = radRaw ? parseInt(radRaw)   : null;
+
+      const btn = document.getElementById('asm-save-btn');
+      if (btn) { btn.disabled = true; btn.textContent = '保存中...'; }
+
+      try {
+        const draft   = JSON.parse(JSON.stringify(source));
+        const hasSec  = Array.isArray(draft.sections) && draft.sections.length > 0;
+        const newSpot = {
+          spotId,
+          name:       nameVal,
+          orderIndex: 0,           // 追加後に末尾 orderIndex を設定
+          latitude:   (!isNaN(lat) && lat !== null) ? lat : null,
+          longitude:  (!isNaN(lon) && lon !== null) ? lon : null,
+          ...(addrVal && { address: addrVal }),
+          ...(descVal && { spotDescription: descVal }),
+          ...(rad > 0  && { recognitionRadiusMeters: rad }),
+          coverImageUrl: null,
+        };
+
+        if (hasSec) {
+          const sectionId = document.getElementById('asm-section')?.value;
+          const sec = draft.sections.find(s => s.sectionId === sectionId);
+          if (!sec) throw new Error('セクションが見つかりません');
+          newSpot.orderIndex = (sec.spots || []).length;
+          sec.spots = [...(sec.spots || []), newSpot];
+        } else {
+          newSpot.orderIndex = (draft.spots || []).length;
+          draft.spots = [...(draft.spots || []), newSpot];
+        }
+
+        const res = await fetch(`${API_BASE_URL}/upload-json`, {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': ADMIN_SECRET },
+          body:    JSON.stringify({
+            courseJsonPath: state.currentSummary.jsonPath,
+            jsonData:       draft,
+          }),
+        });
+        if (!res.ok) {
+          const errBody = await res.json().catch(() => ({}));
+          throw new Error(errBody.error || `HTTP ${res.status}`);
+        }
+
+        state.draft = draft;
+        if (state.currentSummary?._isNew) state.detail = draft;
+        closeAddSpotModal();
+        renderDetail();
+        showToast(`「${nameVal}」を追加しました`, 'success');
+      } catch (err) {
+        if (btn) { btn.disabled = false; btn.textContent = '追加'; }
+        showToast(`追加失敗: ${err.message}`, 'error');
+      }
+    };
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // ジオコーディングモーダル
+    // ──────────────────────────────────────────────────────────────────────────
+    const gm = {
+      running:    false,
+      logs:       [],      // { type: 'info'|'warn'|'error'|'skip'|'ok', text: string }
+      result:     null,    // 補完後のドラフット JSON（保存前）
+      abortFlag:  false,
+    };
+
+    window.openGeocode = function () {
+      gm.running   = false;
+      gm.logs      = [];
+      gm.result    = null;
+      gm.abortFlag = false;
+      renderGeocodeModal();
+      const el = document.getElementById('geocodeModal');
+      el.classList.remove('hidden');
+      el.classList.add('flex');
+    };
+
+    window.closeGeocodeModal = function () {
+      if (gm.running) return; // 実行中は閉じない
+      const el = document.getElementById('geocodeModal');
+      el.classList.add('hidden');
+      el.classList.remove('flex');
+    };
+
+    function gmLog(type, text) {
+      gm.logs.push({ type, text });
+      // ログ欄に行を追記
+      const logEl = document.getElementById('gm-log');
+      if (!logEl) return;
+      const cls = {
+        info:  'text-gray-300',
+        warn:  'text-yellow-400',
+        error: 'text-red-400',
+        skip:  'text-gray-500',
+        ok:    'text-emerald-400',
+      }[type] || 'text-gray-300';
+      const line = document.createElement('div');
+      line.className = cls;
+      line.textContent = text;
+      logEl.appendChild(line);
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    function renderGeocodeModal() {
+      const source = state.draft || state.detail;
+      const spots  = source ? allSpots(source) : [];
+      const target = spots.filter(s => !(s.latitude == null && s.longitude == null));
+      const keySet = !!gmApiKey;
+
+      document.getElementById('geocodeModalContent').innerHTML = `
+        <div class="p-6 flex-shrink-0">
+          <div class="flex items-center justify-between mb-1">
+            <h3 class="font-bold text-gray-900 text-base">座標を自動補完（ジオコーディング）</h3>
+            <button onclick="closeGeocodeModal()" id="gm-close-btn"
+              class="text-gray-400 hover:text-gray-600 p-1">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </button>
+          </div>
+          <p class="text-xs text-gray-400 mb-4">
+            Google Maps Geocoding API でスポット名・住所から座標を取得し、ドラフットに保存します。<br>
+            対象: ${target.length} 件（緯度経度が null のスポットはスキップ）
+          </p>
+
+          <!-- API キー入力 -->
+          <div class="mb-4">
+            <label class="block text-xs font-medium text-gray-600 mb-1.5">
+              Google Maps API キー
+              ${keySet
+                ? '<span class="ml-1.5 text-emerald-600 font-normal">✓ 設定済み</span>'
+                : '<span class="ml-1.5 text-red-400 font-normal">未設定</span>'}
+            </label>
+            <div class="flex gap-2">
+              <input id="gm-api-key-input" type="password"
+                placeholder="${keySet ? '（変更する場合のみ入力）' : 'AIza...'}"
+                class="flex-1 px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm font-mono
+                       focus:outline-none focus:ring-2 focus:ring-blue-400">
+              <button onclick="saveGmApiKey()"
+                class="px-3.5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs
+                       font-medium rounded-xl transition-colors flex-shrink-0">
+                保存
+              </button>
+              ${keySet ? `
+              <button onclick="clearGmApiKey()"
+                class="px-3 py-2 text-red-400 hover:text-red-600 text-xs rounded-xl
+                       border border-red-200 hover:border-red-400 transition-colors flex-shrink-0">
+                削除
+              </button>` : ''}
+            </div>
+            <p class="text-xs text-gray-400 mt-1.5">
+              ブラウザの localStorage に保存されます。このデバイスのみで有効です。
+            </p>
+          </div>
+
+          <button id="gm-start-btn" onclick="doGeocode()" ${!keySet ? 'disabled' : ''}
+            class="w-full py-2.5 text-sm font-medium rounded-xl transition-colors
+                   ${keySet
+                     ? 'bg-blue-600 text-white hover:bg-blue-700'
+                     : 'bg-gray-100 text-gray-400 cursor-not-allowed'}">
+            ${keySet ? '補完を開始' : 'API キーを設定してください'}
+          </button>
+        </div>
+        <!-- ログ出力エリア -->
+        <div id="gm-log"
+          class="flex-1 min-h-0 overflow-y-auto bg-gray-900 rounded-b-2xl px-5 py-4
+                 font-mono text-xs leading-relaxed space-y-0.5 max-h-80">
+          <div class="text-gray-500">▶ 「補完を開始」を押してください</div>
+        </div>`;
+    }
+
+    window.saveGmApiKey = function () {
+      const val = (document.getElementById('gm-api-key-input')?.value || '').trim();
+      if (!val) { showToast('API キーを入力してください', 'error'); return; }
+      gmApiKey = val;
+      localStorage.setItem('gm_api_key', val);
+      renderGeocodeModal(); // 再描画して「設定済み」表示に更新
+      showToast('API キーを保存しました', 'success');
+    };
+
+    window.clearGmApiKey = function () {
+      if (!confirm('保存済みの API キーを削除しますか？')) return;
+      gmApiKey = '';
+      localStorage.removeItem('gm_api_key');
+      renderGeocodeModal();
+      showToast('API キーを削除しました', 'success');
+    };
+
+    window.doGeocode = async function () {
+      if (gm.running) return;
+      if (!gmApiKey) { showToast('API キーを設定してください', 'error'); return; }
+      gm.running   = true;
+      gm.abortFlag = false;
+      gm.logs      = [];
+
+      const startBtn  = document.getElementById('gm-start-btn');
+      const closeBtn  = document.getElementById('gm-close-btn');
+      const logEl     = document.getElementById('gm-log');
+      if (startBtn) { startBtn.disabled = true; startBtn.textContent = '補完中...'; }
+      if (closeBtn)   closeBtn.disabled = true;
+      if (logEl)      logEl.innerHTML   = '';
+
+      try {
+        // ドラフット（なければ本番をディープコピー）をベースに編集
+        const draft = JSON.parse(JSON.stringify(state.draft || state.detail));
+        const spots = allSpotsFromData(draft);
+
+        const courseName = draft.title || state.currentSummary?.id || '';
+        gmLog('info', `コース: ${courseName}`);
+        gmLog('info', `スポット数: ${spots.length}`);
+        gmLog('info', '');
+
+        let updated = 0;
+        let skipped = 0;
+
+        for (const spot of spots) {
+          if (gm.abortFlag) { gmLog('warn', '--- 中断しました ---'); break; }
+
+          const name   = spot.name || '';
+          const oldLat = spot.latitude;
+          const oldLon = spot.longitude;
+
+          // latitude/longitude が両方 null → GPS対象外のためスキップ
+          if (oldLat == null && oldLon == null) {
+            gmLog('skip', `[SKIP] ${name}（座標なし・GPS対象外）`);
+            skipped++;
+            continue;
+          }
+
+          const addr  = spot.address || '';
+          const query = `${name} ${addr}`.trim();
+          gmLog('info', `[検索] ${query}`);
+
+          let newLat, newLon;
+          try {
+            const url    = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&key=${gmApiKey}&language=ja`;
+            const res    = await fetch(url);
+            const data   = await res.json();
+            if (data.status === 'OK') {
+              const loc = data.results[0].geometry.location;
+              newLat = loc.lat;
+              newLon = loc.lng;
+            } else {
+              gmLog('warn', `  [WARN] Geocoding失敗 status=${data.status}`);
+              skipped++;
+              gmLog('info', '');
+              continue;
+            }
+          } catch (err) {
+            gmLog('error', `  [ERROR] リクエスト失敗: ${err.message}`);
+            skipped++;
+            gmLog('info', '');
+            continue;
+          }
+
+          gmLog('info',  `  旧: (${oldLat}, ${oldLon})`);
+          gmLog('ok',    `  新: (${newLat}, ${newLon})`);
+
+          const latDiff = Math.abs(newLat - (oldLat || 0));
+          const lonDiff = Math.abs(newLon - (oldLon || 0));
+          if (latDiff > 0.01 || lonDiff > 0.01) {
+            gmLog('warn', `  [!] 座標が大きくズレています（Δlat=${latDiff.toFixed(4)}, Δlng=${lonDiff.toFixed(4)}）要確認`);
+          }
+
+          spot.latitude  = newLat;
+          spot.longitude = newLon;
+          updated++;
+          gmLog('info', '');
+
+          // API制限対策: 1リクエストあたり 0.15秒待機
+          await new Promise(r => setTimeout(r, 150));
+        }
+
+        gmLog('info', '--- 完了 ---');
+        gmLog('ok',   `更新: ${updated}件 / スキップ: ${skipped}件`);
+
+        if (updated > 0) {
+          // ドラフットとして保存
+          gmLog('info', 'ドラフットに保存中...');
+          const saveRes = await fetch(`${API_BASE_URL}/upload-json`, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': ADMIN_SECRET },
+            body:    JSON.stringify({
+              courseJsonPath: state.currentSummary.jsonPath,
+              jsonData:       draft,
+            }),
+          });
+          if (!saveRes.ok) {
+            const errBody = await saveRes.json().catch(() => ({}));
+            throw new Error(errBody.error || `HTTP ${saveRes.status}`);
+          }
+          state.draft = draft;
+          gmLog('ok',  'ドラフットを保存しました。詳細画面の「本番に反映」で適用できます。');
+
+          // 詳細画面を再描画（モーダルは開いたまま）
+          renderDetail();
+          // 再描画後にモーダルを再表示（renderDetail が mount を上書きするため）
+          const el = document.getElementById('geocodeModal');
+          if (el) { el.classList.remove('hidden'); el.classList.add('flex'); }
+        } else {
+          gmLog('info', '更新対象がなかったためドラフットへの保存はスキップしました。');
+        }
+
+      } catch (err) {
+        gmLog('error', `[ERROR] ${err.message}`);
+      } finally {
+        gm.running = false;
+        const sb = document.getElementById('gm-start-btn');
+        const cb = document.getElementById('gm-close-btn');
+        if (sb) { sb.disabled = false; sb.textContent = '再実行'; }
+        if (cb) cb.disabled = false;
+      }
+    };
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // コース設定編集モーダル
+    // ──────────────────────────────────────────────────────────────────────────
+    window.openCourseEdit = function () {
+      renderCourseEditModal();
+      const el = document.getElementById('courseEditModal');
+      el.classList.remove('hidden');
+      el.classList.add('flex');
+    };
+
+    window.onCourseEditModalBackdropClick = function (event) {
+      // バツボタンでのみ閉じる
+    };
+
+    window.closeCourseEditModal = function () {
+      const el = document.getElementById('courseEditModal');
+      el.classList.add('hidden');
+      el.classList.remove('flex');
+    };
+
+    function renderCourseEditModal() {
+      const source = state.draft || state.detail;
+      if (!source) { closeCourseEditModal(); return; }
+
+      const checkboxes = Object.entries(CAT).map(([id, meta]) => {
+        const checked = (source.categories || []).includes(id) ? 'checked' : '';
+        return `
+          <label class="flex items-center gap-2.5 cursor-pointer py-1">
+            <input type="checkbox" id="cem-cat-${id}" value="${id}" ${checked}
+              class="w-4 h-4 rounded text-blue-600 accent-blue-600 cursor-pointer">
+            <span class="text-sm text-gray-700">${meta.label}</span>
+          </label>`;
+      }).join('');
+
+      document.getElementById('courseEditModalContent').innerHTML = `
+        <div class="p-6">
+          <div class="flex items-center justify-between mb-5">
+            <h3 class="font-bold text-gray-900 text-base">コース設定を編集</h3>
+            <button onclick="closeCourseEditModal()" class="text-gray-400 hover:text-gray-600 p-1">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="space-y-5">
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1.5">
+                コースタイトル <span class="text-red-400">*</span>
+              </label>
+              <input id="cem-title" type="text" value="${e(source.title || '')}"
+                class="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm
+                       focus:outline-none focus:ring-2 focus:ring-blue-400">
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1.5">コース説明</label>
+              <textarea id="cem-summary" rows="3"
+                class="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm
+                       focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none"
+              >${e(source.summary || '')}</textarea>
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1.5">カテゴリ</label>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-0.5 bg-gray-50 rounded-xl px-4 py-3">
+                ${checkboxes}
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1.5">
+                コース認識範囲 (m)
+                <span class="text-gray-400 font-normal ml-1">スポット個別設定がない場合に使用</span>
+              </label>
+              <input id="cem-radius" type="number" min="1" step="1"
+                value="${source.recognitionRadiusMeters != null ? source.recognitionRadiusMeters : ''}"
+                class="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm
+                       focus:outline-none focus:ring-2 focus:ring-blue-400">
+            </div>
+          </div>
+
+          <p class="text-xs text-gray-400 mt-4">
+            保存するとドラフットに記録されます。詳細画面の「本番に反映」で本番に適用できます。
+          </p>
+
+          <div class="flex gap-3 mt-5">
+            <button onclick="closeCourseEditModal()"
+              class="flex-1 py-2.5 bg-gray-100 text-gray-700 text-sm font-medium rounded-xl hover:bg-gray-200">
+              キャンセル
+            </button>
+            <button id="cem-save-btn" onclick="doSaveCourseEdit()"
+              class="flex-1 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700">
+              保存
+            </button>
+          </div>
+        </div>`;
+    }
+
+    window.doSaveCourseEdit = async function () {
+      const titleVal  = (document.getElementById('cem-title')?.value || '').trim();
+      const radiusRaw = document.getElementById('cem-radius')?.value;
+      const radius    = parseFloat(radiusRaw);
+
+      if (!titleVal) { showToast('コースタイトルは必須です', 'error'); return; }
+      if (radiusRaw && (isNaN(radius) || radius <= 0)) {
+        showToast('認識範囲は正の数値を入力してください', 'error'); return;
+      }
+
+      const selectedCats = Object.keys(CAT).filter(id =>
+        document.getElementById(`cem-cat-${id}`)?.checked
+      );
+
+      const btn = document.getElementById('cem-save-btn');
+      if (btn) { btn.disabled = true; btn.textContent = '保存中...'; }
+
+      try {
+        const summaryVal = (document.getElementById('cem-summary')?.value || '').trim();
+
+        const draft = JSON.parse(JSON.stringify(state.draft || state.detail));
+        draft.title      = titleVal;
+        draft.summary    = summaryVal || null;
+        draft.categories = selectedCats;
+        if (radiusRaw && !isNaN(radius) && radius > 0) {
+          draft.recognitionRadiusMeters = radius;
+        }
+
+        const res = await fetch(`${API_BASE_URL}/upload-json`, {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': ADMIN_SECRET },
+          body:    JSON.stringify({
+            courseJsonPath: state.currentSummary.jsonPath,
+            jsonData:       draft,
+          }),
+        });
+        if (!res.ok) {
+          const errBody = await res.json().catch(() => ({}));
+          throw new Error(errBody.error || `HTTP ${res.status}`);
+        }
+
+        state.draft = draft;
+        if (!state.detail || state.currentSummary?._isNew) state.detail = draft;
+        closeCourseEditModal();
+        renderDetail();
+        showToast('コース設定を更新しました', 'success');
+      } catch (err) {
+        if (btn) { btn.disabled = false; btn.textContent = '保存'; }
+        showToast(`保存失敗: ${err.message}`, 'error');
+      }
+    };
+
+    window.doDeleteSpot = async function (spotId) {
+      // 削除対象スポット名を取得して確認ダイアログ
+      const source = state.draft || state.detail;
+      const spot   = source ? findSpotById(source, spotId) : null;
+      const name   = spot?.name || spotId;
+      if (!confirm(`「${name}」を削除しますか？\nこの操作はドラフットに記録されます。本番に反映するまで元に戻せます。`)) return;
+
+      try {
+        const draft = JSON.parse(JSON.stringify(state.draft || state.detail));
+
+        let deleted = false;
+        if (draft.sections) {
+          for (const sec of draft.sections) {
+            const before = (sec.spots || []).length;
+            sec.spots = (sec.spots || []).filter(s => s.spotId !== spotId);
+            if (sec.spots.length < before) {
+              // orderIndex を詰め直す
+              sec.spots.forEach((s, i) => { s.orderIndex = i; });
+              deleted = true;
+              break;
+            }
+          }
+        } else {
+          const before = (draft.spots || []).length;
+          draft.spots = (draft.spots || []).filter(s => s.spotId !== spotId);
+          if (draft.spots.length < before) {
+            draft.spots.forEach((s, i) => { s.orderIndex = i; });
+            deleted = true;
+          }
+        }
+        if (!deleted) throw new Error('スポットが見つかりません');
+
+        const res = await fetch(`${API_BASE_URL}/upload-json`, {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': ADMIN_SECRET },
+          body:    JSON.stringify({
+            courseJsonPath: state.currentSummary.jsonPath,
+            jsonData:       draft,
+          }),
+        });
+        if (!res.ok) {
+          const errBody = await res.json().catch(() => ({}));
+          throw new Error(errBody.error || `HTTP ${res.status}`);
+        }
+
+        state.draft = draft;
+        if (state.currentSummary?._isNew) state.detail = draft;
+        renderDetail();
+        showToast(`「${name}」を削除しました`, 'success');
+      } catch (err) {
+        showToast(`削除失敗: ${err.message}`, 'error');
+      }
+    };
+
+    /** JSON データからスポット配列を返す（state に依存しない汎用版）*/
+    function allSpotsFromData(d) {
+      if (Array.isArray(d.sections) && d.sections.length > 0) {
+        return d.sections.flatMap(s => s.spots || []);
+      }
+      return d.spots || [];
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // 新規コース追加モーダル
+    // ──────────────────────────────────────────────────────────────────────────
+
+    window.openNewCourse = function () {
+      Object.assign(ncm, {
+        file: null, parsed: null, parseErr: null,
+        jsonPath: '', status: 'idle', error: null,
+      });
+      renderNewCourseModal();
+      const el = document.getElementById('newCourseModal');
+      el.classList.remove('hidden');
+      el.classList.add('flex');
+    };
+
+    window.onNewCourseModalBackdropClick = function (event) {
+      // バツボタンでのみ閉じる
+    };
+
+    window.closeNewCourseModal = function () {
+      const el = document.getElementById('newCourseModal');
+      el.classList.add('hidden');
+      el.classList.remove('flex');
+      // 成功後は一覧を再描画して新しいカードを表示
+      if (ncm.status === 'success' && state.view === 'list') renderList();
+    };
+
+    function renderNewCourseModal() {
+      const content = document.getElementById('newCourseModalContent');
+
+      if (ncm.status === 'uploading') {
+        content.innerHTML = `
+          <div class="p-6 text-center">
+            <svg class="w-7 h-7 text-blue-500 spin mx-auto mb-3" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+            </svg>
+            <p class="font-semibold text-gray-800">保存中...</p>
+          </div>`;
+        return;
+      }
+
+      if (ncm.status === 'success') {
+        const p = ncm.parsed;
+        content.innerHTML = `
+          <div class="p-6">
+            <div class="flex items-center gap-2 mb-3">
+              <div class="w-7 h-7 rounded-full bg-emerald-100 flex items-center justify-center">
+                <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                </svg>
+              </div>
+              <h3 class="font-bold text-gray-900">ドラフットに保存しました</h3>
+            </div>
+            <p class="text-sm text-gray-600 mb-1">
+              <span class="font-medium">${e(p.title)}</span> をコース一覧に追加しました。
+            </p>
+            <p class="text-xs text-gray-400 mb-5">
+              コース一覧の「本番に反映」ボタンで本番に適用できます。
+            </p>
+            <button onclick="closeNewCourseModal()"
+              class="w-full py-2.5 bg-gray-900 text-white text-sm font-medium rounded-xl hover:bg-gray-700">
+              閉じる
+            </button>
+          </div>`;
+        return;
+      }
+
+      if (ncm.status === 'error') {
+        content.innerHTML = `
+          <div class="p-6">
+            <div class="flex items-center gap-2 mb-4">
+              <div class="w-7 h-7 rounded-full bg-red-100 flex items-center justify-center">
+                <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+              </div>
+              <h3 class="font-bold text-gray-900">保存失敗</h3>
+            </div>
+            <p class="text-sm text-red-500 mb-5">${e(ncm.error || '')}</p>
+            <div class="flex gap-3">
+              <button onclick="ncm.status='idle'; renderNewCourseModal()"
+                class="flex-1 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700">
+                やり直す
+              </button>
+              <button onclick="closeNewCourseModal()"
+                class="flex-1 py-2.5 bg-gray-100 text-gray-700 text-sm font-medium rounded-xl hover:bg-gray-200">
+                閉じる
+              </button>
+            </div>
+          </div>`;
+        return;
+      }
+
+      // idle: ファイル選択 + 確認画面
+      const p          = ncm.parsed;
+      const idConflict = p && state.courses.some(c => c.id === p.id);
+      const pathConflict = p && ncm.jsonPath && state.courses.some(c => c.jsonPath === ncm.jsonPath);
+      const canSave    = !!(p && !ncm.parseErr && !idConflict && !pathConflict && ncm.jsonPath);
+
+      const cats = p
+        ? (p.categories || []).map(id => badge(id, CAT)).join('') || '<span class="text-gray-400 text-xs">なし</span>'
+        : '';
+
+      content.innerHTML = `
+        <div class="p-6">
+          <div class="flex items-center justify-between mb-5">
+            <div>
+              <h3 class="font-bold text-gray-900 text-base">新規コース追加</h3>
+              <p class="text-xs text-gray-400 mt-0.5">コース JSON をアップロードしてドラフットに保存します</p>
+            </div>
+            <button onclick="closeNewCourseModal()" class="text-gray-400 hover:text-gray-600 p-1">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </button>
+          </div>
+
+          <!-- ファイルピッカー -->
+          <label class="block border-2 border-dashed rounded-xl px-4 py-7 text-center cursor-pointer
+                        ${ncm.file ? 'border-blue-300 bg-blue-50/50' : 'border-gray-200 hover:border-blue-400 hover:bg-blue-50/50'}
+                        transition-colors mb-4">
+            <input type="file" accept=".json,application/json" class="hidden"
+                   onchange="handleNewCourseFile(this)">
+            <svg class="w-8 h-8 mx-auto mb-2 ${ncm.file ? 'text-blue-400' : 'text-gray-300'}"
+                 fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            ${ncm.file
+              ? `<p class="text-sm font-medium text-blue-700">${e(ncm.file.name)}</p>
+                 <p class="text-xs text-gray-400 mt-0.5">${(ncm.file.size / 1024).toFixed(1)} KB — クリックして変更</p>`
+              : `<p class="text-sm text-gray-400">クリックして .json ファイルを選択</p>
+                 <p class="text-xs text-gray-300 mt-0.5">コース JSON ファイル</p>`
+            }
+          </label>
+
+          ${ncm.parseErr
+            ? `<p class="mb-4 text-xs text-red-500 bg-red-50 px-3 py-2 rounded-lg">⚠ ${e(ncm.parseErr)}</p>`
+            : ''}
+
+          ${p && !ncm.parseErr ? `
+            <!-- パース結果プレビュー -->
+            <div class="bg-slate-50 rounded-xl px-4 py-3 mb-4 space-y-2.5 text-xs">
+              <div class="flex gap-2 items-start">
+                <span class="w-20 text-gray-400 flex-shrink-0 pt-0.5">ID</span>
+                <span class="font-mono text-gray-700 break-all">${e(p.id || '–')}</span>
+              </div>
+              <div class="flex gap-2 items-start">
+                <span class="w-20 text-gray-400 flex-shrink-0 pt-0.5">タイトル</span>
+                <span class="text-gray-800 font-medium">${e(p.title || '–')}</span>
+              </div>
+              <div class="flex gap-2 items-start">
+                <span class="w-20 text-gray-400 flex-shrink-0 pt-0.5">カテゴリ</span>
+                <div class="flex flex-wrap gap-1">${cats}</div>
+              </div>
+              <div class="flex gap-2 items-center">
+                <span class="w-20 text-gray-400 flex-shrink-0">スポット数</span>
+                <span class="text-gray-700">${allSpotsFromData(p).length} 件</span>
+              </div>
+              <div class="flex gap-2 items-center">
+                <span class="w-20 text-gray-400 flex-shrink-0">JSON パス</span>
+                <input type="text" value="${e(ncm.jsonPath)}"
+                       oninput="ncm.jsonPath=this.value; renderNewCourseModal()"
+                       class="flex-1 font-mono text-xs border border-gray-200 rounded-lg px-2 py-1.5
+                              focus:outline-none focus:ring-2 focus:ring-blue-400">
+              </div>
+            </div>
+
+            ${idConflict
+              ? `<p class="mb-3 text-xs text-red-500 bg-red-50 px-3 py-2 rounded-lg">⚠ ID「${e(p.id)}」のコースはすでに存在します</p>`
+              : ''}
+            ${pathConflict
+              ? `<p class="mb-3 text-xs text-red-500 bg-red-50 px-3 py-2 rounded-lg">⚠ JSON パス「${e(ncm.jsonPath)}」はすでに使用されています</p>`
+              : ''}
+          ` : ''}
+
+          <div class="flex gap-3">
+            <button onclick="closeNewCourseModal()"
+              class="flex-1 py-2.5 bg-gray-100 text-gray-700 text-sm font-medium rounded-xl hover:bg-gray-200">
+              キャンセル
+            </button>
+            <button onclick="doSaveNewCourse()" ${canSave ? '' : 'disabled'}
+              class="flex-1 py-2.5 text-sm font-medium rounded-xl
+                     ${canSave
+                       ? 'bg-blue-600 text-white hover:bg-blue-700'
+                       : 'bg-gray-100 text-gray-400 cursor-not-allowed'}">
+              ドラフットに保存
+            </button>
+          </div>
+        </div>`;
+    }
+
+    window.handleNewCourseFile = function (input) {
+      const file = input.files && input.files[0];
+      if (!file) return;
+      ncm.file = file;
+      ncm.parsed = null;
+      ncm.parseErr = null;
+      ncm.jsonPath = '';
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        try {
+          const data = JSON.parse(ev.target.result);
+          if (!data.id)    throw new Error('id フィールドがありません');
+          if (!data.title) throw new Error('title フィールドがありません');
+          ncm.parsed   = data;
+          ncm.jsonPath = `courses/${data.id}.json`;
+        } catch (err) {
+          ncm.parseErr = err.message;
+        }
+        renderNewCourseModal();
+      };
+      reader.readAsText(file);
+    };
+
+    window.doSaveNewCourse = async function () {
+      if (!ncm.parsed || ncm.parseErr || !ncm.jsonPath) return;
+      if (state.courses.some(c => c.id === ncm.parsed.id)) return;
+      if (state.courses.some(c => c.jsonPath === ncm.jsonPath)) return;
+
+      ncm.status = 'uploading';
+      renderNewCourseModal();
+      try {
+        const res = await fetch(`${API_BASE_URL}/upload-json`, {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': ADMIN_SECRET },
+          body:    JSON.stringify({
+            courseJsonPath: ncm.jsonPath,
+            jsonData:       ncm.parsed,
+          }),
+        });
+        if (!res.ok) {
+          const errBody = await res.json().catch(() => ({}));
+          throw new Error(errBody.error || `HTTP ${res.status}`);
+        }
+
+        // state.courses に一時エントリを追加し、draftMap に登録
+        const p = ncm.parsed;
+        state.courses.push({
+          id:           p.id,
+          title:        p.title,
+          summary:      p.summary || '',
+          categories:   p.categories || [],
+          version:      p.version || 0,
+          coverImageUrl: p.coverImageUrl || null,
+          spotCount:    allSpotsFromData(p).length,
+          jsonPath:     ncm.jsonPath,
+          updatedAt:    new Date().toISOString(),
+          _isNew:       true,  // 本番 JSON がまだ存在しないことを示すフラグ
+        });
+        draftMap.set(p.id, p);
+
+        ncm.status = 'success';
+        renderNewCourseModal();
+        showToast(`✓ ${p.title} をドラフットに保存しました`, 'success');
+      } catch (err) {
+        ncm.status = 'error';
+        ncm.error  = err.message;
+        renderNewCourseModal();
+        showToast(`保存失敗: ${err.message}`, 'error');
+      }
+    };
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // ドラフト差分ヘルパー
+    // ──────────────────────────────────────────────────────────────────────────
+
+    /** ドラフット JSON から特定スポットを返す */
+    function getDraftSpot(spotId) {
+      if (!state.draft) return null;
+      if (state.draft.sections) {
+        for (const sec of state.draft.sections) {
+          const s = (sec.spots || []).find(s => s.spotId === spotId);
+          if (s) return s;
+        }
+        return null;
+      }
+      return (state.draft.spots || []).find(s => s.spotId === spotId) || null;
+    }
+
+    /** ドラフット変更数（コース画像 + スポット画像）を返す */
+    function countDraftChanges() {
+      if (!state.draft || !state.detail) return 0;
+      let count = 0;
+      if (state.draft.coverImageUrl !== state.detail.coverImageUrl) count++;
+      for (const spot of allSpots(state.detail)) {
+        const ds = getDraftSpot(spot.spotId);
+        if (ds && ds.coverImageUrl !== spot.coverImageUrl) count++;
+      }
+      return count;
+    }
+
+    /** ドラフットバナーの HTML を返す */
+    function draftBanner() {
+      const count = countDraftChanges();
+      return `
+        <div class="mb-5 bg-amber-50 border border-amber-300 rounded-xl px-4 py-3 flex items-center gap-3 shadow-sm">
+          <div class="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
+            <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5
+                   m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+            </svg>
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-semibold text-amber-800">ドラフトあり</p>
+            <p class="text-xs text-amber-600 mt-0.5">
+              ${count} 件の変更があります。本番に適用するとバージョンがインクリメントされます。
+            </p>
+          </div>
+          <button onclick="doPublish()"
+            class="flex-shrink-0 px-4 py-2 bg-amber-600 text-white text-sm font-semibold
+                   rounded-xl hover:bg-amber-700 transition-colors shadow-sm">
+            本番に適用
+          </button>
+        </div>`;
+    }
+
+    /** コースカバー画像エリアの HTML を返す（ドラフット差分時は左右分割表示）*/
+    function renderCourseCoverImg(d) {
+      if (state.draft && state.draft.coverImageUrl && state.draft.coverImageUrl !== d.coverImageUrl) {
+        const liveImg  = d.coverImageUrl
+          ? `<img src="${e(getDisplayUrl(d.coverImageUrl))}" class="absolute inset-0 w-full h-full object-cover" onerror="this.style.display='none'">`
+          : '';
+        const draftImg = `<img src="${e(getDisplayUrl(state.draft.coverImageUrl))}" class="absolute inset-0 w-full h-full object-cover" onerror="this.style.display='none'">`;
+        return `
+          <div class="absolute inset-0 flex">
+            <div class="relative w-1/2 overflow-hidden">
+              ${liveImg}
+              <div class="absolute bottom-1.5 left-1.5 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded font-medium">現在</div>
+            </div>
+            <div class="w-px bg-white/40 z-10 self-stretch flex-shrink-0"></div>
+            <div class="relative w-1/2 overflow-hidden">
+              ${draftImg}
+              <div class="absolute inset-0 ring-2 ring-amber-400 ring-inset pointer-events-none rounded-none"></div>
+              <div class="absolute bottom-1.5 left-1.5 bg-amber-500 text-white text-[10px] px-1.5 py-0.5 rounded font-medium">変更後</div>
+            </div>
+          </div>`;
+      }
+      // 通常表示（ドラフット差分なし）
+      if (!d.coverImageUrl) return '';
+      const credit = d.imageCredit || null;
+      return `
+        <img src="${e(getDisplayUrl(d.coverImageUrl))}" alt="${e(d.title)}"
+             class="absolute inset-0 w-full h-full object-cover"
+             onerror="this.style.display='none'">
+        ${credit ? `
+        <div class="absolute bottom-1.5 right-1.5 text-white text-[9px] leading-tight
+                    bg-black/55 px-1.5 py-0.5 rounded pointer-events-none max-w-[90%] truncate"
+             title="${e(credit)}">
+          🏷 ${e(credit)}
+        </div>` : ''}`;
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // パブリッシュ（ドラフット → 本番適用）
+    // ──────────────────────────────────────────────────────────────────────────
+    window.doPublish = async function () {
+      if (!state.draft || !state.currentSummary) return;
+      const nextVer = (state.detail && state.detail.version != null)
+        ? state.detail.version + 1 : 1;
+
+      if (!confirm(`「${state.currentSummary.title}」のドラフットを本番に適用しますか？\nバージョンが v${nextVer} になります。`)) return;
+
+      showToast('本番に適用中...', 'info');
+      try {
+        const res = await fetch(`${API_BASE_URL}/publish`, {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': ADMIN_SECRET },
+          body:    JSON.stringify({
+            courseJsonPath: state.currentSummary.jsonPath,
+            courseId:       state.currentSummary.id,
+          }),
+        });
+        if (!res.ok) {
+          const errBody = await res.json().catch(() => ({}));
+          throw new Error(errBody.error || `HTTP ${res.status}`);
+        }
+        const result = await res.json();
+
+        // state.detail をドラフットの内容で上書きし、バージョンをセット
+        state.detail  = { ...state.draft, version: result.newVersion };
+        state.draft   = null;
+
+        // store/index.json の courses エントリも更新
+        const c = state.courses.find(c => c.id === state.currentSummary.id);
+        if (c) {
+          c.version       = result.newVersion;
+          c.coverImageUrl = state.detail.coverImageUrl;
+          c.updatedAt     = new Date().toISOString();
+        }
+
+        renderDetail();
+        showToast(`✓ 本番に適用しました（v${result.newVersion}）`, 'success');
+      } catch (err) {
+        showToast(`適用失敗: ${err.message}`, 'error');
+      }
+    };
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // パスワード認証
+    // ──────────────────────────────────────────────────────────────────────────
+    const AUTH_KEY = 'kokokita_admin_auth';
+
+    function isAuthenticated() {
+      return sessionStorage.getItem(AUTH_KEY) === '1';
+    }
+
+    function showLoginScreen(errorMsg) {
+      document.getElementById('backBtn').classList.add('hidden');
+      document.getElementById('courseIdBadge').classList.add('hidden');
+      mount(`
+        <div class="fade-in flex items-center justify-center min-h-[70vh]">
+          <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 w-full max-w-sm">
+            <div class="text-center mb-6">
+              <div class="text-3xl mb-2">📍</div>
+              <h1 class="text-xl font-bold text-gray-900">コース管理</h1>
+              <p class="text-xs text-gray-400 mt-1">管理者のみアクセス可能です</p>
+            </div>
+            ${errorMsg
+              ? `<div class="mb-4 px-3 py-2 bg-red-50 border border-red-200 rounded-lg text-xs text-red-600">${e(errorMsg)}</div>`
+              : ''}
+            <form onsubmit="handleLogin(event)">
+              <div class="mb-4">
+                <label class="block text-xs font-medium text-gray-600 mb-1.5">パスワード</label>
+                <input id="passwordInput" type="password" autofocus
+                  class="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm
+                         focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="パスワードを入力">
+              </div>
+              <button type="submit"
+                class="w-full py-2.5 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700 transition-colors">
+                ログイン
+              </button>
+            </form>
+          </div>
+        </div>
+      `);
+    }
+
+    window.handleLogin = async function (event) {
+      event.preventDefault();
+      const input = document.getElementById('passwordInput').value;
+      if (!input) return;
+
+      // SHA-256 ハッシュを計算してサーバーサイドに送らず、ブラウザ内で照合
+      const encoder  = new TextEncoder();
+      const hashBuf  = await crypto.subtle.digest('SHA-256', encoder.encode(input));
+      const hashHex  = Array.from(new Uint8Array(hashBuf))
+        .map(b => b.toString(16).padStart(2, '0')).join('');
+
+      if (PASSWORD_HASH === 'YOUR-PASSWORD-HASH') {
+        // 未設定時はパスワード不要でアクセス（開発用フォールバック）
+        sessionStorage.setItem(AUTH_KEY, '1');
+        init();
+      } else if (hashHex === PASSWORD_HASH) {
+        sessionStorage.setItem(AUTH_KEY, '1');
+        init();
+      } else {
+        showLoginScreen('パスワードが正しくありません');
+      }
+    };
+
+    window.logout = function () {
+      sessionStorage.removeItem(AUTH_KEY);
+      showLoginScreen();
+    };
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // 起動
+    // ──────────────────────────────────────────────────────────────────────────
+    if (isAuthenticated()) {
+      init();
+    } else {
+      showLoginScreen();
+    }
+
+  })();
+  </script>
+</body>
+</html>

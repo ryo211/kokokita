@@ -41,8 +41,7 @@ final class CourseStoreService {
         let (data, response) = try await session.data(from: url)
         try validateResponse(response, url: url)
         let json = try decoder.decode(CourseJSONParser.CourseJSON.self, from: data)
-        // Web からダウンロードしたコースは source を .downloaded に上書きする
-        return CourseJSONParser.buildCourse(from: json, existing: existingCourse, sourceOverride: .downloaded)
+        return CourseJSONParser.buildCourse(from: json, existing: existingCourse)
     }
 
     // MARK: - Private

@@ -1,0 +1,121 @@
+{
+  "id": "course-hikaru-no-go-001",
+  "courseType": "pilgrimage",
+  "title": "ヒカルの碁の聖地",
+  "summary": "ほったゆみ・小畑健による漫画・アニメ『ヒカルの碁』の舞台を巡るコースです。ヒカルがプロ棋士を目指した日本棋院、佐為を探しに訪れた本因坊秀策ゆかりの因島、そして作中の碁会所のモデルになった場所まで、囲碁の世界に浸れるスポットを収録しています。全8件収録。",
+  "source": "bundled",
+  "isUserCreated": false,
+  "version": 1,
+  "recognitionRadiusMeters": 150.0,
+  "detailUrl": null,
+  "coverImageUrl": null,
+  "categories": ["anime"],
+  "sections": [
+    {
+      "sectionId": "sec-tokyo",
+      "name": "東京エリア",
+      "sectionDescription": "ヒカルがプロ棋士を目指して通い詰めた舞台。作中に忠実に描かれた市ヶ谷・中野を巡る。",
+      "orderIndex": 0,
+      "coverImageUrl": null,
+      "spots": [
+        {
+          "spotId": "hng-001",
+          "name": "日本棋院会館（市ヶ谷）",
+          "latitude": 35.6938,
+          "longitude": 139.7358,
+          "spotDescription": "作品中盤以降の主舞台。ヒカルがプロ試験を受け、棋士として活躍した場所。5階の特別対局室「幽玄の間」も作中にリアルに描かれており、一般向けの囲碁殿堂資料館も併設されている。",
+          "coverImageUrl": null,
+          "orderIndex": 0,
+          "recognitionRadiusMeters": 150.0,
+          "address": "東京都千代田区五番町7-2"
+        },
+        {
+          "spotId": "hng-002",
+          "name": "本妙寺（巣鴨）",
+          "latitude": 35.7360,
+          "longitude": 139.7385,
+          "spotDescription": "第62話でヒカルが消えた佐為を探して訪れた、歴代本因坊のお墓がある寺院。境内には本因坊秀策のお墓もあり、囲碁ファンの参拝が絶えない。碁石が供えられていることも多い。",
+          "coverImageUrl": null,
+          "orderIndex": 1,
+          "recognitionRadiusMeters": 150.0,
+          "address": "東京都豊島区巣鴨5-35-3"
+        },
+        {
+          "spotId": "hng-003",
+          "name": "中野駅北口（雑居ビル付近）",
+          "latitude": 35.7077,
+          "longitude": 139.6634,
+          "spotDescription": "第1巻でヒカルがプロ棋士・塔矢行洋と初めて出会った場所のモデル。中野駅北口からすぐの雑居ビル一帯が作中に描かれている。",
+          "coverImageUrl": null,
+          "orderIndex": 2,
+          "recognitionRadiusMeters": 150.0,
+          "address": "東京都中野区中野2丁目（中野駅北口付近）"
+        },
+        {
+          "spotId": "hng-004",
+          "name": "囲碁サロン天元中野（跡地）",
+          "latitude": 35.7055,
+          "longitude": 139.6641,
+          "spotDescription": "中野駅南口近くの囲碁サロン。作中に登場する碁会所のモデルになっていると言われている。現地の外観が作品に近い雰囲気を持つとして、ファンの間で知られるスポット。",
+          "coverImageUrl": null,
+          "orderIndex": 3,
+          "recognitionRadiusMeters": 150.0,
+          "address": "東京都中野区中野3丁目（中野駅南口付近）"
+        }
+      ]
+    },
+    {
+      "sectionId": "sec-hiroshima-innoshima",
+      "name": "広島・因島エリア",
+      "sectionDescription": "佐為がかつて憑いていた本因坊秀策の生誕地。第61〜62話でヒカルが佐為を探して訪れた聖地。",
+      "orderIndex": 1,
+      "coverImageUrl": null,
+      "spots": [
+        {
+          "spotId": "hng-005",
+          "name": "尾道駅",
+          "latitude": 34.4082,
+          "longitude": 133.2003,
+          "spotDescription": "第61話でヒカルが佐為を探して因島へ向かう際に降り立った駅。作中に駅舎と因島行きバス停が描かれており、聖地巡礼の起点となるスポット。",
+          "coverImageUrl": null,
+          "orderIndex": 0,
+          "recognitionRadiusMeters": 200.0,
+          "address": "広島県尾道市東御所町1-1"
+        },
+        {
+          "spotId": "hng-006",
+          "name": "本因坊秀策囲碁記念館",
+          "latitude": 34.2717,
+          "longitude": 133.1972,
+          "spotDescription": "第61〜62話でヒカルが訪れた、本因坊秀策の生家を復元した記念館。秀策愛用の碁盤・碁石など貴重な遺品を展示。日本棋院「幽玄の間」の再現コーナーもあり、ヒカルの碁全巻も閲覧できる。",
+          "coverImageUrl": null,
+          "orderIndex": 1,
+          "recognitionRadiusMeters": 200.0,
+          "address": "広島県尾道市因島外浦町182-1"
+        },
+        {
+          "spotId": "hng-007",
+          "name": "地蔵院（本因坊秀策の墓）",
+          "latitude": 34.2724,
+          "longitude": 133.1965,
+          "spotDescription": "第62話でヒカルが佐為を探して訪れた、本因坊秀策のお墓がある寺院。記念館から徒歩圏内の山ふもとに位置する。ヒカルが墓前に立つシーンは作品屈指の名場面として知られる。",
+          "coverImageUrl": null,
+          "orderIndex": 2,
+          "recognitionRadiusMeters": 200.0,
+          "address": "広島県尾道市因島外浦町"
+        },
+        {
+          "spotId": "hng-008",
+          "name": "宝泉寺（竹原市）",
+          "latitude": 34.3493,
+          "longitude": 132.9097,
+          "spotDescription": "第62話でヒカルに同行した河合さんが訪れた、秀策ゆかりの寺院。秀策が使用していた碁盤が現存しており、秀策と竹原のつながりを伝える場所として知られている。",
+          "coverImageUrl": null,
+          "orderIndex": 3,
+          "recognitionRadiusMeters": 200.0,
+          "address": "広島県竹原市竹原町2-10-43"
+        }
+      ]
+    }
+  ]
+}

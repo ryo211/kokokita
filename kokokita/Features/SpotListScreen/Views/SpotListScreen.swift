@@ -70,6 +70,17 @@ struct SpotListScreen: View {
     @State private var expandedImageUrl: URL? = nil
 
     @Environment(\.spotFavoriteStore) private var favoriteStore
+    @Environment(\.spotFolderStore) private var folderStore
+
+    /// 現在選択中のフォルダ ID
+    @State private var selectedFolderId: UUID? = nil
+
+    // フォルダ管理アラート
+    @State private var showFolderRenameAlert = false
+    @State private var folderRenameText = ""
+    @State private var showNewFolderAlert = false
+    @State private var newFolderAlertText = ""
+    @State private var showDeleteFolderAlert = false
 
     /// 現在のスポット写真サイズ
     private var spotPhotoSize: CourseSpotPhotoSize {
@@ -78,7 +89,18 @@ struct SpotListScreen: View {
 
     /// 地点選択が有効かどうか（近くのスポットモード、または距離ソート時）
     private var isLocationSelectionActive: Bool {
-        store.listMode == .nearby || store.sortType == .distance
+        guard store.listMode != .prefecture else { return false }
+        return store.listMode == .nearby || store.sortType == .distance
+    }
+
+    /// 現在選択中のフォルダ
+    private var currentFolder: SpotFolder? {
+        folderStore.folders.first(where: { $0.id == selectedFolderId })
+    }
+
+    /// 現在選択中のフォルダのスポット ID 一覧
+    private var currentFolderSpotIds: [UUID] {
+        currentFolder?.spotIds ?? []
     }
 
     var body: some View {
@@ -131,12 +153,27 @@ struct SpotListScreen: View {
         .task {
             store.listMode = initialMode
             store.favoriteSpotIds = favoriteStore.favoriteSpotIds
+            // デフォルトフォルダを初期選択
+            if selectedFolderId == nil {
+                selectedFolderId = folderStore.defaultFolder?.id
+            }
+            store.folderSpotIds = currentFolderSpotIds
             await store.load()
             initializeCamera()
         }
         .onChange(of: favoriteStore.favoriteSpotIds) { _, ids in
             store.favoriteSpotIds = ids
             store.recalculateNearbySpots()
+        }
+        .onChange(of: selectedFolderId) { _, _ in
+            store.folderSpotIds = currentFolderSpotIds
+            store.recalculateNearbySpots()
+            fitAllPoints()
+        }
+        .onChange(of: folderStore.folders) { _, _ in
+            // フォルダ内容が変わった場合（スポット追加・削除）に再計算
+            store.folderSpotIds = currentFolderSpotIds
+            if store.listMode == .folder { store.recalculateNearbySpots() }
         }
         .navigationDestination(item: $courseDetailRoute) { route in
             CourseDetailView(course: route.course, initialSelectedSpotId: route.initialSpotId)
@@ -154,6 +191,7 @@ struct SpotListScreen: View {
                 cameraPosition = .region(MKCoordinateRegion(center: center, span: visibleMapSpan))
             }
         }
+        .onChange(of: store.excludedCourseIds) { _, _ in fitAllPoints() }
         .sheet(isPresented: $showMapSettings) {
             CourseMapSettingsSheet(
                 zoomOnSpotFocus: $zoomOnSpotFocus,
@@ -182,6 +220,39 @@ struct SpotListScreen: View {
             }
         }
         .animation(.easeInOut(duration: 0.2), value: expandedImageUrl != nil)
+        // フォルダ名変更
+        .alert(L.Folder.rename, isPresented: $showFolderRenameAlert) {
+            TextField(L.Folder.namePlaceholder, text: $folderRenameText)
+            Button(L.Common.save) {
+                let name = folderRenameText.trimmingCharacters(in: .whitespacesAndNewlines)
+                if !name.isEmpty, let id = selectedFolderId {
+                    folderStore.renameFolder(id, name: name)
+                }
+            }
+            Button(L.Common.cancel, role: .cancel) {}
+        }
+        // 新規フォルダ作成
+        .alert(L.Folder.new, isPresented: $showNewFolderAlert) {
+            TextField(L.Folder.namePlaceholder, text: $newFolderAlertText)
+            Button(L.Folder.create) {
+                let name = newFolderAlertText.trimmingCharacters(in: .whitespacesAndNewlines)
+                guard !name.isEmpty else { return }
+                let folder = folderStore.createFolder(name: name)
+                selectedFolderId = folder.id
+            }
+            Button(L.Common.cancel, role: .cancel) {}
+        }
+        // フォルダ削除
+        .alert(L.Folder.deleteConfirm, isPresented: $showDeleteFolderAlert) {
+            Button(L.Common.delete, role: .destructive) {
+                guard let id = selectedFolderId else { return }
+                folderStore.deleteFolder(id)
+                selectedFolderId = folderStore.defaultFolder?.id
+            }
+            Button(L.Common.cancel, role: .cancel) {}
+        } message: {
+            Text(L.Folder.deleteConfirmMessage)
+        }
     }
 
     // MARK: - 地図セクション
@@ -190,7 +261,7 @@ struct SpotListScreen: View {
         ZStack(alignment: .top) {
             MapReader { proxy in
                 Map(position: $cameraPosition, interactionModes: [.pan, .zoom, .pitch]) {
-                    // スポットピン
+                    // 非選択ピンを先に描画（z-order: 下）
                     ForEach(Array(store.nearbySpots.enumerated()), id: \.element.spot.id) { index, item in
                         if item.spot.hasValidCoordinate {
                             let coord = CLLocationCoordinate2D(
@@ -201,19 +272,26 @@ struct SpotListScreen: View {
                                 SpotPinView(
                                     orderNumber: index + 1,
                                     isCheckedIn: item.spot.isCheckedIn,
-                                    isSelected: selectedSpotId == item.spot.id
+                                    isSelected: false
                                 )
                                 .onTapGesture { focusOrUnfocus(item: item) }
                             }
-                            if selectedSpotId == item.spot.id {
-                                MapCircle(
-                                    center: coord,
-                                    radius: item.spot.recognitionRadiusMeters ?? item.course.recognitionRadiusMeters
-                                )
-                                .foregroundStyle(Color.indigo.opacity(0.08))
-                                .stroke(Color.indigo.opacity(0.5), lineWidth: 1.5)
-                            }
                         }
+                    }
+
+                    // 認識半径サークル（選択時のみ）
+                    // 選択ピン自体は Map 外の SwiftUI overlay で描画（z-order 保証のため）
+                    if let selectedId = selectedSpotId,
+                       let entry = store.nearbySpots.enumerated().first(where: { $0.element.spot.id == selectedId }),
+                       entry.element.spot.hasValidCoordinate {
+                        let item = entry.element
+                        let coord = CLLocationCoordinate2D(
+                            latitude: item.spot.latitude,
+                            longitude: item.spot.longitude
+                        )
+                        MapCircle(center: coord, radius: item.spot.recognitionRadiusMeters ?? item.course.recognitionRadiusMeters)
+                            .foregroundStyle(Color.indigo.opacity(0.08))
+                            .stroke(Color.indigo.opacity(0.5), lineWidth: 1.5)
                     }
 
                     // 確定済み選択地点ピン（地点選択が有効なモードのみ）
@@ -280,6 +358,20 @@ struct SpotListScreen: View {
                 }
                 // リーダーライン＋スポット画像
                 .overlay { leaderLineOverlay }
+                // 選択ピンを SwiftUI overlay として最前面に描画（MapKit z-order に依存しない）
+                .overlay {
+                    if let spotPoint = selectedSpotScreenPoint,
+                       let entry = store.nearbySpots.enumerated().first(where: { $0.element.spot.id == selectedSpotId }),
+                       entry.element.spot.hasValidCoordinate {
+                        SpotPinView(
+                            orderNumber: entry.offset + 1,
+                            isCheckedIn: entry.element.spot.isCheckedIn,
+                            isSelected: true
+                        )
+                        .onTapGesture { focusOrUnfocus(item: entry.element) }
+                        .position(spotPoint)
+                    }
+                }
             }
         }
     }
@@ -287,14 +379,25 @@ struct SpotListScreen: View {
     // MARK: - モード切替タブ（左側付箋UI）
 
     private var spotModeTabsView: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            ForEach(Array(SpotListMode.allCases.enumerated()), id: \.element) { index, mode in
+        let mainModes: [SpotListMode] = [.nearby, .favorites, .visited, .prefecture]
+        let allModes = SpotListMode.allCases
+        return VStack(alignment: .leading, spacing: 4) {
+            // 近く・お気に入り・行った・都道府県
+            ForEach(Array(mainModes.enumerated()), id: \.element) { index, mode in
                 let isSelected = store.listMode == mode
                 SpotModeTabButton(mode: mode, isSelected: isSelected) {
                     switchMode(to: mode)
                 }
-                .zIndex(isSelected ? 10 : Double(SpotListMode.allCases.count - index))
+                .zIndex(isSelected ? 10 : Double(allModes.count - index))
             }
+            // 区切り（フォルダタブを少し離す）
+            Spacer().frame(height: 8)
+            // フォルダ
+            let isFolderSelected = store.listMode == .folder
+            SpotModeTabButton(mode: .folder, isSelected: isFolderSelected) {
+                switchMode(to: .folder)
+            }
+            .zIndex(isFolderSelected ? 10 : 1)
         }
     }
 
@@ -305,6 +408,14 @@ struct SpotListScreen: View {
         if let currentIdx = allModes.firstIndex(of: store.listMode),
            let newIdx = allModes.firstIndex(of: mode) {
             listTransitionEdge = newIdx > currentIdx ? .trailing : .leading
+        }
+        // フォルダモードに切り替える際はスポットIDを同期
+        if mode == .folder {
+            store.folderSpotIds = currentFolderSpotIds
+        }
+        // 都道府県モードに切り替える際はページを先頭に戻す
+        if mode == .prefecture {
+            store.prefecturePage = 1
         }
         withAnimation(.spring(response: 0.3, dampingFraction: 0.75)) {
             selectedSpotId = nil
@@ -524,8 +635,56 @@ struct SpotListScreen: View {
             Group {
                 if store.isLoading {
                     ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else if store.nearbySpots.isEmpty {
+                } else if store.nearbySpots.isEmpty && store.listMode != .folder {
                     emptyView
+                } else if store.listMode == .folder {
+                    // フォルダモード: ヘッダー + スポット一覧（空の場合もヘッダーを表示）
+                    ScrollViewReader { proxy in
+                        ScrollView {
+                            LazyVStack(spacing: 0) {
+                                folderSelectorHeader
+                                    .padding(.horizontal, 16)
+                                    .padding(.vertical, 10)
+                                Divider()
+                                if store.nearbySpots.isEmpty {
+                                    VStack(spacing: 12) {
+                                        Image(systemName: "folder")
+                                            .font(.largeTitle)
+                                            .foregroundStyle(.secondary)
+                                        Text(L.SpotList.noFolder)
+                                            .font(.subheadline)
+                                            .foregroundStyle(.secondary)
+                                            .multilineTextAlignment(.center)
+                                    }
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 48)
+                                } else {
+                                    ForEach(Array(store.nearbySpots.enumerated()), id: \.element.spot.id) { index, item in
+                                        SpotListRowView(
+                                            spot: item.spot,
+                                            course: item.course,
+                                            orderNumber: index + 1,
+                                            isSelected: selectedSpotId == item.spot.id,
+                                            distance: nil,
+                                            onCourseTap: { courseDetailRoute = CourseRoute(course: item.course, initialSpotId: item.spot.id) },
+                                            currentFolderId: selectedFolderId
+                                        )
+                                        .id(item.spot.id)
+                                        .contentShape(Rectangle())
+                                        .onTapGesture { focusOrUnfocus(item: item) }
+                                        if index < store.nearbySpots.count - 1 {
+                                            Divider().padding(.leading, 60)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        .onChange(of: selectedSpotId) { _, newId in
+                            if let id = newId {
+                                withAnimation { proxy.scrollTo(id, anchor: .top) }
+                            }
+                        }
+                    }
                 } else {
                     ScrollViewReader { proxy in
                         ScrollView {
@@ -583,25 +742,73 @@ struct SpotListScreen: View {
         .animation(.easeInOut(duration: 0.28), value: store.listMode)
         .animation(.spring(duration: 0.35, bounce: 0.05), value: showFilter)
         .clipped()
-        // 横スワイプでモード循環切り替え（縦スクロールとは独立して動作）
-        .simultaneousGesture(
-            DragGesture(minimumDistance: 40, coordinateSpace: .local)
-                .onEnded { value in
-                    guard abs(value.translation.width) > abs(value.translation.height) * 1.5,
-                          abs(value.translation.width) > 40 else { return }
-                    let allModes = SpotListMode.allCases
-                    guard let currentIndex = allModes.firstIndex(of: store.listMode) else { return }
-                    if value.translation.width < 0 {
-                        // 左スワイプ → 次のモード（新コンテンツは右から）
-                        listTransitionEdge = .trailing
-                        switchMode(to: allModes[(currentIndex + 1) % allModes.count])
-                    } else {
-                        // 右スワイプ → 前のモード（新コンテンツは左から）
-                        listTransitionEdge = .leading
-                        switchMode(to: allModes[(currentIndex - 1 + allModes.count) % allModes.count])
+    }
+
+    // フォルダモードのヘッダー: フォルダ名 + 切り替えメニュー
+    private var folderSelectorHeader: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "folder.fill")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.indigo)
+
+            // フォルダ切り替えドロップダウン
+            Menu {
+                ForEach(folderStore.folders) { folder in
+                    Button {
+                        selectedFolderId = folder.id
+                    } label: {
+                        if selectedFolderId == folder.id {
+                            Label(folder.name, systemImage: "checkmark")
+                        } else {
+                            Text(folder.name)
+                        }
                     }
                 }
-        )
+            } label: {
+                HStack(spacing: 4) {
+                    Text(currentFolder?.name ?? L.Folder.select)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.primary)
+                    Image(systemName: "chevron.up.chevron.down")
+                        .font(.system(size: 10, weight: .semibold))
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .buttonStyle(.plain)
+
+            Spacer()
+
+            // フォルダ管理メニュー
+            Menu {
+                Button {
+                    folderRenameText = currentFolder?.name ?? ""
+                    showFolderRenameAlert = true
+                } label: {
+                    Label(L.Folder.rename, systemImage: "pencil")
+                }
+
+                Button {
+                    newFolderAlertText = ""
+                    showNewFolderAlert = true
+                } label: {
+                    Label(L.Folder.new, systemImage: "folder.badge.plus")
+                }
+
+                if currentFolder?.isDefault == false {
+                    Divider()
+                    Button(role: .destructive) {
+                        showDeleteFolderAlert = true
+                    } label: {
+                        Label(L.Folder.delete, systemImage: "trash")
+                    }
+                }
+            } label: {
+                Image(systemName: "ellipsis.circle")
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundStyle(.indigo)
+            }
+            .buttonStyle(.plain)
+        }
     }
 
     private var filterButton: some View {
@@ -653,6 +860,10 @@ struct SpotListScreen: View {
                 return L.SpotList.locationUnavailable
             }
             return L.SpotList.noVisited
+        case .prefecture:
+            return L.SpotList.noPrefectureSpots
+        case .folder:
+            return L.SpotList.noFolder
         }
     }
 
@@ -738,25 +949,29 @@ struct SpotListScreen: View {
     // MARK: - レイアウト切替バー
 
     private var layoutStrip: some View {
-        HStack(alignment: .center, spacing: 8) {
-            // 左側: モードに応じたコンテンツ
-            if isLocationSelectionActive {
-                locationAreaContent
+        Group {
+            if store.listMode == .prefecture {
+                prefectureControlContent
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
             } else {
-                totalCountContent
-            }
-
-            Spacer()
-
-            // 右側: 近くのスポットは件数設定、その他はソートタイプ選択
-            if store.listMode == .nearby {
-                spotCountButton
-            } else {
-                sortTypeSelector
+                HStack(alignment: .center, spacing: 8) {
+                    if isLocationSelectionActive {
+                        locationAreaContent
+                    } else {
+                        totalCountContent
+                    }
+                    Spacer()
+                    if store.listMode == .nearby {
+                        spotCountButton
+                    } else {
+                        sortTypeSelector
+                    }
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 8)
         .contentShape(Rectangle())
         .gesture(
             DragGesture(minimumDistance: 5, coordinateSpace: .local)
@@ -772,6 +987,122 @@ struct SpotListScreen: View {
                 }
                 .onEnded { _ in layoutSwipeConsumed = false }
         )
+    }
+
+    // 都道府県別モード用コントロール帯
+    private var prefectureControlContent: some View {
+        VStack(spacing: 6) {
+            HStack(spacing: 8) {
+                // 総スポット数
+                HStack(spacing: 4) {
+                    Image(systemName: "mappin.and.ellipse")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.indigo)
+                    Text("全\(store.prefectureTotalCount)件")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.primary)
+                        .monospacedDigit()
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 5)
+                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .strokeBorder(Color.indigo.opacity(0.2), lineWidth: 0.8)
+                }
+                .shadow(color: .black.opacity(0.07), radius: 3, x: 0, y: 1)
+
+                Spacer()
+
+                // 都道府県選択ドロップダウン
+                Menu {
+                    let counts = store.prefectureSpotCounts
+                    ForEach(SpotListStore.prefectureList, id: \.self) { pref in
+                        Button {
+                            store.selectedPrefecture = pref
+                            store.prefecturePage = 1
+                            store.recalculateNearbySpots()
+                            selectedSpotId = nil
+                            fitAllPoints()
+                        } label: {
+                            let count = counts[pref] ?? 0
+                            let label = count > 0 ? "\(pref)（\(count)件）" : pref
+                            if store.selectedPrefecture == pref {
+                                Label(label, systemImage: "checkmark")
+                            } else {
+                                Text(label)
+                            }
+                        }
+                    }
+                } label: {
+                    HStack(spacing: 4) {
+                        Text(store.selectedPrefecture)
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.indigo)
+                        Image(systemName: "chevron.up.chevron.down")
+                            .font(.system(size: 9, weight: .semibold))
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 6)
+                    .background(Color.indigo.opacity(0.10), in: Capsule())
+                }
+                .buttonStyle(.plain)
+            }
+
+            HStack(spacing: 8) {
+                // 現在の表示範囲テキスト（例: 1〜50件）
+                let start = store.prefectureTotalCount > 0 ? (store.prefecturePage - 1) * store.prefecturePageSize + 1 : 0
+                let end = min(store.prefecturePage * store.prefecturePageSize, store.prefectureTotalCount)
+                Text(store.prefectureTotalCount > 0 ? "\(start)〜\(end)件表示" : "0件")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .monospacedDigit()
+
+                Spacer()
+
+                // ページ移動ボタン群
+                HStack(spacing: 4) {
+                    Button {
+                        guard store.prefecturePage > 1 else { return }
+                        store.prefecturePage -= 1
+                        store.recalculateNearbySpots()
+                        selectedSpotId = nil
+                        fitAllPoints()
+                    } label: {
+                        Image(systemName: "chevron.left")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(store.prefecturePage > 1 ? Color.indigo : Color.secondary.opacity(0.4))
+                            .frame(width: 28, height: 28)
+                            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 7, style: .continuous))
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(store.prefecturePage <= 1)
+
+                    Text("\(store.prefecturePage) / \(store.prefecturePageCount)")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                        .monospacedDigit()
+                        .frame(minWidth: 44)
+
+                    Button {
+                        guard store.prefecturePage < store.prefecturePageCount else { return }
+                        store.prefecturePage += 1
+                        store.recalculateNearbySpots()
+                        selectedSpotId = nil
+                        fitAllPoints()
+                    } label: {
+                        Image(systemName: "chevron.right")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(store.prefecturePage < store.prefecturePageCount ? Color.indigo : Color.secondary.opacity(0.4))
+                            .frame(width: 28, height: 28)
+                            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 7, style: .continuous))
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(store.prefecturePage >= store.prefecturePageCount)
+                }
+            }
+        }
     }
 
     // 住所カード（近くのスポットモード or 近い順ソート時）
@@ -996,8 +1327,8 @@ private struct SpotModeTabButton: View {
     let isSelected: Bool
     let action: () -> Void
 
-    private let selectedWidth: CGFloat = 104
-    private let unselectedWidth: CGFloat = 80
+    private let selectedWidth: CGFloat = 120
+    private let unselectedWidth: CGFloat = 96
     /// 全 SF Symbol を同じ幅で並べてテキスト開始位置を揃える
     private let iconWidth: CGFloat = 14
     /// 全モード・選択状態で統一フォントサイズ（minimumScaleFactor を使わない）
@@ -1081,23 +1412,50 @@ private struct SpotPinView: View {
     let isCheckedIn: Bool
     let isSelected: Bool
 
-    private var pinColor: Color { isCheckedIn ? .indigo : Color(uiColor: .systemGray3) }
-    private var size: CGFloat { isSelected ? 18 : 14 }
+    private var size: CGFloat { isSelected ? 20 : 14 }
 
     var body: some View {
         ZStack {
+            // フォーカス時のスポットライト（背後からの照射グロー）
             Circle()
-                .fill(isSelected ? Color.indigo : .white)
+                .fill(Color.indigo.opacity(0.38))
+                .frame(width: 42, height: 42)
+                .blur(radius: 9)
+                .scaleEffect(isSelected ? 1 : 0.01)
+                .opacity(isSelected ? 1 : 0)
+
+            // 外縁（白リング + 影）
+            Circle()
+                .fill(Color.white)
                 .frame(width: size + 5, height: size + 5)
-                .shadow(color: .black.opacity(0.35), radius: 4, x: 0, y: 2)
-            Circle()
-                .fill(pinColor)
-                .frame(width: size, height: size)
-            Text("\(orderNumber)")
-                .font(.system(size: isSelected ? 8 : 6, weight: .bold))
-                .foregroundStyle(.white)
+                .shadow(color: .black.opacity(isSelected ? 0.4 : 0.25),
+                        radius: isSelected ? 6 : 3, x: 0, y: 2)
+
+            // インディゴ + 番号（達成済みも同色）
+            ZStack {
+                Circle()
+                    .fill(Color.indigo)
+                    .frame(width: size, height: size)
+                Text("\(orderNumber)")
+                    .font(.system(size: isSelected ? 9 : 6, weight: .bold))
+                    .foregroundStyle(.white)
+            }
+            .overlay(alignment: .bottomTrailing) {
+                if isCheckedIn {
+                    // 達成済み：右下に小チェックバッジ
+                    ZStack {
+                        Circle()
+                            .fill(Color.white)
+                            .frame(width: isSelected ? 9 : 7, height: isSelected ? 9 : 7)
+                        Image(systemName: "checkmark")
+                            .font(.system(size: isSelected ? 5 : 4, weight: .bold))
+                            .foregroundStyle(Color.indigo)
+                    }
+                    .offset(x: isSelected ? 3 : 2, y: isSelected ? 3 : 2)
+                }
+            }
         }
-        .animation(.easeInOut(duration: 0.15), value: isSelected)
+        .animation(.easeOut(duration: 0.2), value: isSelected)
     }
 }
 
@@ -1110,8 +1468,14 @@ private struct SpotListRowView: View {
     let isSelected: Bool
     var distance: Double? = nil
     var onCourseTap: () -> Void = {}
+    /// フォルダモードで表示中の場合に設定。メニューが「削除」に切り替わる
+    var currentFolderId: UUID? = nil
 
     @Environment(\.spotFavoriteStore) private var favoriteStore
+    @Environment(\.spotFolderStore) private var folderStore
+    @State private var showInquiry = false
+    @State private var showShare = false
+    @State private var showFolderPicker = false
 
     private var distanceText: String? {
         guard let d = distance else { return nil }
@@ -1121,13 +1485,27 @@ private struct SpotListRowView: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 12) {
+                // 番号バッジ（インディゴ統一 / 達成済みは右下チェックバッジ付き）
                 ZStack {
                     Circle()
-                        .fill(spot.isCheckedIn ? Color.indigo : Color(uiColor: .systemGray4))
+                        .fill(Color.indigo)
                         .frame(width: 32, height: 32)
                     Text("\(orderNumber)")
                         .font(.caption.bold())
                         .foregroundStyle(.white)
+                }
+                .overlay(alignment: .bottomTrailing) {
+                    if spot.isCheckedIn {
+                        ZStack {
+                            Circle()
+                                .fill(Color.white)
+                                .frame(width: 14, height: 14)
+                            Image(systemName: "checkmark")
+                                .font(.system(size: 8, weight: .bold))
+                                .foregroundStyle(Color.indigo)
+                        }
+                        .offset(x: 4, y: 4)
+                    }
                 }
 
                 VStack(alignment: .leading, spacing: 2) {
@@ -1149,6 +1527,14 @@ private struct SpotListRowView: View {
                         }
                     }
 
+                    if let desc = spot.spotDescription {
+                        Text(desc)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(isSelected ? nil : 2)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+
                     if let text = distanceText {
                         HStack(spacing: 2) {
                             Image(systemName: "location.fill").font(.caption2)
@@ -1161,19 +1547,68 @@ private struct SpotListRowView: View {
 
                 Spacer()
 
-                Button {
-                    favoriteStore.toggle(spot.id)
-                } label: {
-                    Image(systemName: favoriteStore.isFavorite(spot.id) ? "heart.fill" : "heart")
-                        .font(.body.weight(.semibold))
-                        .foregroundStyle(
-                            favoriteStore.isFavorite(spot.id)
-                                ? Color(red: 1.0, green: 0.42, blue: 0.62)
-                                : Color.secondary.opacity(0.88)
-                        )
-                        .shadow(color: Color(uiColor: .systemBackground).opacity(0.9), radius: 1.5, x: 0, y: 0)
+                VStack(spacing: 6) {
+                    // 3点メニューボタン
+                    Menu {
+                        if let folderId = currentFolderId {
+                            // フォルダモードから表示: 削除ボタン
+                            Button(role: .destructive) {
+                                folderStore.removeSpot(spot.id, from: folderId)
+                            } label: {
+                                Label(L.Folder.removeFromFolder, systemImage: "folder.badge.minus")
+                            }
+                        } else {
+                            // 通常モード: 追加ボタン（一方向・状態なし）
+                            Button { showFolderPicker = true } label: {
+                                Label(L.SpotList.menuAddFolder, systemImage: "folder.badge.plus")
+                            }
+                        }
+                        Button { showInquiry = true } label: {
+                            Label(L.SpotList.menuInquiry, systemImage: "questionmark.circle")
+                        }
+                        Button { showShare = true } label: {
+                            Label(L.SpotList.menuShare, systemImage: "square.and.arrow.up")
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundStyle(Color.secondary)
+                            .frame(width: 36, height: 36)
+                            .background(Color(uiColor: .systemBackground).opacity(0.35), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                            .overlay {
+                                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                    .strokeBorder(Color.secondary.opacity(0.18), lineWidth: 0.8)
+                            }
+                    }
+                    .buttonStyle(.plain)
+
+                    // お気に入りボタン
+                    Button {
+                        favoriteStore.toggle(spot.id)
+                    } label: {
+                        let isFav = favoriteStore.isFavorite(spot.id)
+                        Image(systemName: isFav ? "heart.fill" : "heart")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(
+                                isFav
+                                    ? Color(red: 1.0, green: 0.42, blue: 0.62)
+                                    : Color.secondary
+                            )
+                            .frame(width: 36, height: 36)
+                            .background(Color(uiColor: .systemBackground).opacity(0.35), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                            .overlay {
+                                if isFav {
+                                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                        .fill(Color(red: 1.0, green: 0.42, blue: 0.62).opacity(0.12))
+                                }
+                            }
+                            .overlay {
+                                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                    .strokeBorder(Color.secondary.opacity(0.18), lineWidth: 0.8)
+                            }
+                    }
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 10)
@@ -1185,6 +1620,15 @@ private struct SpotListRowView: View {
         }
         .background { SpotRowBackdropView(spot: spot, isSelected: isSelected) }
         .animation(.easeInOut(duration: 0.2), value: isSelected)
+        .sheet(isPresented: $showInquiry) {
+            SpotInquirySheet(courseName: course.title, spotName: spot.name)
+        }
+        .sheet(isPresented: $showShare) {
+            SpotSharePreviewSheet(spot: spot, course: course)
+        }
+        .sheet(isPresented: $showFolderPicker) {
+            FolderPickerSheet(spot: spot)
+        }
     }
 }
 
@@ -1192,6 +1636,10 @@ private struct SpotListRowView: View {
 
 private struct SpotRowExpandedView: View {
     let spot: CourseSpot
+    @State private var linkedVisits: [VisitAggregate] = []
+    @State private var labelMap: [UUID: String] = [:]
+    @State private var groupMap: [UUID: String] = [:]
+    @State private var memberMap: [UUID: String] = [:]
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -1224,9 +1672,102 @@ private struct SpotRowExpandedView: View {
                 .padding(.leading, 60)
                 .padding(.trailing, 16)
             }
+
+            if !linkedVisits.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 10) {
+                        ForEach(linkedVisits, id: \.visit.id) { aggregate in
+                            NavigationLink {
+                                VisitDetailScreen(
+                                    data: toDetailData(aggregate),
+                                    visitId: aggregate.id,
+                                    onBack: {},
+                                    onEdit: {},
+                                    onShare: {},
+                                    onDelete: {
+                                        try? AppContainer.shared.repo.delete(id: aggregate.id)
+                                        NotificationCenter.default.post(name: .visitsChanged, object: nil)
+                                        reloadLinkedVisits()
+                                    },
+                                    onUpdate: {
+                                        NotificationCenter.default.post(name: .visitsChanged, object: nil)
+                                        reloadLinkedVisits()
+                                    },
+                                    onMapTap: nil
+                                )
+                            } label: {
+                                CheckInVisitCard(aggregate: aggregate)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                    .padding(.leading, 60)
+                    .padding(.trailing, 16)
+                    .padding(.bottom, 4)
+                }
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.bottom, 10)
+        .task(id: spot.id) {
+            await loadData()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .visitsChanged)) { _ in
+            reloadLinkedVisits()
+        }
+    }
+
+    private func loadData() async {
+        let repo = AppContainer.shared.repo
+        labelMap = (try? repo.allLabels())?.reduce(into: [:]) { $0[$1.id] = $1.name } ?? [:]
+        groupMap = (try? repo.allGroups())?.reduce(into: [:]) { $0[$1.id] = $1.name } ?? [:]
+        memberMap = (try? repo.allMembers())?.reduce(into: [:]) { $0[$1.id] = $1.name } ?? [:]
+        reloadLinkedVisits()
+    }
+
+    private func reloadLinkedVisits() {
+        guard !spot.visitIds.isEmpty else {
+            linkedVisits = []
+            return
+        }
+        linkedVisits = spot.visitIds.compactMap { id in
+            try? AppContainer.shared.repo.get(by: id)
+        }
+    }
+
+    private func toDetailData(_ agg: VisitAggregate) -> VisitDetailData {
+        let title: String = {
+            let t = agg.details.title?.trimmingCharacters(in: .whitespacesAndNewlines)
+            if let t, !t.isEmpty { return t }
+            if let f = agg.details.facilityName, !f.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { return f }
+            return L.Home.noTitle
+        }()
+
+        let coord: CLLocationCoordinate2D? = {
+            let lat = agg.visit.latitude
+            let lon = agg.visit.longitude
+            guard lat != 0 || lon != 0 else { return nil }
+            return .init(latitude: lat, longitude: lon)
+        }()
+
+        return VisitDetailData(
+            title: title,
+            labels: agg.details.labelIds.compactMap { labelMap[$0] },
+            group: agg.details.groupId.flatMap { groupMap[$0] },
+            members: agg.details.memberIds.compactMap { memberMap[$0] },
+            timestamp: agg.visit.timestampUTC,
+            address: agg.details.resolvedAddress ?? agg.details.facilityAddress,
+            coordinate: coord,
+            memo: agg.details.comment,
+            facility: FacilityInfo(
+                name: agg.details.facilityName,
+                address: agg.details.facilityAddress,
+                phone: nil
+            ),
+            facilityCategory: agg.details.facilityCategory,
+            photoPaths: agg.details.photoPaths,
+            isManualEntry: agg.visit.isManualEntry
+        )
     }
 }
 
@@ -1293,6 +1834,16 @@ private struct SpotRowBackdropView: View {
                         startPoint: .leading,
                         endPoint: .trailing
                     )
+                }
+                if spot.isCheckedIn {
+                    Image("kokokita_hanko")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: min(geo.size.width * 0.42, 172))
+                        .opacity(isSelected ? 0.48 : 0.40)
+                        .rotationEffect(.degrees(-10))
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
+                        .offset(x: -8, y: isSelected ? 6 : 2)
                 }
                 if isSelected { Color.indigo.opacity(selectedTintOpacity) }
             }

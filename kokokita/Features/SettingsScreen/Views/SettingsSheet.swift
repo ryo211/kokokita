@@ -3,10 +3,66 @@ import SwiftUI
 struct SettingsSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(AppModeManager.self) private var modeManager
+    @ObservedObject private var autoRecordSettings = AutoRecordSettings.shared
+    @State private var showCandidateReview = false
+    @State private var showExcludedLocations = false
+    @State private var pendingCandidateCount: Int = 0
+    @State private var showPaywall = false
+    private var premiumManager = PremiumManager.shared
 
     var body: some View {
         NavigationStack {
             List {
+                // プレミアム
+                premiumSection
+
+                // 自動記録
+                Section {
+                    Toggle(isOn: $autoRecordSettings.isEnabled) {
+                        Label(L.AutoRecord.settingsToggle, systemImage: "waveform.path.ecg")
+                    }
+                    .onChange(of: autoRecordSettings.isEnabled) { _, isEnabled in
+                        if isEnabled {
+                            AppContainer.shared.autoRecord.requestAlwaysAuthorization()
+                            AppContainer.shared.autoRecord.startMonitoring()
+                        } else {
+                            AppContainer.shared.autoRecord.stopMonitoring()
+                        }
+                    }
+
+                    Button {
+                        showCandidateReview = true
+                    } label: {
+                        HStack {
+                            Label(L.AutoRecord.reviewCandidates, systemImage: "list.bullet.clipboard")
+                                .foregroundStyle(.primary)
+                            Spacer()
+                            if pendingCandidateCount > 0 {
+                                Text("\(pendingCandidateCount)")
+                                    .font(.caption)
+                                    .foregroundStyle(.white)
+                                    .padding(.horizontal, 7)
+                                    .padding(.vertical, 3)
+                                    .background(Color.accentColor)
+                                    .clipShape(Capsule())
+                            }
+                            Image(systemName: "chevron.right")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+
+                    NavigationLink {
+                        ExcludedLocationsScreen()
+                    } label: {
+                        Label(L.AutoRecord.excludedLocationsTitle, systemImage: "location.slash")
+                    }
+                } header: {
+                    Text(L.AutoRecord.settingsTitle)
+                } footer: {
+                    Text(L.AutoRecord.settingsToggleDescription)
+                }
+
                 // アプリモード切替
                 Section {
                     Button {
@@ -82,7 +138,79 @@ struct SettingsSheet: View {
                     }
                 }
             }
+            .sheet(isPresented: $showCandidateReview) {
+                AutoRecordCandidateReviewScreen()
+                    .onDisappear { loadPendingCount() }
+            }
+            .sheet(isPresented: $showPaywall) {
+                PaywallView()
+            }
+            .onAppear { loadPendingCount() }
         }
+    }
+
+    // MARK: - Premium Section
+
+    private var premiumSection: some View {
+        Section {
+            if premiumManager.isPremium {
+                // 購入済み：ステータス表示
+                HStack(spacing: 12) {
+                    Image("kokokita_prp")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 44, height: 44)
+                        .background(Color.white)
+                        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                        .shadow(color: Color.black.opacity(0.08), radius: 4, x: 0, y: 2)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(L.SettingsSheet.premiumActive)
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(.orange)
+                        Text(L.SettingsSheet.premiumActiveDescription)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    Image(systemName: "checkmark.seal.fill")
+                        .foregroundStyle(.orange)
+                }
+                .padding(.vertical, 4)
+            } else {
+                // 未購入：アップグレードCTA
+                Button {
+                    showPaywall = true
+                } label: {
+                    HStack(spacing: 12) {
+                        Image("kokokita_prp")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 44, height: 44)
+                            .background(Color.white)
+                            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                            .shadow(color: Color.black.opacity(0.08), radius: 4, x: 0, y: 2)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(L.SettingsSheet.premiumUpgrade)
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(.primary)
+                            Text(L.SettingsSheet.premiumUpgradeDescription)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(.vertical, 4)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+
+    private func loadPendingCount() {
+        pendingCandidateCount = (try? AppContainer.shared.candidateRepo.countPending()) ?? 0
     }
 
     private var appVersion: String {

@@ -118,7 +118,6 @@ struct NearbyVisitsCarousel: View {
     private func deleteVisit(id: UUID) {
         do {
             try AppContainer.shared.repo.delete(id: id)
-            NotificationCenter.default.post(name: .visitsChanged, object: nil)
         } catch {
             Logger.error("カルーセルからの記録削除に失敗", error: error)
         }
