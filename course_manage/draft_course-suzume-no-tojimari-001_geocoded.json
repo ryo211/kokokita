@@ -1,0 +1,216 @@
+{
+  "id": "course-suzume-no-tojimari-001",
+  "courseType": "pilgrimage",
+  "title": "『すずめの戸締まり』の聖地",
+  "summary": "新海誠監督の映画「すずめの戸締まり」の舞台を、すずめの旅の順に巡るコースです。宮崎の出発地から大分・愛媛・神戸・東京を経て、岩手の故郷まで—日本を縦断した閉じ師の旅の足跡を辿ります。全14件収録。",
+  "source": "downloaded",
+  "isUserCreated": false,
+  "version": 1,
+  "recognitionRadiusMeters": 200,
+  "detailUrl": null,
+  "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/course/course-suzume-no-tojimari-001.jpg",
+  "categories": [
+    "anime"
+  ],
+  "sections": [
+    {
+      "sectionId": "sec-kyushu",
+      "name": "九州（旅の始まり）",
+      "sectionDescription": "宮崎でくらしていたすずめが草太と出会い、最初の後ろ戸を閉じた九州の章。",
+      "orderIndex": 0,
+      "coverImageUrl": null,
+      "spots": [
+        {
+          "spotId": "szm-001",
+          "name": "油津港",
+          "address": "宮崎県日南市油津",
+          "latitude": 31.5825583,
+          "longitude": 131.4064103,
+          "spotDescription": "すずめが草太と出会う通学路から見える港。昭和の風情漂う堀川運河と赤レンガ館が映画の空気感を再現。",
+          "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/szm-001.jpg",
+          "orderIndex": 0,
+          "recognitionRadiusMeters": 300
+        },
+        {
+          "spotId": "szm-002",
+          "name": "旧豊後森機関庫公園",
+          "address": "大分県玖珠郡玖珠町帆足2835-2",
+          "latitude": 33.2817679,
+          "longitude": 131.1567115,
+          "spotDescription": "すずめが最初の後ろ戸を開けてしまった廃墟のモデル。扇型機関庫と転車台が印象的な国指定有形文化財。",
+          "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/szm-002.jpg",
+          "orderIndex": 1,
+          "recognitionRadiusMeters": 200
+        },
+        {
+          "spotId": "szm-003",
+          "name": "湯平温泉",
+          "address": "大分県由布市湯布院町湯平",
+          "latitude": 33.1939553,
+          "longitude": 131.3267668,
+          "spotDescription": "すずめが草太を追って向かった廃温泉街のモデルの一つとされる。石畳と赤提灯が劇中の雰囲気に近い。",
+          "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/szm-003.jpg",
+          "orderIndex": 2,
+          "recognitionRadiusMeters": 250
+        }
+      ]
+    },
+    {
+      "sectionId": "sec-shikoku",
+      "name": "四国（フェリーの終着点）",
+      "sectionDescription": "すずめがフェリーで渡り上陸した愛媛・八幡浜。ここから本州へ向けての旅が続く。",
+      "orderIndex": 1,
+      "coverImageUrl": null,
+      "spots": [
+        {
+          "spotId": "szm-004",
+          "name": "八幡浜港",
+          "address": "愛媛県八幡浜市出島1581-26",
+          "latitude": 33.4585277,
+          "longitude": 132.4153333,
+          "spotDescription": "すずめがフェリーで到着した四国の玄関口。作中フェリー「みかん四国」のモデル「おれんじ四国」が実際に就航。",
+          "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/szm-004.jpg",
+          "orderIndex": 0,
+          "recognitionRadiusMeters": 200
+        },
+        {
+          "spotId": "szm-005",
+          "name": "下灘駅",
+          "address": "愛媛県伊予市双海町大久保",
+          "latitude": 33.6551644,
+          "longitude": 132.5893398,
+          "spotDescription": "ダイジンの目撃情報がSNSに投稿されるシーンで登場。「海に最も近い駅」として知られる絶景の無人駅。",
+          "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/szm-005.jpg",
+          "orderIndex": 1,
+          "recognitionRadiusMeters": 150
+        }
+      ]
+    },
+    {
+      "sectionId": "sec-kobe",
+      "name": "兵庫・神戸（ルミとの出会い）",
+      "sectionDescription": "すずめが二ノ宮ルミと出会い、廃遊園地の後ろ戸を閉じた神戸の章。",
+      "orderIndex": 2,
+      "coverImageUrl": null,
+      "spots": [
+        {
+          "spotId": "szm-006",
+          "name": "二宮筋商店街",
+          "address": "兵庫県神戸市中央区二宮町",
+          "latitude": 34.6993999,
+          "longitude": 135.1968387,
+          "spotDescription": "ルミが経営するスナック「はぁばぁ」がある九宮筋商店街のモデル。昭和の雰囲気が残るアーケード街。",
+          "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/szm-006.jpg",
+          "orderIndex": 0,
+          "recognitionRadiusMeters": 200
+        },
+        {
+          "spotId": "szm-007",
+          "name": "神戸おとぎの国（道の駅 神戸フルーツ・フラワーパーク大沢）",
+          "address": "兵庫県神戸市北区大沢町上大沢2150",
+          "latitude": 34.8500593,
+          "longitude": 135.1922098,
+          "spotDescription": "廃遊園地「神戸ゆめの国」のモデル。観覧車とジェットコースターの配置が劇中と一致すると言われる。",
+          "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/szm-007.jpg",
+          "orderIndex": 1,
+          "recognitionRadiusMeters": 250
+        },
+        {
+          "spotId": "szm-008",
+          "name": "新神戸駅",
+          "address": "兵庫県神戸市中央区新幹線町1-1",
+          "latitude": 34.7062884,
+          "longitude": 135.1954675,
+          "spotDescription": "東京へ向かうすずめとルミが熱い抱擁を交わした駅。「行ってらっしゃい」の名シーンの舞台。",
+          "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/szm-008.jpg",
+          "orderIndex": 2,
+          "recognitionRadiusMeters": 150
+        }
+      ]
+    },
+    {
+      "sectionId": "sec-tokyo",
+      "name": "東京（決戦の地）",
+      "sectionDescription": "草太を救うため、東京の要石を求めて走り抜けた章。御茶ノ水周辺が主なロケ地。",
+      "orderIndex": 3,
+      "coverImageUrl": null,
+      "spots": [
+        {
+          "spotId": "szm-009",
+          "name": "聖橋（御茶ノ水）",
+          "address": "東京都千代田区神田駿河台4",
+          "latitude": 35.6997231,
+          "longitude": 139.7655029,
+          "spotDescription": "すずめが飛び降りるシーンで登場した関東大震災後の震災復興橋梁。丸ノ内線の地下鉄が見下ろせる。",
+          "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/szm-009.jpg",
+          "orderIndex": 0,
+          "recognitionRadiusMeters": 100
+        },
+        {
+          "spotId": "szm-010",
+          "name": "JR御茶ノ水駅",
+          "address": "東京都千代田区神田駿河台2-1",
+          "latitude": 35.6997175,
+          "longitude": 139.7644404,
+          "spotDescription": "作中でそのまま登場する駅。聖橋や神田川とあわせて、東京のロケ地の中心となるエリア。",
+          "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/szm-010.jpg",
+          "orderIndex": 1,
+          "recognitionRadiusMeters": 120
+        }
+      ]
+    },
+    {
+      "sectionId": "sec-tohoku",
+      "name": "東北（すずめの故郷）",
+      "sectionDescription": "旅の終着地。すずめが生まれ、幼い日の自分と出会い直した岩手・宮城の地。",
+      "orderIndex": 4,
+      "coverImageUrl": null,
+      "spots": [
+        {
+          "spotId": "szm-011",
+          "name": "道の駅 大谷海岸",
+          "address": "宮城県気仙沼市本吉町三島9",
+          "latitude": 38.8147511,
+          "longitude": 141.5624139,
+          "spotDescription": "芹澤の車で移動中に雨宿りをする道の駅のモデル。震災後2021年にリニューアル。劇中と同じ通路が現存する。",
+          "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/szm-011.jpg",
+          "orderIndex": 0,
+          "recognitionRadiusMeters": 150
+        },
+        {
+          "spotId": "szm-012",
+          "name": "織笠駅（三陸鉄道）",
+          "address": "岩手県下閉伊郡山田町織笠",
+          "latitude": 39.4540435,
+          "longitude": 141.9553489,
+          "spotDescription": "すずめと草太が別れを告げた終盤の感動シーンの舞台。震災後に高台へ移転した小さな無人駅。聖地ノートが置かれている。",
+          "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/szm-012.jpg",
+          "orderIndex": 1,
+          "recognitionRadiusMeters": 100
+        },
+        {
+          "spotId": "szm-013",
+          "name": "山田湾展望広場（後ろ戸レプリカ設置地）",
+          "address": "岩手県下閉伊郡山田町織笠第11地割111-9",
+          "latitude": 39.451517,
+          "longitude": 141.9619231,
+          "spotDescription": "山田町観光協会が設置した映画の「後ろ戸」レプリカがある展望広場。山田湾と共に写真が撮れる人気スポット。",
+          "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/szm-013.jpg",
+          "orderIndex": 2,
+          "recognitionRadiusMeters": 150
+        },
+        {
+          "spotId": "szm-014",
+          "name": "高田松原津波復興祈念公園",
+          "address": "岩手県陸前高田市気仙町字土手影180",
+          "latitude": 39.0067558,
+          "longitude": 141.6271923,
+          "spotDescription": "東日本大震災の犠牲者を追悼する国営公園。「奇跡の一本松」が立つ。すずめが向き合った「喪失と再生」の地。",
+          "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/spot/szm-014.jpg",
+          "orderIndex": 3,
+          "recognitionRadiusMeters": 400
+        }
+      ]
+    }
+  ]
+}

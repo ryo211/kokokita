@@ -3,10 +3,13 @@ import SwiftUI
 struct HomeScreen: View {
     @Environment(AppUIState.self) private var ui
     @State private var showSettings = false
+    @State private var showBookDrawer = false
     @State private var store = VisitListStore(repo: AppContainer.shared.repo)
     @State private var isPulsing = true
     @State private var recentVisits: [VisitAggregate]? = nil  // nilで初期化
     @State private var hasStartedAnimation = false
+    @State private var pendingCandidateCount: Int = 0
+    @State private var showAutoRecordReview = false
 
     let onKokokitaTap: () -> Void
     let onViewAllTap: () -> Void
@@ -49,6 +52,11 @@ struct HomeScreen: View {
                 .ignoresSafeArea()
 
                 VStack(spacing: 40) {
+                    // 自動記録候補バナー（控えめな導線）
+                    if pendingCandidateCount > 0 {
+                        autoRecordPendingBanner
+                    }
+
                     Spacer()
 
                     // メイン: 大きなKokokitaボタン
@@ -73,6 +81,24 @@ struct HomeScreen: View {
                 .padding(.bottom, 24)
             }
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        showBookDrawer = true
+                    } label: {
+                        HStack(spacing: 5) {
+                            Image(systemName: "book.closed.fill")
+                                .font(.subheadline)
+                                .foregroundStyle(ui.currentBook?.color ?? Color(.systemBlue))
+                            Text(ui.currentBook?.name ?? L.Book.myBook)
+                                .font(.subheadline.weight(.medium))
+                                .foregroundStyle(.primary)
+                                .lineLimit(1)
+                            Image(systemName: "chevron.down")
+                                .font(.caption2.weight(.semibold))
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         showSettings = true
@@ -87,6 +113,17 @@ struct HomeScreen: View {
             .sheet(isPresented: $showSettings) {
                 SettingsSheet()
             }
+            .sheet(isPresented: $showAutoRecordReview) {
+                AutoRecordCandidateReviewScreen()
+                    .onDisappear { loadPendingCandidateCount() }
+            }
+            .overlay(alignment: .leading) {
+                if showBookDrawer {
+                    BookPickerDrawer(onDismiss: { withAnimation(.easeInOut(duration: 0.2)) { showBookDrawer = false } })
+                        .transition(.move(edge: .leading))
+                }
+            }
+            .animation(.easeInOut(duration: 0.22), value: showBookDrawer)
         }
         .task {
             // アニメーション開始（初回のみ）
@@ -101,11 +138,44 @@ struct HomeScreen: View {
             // 画面表示のたびに最新データを読み込む
             loadTaxonomy()
             loadRecentVisits()
+            loadPendingCandidateCount()
         }
         .onReceive(NotificationCenter.default.publisher(for: .visitsChanged)) { _ in
             loadTaxonomy()
             loadRecentVisits()
+            loadPendingCandidateCount()
         }
+        .onReceive(NotificationCenter.default.publisher(for: .bookChanged)) { _ in
+            ui.currentBook = AppContainer.shared.currentBook
+            loadTaxonomy()
+            loadRecentVisits()
+        }
+    }
+
+    // MARK: - Auto Record Pending Banner
+
+    private var autoRecordPendingBanner: some View {
+        Button {
+            showAutoRecordReview = true
+        } label: {
+            HStack(spacing: 8) {
+                Image(systemName: "waveform.path.ecg")
+                    .font(.subheadline)
+                Text(L.AutoRecord.homePendingBanner(pendingCandidateCount))
+                    .font(.subheadline)
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+            }
+            .foregroundStyle(.white)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
+            .background(Color.accentColor.opacity(0.85))
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+        }
+        .buttonStyle(.plain)
+        .padding(.horizontal, 20)
+        .padding(.top, 8)
     }
 
     // MARK: - Kokokita Button
@@ -236,6 +306,15 @@ struct HomeScreen: View {
             store.members = try AppContainer.shared.repo.allMembers()
         } catch {
             Logger.error("Failed to load taxonomy: \(error.localizedDescription)")
+        }
+    }
+
+    /// 自動記録の未確認候補数を取得
+    private func loadPendingCandidateCount() {
+        do {
+            pendingCandidateCount = try AppContainer.shared.candidateRepo.countPending()
+        } catch {
+            Logger.error("Failed to load pending candidate count: \(error.localizedDescription)")
         }
     }
 

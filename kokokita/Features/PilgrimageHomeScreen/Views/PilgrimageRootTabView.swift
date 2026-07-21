@@ -4,12 +4,15 @@ import SwiftUI
 // 記録モードと同じカスタムタブバー UI を使用
 struct PilgrimageRootTabView: View {
     @Environment(AppModeManager.self) private var modeManager
+    @Environment(AppUIState.self) private var ui
     @State private var tab: PilgrimageTab = .home
     @State private var recording = RecordingController()
     /// CourseScreen と共有するストア（NEWバッジ連動用）
     @State private var courseStore = CourseListStore()
     /// コースタブの赤ポチ（タブをタップで消える、コース一覧NEWバッジとは独立）
     @State private var showCourseTabBadge = false
+    /// 自動記録候補がある場合、記録モード切り替えボタンに赤ポチを表示
+    @State private var hasAutoRecordCandidates = false
     /// 飛翔アニメーション実行中フラグ
     @State private var isFlyAnimating = false
     /// マイリストタブのグローバルフレーム
@@ -49,39 +52,41 @@ struct PilgrimageRootTabView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
 
                 // フッター（バナー広告 + カスタムタブバー）
-                VStack(spacing: 0) {
-                    #if DEBUG
-                    if debugSettings.isAdDisplayEnabled {
-                        BannerAdView(adUnitID: pilgrimageBannerAdUnitID)
-                            .background(.thinMaterial)
-                    }
-                    #else
-                    BannerAdView(adUnitID: pilgrimageBannerAdUnitID)
-                        .background(.thinMaterial)
-                    #endif
+                if !ui.isTabBarHidden {
+                    VStack(spacing: 0) {
+                        #if DEBUG
+                        if debugSettings.isAdDisplayEnabled && !PremiumManager.shared.isPremium {
+                            BannerAdView(adUnitID: pilgrimageBannerAdUnitID)
+                                .background(.thinMaterial)
+                        }
+                        #else
+                        if !PremiumManager.shared.isPremium {
+                            BannerAdView(adUnitID: pilgrimageBannerAdUnitID)
+                                .background(.thinMaterial)
+                        }
+                        #endif
 
-                    PilgrimageBottomBar(
-                        current: tab,
-                        showCourseTabBadge: showCourseTabBadge,
-                        onSelect: { newTab in
-                            let prev = tab
-                            tab = newTab
-                            if newTab == .map {
-                                // コースタブに入ったら赤ポチだけ消す
-                                // コース一覧のNEWバッジはそのまま表示し続ける
-                                withAnimation { showCourseTabBadge = false }
-                            } else if prev == .map {
-                                // コースタブから離れたらNEWバッジをクリア
-                                courseStore.newlyAddedCourseIds.removeAll()
-                            }
-                        },
-                        onRecord: {
-                            recording.checkLocationPermissionAndCreate()
-                        },
-                        onModeSwitch: { modeManager.setMode(.record) },
-                        onMyListTabFrame: { myListTabFrame = $0 },
-                        onCourseTabFrame: { courseTabFrame = $0 }
-                    )
+                        PilgrimageBottomBar(
+                            current: tab,
+                            showCourseTabBadge: showCourseTabBadge,
+                            onSelect: { newTab in
+                                let prev = tab
+                                tab = newTab
+                                if newTab == .map {
+                                    // コースタブに入ったら赤ポチだけ消す
+                                    withAnimation { showCourseTabBadge = false }
+                                }
+                            },
+                            onRecord: {
+                                recording.checkLocationPermissionAndCreate()
+                            },
+                            showRecordModeBadge: hasAutoRecordCandidates,
+                            onModeSwitch: { modeManager.setMode(.record) },
+                            onMyListTabFrame: { myListTabFrame = $0 },
+                            onCourseTabFrame: { courseTabFrame = $0 }
+                        )
+                    }
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
             }
             // ルートフレームを取得（グローバル→ローカル変換用）
@@ -106,11 +111,27 @@ struct PilgrimageRootTabView: View {
                 .allowsHitTesting(false)
             }
         }
+        .animation(.snappy, value: ui.isTabBarHidden)
         .recordingOverlay(recording)
         .ignoresSafeArea(.keyboard, edges: .bottom)
         .onReceive(NotificationCenter.default.publisher(for: .courseEnabled)) { notification in
             guard let _ = notification.object as? UUID else { return }
             triggerCourseEnabledEffect()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .courseDownloaded)) { _ in
+            withAnimation(.spring(duration: 0.4)) { showCourseTabBadge = true }
+        }
+        .onAppear {
+            refreshAutoRecordCandidateBadge()
+            // 起動時に未視認の新着コースがあればバッジを表示
+            if courseStore.hasUnseenCourses {
+                showCourseTabBadge = true
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .autoRecordCandidatesChanged)) { _ in
+            Task { @MainActor in
+                refreshAutoRecordCandidateBadge()
+            }
         }
     }
 
@@ -135,6 +156,15 @@ struct PilgrimageRootTabView: View {
             withAnimation(.spring(duration: 0.4)) {
                 showCourseTabBadge = true
             }
+        }
+    }
+
+    private func refreshAutoRecordCandidateBadge() {
+        do {
+            hasAutoRecordCandidates = try AppContainer.shared.candidateRepo.countPending() > 0
+        } catch {
+            hasAutoRecordCandidates = false
+            Logger.error("自動記録候補の件数取得に失敗しました", error: error)
         }
     }
 }
@@ -207,6 +237,7 @@ private struct PilgrimageBottomBar: View {
     let showCourseTabBadge: Bool
     let onSelect: (PilgrimageTab) -> Void
     let onRecord: () -> Void
+    let showRecordModeBadge: Bool
     let onModeSwitch: () -> Void
     let onMyListTabFrame: (CGRect) -> Void
     let onCourseTabFrame: (CGRect) -> Void
@@ -261,16 +292,26 @@ private struct PilgrimageBottomBar: View {
                 Button {
                     onModeSwitch()
                 } label: {
-                    VStack(spacing: 3) {
-                        Image(systemName: "mappin.circle")
-                            .font(.title3)
-                        Text(L.Tab.modeRecord)
-                            .font(.caption2)
+                    ZStack(alignment: .topTrailing) {
+                        VStack(spacing: 3) {
+                            Image(systemName: "mappin.circle")
+                                .font(.title3)
+                            Text(L.Tab.modeRecord)
+                                .font(.caption2)
+                        }
+                        .foregroundStyle(modeSwitchColor.opacity(colorScheme == .dark ? 1.0 : 0.7))
+                        .frame(width: 52, height: 52)
+                        .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .strokeBorder(modeSwitchColor.opacity(colorScheme == .dark ? 0.62 : 0.45), lineWidth: 1.5))
+
+                        if showRecordModeBadge {
+                            Circle()
+                                .fill(Color.red)
+                                .frame(width: 9, height: 9)
+                                .offset(x: -6, y: 6)
+                                .transition(.scale.combined(with: .opacity))
+                        }
                     }
-                    .foregroundStyle(modeSwitchColor.opacity(colorScheme == .dark ? 1.0 : 0.7))
-                    .frame(width: 52, height: 52)
-                    .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .strokeBorder(modeSwitchColor.opacity(colorScheme == .dark ? 0.62 : 0.45), lineWidth: 1.5))
                 }
                 .buttonStyle(.plain)
             }

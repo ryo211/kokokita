@@ -1,0 +1,176 @@
+{
+  "id": "course-ryoma-sakamoto-001",
+  "courseType": "pilgrimage",
+  "title": "坂本龍馬ゆかりの地",
+  "summary": "幕末の英雄・坂本龍馬の足跡を辿るコース。生誕地の高知から活動拠点の長崎、そして終焉の地・京都まで、龍馬が駆け抜けた歴史の舞台を巡ります。全14件収録。",
+  "source": "downloaded",
+  "isUserCreated": false,
+  "version": 1,
+  "recognitionRadiusMeters": 150.0,
+  "detailUrl": null,
+  "coverImageUrl": "https://kokokita-app.irodoriq.com/course/images/course/course-ryoma-sakamoto-001.jpg",
+  "categories": [
+    "history_culture"
+  ],
+  "sections": [
+    {
+      "sectionId": "sec-kochi",
+      "name": "高知（生誕・青年期）",
+      "sectionDescription": "1835年、龍馬が生まれ育った土佐高知。城下町に残る足跡と太平洋を望む桂浜のシンボルを巡ります。",
+      "orderIndex": 0,
+      "coverImageUrl": null,
+      "spots": [
+        {
+          "spotId": "ryoma-001",
+          "name": "坂本龍馬誕生地",
+          "latitude": 33.5571713,
+          "longitude": 133.525921,
+          "spotDescription": "龍馬が1835年11月15日に生まれた郷士坂本家屋敷跡。現在は上町病院前に記念碑が立つ。",
+          "coverImageUrl": null,
+          "orderIndex": 0,
+          "recognitionRadiusMeters": 100.0,
+          "address": "高知県高知市上町1丁目"
+        },
+        {
+          "spotId": "ryoma-002",
+          "name": "龍馬の生まれたまち記念館",
+          "latitude": 33.5565,
+          "longitude": 133.5245,
+          "spotDescription": "龍馬の生誕地・上町エリアの歴史と文化を紹介する記念館。少年時代を中心に映像や模型で展示。",
+          "coverImageUrl": null,
+          "orderIndex": 1,
+          "recognitionRadiusMeters": 100.0,
+          "address": "高知県高知市上町2-6-33"
+        },
+        {
+          "spotId": "ryoma-003",
+          "name": "高知城",
+          "latitude": 33.5608125,
+          "longitude": 133.5314844,
+          "spotDescription": "土佐山内家の居城。龍馬も見上げた城で、天守からは高知市内を一望できる。現存天守12城の一つ。",
+          "coverImageUrl": null,
+          "orderIndex": 2,
+          "recognitionRadiusMeters": 200.0,
+          "address": "高知県高知市丸ノ内1-2-1"
+        },
+        {
+          "spotId": "ryoma-004",
+          "name": "坂本龍馬像（桂浜）",
+          "latitude": 33.4986187,
+          "longitude": 133.5754821,
+          "spotDescription": "1928年建立。太平洋を見据えて立つ龍馬の銅像。「懐手に遠くを望む姿」は日本で最も有名な銅像の一つ。",
+          "coverImageUrl": null,
+          "orderIndex": 3,
+          "recognitionRadiusMeters": 150.0,
+          "address": "高知県高知市浦戸桂浜"
+        },
+        {
+          "spotId": "ryoma-005",
+          "name": "高知県立坂本龍馬記念館",
+          "latitude": 33.4964655,
+          "longitude": 133.5719482,
+          "spotDescription": "桂浜公園内の高台に建つ記念館。龍馬直筆の手紙や近江屋復元模型を展示。屋上から太平洋を一望できる。",
+          "coverImageUrl": null,
+          "orderIndex": 4,
+          "recognitionRadiusMeters": 150.0,
+          "address": "高知県高知市浦戸城山830"
+        }
+      ]
+    },
+    {
+      "sectionId": "sec-nagasaki",
+      "name": "長崎（亀山社中・海援隊）",
+      "sectionDescription": "龍馬が日本初の商社「亀山社中」を設立した地。西洋との窓口だった長崎で、薩長同盟へと奔走した拠点を辿ります。",
+      "orderIndex": 1,
+      "coverImageUrl": null,
+      "spots": [
+        {
+          "spotId": "ryoma-006",
+          "name": "亀山社中記念館",
+          "latitude": 32.748767,
+          "longitude": 129.8867825,
+          "spotDescription": "1865年に龍馬が設立した日本初の商社「亀山社中」の跡地。当時の姿に復元され、龍馬ゆかりの品々を展示。",
+          "coverImageUrl": null,
+          "orderIndex": 0,
+          "recognitionRadiusMeters": 100.0,
+          "address": "長崎県長崎市伊良林2-7-24"
+        },
+        {
+          "spotId": "ryoma-007",
+          "name": "風頭公園（龍馬像）",
+          "latitude": 32.7458111,
+          "longitude": 129.8858971,
+          "spotDescription": "亀山社中近くの展望公園に立つ龍馬像。長崎の港と街並みを眼下に見渡す、龍馬が見た景色を感じられる場所。",
+          "coverImageUrl": null,
+          "orderIndex": 1,
+          "recognitionRadiusMeters": 150.0,
+          "address": "長崎県長崎市伊良林3丁目"
+        }
+      ]
+    },
+    {
+      "sectionId": "sec-kyoto",
+      "name": "京都（薩長同盟・終焉）",
+      "sectionDescription": "薩長同盟の舞台となった伏見・寺田屋、そして龍馬が凶刃に倒れた河原町。幕末最大の激動の地を巡ります。",
+      "orderIndex": 2,
+      "coverImageUrl": null,
+      "spots": [
+        {
+          "spotId": "ryoma-008",
+          "name": "寺田屋",
+          "latitude": 34.930297,
+          "longitude": 135.7595609,
+          "spotDescription": "龍馬が伏見奉行所の捕吏に襲撃された旅籠。妻・お龍が裸で駆け上がり龍馬を救ったエピソードで有名。",
+          "coverImageUrl": null,
+          "orderIndex": 0,
+          "recognitionRadiusMeters": 100.0,
+          "address": "京都府京都市伏見区南浜町263"
+        },
+        {
+          "spotId": "ryoma-009",
+          "name": "酢屋（海援隊京都本部跡）",
+          "latitude": 35.0084098,
+          "longitude": 135.7692128,
+          "spotDescription": "龍馬が海援隊の京都事務所を構え、自身も下宿した材木商。現在は「龍馬ギャラリー」として2階を公開。",
+          "coverImageUrl": null,
+          "orderIndex": 1,
+          "recognitionRadiusMeters": 100.0,
+          "address": "京都府京都市中京区河原町通三条下ル大黒町40"
+        },
+        {
+          "spotId": "ryoma-010",
+          "name": "近江屋跡",
+          "latitude": 35.0056091,
+          "longitude": 135.7691003,
+          "spotDescription": "1867年11月15日、龍馬が中岡慎太郎とともに暗殺された醤油商の宿。現在は石碑が残るのみ。",
+          "coverImageUrl": null,
+          "orderIndex": 2,
+          "recognitionRadiusMeters": 100.0,
+          "address": "京都府京都市中京区河原町通蛸薬師下ル船屋町384"
+        },
+        {
+          "spotId": "ryoma-011",
+          "name": "円山公園（龍馬・慎太郎像）",
+          "latitude": 35.0030751,
+          "longitude": 135.7818542,
+          "spotDescription": "京都最古の公園に立つ坂本龍馬と中岡慎太郎の並び立つ銅像。二人の盟友の姿を伝える京都のシンボル。",
+          "coverImageUrl": null,
+          "orderIndex": 3,
+          "recognitionRadiusMeters": 150.0,
+          "address": "京都府京都市東山区円山町"
+        },
+        {
+          "spotId": "ryoma-012",
+          "name": "京都霊山護国神社",
+          "latitude": 34.9999349,
+          "longitude": 135.7829385,
+          "spotDescription": "維新の志士たちが眠る霊山。坂本龍馬と中岡慎太郎の墓があり、隣接の霊山歴史館は幕末専門の資料館。",
+          "coverImageUrl": null,
+          "orderIndex": 4,
+          "recognitionRadiusMeters": 150.0,
+          "address": "京都府京都市東山区清閑寺霊山町1"
+        }
+      ]
+    }
+  ]
+}

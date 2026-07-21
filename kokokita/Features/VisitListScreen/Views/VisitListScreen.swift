@@ -12,9 +12,6 @@ struct VisitListScreen: View {
     @State private var router = NavigationRouter()
     @State private var store = VisitListStore(repo: AppContainer.shared.repo)
 
-    @State private var pendingDeleteId: UUID? = nil
-    @State private var showDeleteConfirm = false
-
     @State private var showSearchSheet = false
 
     @State private var editingTarget: VisitAggregate? = nil
@@ -188,27 +185,6 @@ struct VisitListScreen: View {
                 }
             }
         }
-        .alert(
-            L.Home.deleteConfirmTitle,
-            isPresented: Binding(
-                get: { pendingDeleteId != nil },
-                set: { if !$0 { pendingDeleteId = nil } }
-            )
-        ) {
-            Button(L.Common.delete, role: .destructive) {
-                if let id = pendingDeleteId {
-                    withAnimation {
-                        store.delete(id: id)
-                    }
-                }
-                pendingDeleteId = nil
-            }
-            Button(L.Common.cancel, role: .cancel) {
-                pendingDeleteId = nil
-            }
-        } message: {
-            Text(L.Home.deleteConfirmMessage)
-        }
     }
 
     // 各リスト行のビュー（さらに分離）
@@ -237,10 +213,11 @@ struct VisitListScreen: View {
         } label: {
             VisitListRow(agg: agg, labelMap: labelMap, groupMap: groupMap, memberMap: memberMap, labelColorMap: labelColorMap)
         }
-        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
             Button() {
-                pendingDeleteId = agg.id
-                showDeleteConfirm = true
+                withAnimation {
+                    store.delete(id: agg.id)
+                }
             } label: {
                 Label(L.Common.delete, systemImage: "trash")
             }
@@ -248,17 +225,7 @@ struct VisitListScreen: View {
         }
         .listRowBackground(
             Group {
-                if pendingDeleteId == agg.id && showDeleteConfirm {
-                    // 削除確認時: 薄い赤背景
-                    LinearGradient(
-                        colors: [
-                            Color.red.opacity(0.08),
-                            Color.red.opacity(0.04)
-                        ],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
-                } else if isWithin24Hours(agg.visit.timestampUTC) {
+                if isWithin24Hours(agg.visit.timestampUTC) {
                     // 直近24時間の記録: 非常に控えめな青色背景
                     Color.accentColor.opacity(0.03)
                 } else {

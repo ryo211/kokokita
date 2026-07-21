@@ -26,8 +26,6 @@ struct LabelDetailView: View {
     @State private var memberMap: [UUID: String] = [:]
     @State private var visitLabelColorMap: [String: Color] = [:]
     @State private var editingTarget: VisitAggregate? = nil
-    @State private var showVisitDeleteConfirm = false
-    @State private var pendingDeleteVisitId: UUID? = nil
     @State private var selectedVisit: VisitSelection? = nil
     @State private var focusedVisitId: UUID? = nil
     private let repo = AppContainer.shared.repo
@@ -92,8 +90,7 @@ struct LabelDetailView: View {
                                 onEdit: { editingTarget = visit },
                                 onShare: {},
                                 onDelete: {
-                                    pendingDeleteVisitId = selection.id
-                                    showVisitDeleteConfirm = true
+                                    deleteVisit(id: selection.id)
                                 },
                                 onUpdate: {
                                     loadRelatedVisits()
@@ -183,18 +180,6 @@ struct LabelDetailView: View {
             Button(L.Common.cancel, role: .cancel) {}
             Button(L.Common.delete, role: .destructive) { delete() }
         } message: { Text(L.LabelManagement.deleteIrreversible) }
-        .alert(L.Detail.deleteVisitTitle, isPresented: $showVisitDeleteConfirm) {
-            Button(L.Common.cancel, role: .cancel) {
-                pendingDeleteVisitId = nil
-            }
-            Button(L.Common.delete, role: .destructive) {
-                if let id = pendingDeleteVisitId {
-                    deleteVisit(id: id)
-                }
-            }
-        } message: {
-            Text(L.Detail.deleteVisitMessage)
-        }
         .alert(L.Common.error, isPresented: Binding(get: { store.alert != nil }, set: { _ in store.alert = nil })) {
             Button(L.Common.ok, role: .cancel) {}
         } message: { Text(store.alert ?? "") }
@@ -275,7 +260,6 @@ struct LabelDetailView: View {
     private func deleteVisit(id: UUID) {
         do {
             try repo.delete(id: id)
-            pendingDeleteVisitId = nil
             loadRelatedVisits()
         } catch {
             Logger.error("Failed to delete visit: \(error.localizedDescription)")

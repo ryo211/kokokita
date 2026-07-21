@@ -28,6 +28,10 @@ struct VisitEditScreen: View {
     @State private var groupOptions: [GroupTag] = []
     @State private var memberOptions: [MemberTag] = []
 
+    // ブック
+    @State private var bookOptions: [Book] = []
+    @State private var bookPickerShown = false
+
     // ピッカー/作成シート
     @State private var labelPickerShown = false
     @State private var groupPickerShown = false
@@ -74,6 +78,12 @@ struct VisitEditScreen: View {
         return "\(head) ほか\(selectedMemberNames.count - 2)件"
     }
 
+    // 選択中のブック名
+    private var selectedBookName: String {
+        guard let bookId = vm.selectedBookId else { return L.Common.notSelected }
+        return bookOptions.first(where: { $0.id == bookId })?.name ?? L.Common.notSelected
+    }
+
     var body: some View {
         NavigationStack {
             formContent
@@ -89,6 +99,7 @@ struct VisitEditScreen: View {
         .sheet(isPresented: $groupPickerShown) { groupPickerSheetContent }
         .sheet(isPresented: $memberPickerShown) { memberPickerSheetContent }
         .sheet(isPresented: $visitCopyPickerShown) { visitCopyPickerSheetContent }
+        .sheet(isPresented: $bookPickerShown) { bookPickerSheetContent }
         .ignoresSafeArea(.keyboard, edges: .bottom)
         .onDisappear {
             vm.discardPhotoEditingIfNeeded()
@@ -247,6 +258,17 @@ struct VisitEditScreen: View {
                 onCreate: createMemberAndSelect
             )
         }
+    }
+
+    // MARK: - Book Picker Sheet
+
+    @ViewBuilder
+    private var bookPickerSheetContent: some View {
+        BookMovePickerSheet(
+            books: bookOptions,
+            selectedBookId: $vm.selectedBookId,
+            isPresented: $bookPickerShown
+        )
     }
 
     // MARK: - Visit Copy Picker Sheet
@@ -475,6 +497,25 @@ struct VisitEditScreen: View {
                 .padding(.top, UIConstants.Spacing.small)
             }
 
+            // ブック移動（編集モード・複数ブックがある場合のみ）
+            if case .edit = mode, bookOptions.count > 1 {
+                Section {
+                    Button {
+                        bookPickerShown = true
+                    } label: {
+                        HStack {
+                            Label(selectedBookName, systemImage: "books.vertical")
+                                .foregroundStyle(.primary)
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                } header: {
+                    Text(L.VisitEdit.bookSection)
+                }
+            }
         }
     }
 
@@ -510,6 +551,7 @@ struct VisitEditScreen: View {
         labelOptions = ((try? AppContainer.shared.repo.allLabels()) ?? []).sortedByName
         groupOptions = ((try? AppContainer.shared.repo.allGroups()) ?? []).sortedByName
         memberOptions = ((try? AppContainer.shared.repo.allMembers()) ?? []).sortedByName
+        bookOptions = (try? AppContainer.shared.bookRepo.allBooks()) ?? []
     }
 
     private func createLabelAndSelect() {
@@ -568,5 +610,63 @@ struct VisitEditScreen: View {
             return 0
         }
         return window.safeAreaInsets.bottom
+    }
+}
+
+// MARK: - Book Move Picker Sheet
+
+private struct BookMovePickerSheet: View {
+    let books: [Book]
+    @Binding var selectedBookId: UUID?
+    @Binding var isPresented: Bool
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 0) {
+                    bookRows
+                }
+                .background(Color(.systemBackground))
+            }
+            .navigationTitle(L.VisitEdit.selectBook)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button(L.Common.close) { isPresented = false }
+                }
+            }
+        }
+    }
+
+    private var bookRows: some View {
+        VStack(spacing: 0) {
+            ForEach(books) { book in
+                bookRow(book)
+            }
+        }
+    }
+
+    private func bookRow(_ book: Book) -> some View {
+        Button {
+            selectedBookId = book.id
+            isPresented = false
+        } label: {
+            HStack(spacing: 12) {
+                Circle()
+                    .fill(book.color)
+                    .frame(width: 12, height: 12)
+                Text(book.name)
+                    .foregroundStyle(.primary)
+                Spacer()
+                if selectedBookId == book.id {
+                    Image(systemName: "checkmark")
+                        .foregroundStyle(Color.accentColor)
+                }
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 14)
+        }
+        .background(Color(.secondarySystemBackground))
+        .overlay(Divider(), alignment: .bottom)
     }
 }

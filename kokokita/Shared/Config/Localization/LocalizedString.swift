@@ -52,6 +52,8 @@ enum L {
         static let recordDateTime = localized("visit.edit.recordDateTime")
         static let copyFromOtherVisit = localized("visit.edit.copyFromOtherVisit")
         static let selectVisitToCopy = localized("visit.edit.selectVisitToCopy")
+        static let bookSection = localized("visit.edit.bookSection")
+        static let selectBook = localized("visit.edit.selectBook")
     }
 
     // MARK: - Photo
@@ -449,6 +451,10 @@ enum L {
         static let reviewApp = localized("settingssheet.reviewApp")
         static let developerTools = localized("settingssheet.developerTools")
         static let version = localized("settingssheet.version")
+        static let premiumUpgrade = localized("settingssheet.premiumUpgrade")
+        static let premiumUpgradeDescription = localized("settingssheet.premiumUpgradeDescription")
+        static let premiumActive = localized("settingssheet.premiumActive")
+        static let premiumActiveDescription = localized("settingssheet.premiumActiveDescription")
     }
 
     // MARK: - Course Screen
@@ -470,6 +476,7 @@ enum L {
         static let typePilgrimage = localized("course.type.pilgrimage")
         static let typeStampRally = localized("course.type.stampRally")
         static let typeMyList = localized("course.type.myList")
+        static let categoryAll             = localized("course.category.all")
         static let categoryHistoryCulture  = localized("course.category.history_culture")
         static let categoryNature          = localized("course.category.nature")
         static let categoryArtEntertainment = localized("course.category.art_entertainment")
@@ -478,7 +485,15 @@ enum L {
         static let categoryAnime           = localized("course.category.anime")
         static let categoryUserCreated     = localized("course.category.user_created")
         static let newBadge = localized("course.newBadge")
+        static let newSectionTitle = localized("course.newSectionTitle")
+        static let favoriteSectionTitle = localized("course.favoriteSectionTitle")
+        static let favoriteToggleAdd = localized("course.favoriteToggleAdd")
+        static let favoriteToggleRemove = localized("course.favoriteToggleRemove")
+        static let favoriteViewAll = localized("course.favoriteViewAll")
+        static let favoriteEmptyDescription = localized("course.favoriteEmptyDescription")
         static let achieved = localized("course.achieved")
+        static let addHint = localized("course.addHint")
+
         static let notVisited = localized("course.notVisited")
         static let noAddress = localized("course.noAddress")
         static func visitedOn(_ dateString: String) -> String { String(format: localized("course.visitedOn"), dateString) }
@@ -488,6 +503,8 @@ enum L {
         static let sortNearby = localized("course.sort.nearby")
         static let sortDefault  = localized("course.sort.default")
         static let sortDistance = localized("course.sort.distance")
+        static let sortUpdatedAt = localized("course.sort.updatedAt")
+        static let sortSpotCount = localized("course.sort.spotCount")
     }
 
     // MARK: - Course Store（コースダウンロード）
@@ -503,6 +520,7 @@ enum L {
         static let filterAvailable = localized("courseStore.filter.available")
         static let filterInstalled = localized("courseStore.filter.installed")
         static let filterAll = localized("courseStore.filter.all")
+        static let searchPlaceholder = localized("courseStore.searchPlaceholder")
     }
 
     // MARK: - Manual Entry (後付け記録)
@@ -615,12 +633,39 @@ enum L {
         static let modeFavoritesShort = localized("spotList.mode.favorites.short")
         static let modeVisited = localized("spotList.mode.visited")
         static let modeVisitedShort = localized("spotList.mode.visited.short")
+        static let modePrefecture = localized("spotList.mode.prefecture")
+        static let modePrefectureShort = localized("spotList.mode.prefecture.short")
         static let noFavorites = localized("spotList.noFavorites")
         static let noVisited = localized("spotList.noVisited")
+        static let noPrefectureSpots = localized("spotList.noPrefectureSpots")
         static let sortTypeAdded = localized("spotList.sortType.added")
         static let nearbySubtitle = localized("spotList.nearbySubtitle")
         static let distanceSubtitle = localized("spotList.distanceSubtitle")
         static func totalCount(_ count: Int) -> String { String(format: localized("spotList.totalCount"), count) }
+        static let filterPrefecture = localized("spotList.filter.prefecture")
+        static let filterAllPrefectures = localized("spotList.filter.allPrefectures")
+        static let menuInquiry = localized("spotList.menu.inquiry")
+        static let menuAddFolder = localized("spotList.menu.addFolder")
+        static let menuShare = localized("spotList.menu.share")
+        static let modeFolder = localized("spotList.mode.folder")
+        static let modeFolderShort = localized("spotList.mode.folder.short")
+        static let noFolder = localized("spotList.noFolder")
+    }
+
+    // MARK: - Folder（フォルダ機能）
+    enum Folder {
+        static let defaultName = localized("folder.defaultName")
+        static let title = localized("folder.title")
+        static let new = localized("folder.new")
+        static let namePlaceholder = localized("folder.namePlaceholder")
+        static let create = localized("folder.create")
+        static let rename = localized("folder.rename")
+        static let delete = localized("folder.delete")
+        static let deleteConfirm = localized("folder.deleteConfirm")
+        static let deleteConfirmMessage = localized("folder.deleteConfirmMessage")
+        static let select = localized("folder.select")
+        static let added = localized("folder.added")
+        static let removeFromFolder = localized("folder.removeFromFolder")
     }
 
     // MARK: - TaxonomyList（タクソノミー一覧ソート）
@@ -639,6 +684,31 @@ enum L {
         static let noFavoritesShort   = localized("spotPanelList.noFavoritesShort")
     }
 
+    // MARK: - Inquiry（問い合わせ）
+    enum Inquiry {
+        static let title              = localized("inquiry.title")
+        static let sectionTarget      = localized("inquiry.sectionTarget")
+        static let sectionCategory    = localized("inquiry.sectionCategory")
+        static let sectionContent     = localized("inquiry.sectionContent")
+        static let categoryProvideInfo = localized("inquiry.category.provideInfo")
+        static let categoryReportError = localized("inquiry.category.reportError")
+        static let categoryRequest    = localized("inquiry.category.request")
+        static let categoryQuestion   = localized("inquiry.category.question")
+        static let categoryOther      = localized("inquiry.category.other")
+        static let sendButton         = localized("inquiry.sendButton")
+        static let sendNote           = localized("inquiry.sendNote")
+        static let emailLabelCourse   = localized("inquiry.email.labelCourse")
+        static let emailLabelSpot     = localized("inquiry.email.labelSpot")
+        static let emailLabelCategory = localized("inquiry.email.labelCategory")
+        static let emailLabelContent  = localized("inquiry.email.labelContent")
+        static func emailSubject(_ course: String, _ spot: String) -> String {
+            String(format: localized("inquiry.email.subject"), course, spot)
+        }
+        static func emailSubjectCourse(_ course: String) -> String {
+            String(format: localized("inquiry.email.subjectCourse"), course)
+        }
+    }
+
     // MARK: - CheckIn Result
     enum CheckIn {
         static let resultTitle = localized("checkIn.resultTitle")
@@ -649,6 +719,184 @@ enum L {
         static let retroactiveTitle = localized("checkIn.retroactiveTitle")
         static let retroactiveSubtitle = localized("checkIn.retroactiveSubtitle")
         static let retroactiveDateSuffix = localized("checkIn.retroactiveDateSuffix")
+    }
+
+    // MARK: - AutoRecord（自動記録）
+    enum AutoRecord {
+        static let badgeTitle = localized("autoRecord.badge.title")
+        static func badgeCountFormat(_ count: Int) -> String { String(format: localized("autoRecord.badge.countFormat"), count) }
+        static let reviewTitle = localized("autoRecord.review.title")
+        static let reviewSubtitle = localized("autoRecord.review.subtitle")
+        static let reviewEmpty = localized("autoRecord.review.empty")
+        static let approve = localized("autoRecord.review.approve")
+        static let dismiss = localized("autoRecord.review.dismiss")
+        static let dismissAll = localized("autoRecord.review.dismissAll")
+        static let arrivalDate = localized("autoRecord.review.arrivalDate")
+        static let stayDuration = localized("autoRecord.review.stayDuration")
+        static func stayDurationFormat(_ minutes: Int) -> String { String(format: localized("autoRecord.review.stayDurationFormat"), minutes) }
+        static let accuracy = localized("autoRecord.review.accuracy")
+        static func accuracyFormat(_ meters: Int) -> String { String(format: localized("autoRecord.review.accuracyFormat"), meters) }
+        static let loadingPlace = localized("autoRecord.review.loadingPlace")
+        static let settingsTitle = localized("autoRecord.settings.title")
+        static let settingsToggle = localized("autoRecord.settings.toggle")
+        static let settingsToggleDescription = localized("autoRecord.settings.toggleDescription")
+        static let reviewCandidates = localized("autoRecord.settings.reviewCandidates")
+        static let permissionTitle = localized("autoRecord.permission.title")
+        static let permissionMessage = localized("autoRecord.permission.message")
+        static let permissionOpenSettings = localized("autoRecord.permission.openSettings")
+        static let dismissConfirmTitle = localized("autoRecord.dismiss.confirmTitle")
+        static let dismissConfirmMessage = localized("autoRecord.dismiss.confirmMessage")
+        static let dismissAllConfirmTitle = localized("autoRecord.dismissAll.confirmTitle")
+        static func dismissAllConfirmMessage(_ count: Int) -> String { String(format: localized("autoRecord.dismissAll.confirmMessage"), count) }
+        static func homePendingBanner(_ count: Int) -> String { String(format: localized("autoRecord.home.pendingBanner"), count) }
+        static let exclude = localized("autoRecord.exclude")
+        static let excludeTitle = localized("autoRecord.exclude.title")
+        static func excludeMessage(_ radiusMeters: Int) -> String { String(format: localized("autoRecord.exclude.message"), radiusMeters) }
+        static let excludeLabelPlaceholder = localized("autoRecord.exclude.labelPlaceholder")
+        static let excludeConfirm = localized("autoRecord.exclude.confirm")
+        static let excludedLocationsTitle = localized("autoRecord.excludedLocations.title")
+        static let excludedLocationsEmpty = localized("autoRecord.excludedLocations.empty")
+        static let excludedLocationsFooter = localized("autoRecord.excludedLocations.footer")
+        static func excludedLocationsRadius(_ meters: Int) -> String { String(format: localized("autoRecord.excludedLocations.radius"), meters) }
+    }
+
+    // MARK: - Trash（ゴミ箱）
+    enum Trash {
+        static let title = localized("trash.title")
+        static let empty = localized("trash.empty")
+        static let emptyDescription = localized("trash.emptyDescription")
+        static let restore = localized("trash.restore")
+        static let permanentlyDelete = localized("trash.permanentlyDelete")
+        static let emptyTrash = localized("trash.emptyTrash")
+        static let emptyTrashConfirmTitle = localized("trash.emptyTrashConfirmTitle")
+        static func emptyTrashConfirmMessage(_ count: Int) -> String { String(format: localized("trash.emptyTrashConfirmMessage"), count) }
+        static let permanentlyDeleteConfirmTitle = localized("trash.permanentlyDeleteConfirmTitle")
+        static let permanentlyDeleteConfirmMessage = localized("trash.permanentlyDeleteConfirmMessage")
+        static func deletedAt(_ date: String) -> String { String(format: localized("trash.deletedAt"), date) }
+        static func expiresIn(_ days: Int) -> String { String(format: localized("trash.expiresIn"), days) }
+        static let expiresToday = localized("trash.expiresToday")
+        static func count(_ n: Int) -> String { String(format: localized("trash.count"), n) }
+    }
+
+    // MARK: - Book
+    enum Book {
+        static let myBook = localized("book.myBook")
+        static let pickerTitle = localized("book.pickerTitle")
+        static let newBook = localized("book.newBook")
+        static let namePlaceholder = localized("book.namePlaceholder")
+        static let premiumTitle = localized("book.premiumTitle")
+        static let premiumDescription = localized("book.premiumDescription")
+        static let premiumUpgrade = localized("book.premiumUpgrade")
+        static let deleteConfirm = localized("book.deleteConfirm")
+        static let deleteDescription = localized("book.deleteDescription")
+        static let rename = localized("book.rename")
+        static let colorLabel = localized("book.colorLabel")
+        static let currentLabel = localized("book.currentLabel")
+    }
+
+    // MARK: - SlideShow（シネマモード）
+    enum SlideShow {
+        static let menuLabel = localized("slideShow.menuLabel")
+        static let toolbarButton = localized("slideShow.toolbarButton")
+        static let noPlayableSpots = localized("slideShow.noPlayableSpots")
+        static let noPlayableSpotsDesc = localized("slideShow.noPlayableSpotsDesc")
+        static let settingsTitle = localized("slideShow.settings.title")
+        static let settingsInterval = localized("slideShow.settings.interval")
+        static func settingsIntervalSec(_ sec: Double) -> String {
+            String(format: localized("slideShow.settings.intervalSec"), sec)
+        }
+        static let settingsMinSec = localized("slideShow.settings.minSec")
+        static let settingsMaxSec = localized("slideShow.settings.maxSec")
+        static let settingsAnimationSpeed = localized("slideShow.settings.animationSpeed")
+        static let speedSlow   = localized("slideShow.settings.speed.slow")
+        static let speedMedium = localized("slideShow.settings.speed.medium")
+        static let speedFast   = localized("slideShow.settings.speed.fast")
+    }
+
+    // MARK: - TourMode（ツアーモード）
+    enum TourMode {
+        static let title = localized("tourMode.title")
+        static let menuLabel = localized("tourMode.menuLabel")
+        static let toolbarButton = localized("tourMode.toolbarButton")
+        static let settingsIntervalLabel = localized("tourMode.settings.intervalLabel")
+        static func settingsIntervalSec(_ sec: Double) -> String {
+            String(format: localized("tourMode.settings.intervalSec"), sec)
+        }
+        static let settingsIntervalMin = localized("tourMode.settings.intervalMin")
+        static let settingsIntervalMax = localized("tourMode.settings.intervalMax")
+        static let startButton = localized("tourMode.startButton")
+        static let settingsPhotoSpotsOnly = localized("tourMode.settings.photoSpotsOnly")
+        static let settingsTypewriter = localized("tourMode.settings.typewriter")
+        static let settingsTypewriterDesc = localized("tourMode.settings.typewriterDesc")
+    }
+
+    // MARK: - CourseDetail メニュー
+    enum CourseDetail {
+        static let menuCourseInfo = localized("courseDetail.menu.courseInfo")
+        static let menuShare = localized("courseDetail.menu.share")
+        static let menuSectionMapSettings = localized("courseDetail.menu.sectionMapSettings")
+        static let menuSectionPlayback = localized("courseDetail.menu.sectionPlayback")
+        static let menuZoomOnFocus = localized("courseDetail.menu.zoomOnFocus")
+        static let menuZoomOnFocusOn = localized("courseDetail.menu.zoomOnFocusOn")
+        static let menuZoomOnFocusOff = localized("courseDetail.menu.zoomOnFocusOff")
+        static let menuSpotPhotoSize = localized("courseDetail.menu.spotPhotoSize")
+    }
+
+    // MARK: - Share（共有プレビュー）
+    enum Share {
+        static let previewTitle = localized("share.previewTitle")
+        static let button = localized("share.button")
+        static let imageSection = localized("share.imageSection")
+        static let mapTitle = localized("share.mapTitle")
+        static let textLabel = localized("share.textLabel")
+        static let mapEditHint = localized("share.mapEditHint")
+        static let mapEditorTitle = localized("share.mapEditorTitle")
+        static let layoutLabel = localized("share.layoutLabel")
+        static let layoutPhoto = localized("share.layoutPhoto")
+        static let layoutMap = localized("share.layoutMap")
+        static let showSubThumbnail = localized("share.showSubThumbnail")
+        static let selectPhoto = localized("share.selectPhoto")
+        static func spotShareText(_ course: String, _ spot: String) -> String {
+            String(format: localized("share.spotShareText"), course, spot)
+        }
+        static func courseShareText(_ course: String) -> String {
+            String(format: localized("share.courseShareText"), course)
+        }
+        static func spotCountLabel(_ count: Int) -> String {
+            String(format: localized("share.spotCountLabel"), count)
+        }
+    }
+
+    // MARK: - Paywall（課金ペイウォール）
+    enum Paywall {
+        static let title                = localized("paywall.title")
+        static let subtitle             = localized("paywall.subtitle")
+        static let featureNoAds         = localized("paywall.feature.noAds")
+        static let featureNoAdsDesc     = localized("paywall.feature.noAdsDesc")
+        static let featureMultiBook     = localized("paywall.feature.multiBook")
+        static let featureMultiBookDesc = localized("paywall.feature.multiBookDesc")
+        static let featureCourse        = localized("paywall.feature.coursePlayback")
+        static let featureCourseDesc    = localized("paywall.feature.coursePlaybackDesc")
+        static let monthly              = localized("paywall.monthly")
+        static let yearly               = localized("paywall.yearly")
+        static let yearlyBadge          = localized("paywall.yearlyBadge")
+        static let lifetime             = localized("paywall.lifetime")
+        static let lifetimeBadge        = localized("paywall.lifetimeBadge")
+        static let ctaSubscribe         = localized("paywall.ctaSubscribe")
+        static let ctaLifetime          = localized("paywall.ctaLifetime")
+        static let restore              = localized("paywall.restore")
+        static let terms                = localized("paywall.terms")
+        static let privacy              = localized("paywall.privacy")
+        static let loadingProducts      = localized("paywall.loadingProducts")
+        static let courseGateTitle      = localized("paywall.courseGateTitle")
+        static let courseGateMessage    = localized("paywall.courseGateMessage")
+        static let restoreSuccess       = localized("paywall.restoreSuccess")
+        static let restoreFailed        = localized("paywall.restoreFailed")
+        static let purchaseError        = localized("paywall.purchaseError")
+        static let alreadyPremium       = localized("paywall.alreadyPremium")
+        static let debugOverrideOn      = localized("paywall.debugOverrideOn")
+        static let debugOverrideOff     = localized("paywall.debugOverrideOff")
+        static let debugOverrideNone    = localized("paywall.debugOverrideNone")
     }
 
     // MARK: - Helper
