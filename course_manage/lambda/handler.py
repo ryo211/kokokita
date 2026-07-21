@@ -310,6 +310,9 @@ def handle_publish(body):
         for c in courses:
             if c.get('jsonPath') == course_json_path:
                 c['version']       = new_version
+                c['title']         = draft_data.get('title', c.get('title', ''))
+                c['summary']       = draft_data.get('summary', c.get('summary', ''))
+                c['categories']    = draft_data.get('categories', c.get('categories', []))
                 c['coverImageUrl'] = draft_data.get('coverImageUrl')
                 c['spotCount']     = spot_count
                 c['spotImgCount']  = spot_img_count
