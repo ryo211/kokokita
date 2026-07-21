@@ -25,9 +25,9 @@ struct CourseListView: View {
         return store.courses.filter { $0.title.localizedCaseInsensitiveContains(searchText) }
     }
 
-    // 新着コース（未視認 or 視認から24時間以内）
+    // 新着コース（未視認 or 視認から24時間以内）、新しいものを左に表示
     private var newCourses: [Course] {
-        store.courses.filter { store.isNew($0.id) }
+        store.courses.filter { store.isNew($0.id) }.reversed()
     }
 
     // お気に入りコース（追加した順、新しい順）

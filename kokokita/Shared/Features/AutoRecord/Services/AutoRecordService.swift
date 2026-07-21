@@ -89,10 +89,14 @@ extension AutoRecordService: CLLocationManagerDelegate {
             return
         }
 
-        // 滞在時間足切り
+        // 滞在時間足切り（短すぎる・長すぎる滞在を除外）
         let stayDuration = visit.departureDate.timeIntervalSince(visit.arrivalDate)
         guard stayDuration >= AppConfig.autoRecordMinStaySeconds else {
             Logger.debug("自動記録: 滞在時間不足で破棄 (\(Int(stayDuration))秒 < \(Int(AppConfig.autoRecordMinStaySeconds))秒)")
+            return
+        }
+        guard stayDuration <= AppConfig.autoRecordMaxStaySeconds else {
+            Logger.debug("自動記録: 滞在時間超過で破棄 (\(Int(stayDuration / 3600))時間 > 72時間)")
             return
         }
 
