@@ -759,6 +759,7 @@
 "paywall.debugOverrideOn" = "デバッグ: Premium強制ON";
 "paywall.debugOverrideOff" = "デバッグ: Premium強制OFF";
 "paywall.debugOverrideNone" = "デバッグ: 実際の課金状態を使用";
+"paywall.subscriptionDisclosure" = "• 料金はApple IDアカウントに請求されます\n• 現在の期間終了の24時間前までにキャンセルしない限り、サブスクリプションは自動更新されます\n• 更新料金は期間終了の24時間以内に請求されます\n• 購入後は「設定」→「Apple ID」→「サブスクリプション」から管理・解約できます";
 
 // MARK: - CourseDetail メニュー（追加）
 "courseDetail.menu.share" = "共有";

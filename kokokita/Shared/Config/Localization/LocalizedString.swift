@@ -894,9 +894,10 @@ enum L {
         static let restoreFailed        = localized("paywall.restoreFailed")
         static let purchaseError        = localized("paywall.purchaseError")
         static let alreadyPremium       = localized("paywall.alreadyPremium")
-        static let debugOverrideOn      = localized("paywall.debugOverrideOn")
-        static let debugOverrideOff     = localized("paywall.debugOverrideOff")
-        static let debugOverrideNone    = localized("paywall.debugOverrideNone")
+        static let debugOverrideOn           = localized("paywall.debugOverrideOn")
+        static let debugOverrideOff          = localized("paywall.debugOverrideOff")
+        static let debugOverrideNone         = localized("paywall.debugOverrideNone")
+        static let subscriptionDisclosure    = localized("paywall.subscriptionDisclosure")
     }
 
     // MARK: - Helper

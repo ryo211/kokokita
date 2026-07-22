@@ -193,16 +193,28 @@ struct PaywallView: View {
         .padding(.bottom, 16)
     }
 
-    // MARK: - 法的リンク
+    // MARK: - 法的情報
 
     private var legalSection: some View {
-        HStack(spacing: 16) {
-            Link(L.Paywall.terms, destination: URL(string: "https://kokokita.app/terms")!)
-            Text("•").foregroundStyle(.secondary)
-            Link(L.Paywall.privacy, destination: URL(string: "https://kokokita.app/privacy")!)
+        VStack(spacing: 12) {
+            // 自動更新開示（月額プラン選択時のみ・ガイドライン3.1.2(a)必須要件）
+            if store.selectedProductId == PremiumProduct.monthlyId {
+                Text(L.Paywall.subscriptionDisclosure)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.leading)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 20)
+            }
+
+            HStack(spacing: 16) {
+                Link(L.Paywall.terms, destination: URL(string: "https://kokokita.app/terms")!)
+                Text("•").foregroundStyle(.secondary)
+                Link(L.Paywall.privacy, destination: URL(string: "https://kokokita.app/privacy")!)
+            }
+            .font(.caption)
+            .foregroundStyle(.secondary)
         }
-        .font(.caption)
-        .foregroundStyle(.secondary)
     }
 }
 

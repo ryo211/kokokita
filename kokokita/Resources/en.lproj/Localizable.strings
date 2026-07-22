@@ -755,6 +755,7 @@
 "paywall.debugOverrideOn" = "Debug: Premium forced ON";
 "paywall.debugOverrideOff" = "Debug: Premium forced OFF";
 "paywall.debugOverrideNone" = "Debug: Using real purchase state";
+"paywall.subscriptionDisclosure" = "• Payment will be charged to your Apple ID account.\n• Subscription automatically renews unless cancelled at least 24 hours before the end of the current period.\n• Renewal price is charged within 24 hours before the end of the current period.\n• Manage or cancel in Settings → Apple ID → Subscriptions after purchase.";
 
 // MARK: - CourseDetail menu (added)
 "courseDetail.menu.share" = "Share";
