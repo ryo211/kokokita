@@ -12,266 +12,301 @@ final class CoreDataTaxonomyRepository {
     }
 
     // MARK: - Read Operations
+    // すべての公開メソッドは ctx.performAndWait でラップする。
+    // viewContext はメインキュー専用のため、呼び出し元のスレッドに関わらず
+    // コンテキスト自身のキュー上での実行を保証するため。
 
     func allLabels() throws -> [LabelTag] {
-        let req: NSFetchRequest<LabelEntity> = LabelEntity.fetchRequest()
-        req.predicate = NSPredicate(format: "bookId == %@", currentBookId as NSUUID)
-        req.sortDescriptors = [NSSortDescriptor(key: #keyPath(LabelEntity.name), ascending: true)]
-        return try ctx.fetch(req).compactMap { row in
-            guard let id = row.id, let name = row.name else {
-                Logger.warning("Label entity missing required fields (id or name)")
-                return nil
+        try ctx.performAndWait {
+            let req: NSFetchRequest<LabelEntity> = LabelEntity.fetchRequest()
+            req.predicate = NSPredicate(format: "bookId == %@", currentBookId as NSUUID)
+            req.sortDescriptors = [NSSortDescriptor(key: #keyPath(LabelEntity.name), ascending: true)]
+            return try ctx.fetch(req).compactMap { row in
+                guard let id = row.id, let name = row.name else {
+                    Logger.warning("Label entity missing required fields (id or name)")
+                    return nil
+                }
+                return LabelTag(id: id, name: name, colorId: row.colorId)
             }
-            return LabelTag(id: id, name: name, colorId: row.colorId)
         }
     }
 
     func allGroups() throws -> [GroupTag] {
-        let req: NSFetchRequest<GroupEntity> = GroupEntity.fetchRequest()
-        req.predicate = NSPredicate(format: "bookId == %@", currentBookId as NSUUID)
-        req.sortDescriptors = [NSSortDescriptor(key: #keyPath(GroupEntity.name), ascending: true)]
-        return try ctx.fetch(req).compactMap { row in
-            guard let id = row.id, let name = row.name else {
-                Logger.warning("Group entity missing required fields (id or name)")
-                return nil
+        try ctx.performAndWait {
+            let req: NSFetchRequest<GroupEntity> = GroupEntity.fetchRequest()
+            req.predicate = NSPredicate(format: "bookId == %@", currentBookId as NSUUID)
+            req.sortDescriptors = [NSSortDescriptor(key: #keyPath(GroupEntity.name), ascending: true)]
+            return try ctx.fetch(req).compactMap { row in
+                guard let id = row.id, let name = row.name else {
+                    Logger.warning("Group entity missing required fields (id or name)")
+                    return nil
+                }
+                return GroupTag(id: id, name: name)
             }
-            return GroupTag(id: id, name: name)
         }
     }
 
     func allMembers() throws -> [MemberTag] {
-        let req: NSFetchRequest<MemberEntity> = MemberEntity.fetchRequest()
-        req.predicate = NSPredicate(format: "bookId == %@", currentBookId as NSUUID)
-        req.sortDescriptors = [NSSortDescriptor(key: #keyPath(MemberEntity.name), ascending: true)]
-        return try ctx.fetch(req).compactMap { row in
-            guard let id = row.id, let name = row.name else {
-                Logger.warning("Member entity missing required fields (id or name)")
-                return nil
+        try ctx.performAndWait {
+            let req: NSFetchRequest<MemberEntity> = MemberEntity.fetchRequest()
+            req.predicate = NSPredicate(format: "bookId == %@", currentBookId as NSUUID)
+            req.sortDescriptors = [NSSortDescriptor(key: #keyPath(MemberEntity.name), ascending: true)]
+            return try ctx.fetch(req).compactMap { row in
+                guard let id = row.id, let name = row.name else {
+                    Logger.warning("Member entity missing required fields (id or name)")
+                    return nil
+                }
+                return MemberTag(id: id, name: name)
             }
-            return MemberTag(id: id, name: name)
         }
     }
 
     // MARK: - Upsert Operations
 
     func upsertLabel(name: String) throws -> LabelTag {
-        let req: NSFetchRequest<LabelEntity> = LabelEntity.fetchRequest()
-        req.predicate = NSPredicate(format: "name == %@", name)
-        if let hit = try ctx.fetch(req).first, let id = hit.id, let nm = hit.name {
-            return LabelTag(id: id, name: nm, colorId: hit.colorId)
+        try ctx.performAndWait {
+            let req: NSFetchRequest<LabelEntity> = LabelEntity.fetchRequest()
+            req.predicate = NSPredicate(format: "name == %@", name)
+            if let hit = try ctx.fetch(req).first, let id = hit.id, let nm = hit.name {
+                return LabelTag(id: id, name: nm, colorId: hit.colorId)
+            }
+            let e = LabelEntity(context: ctx)
+            let newId = UUID()
+            e.id = newId
+            e.name = name
+            try ctx.save()
+            guard let savedId = e.id, let savedName = e.name else {
+                Logger.error("Failed to save label entity properly")
+                throw NSError(domain: "Repository", code: 2, userInfo: [NSLocalizedDescriptionKey: "ラベルの保存に失敗しました"])
+            }
+            return LabelTag(id: savedId, name: savedName)
         }
-        let e = LabelEntity(context: ctx)
-        let newId = UUID()
-        e.id = newId
-        e.name = name
-        try ctx.save()
-        guard let savedId = e.id, let savedName = e.name else {
-            Logger.error("Failed to save label entity properly")
-            throw NSError(domain: "Repository", code: 2, userInfo: [NSLocalizedDescriptionKey: "ラベルの保存に失敗しました"])
-        }
-        return LabelTag(id: savedId, name: savedName)
     }
 
     func upsertGroup(name: String) throws -> GroupTag {
-        let req: NSFetchRequest<GroupEntity> = GroupEntity.fetchRequest()
-        req.predicate = NSPredicate(format: "name == %@", name)
-        if let hit = try ctx.fetch(req).first, let id = hit.id, let nm = hit.name {
-            return GroupTag(id: id, name: nm)
+        try ctx.performAndWait {
+            let req: NSFetchRequest<GroupEntity> = GroupEntity.fetchRequest()
+            req.predicate = NSPredicate(format: "name == %@", name)
+            if let hit = try ctx.fetch(req).first, let id = hit.id, let nm = hit.name {
+                return GroupTag(id: id, name: nm)
+            }
+            let e = GroupEntity(context: ctx)
+            let newId = UUID()
+            e.id = newId
+            e.name = name
+            try ctx.save()
+            guard let savedId = e.id, let savedName = e.name else {
+                Logger.error("Failed to save group entity properly")
+                throw NSError(domain: "Repository", code: 2, userInfo: [NSLocalizedDescriptionKey: "グループの保存に失敗しました"])
+            }
+            return GroupTag(id: savedId, name: savedName)
         }
-        let e = GroupEntity(context: ctx)
-        let newId = UUID()
-        e.id = newId
-        e.name = name
-        try ctx.save()
-        guard let savedId = e.id, let savedName = e.name else {
-            Logger.error("Failed to save group entity properly")
-            throw NSError(domain: "Repository", code: 2, userInfo: [NSLocalizedDescriptionKey: "グループの保存に失敗しました"])
-        }
-        return GroupTag(id: savedId, name: savedName)
     }
 
     func upsertMember(name: String) throws -> MemberTag {
-        let req: NSFetchRequest<MemberEntity> = MemberEntity.fetchRequest()
-        req.predicate = NSPredicate(format: "name == %@", name)
-        if let hit = try ctx.fetch(req).first, let id = hit.id, let nm = hit.name {
-            return MemberTag(id: id, name: nm)
+        try ctx.performAndWait {
+            let req: NSFetchRequest<MemberEntity> = MemberEntity.fetchRequest()
+            req.predicate = NSPredicate(format: "name == %@", name)
+            if let hit = try ctx.fetch(req).first, let id = hit.id, let nm = hit.name {
+                return MemberTag(id: id, name: nm)
+            }
+            let e = MemberEntity(context: ctx)
+            let newId = UUID()
+            e.id = newId
+            e.name = name
+            try ctx.save()
+            guard let savedId = e.id, let savedName = e.name else {
+                Logger.error("Failed to save member entity properly")
+                throw NSError(domain: "Repository", code: 2, userInfo: [NSLocalizedDescriptionKey: "メンバーの保存に失敗しました"])
+            }
+            return MemberTag(id: savedId, name: savedName)
         }
-        let e = MemberEntity(context: ctx)
-        let newId = UUID()
-        e.id = newId
-        e.name = name
-        try ctx.save()
-        guard let savedId = e.id, let savedName = e.name else {
-            Logger.error("Failed to save member entity properly")
-            throw NSError(domain: "Repository", code: 2, userInfo: [NSLocalizedDescriptionKey: "メンバーの保存に失敗しました"])
-        }
-        return MemberTag(id: savedId, name: savedName)
     }
 
     // MARK: - Create Operations
 
     func createLabel(name: String, colorId: String? = nil) throws -> UUID {
-        let trimmed = name.trimmed
-        guard !trimmed.isEmpty else {
-            Logger.warning("Attempted to create label with empty name")
-            throw NSError(domain: "Label", code: 1,
-                          userInfo: [NSLocalizedDescriptionKey: "空名は作成できません"])
+        try ctx.performAndWait {
+            let trimmed = name.trimmed
+            guard !trimmed.isEmpty else {
+                Logger.warning("Attempted to create label with empty name")
+                throw NSError(domain: "Label", code: 1,
+                              userInfo: [NSLocalizedDescriptionKey: "空名は作成できません"])
+            }
+            let e = LabelEntity(context: ctx)
+            let newId = UUID()
+            e.id = newId
+            e.name = trimmed
+            e.colorId = colorId
+            e.bookId = currentBookId
+            try ctx.save()
+            guard let savedId = e.id else {
+                Logger.error("Label entity ID is nil after save")
+                throw NSError(domain: "Repository", code: 2, userInfo: [NSLocalizedDescriptionKey: "ラベルの保存に失敗しました"])
+            }
+            return savedId
         }
-        let e = LabelEntity(context: ctx)
-        let newId = UUID()
-        e.id = newId
-        e.name = trimmed
-        e.colorId = colorId
-        e.bookId = currentBookId
-        try ctx.save()
-        guard let savedId = e.id else {
-            Logger.error("Label entity ID is nil after save")
-            throw NSError(domain: "Repository", code: 2, userInfo: [NSLocalizedDescriptionKey: "ラベルの保存に失敗しました"])
-        }
-        return savedId
     }
 
     func createGroup(name: String) throws -> UUID {
-        let trimmed = name.trimmed
-        guard !trimmed.isEmpty else {
-            Logger.warning("Attempted to create group with empty name")
-            throw NSError(domain: "Group", code: 1,
-                          userInfo: [NSLocalizedDescriptionKey: "空名は作成できません"])
+        try ctx.performAndWait {
+            let trimmed = name.trimmed
+            guard !trimmed.isEmpty else {
+                Logger.warning("Attempted to create group with empty name")
+                throw NSError(domain: "Group", code: 1,
+                              userInfo: [NSLocalizedDescriptionKey: "空名は作成できません"])
+            }
+            let e = GroupEntity(context: ctx)
+            let newId = UUID()
+            e.id = newId
+            e.name = trimmed
+            e.bookId = currentBookId
+            try ctx.save()
+            guard let savedId = e.id else {
+                Logger.error("Group entity ID is nil after save")
+                throw NSError(domain: "Repository", code: 2, userInfo: [NSLocalizedDescriptionKey: "グループの保存に失敗しました"])
+            }
+            return savedId
         }
-        let e = GroupEntity(context: ctx)
-        let newId = UUID()
-        e.id = newId
-        e.name = trimmed
-        e.bookId = currentBookId
-        try ctx.save()
-        guard let savedId = e.id else {
-            Logger.error("Group entity ID is nil after save")
-            throw NSError(domain: "Repository", code: 2, userInfo: [NSLocalizedDescriptionKey: "グループの保存に失敗しました"])
-        }
-        return savedId
     }
 
     func createMember(name: String) throws -> UUID {
-        let trimmed = name.trimmed
-        guard !trimmed.isEmpty else {
-            Logger.warning("Attempted to create member with empty name")
-            throw NSError(domain: "Member", code: 1,
-                          userInfo: [NSLocalizedDescriptionKey: "空名は作成できません"])
+        try ctx.performAndWait {
+            let trimmed = name.trimmed
+            guard !trimmed.isEmpty else {
+                Logger.warning("Attempted to create member with empty name")
+                throw NSError(domain: "Member", code: 1,
+                              userInfo: [NSLocalizedDescriptionKey: "空名は作成できません"])
+            }
+            let e = MemberEntity(context: ctx)
+            let newId = UUID()
+            e.id = newId
+            e.name = trimmed
+            e.bookId = currentBookId
+            try ctx.save()
+            guard let savedId = e.id else {
+                Logger.error("Member entity ID is nil after save")
+                throw NSError(domain: "Repository", code: 2, userInfo: [NSLocalizedDescriptionKey: "メンバーの保存に失敗しました"])
+            }
+            return savedId
         }
-        let e = MemberEntity(context: ctx)
-        let newId = UUID()
-        e.id = newId
-        e.name = trimmed
-        e.bookId = currentBookId
-        try ctx.save()
-        guard let savedId = e.id else {
-            Logger.error("Member entity ID is nil after save")
-            throw NSError(domain: "Repository", code: 2, userInfo: [NSLocalizedDescriptionKey: "メンバーの保存に失敗しました"])
-        }
-        return savedId
     }
 
     // MARK: - Update Operations
 
     func renameLabel(id: UUID, newName: String) throws {
-        guard let label = try fetchEntity(LabelEntity.self, id: id) else {
-            Logger.warning("Label not found for rename: \(id)")
-            return
+        try ctx.performAndWait {
+            guard let label = try fetchEntity(LabelEntity.self, id: id) else {
+                Logger.warning("Label not found for rename: \(id)")
+                return
+            }
+            label.name = newName
+            try ctx.save()
         }
-        label.name = newName
-        try ctx.save()
     }
 
     func renameGroup(id: UUID, newName: String) throws {
-        guard let group = try fetchEntity(GroupEntity.self, id: id) else {
-            Logger.warning("Group not found for rename: \(id)")
-            return
+        try ctx.performAndWait {
+            guard let group = try fetchEntity(GroupEntity.self, id: id) else {
+                Logger.warning("Group not found for rename: \(id)")
+                return
+            }
+            group.name = newName
+            try ctx.save()
         }
-        group.name = newName
-        try ctx.save()
     }
 
     func renameMember(id: UUID, newName: String) throws {
-        guard let member = try fetchEntity(MemberEntity.self, id: id) else {
-            Logger.warning("Member not found for rename: \(id)")
-            return
+        try ctx.performAndWait {
+            guard let member = try fetchEntity(MemberEntity.self, id: id) else {
+                Logger.warning("Member not found for rename: \(id)")
+                return
+            }
+            member.name = newName
+            try ctx.save()
         }
-        member.name = newName
-        try ctx.save()
     }
 
     /// ラベルの色を更新
     func updateLabelColor(id: UUID, colorId: String?) throws {
-        guard let label = try fetchEntity(LabelEntity.self, id: id) else {
-            Logger.warning("Label not found for color update: \(id)")
-            return
+        try ctx.performAndWait {
+            guard let label = try fetchEntity(LabelEntity.self, id: id) else {
+                Logger.warning("Label not found for color update: \(id)")
+                return
+            }
+            label.colorId = colorId
+            try ctx.save()
         }
-        label.colorId = colorId
-        try ctx.save()
     }
 
     // MARK: - Delete Operations
 
     func deleteLabel(id: UUID) throws {
-        guard let label = try fetchEntity(LabelEntity.self, id: id) else {
-            Logger.warning("Label not found for delete: \(id)")
-            return
-        }
-
-        // 関連から外す（安全のため）
-        let req = VisitDetailsEntity.fetchRequest()
-        req.predicate = NSPredicate(format: "ANY labels == %@", label)
-        let affected = try ctx.fetch(req)
-        for d in affected {
-            if var set = d.labels as? Set<LabelEntity> {
-                set.remove(label)
-                d.labels = NSSet(set: set)
+        try ctx.performAndWait {
+            guard let label = try fetchEntity(LabelEntity.self, id: id) else {
+                Logger.warning("Label not found for delete: \(id)")
+                return
             }
-        }
 
-        ctx.delete(label)
-        try ctx.save()
+            // 関連から外す（安全のため）
+            let req = VisitDetailsEntity.fetchRequest()
+            req.predicate = NSPredicate(format: "ANY labels == %@", label)
+            let affected = try ctx.fetch(req)
+            for d in affected {
+                if var set = d.labels as? Set<LabelEntity> {
+                    set.remove(label)
+                    d.labels = NSSet(set: set)
+                }
+            }
+
+            ctx.delete(label)
+            try ctx.save()
+        }
     }
 
     func deleteGroup(id: UUID) throws {
-        guard let group = try fetchEntity(GroupEntity.self, id: id) else {
-            Logger.warning("Group not found for delete: \(id)")
-            return
-        }
-
-        // このグループを参照している詳細の groupId を外す
-        if let gid = group.id {
-            let req = VisitDetailsEntity.fetchRequest()
-            req.predicate = NSPredicate(format: "groupId == %@", gid as CVarArg)
-            let affected = try ctx.fetch(req)
-            for d in affected {
-                d.groupId = nil
+        try ctx.performAndWait {
+            guard let group = try fetchEntity(GroupEntity.self, id: id) else {
+                Logger.warning("Group not found for delete: \(id)")
+                return
             }
-        }
 
-        ctx.delete(group)
-        try ctx.save()
+            // このグループを参照している詳細の groupId を外す
+            if let gid = group.id {
+                let req = VisitDetailsEntity.fetchRequest()
+                req.predicate = NSPredicate(format: "groupId == %@", gid as CVarArg)
+                let affected = try ctx.fetch(req)
+                for d in affected {
+                    d.groupId = nil
+                }
+            }
+
+            ctx.delete(group)
+            try ctx.save()
+        }
     }
 
     func deleteMember(id: UUID) throws {
-        guard let member = try fetchEntity(MemberEntity.self, id: id) else {
-            Logger.warning("Member not found for delete: \(id)")
-            return
-        }
-
-        // 関連から外す（安全のため）
-        let req = VisitDetailsEntity.fetchRequest()
-        req.predicate = NSPredicate(format: "ANY members == %@", member)
-        let affected = try ctx.fetch(req)
-        for d in affected {
-            if var set = d.members as? Set<MemberEntity> {
-                set.remove(member)
-                d.members = NSSet(set: set)
+        try ctx.performAndWait {
+            guard let member = try fetchEntity(MemberEntity.self, id: id) else {
+                Logger.warning("Member not found for delete: \(id)")
+                return
             }
-        }
 
-        ctx.delete(member)
-        try ctx.save()
+            // 関連から外す（安全のため）
+            let req = VisitDetailsEntity.fetchRequest()
+            req.predicate = NSPredicate(format: "ANY members == %@", member)
+            let affected = try ctx.fetch(req)
+            for d in affected {
+                if var set = d.members as? Set<MemberEntity> {
+                    set.remove(member)
+                    d.members = NSSet(set: set)
+                }
+            }
+
+            ctx.delete(member)
+            try ctx.save()
+        }
     }
 
     // MARK: - Helpers
