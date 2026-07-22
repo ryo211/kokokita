@@ -107,6 +107,86 @@ final class CoreDataCourseRepository: CourseRepository {
         }
     }
 
+    // MARK: - 起動時マイグレーション
+
+    /// syncSections/syncSpots の過去の不具合により生成された、同一ID（決定論的UUID）を持つ
+    /// 重複 CourseSectionEntity / CourseSpotEntity を統合する（起動時に呼ぶ）。
+    /// スポットのチェックイン記録（visits リレーション）は必ず統合前にマージしてから削除するため、
+    /// 既存の訪問記録との紐づけは失われない。
+    func cleanUpDuplicateSectionsAndSpots() throws {
+        try ctx.performAndWait {
+            // スポットを先に統合する（visits を失わないよう、セクション統合より先に行う必要がある）
+            try dedupeSpots()
+            // セクションを統合する。統合対象セクションの子スポットは、既に統合済みの単一エンティティに
+            // 付け替えてから削除するため、Cascade削除でチェックイン記録ごと失われることはない
+            try dedupeSections()
+            if ctx.hasChanges {
+                try ctx.save()
+            }
+        }
+    }
+
+    private func dedupeSpots() throws {
+        let all = try ctx.fetch(CourseSpotEntity.fetchRequest())
+        let grouped = Dictionary(grouping: all) { $0.id }
+
+        for (id, group) in grouped {
+            guard id != nil, group.count > 1 else { continue }
+
+            // セクションにアタッチされているものを優先して winner に選ぶ
+            let sorted = group.sorted { lhs, rhs in
+                (lhs.section != nil ? 0 : 1) < (rhs.section != nil ? 0 : 1)
+            }
+            let winner = sorted[0]
+            let losers = sorted.dropFirst()
+
+            for loser in losers {
+                // チェックイン記録（visits リレーション）を winner へ統合
+                if let loserVisits = loser.visits as? Set<VisitDetailsEntity> {
+                    for v in loserVisits where !(winner.visits?.contains(v) ?? false) {
+                        winner.addToVisits(v)
+                    }
+                }
+                // レガシーフラグもマージ（isCheckedIn は true 優先、firstCheckedInAt は最古優先）
+                if loser.isCheckedIn?.boolValue == true {
+                    winner.isCheckedIn = NSNumber(value: true)
+                }
+                if let loserDate = loser.firstCheckedInAt {
+                    winner.firstCheckedInAt = winner.firstCheckedInAt.map { min($0, loserDate) } ?? loserDate
+                }
+                ctx.delete(loser)
+            }
+            Logger.info("重複スポットを統合しました: id=\(id?.uuidString ?? ""), 統合件数=\(losers.count)")
+        }
+    }
+
+    private func dedupeSections() throws {
+        let all = try ctx.fetch(CourseSectionEntity.fetchRequest())
+        let grouped = Dictionary(grouping: all) { $0.id }
+
+        for (id, group) in grouped {
+            guard id != nil, group.count > 1 else { continue }
+
+            // コースにアタッチされているものを優先して winner に選ぶ
+            let sorted = group.sorted { lhs, rhs in
+                (lhs.course != nil ? 0 : 1) < (rhs.course != nil ? 0 : 1)
+            }
+            let winner = sorted[0]
+            let losers = sorted.dropFirst()
+
+            for loser in losers {
+                // 削除前に子スポットを winner へ付け替える（Cascade削除でチェックイン記録ごと消えるのを防ぐ）
+                if let loserSpots = loser.spots?.array as? [CourseSpotEntity] {
+                    for spot in loserSpots {
+                        spot.section = winner
+                    }
+                }
+                ctx.delete(loser)
+            }
+            Logger.info("重複セクションを統合しました: id=\(id?.uuidString ?? ""), 統合件数=\(losers.count)")
+        }
+    }
+
     // MARK: - Private ヘルパー
 
     private func fetchEntity(id: UUID) throws -> CourseEntity? {

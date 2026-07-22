@@ -13,6 +13,14 @@ struct KokokitaApp: App {
             Logger.error("ゴミ箱の期限切れ記録の削除に失敗しました", error: error)
         }
 
+        // コース: syncSections/syncSpots の過去の不具合による重複セクション・スポットを統合
+        // （Course画面を開く前に必ず解消しておく必要があるため、他のクリーンアップと同様に起動時に実行）
+        do {
+            try AppContainer.shared.courseRepo.cleanUpDuplicateSectionsAndSpots()
+        } catch {
+            Logger.error("コースの重複セクション・スポットの統合に失敗しました", error: error)
+        }
+
         // 自動記録: 古い候補を削除してから監視開始
         AppContainer.shared.autoRecord.cleanUpOldCandidates()
         AppContainer.shared.autoRecord.startMonitoring()
