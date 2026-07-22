@@ -133,6 +133,16 @@ final class CoreDataCourseRepository: CourseRepository {
         for (id, group) in grouped {
             guard id != nil, group.count > 1 else { continue }
 
+            // spotId はコースをまたいで同一文字列が使われることがある（例: 同名スポットの偶然の一致）。
+            // 決定論的IDはコースを区別しないため、異なるコースに現在アタッチされている複数のスポットが
+            // 同一IDを持つケースが実在する。これは「同じスポットの重複」ではなく「別コースの別スポットが
+            // たまたま同じIDになっただけ」なので、統合してはいけない。
+            let attachedCourses = Set(group.compactMap { $0.section?.course?.objectID })
+            guard attachedCourses.count <= 1 else {
+                Logger.warning("スポットID衝突（別コース間）を検出したためスキップ: id=\(id?.uuidString ?? ""), 該当コース数=\(attachedCourses.count)")
+                continue
+            }
+
             // セクションにアタッチされているものを優先して winner に選ぶ
             let sorted = group.sorted { lhs, rhs in
                 (lhs.section != nil ? 0 : 1) < (rhs.section != nil ? 0 : 1)
@@ -166,6 +176,17 @@ final class CoreDataCourseRepository: CourseRepository {
 
         for (id, group) in grouped {
             guard id != nil, group.count > 1 else { continue }
+
+            // sectionId は地方名等の一般的な文字列が複数コースで再利用されることが実際にある
+            // （例: "sec-tokyo" が7コースで使われている）。決定論的IDはコースを区別しないため、
+            // 異なるコースに現在アタッチされている複数のセクションが同一IDを持つケースが実在する。
+            // これは「同じセクションの重複」ではなく「別コースの別セクションが偶然同じIDになっただけ」
+            // なので、統合してはいけない（統合するとスポットが誤って他コースへ付け替わってしまう）。
+            let attachedCourses = Set(group.compactMap { $0.course?.objectID })
+            guard attachedCourses.count <= 1 else {
+                Logger.warning("セクションID衝突（別コース間）を検出したためスキップ: id=\(id?.uuidString ?? ""), 該当コース数=\(attachedCourses.count)")
+                continue
+            }
 
             // コースにアタッチされているものを優先して winner に選ぶ
             let sorted = group.sorted { lhs, rhs in
@@ -231,9 +252,12 @@ final class CoreDataCourseRepository: CourseRepository {
     /// 検知・拒否されない）、孤立分も含めて再利用することで重複生成を防ぐ。
     private func syncSections(_ sections: [CourseSection], to courseEntity: CourseEntity) throws {
         let existingSections = try fetchSectionEntities(ids: sections.map(\.id), scopedTo: courseEntity)
-        // スポットは checkIn(spotId:visitId:) が元々コース横断のグローバルIDとして扱う設計のため、
-        // ここでもコースに絞らずストア全体から検索する（同一スポットが複数コースに登場する場合の共有を維持）
-        let existingSpots = try fetchSpotEntities(ids: sections.flatMap { $0.spots.map(\.id) })
+        // spotId も地方名等の一般的な文字列が複数コースで再利用される可能性があるため
+        // （実際に sectionId で同様の衝突が複数コース間で確認されている）、セクションと同様に
+        // このコースに属するもの・孤立しているものに限定して検索する。他コースの同名スポットを
+        // 誤って奪わないための絞り込み。checkIn(spotId:visitId:) は別途コース横断でグローバルに
+        // 扱う設計のままで問題ない（内容の上書き・付け替えを行わないため）。
+        let existingSpots = try fetchSpotEntities(ids: sections.flatMap { $0.spots.map(\.id) }, scopedTo: courseEntity)
 
         var orderedSections: [CourseSectionEntity] = []
         for section in sections {
@@ -277,11 +301,19 @@ final class CoreDataCourseRepository: CourseRepository {
         }
     }
 
-    /// 指定IDのスポットエンティティをストア全体から検索する（孤立エンティティも対象に含む）
-    private func fetchSpotEntities(ids: [UUID]) throws -> [UUID: CourseSpotEntity] {
+    /// 指定IDのスポットエンティティを検索する。対象はこのコースに現在属するもの、
+    /// および過去のsyncでリレーションが切れて孤立した（section == nil）ものに限定する。
+    /// 他コースに属する同名spotIdのエンティティを誤って奪わないための絞り込み。
+    private func fetchSpotEntities(ids: [UUID], scopedTo courseEntity: CourseEntity) throws -> [UUID: CourseSpotEntity] {
         guard !ids.isEmpty else { return [:] }
         let req = CourseSpotEntity.fetchRequest()
-        req.predicate = NSPredicate(format: "id IN %@", ids)
+        req.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [
+            NSPredicate(format: "id IN %@", ids),
+            NSCompoundPredicate(orPredicateWithSubpredicates: [
+                NSPredicate(format: "section.course == %@", courseEntity),
+                NSPredicate(format: "section == nil")
+            ])
+        ])
         let found = try ctx.fetch(req)
         // 同一IDが既に複数存在する場合（既存の重複データ）は先勝ちで1件のみ採用する
         return found.reduce(into: [:]) { dict, e in
