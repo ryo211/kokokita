@@ -12,81 +12,99 @@ final class CoreDataCourseRepository: CourseRepository {
     // MARK: - 読み取り
 
     func fetchAll() throws -> [Course] {
-        let req = CourseEntity.fetchRequest()
-        req.sortDescriptors = [NSSortDescriptor(key: "createdAt", ascending: true)]
-        let entities = try ctx.fetch(req)
-        return entities.map { mapToCourse($0) }
+        // viewContext はメインキュー専用のため、呼び出し元のスレッドに関わらず
+        // performAndWait でコンテキスト自身のキュー上での実行を保証する
+        try ctx.performAndWait {
+            let req = CourseEntity.fetchRequest()
+            req.sortDescriptors = [NSSortDescriptor(key: "createdAt", ascending: true)]
+            let entities = try ctx.fetch(req)
+            return entities.map { mapToCourse($0) }
+        }
     }
 
     func fetch(id: UUID) throws -> Course? {
-        guard let entity = try fetchEntity(id: id) else { return nil }
-        return mapToCourse(entity)
+        try ctx.performAndWait {
+            guard let entity = try fetchEntity(id: id) else { return nil }
+            return mapToCourse(entity)
+        }
     }
 
     // MARK: - 書き込み
 
     func save(_ course: Course) throws {
-        let entity = (try fetchEntity(id: course.id)) ?? CourseEntity(context: ctx)
-        apply(course: course, to: entity)
-        try ctx.save()
+        try ctx.performAndWait {
+            let entity = (try fetchEntity(id: course.id)) ?? CourseEntity(context: ctx)
+            apply(course: course, to: entity)
+            try ctx.save()
+        }
     }
 
     func saveAll(_ courses: [Course]) throws {
-        for course in courses {
-            let entity = (try fetchEntity(id: course.id)) ?? CourseEntity(context: ctx)
-            apply(course: course, to: entity)
+        try ctx.performAndWait {
+            for course in courses {
+                let entity = (try fetchEntity(id: course.id)) ?? CourseEntity(context: ctx)
+                apply(course: course, to: entity)
+            }
+            try ctx.save()
         }
-        try ctx.save()
     }
 
     func setEverEnabled(_ courseId: UUID) throws {
-        guard let entity = try fetchEntity(id: courseId) else { return }
-        entity.everEnabled = NSNumber(value: true)
-        entity.updatedAt = Date()
-        try ctx.save()
+        try ctx.performAndWait {
+            guard let entity = try fetchEntity(id: courseId) else { return }
+            entity.everEnabled = NSNumber(value: true)
+            entity.updatedAt = Date()
+            try ctx.save()
+        }
     }
 
     func checkIn(spotId: UUID, visitId: UUID?) throws {
-        // fetchLimit を設けず同UUID の全エンティティを更新する
-        // （syncSections の不具合で重複エンティティが生成された場合も確実にリンクを反映するため）
-        let req = CourseSpotEntity.fetchRequest()
-        req.predicate = NSPredicate(format: "id == %@", spotId as NSUUID)
-        let found = try ctx.fetch(req)
+        try ctx.performAndWait {
+            // fetchLimit を設けず同UUID の全エンティティを更新する
+            // （syncSections の不具合で重複エンティティが生成された場合も確実にリンクを反映するため）
+            let req = CourseSpotEntity.fetchRequest()
+            req.predicate = NSPredicate(format: "id == %@", spotId as NSUUID)
+            let found = try ctx.fetch(req)
 
-        guard !found.isEmpty else { return }
+            guard !found.isEmpty else { return }
 
-        // visitId → VisitDetailsEntity を解決
-        var visitDetails: VisitDetailsEntity? = nil
-        if let visitId = visitId {
-            let vReq = VisitEntity.fetchRequest()
-            vReq.predicate = NSPredicate(format: "id == %@", visitId as NSUUID)
-            vReq.fetchLimit = 1
-            if let visitEntity = try ctx.fetch(vReq).first {
-                visitDetails = visitEntity.details
+            // visitId → VisitDetailsEntity を解決
+            var visitDetails: VisitDetailsEntity? = nil
+            if let visitId = visitId {
+                let vReq = VisitEntity.fetchRequest()
+                vReq.predicate = NSPredicate(format: "id == %@", visitId as NSUUID)
+                vReq.fetchLimit = 1
+                if let visitEntity = try ctx.fetch(vReq).first {
+                    visitDetails = visitEntity.details
+                }
             }
-        }
 
-        for spot in found {
-            // isCheckedIn / firstCheckedInAt はフラグとして書き込まず visits リレーションから導出
-            if let details = visitDetails,
-               !(spot.visits?.contains(details) ?? false) {
-                spot.addToVisits(details)
+            for spot in found {
+                // isCheckedIn / firstCheckedInAt はフラグとして書き込まず visits リレーションから導出
+                if let details = visitDetails,
+                   !(spot.visits?.contains(details) ?? false) {
+                    spot.addToVisits(details)
+                }
             }
+            try ctx.save()
+            // 関係キャッシュを無効化して次回フェッチ時に必ず永続化ストアから取得させる
+            ctx.refreshAllObjects()
         }
-        try ctx.save()
-        // 関係キャッシュを無効化して次回フェッチ時に必ず永続化ストアから取得させる
-        ctx.refreshAllObjects()
     }
 
     func delete(_ courseId: UUID) throws {
-        guard let entity = try fetchEntity(id: courseId) else { return }
-        ctx.delete(entity)
-        try ctx.save()
+        try ctx.performAndWait {
+            guard let entity = try fetchEntity(id: courseId) else { return }
+            ctx.delete(entity)
+            try ctx.save()
+        }
     }
 
     func fetchSpotsForRetroactive(courseId: UUID) throws -> [CourseSpot] {
-        guard let entity = try fetchEntity(id: courseId) else { return [] }
-        return mapToSections(entity).flatMap(\.spots)
+        try ctx.performAndWait {
+            guard let entity = try fetchEntity(id: courseId) else { return [] }
+            return mapToSections(entity).flatMap(\.spots)
+        }
     }
 
     // MARK: - Private ヘルパー

@@ -79,14 +79,17 @@ final class CourseRetroactiveRecognitionService {
     // MARK: - Private
 
     /// 証明付き訪問記録（isManualEntry == false）を全件取得
+    // メインスレッド外から呼ばれる可能性に備え、performAndWait でコンテキスト自身のキュー上での実行を保証する
     private func fetchProofVisits() throws -> [VisitRecord] {
-        let req = VisitEntity.fetchRequest()
-        req.predicate = NSPredicate(format: "isManualEntry == NO OR isManualEntry == nil")
-        req.sortDescriptors = [NSSortDescriptor(key: "timestampUTC", ascending: true)]
-        let entities = try ctx.fetch(req)
-        return entities.compactMap { e -> VisitRecord? in
-            guard let id = e.id, let ts = e.timestampUTC else { return nil }
-            return VisitRecord(id: id, timestampUTC: ts, latitude: e.latitude, longitude: e.longitude)
+        try ctx.performAndWait {
+            let req = VisitEntity.fetchRequest()
+            req.predicate = NSPredicate(format: "isManualEntry == NO OR isManualEntry == nil")
+            req.sortDescriptors = [NSSortDescriptor(key: "timestampUTC", ascending: true)]
+            let entities = try ctx.fetch(req)
+            return entities.compactMap { e -> VisitRecord? in
+                guard let id = e.id, let ts = e.timestampUTC else { return nil }
+                return VisitRecord(id: id, timestampUTC: ts, latitude: e.latitude, longitude: e.longitude)
+            }
         }
     }
 

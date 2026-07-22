@@ -12,36 +12,47 @@ final class ExcludedLocationRepository {
 
     // MARK: - 取得
 
+    // CLLocationManagerDelegate 等、メインスレッド外から呼ばれる可能性があるため
+    // performAndWait でコンテキスト自身のキュー上での実行を保証する
     func fetchAll() throws -> [ExcludedLocation] {
-        let req = ExcludedLocationEntity.fetchRequest()
-        req.sortDescriptors = [NSSortDescriptor(key: "createdAt", ascending: false)]
-        return try ctx.fetch(req).map { $0.toDomain() }
+        try ctx.performAndWait {
+            let req = ExcludedLocationEntity.fetchRequest()
+            req.sortDescriptors = [NSSortDescriptor(key: "createdAt", ascending: false)]
+            return try ctx.fetch(req).map { $0.toDomain() }
+        }
     }
 
     // MARK: - 保存
 
     func save(_ location: ExcludedLocation) throws {
-        let entity = ExcludedLocationEntity(context: ctx)
-        entity.id = location.id
-        entity.label = location.label
-        entity.latitude = location.latitude
-        entity.longitude = location.longitude
-        entity.radiusMeters = location.radiusMeters
-        entity.createdAt = location.createdAt
-        try ctx.save()
+        try ctx.performAndWait {
+            let entity = ExcludedLocationEntity(context: ctx)
+            entity.id = location.id
+            entity.label = location.label
+            entity.latitude = location.latitude
+            entity.longitude = location.longitude
+            entity.radiusMeters = location.radiusMeters
+            entity.createdAt = location.createdAt
+            try ctx.save()
+        }
         Logger.info("除外エリアを保存しました: \(location.displayLabel)")
     }
 
     // MARK: - 削除
 
     func delete(id: UUID) throws {
-        let req = ExcludedLocationEntity.fetchRequest()
-        req.predicate = NSPredicate(format: "id == %@", id as CVarArg)
-        req.fetchLimit = 1
-        guard let entity = try ctx.fetch(req).first else { return }
-        ctx.delete(entity)
-        try ctx.save()
-        Logger.info("除外エリアを削除しました: \(id)")
+        let deleted = try ctx.performAndWait { () -> Bool in
+            let req = ExcludedLocationEntity.fetchRequest()
+            req.predicate = NSPredicate(format: "id == %@", id as CVarArg)
+            req.fetchLimit = 1
+            guard let entity = try ctx.fetch(req).first else { return false }
+            ctx.delete(entity)
+            try ctx.save()
+            return true
+        }
+        if deleted {
+            Logger.info("除外エリアを削除しました: \(id)")
+        }
     }
 
     // MARK: - 判定

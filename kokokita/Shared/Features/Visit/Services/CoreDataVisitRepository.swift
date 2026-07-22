@@ -11,374 +11,403 @@ final class CoreDataVisitRepository {
     }
 
     // MARK: - VisitRepository
+    // すべての公開メソッドは ctx.performAndWait でラップする。
+    // viewContext はメインキュー専用のため、呼び出し元のスレッドに関わらず
+    // コンテキスト自身のキュー上での実行を保証するため。
 
     func create(visit: Visit, details: VisitDetails, saveImmediately: Bool = true) throws {
-        // 既存のVisitをチェック（リストア時の重複防止）
-        if (try fetchVisitEntity(id: visit.id)) != nil {
-            Logger.warning("Visit with ID \(visit.id) already exists, skipping creation")
-            throw NSError(domain: "Visit", code: 2,
-                          userInfo: [NSLocalizedDescriptionKey: "Visit with ID \(visit.id) already exists"])
-        }
-
-        let v = VisitEntity(context: ctx)
-
-        // ---- Visit（不変部）を先にすべて代入 ----
-        v.id = visit.id
-        v.timestampUTC = visit.timestampUTC
-        v.latitude = visit.latitude
-        v.longitude = visit.longitude
-
-        // Optional（Data Model を NSNumber? にしている想定）
-        v.horizontalAccuracy    = visit.horizontalAccuracy.map { NSNumber(value: $0) }
-        v.isSimulatedBySoftware = visit.isSimulatedBySoftware.map { NSNumber(value: $0) }
-        v.isProducedByAccessory = visit.isProducedByAccessory.map { NSNumber(value: $0) }
-
-        // 後付け記録フラグ
-        v.isManualEntry = NSNumber(value: visit.isManualEntry)
-
-        // 改ざん検出メタ（Integrity）- 後付け記録の場合はnil
-        if let integrity = visit.integrity {
-            v.integrityAlgo         = integrity.algo
-            v.integritySigDER       = integrity.signatureDERBase64
-            v.integrityPubRaw       = integrity.publicKeyRawBase64
-            v.integrityPayloadHash  = integrity.payloadHashHex
-            v.integrityCreatedAtUTC = integrity.createdAtUTC
-        }
-
-        // ---- VisitDetails（可変部） ----
-        let d = VisitDetailsEntity(context: ctx)
-        d.title     = details.title
-        d.facilityName = details.facilityName
-        d.facilityAddress = details.facilityAddress
-        d.facilityCategory = details.facilityCategory
-        d.comment   = details.comment
-        d.groupId   = details.groupId
-        d.resolvedAddress = details.resolvedAddress
-        // to-many labels
-        d.labels    = NSSet(array: try fetchLabelEntities(for: details.labelIds))
-        // to-many members
-        d.members   = NSSet(array: try fetchMemberEntities(for: details.memberIds))
-
-        if !details.photoPaths.isEmpty {
-            let ordered = NSMutableOrderedSet()
-            for (idx, path) in details.photoPaths.enumerated() {
-                let p = VisitPhotoEntity(context: ctx)
-                p.id = UUID()
-                p.filePath = path
-                p.orderIndex = Int16(idx)   // Ordered リレーションがあるなら任意
-                p.createdAt = Date()
-                p.details = d
-                ordered.add(p)
+        try ctx.performAndWait {
+            // 既存のVisitをチェック（リストア時の重複防止）
+            if (try fetchVisitEntity(id: visit.id)) != nil {
+                Logger.warning("Visit with ID \(visit.id) already exists, skipping creation")
+                throw NSError(domain: "Visit", code: 2,
+                              userInfo: [NSLocalizedDescriptionKey: "Visit with ID \(visit.id) already exists"])
             }
-            d.photos = ordered
-        }
-        
-        // ブック割り当て
-        v.bookId = currentBookId
 
-        // リレーション接続（inverse は DataModel 側で設定しておく）
-        v.details = d
+            let v = VisitEntity(context: ctx)
 
-        // 保存直前チェック（必須が nil ならここでログに出る）
-        preflightValidate([v, d])
+            // ---- Visit（不変部）を先にすべて代入 ----
+            v.id = visit.id
+            v.timestampUTC = visit.timestampUTC
+            v.latitude = visit.latitude
+            v.longitude = visit.longitude
 
-        if saveImmediately {
-            try ctx.save()
+            // Optional（Data Model を NSNumber? にしている想定）
+            v.horizontalAccuracy    = visit.horizontalAccuracy.map { NSNumber(value: $0) }
+            v.isSimulatedBySoftware = visit.isSimulatedBySoftware.map { NSNumber(value: $0) }
+            v.isProducedByAccessory = visit.isProducedByAccessory.map { NSNumber(value: $0) }
+
+            // 後付け記録フラグ
+            v.isManualEntry = NSNumber(value: visit.isManualEntry)
+
+            // 改ざん検出メタ（Integrity）- 後付け記録の場合はnil
+            if let integrity = visit.integrity {
+                v.integrityAlgo         = integrity.algo
+                v.integritySigDER       = integrity.signatureDERBase64
+                v.integrityPubRaw       = integrity.publicKeyRawBase64
+                v.integrityPayloadHash  = integrity.payloadHashHex
+                v.integrityCreatedAtUTC = integrity.createdAtUTC
+            }
+
+            // ---- VisitDetails（可変部） ----
+            let d = VisitDetailsEntity(context: ctx)
+            d.title     = details.title
+            d.facilityName = details.facilityName
+            d.facilityAddress = details.facilityAddress
+            d.facilityCategory = details.facilityCategory
+            d.comment   = details.comment
+            d.groupId   = details.groupId
+            d.resolvedAddress = details.resolvedAddress
+            // to-many labels
+            d.labels    = NSSet(array: try fetchLabelEntities(for: details.labelIds))
+            // to-many members
+            d.members   = NSSet(array: try fetchMemberEntities(for: details.memberIds))
+
+            if !details.photoPaths.isEmpty {
+                let ordered = NSMutableOrderedSet()
+                for (idx, path) in details.photoPaths.enumerated() {
+                    let p = VisitPhotoEntity(context: ctx)
+                    p.id = UUID()
+                    p.filePath = path
+                    p.orderIndex = Int16(idx)   // Ordered リレーションがあるなら任意
+                    p.createdAt = Date()
+                    p.details = d
+                    ordered.add(p)
+                }
+                d.photos = ordered
+            }
+
+            // ブック割り当て
+            v.bookId = currentBookId
+
+            // リレーション接続（inverse は DataModel 側で設定しておく）
+            v.details = d
+
+            // 保存直前チェック（必須が nil ならここでログに出る）
+            preflightValidate([v, d])
+
+            if saveImmediately {
+                try ctx.save()
+            }
         }
     }
 
     /// 後付け記録を作成（署名なし）
     func createManualEntry(visit: Visit, details: VisitDetails, saveImmediately: Bool = true) throws {
-        guard visit.isManualEntry else {
-            Logger.error("createManualEntry called with non-manual entry visit")
-            throw NSError(domain: "Visit", code: 3,
-                          userInfo: [NSLocalizedDescriptionKey: "後付け記録ではありません"])
-        }
-
-        // 既存のVisitをチェック（重複防止）
-        if try fetchVisitEntity(id: visit.id) != nil {
-            Logger.warning("Visit with ID \(visit.id) already exists, skipping creation")
-            throw NSError(domain: "Visit", code: 2,
-                          userInfo: [NSLocalizedDescriptionKey: "Visit with ID \(visit.id) already exists"])
-        }
-
-        let v = VisitEntity(context: ctx)
-
-        // ---- Visit（不変部）----
-        v.id = visit.id
-        v.timestampUTC = visit.timestampUTC
-        v.latitude = visit.latitude
-        v.longitude = visit.longitude
-
-        // Optional
-        v.horizontalAccuracy = visit.horizontalAccuracy.map { NSNumber(value: $0) }
-        v.isSimulatedBySoftware = nil
-        v.isProducedByAccessory = nil
-
-        // 後付け記録フラグ
-        v.isManualEntry = NSNumber(value: true)
-
-        // 署名なし（後付け記録なので）
-        v.integrityAlgo = nil
-        v.integritySigDER = nil
-        v.integrityPubRaw = nil
-        v.integrityPayloadHash = nil
-        v.integrityCreatedAtUTC = nil
-
-        // ---- VisitDetails（可変部） ----
-        let d = VisitDetailsEntity(context: ctx)
-        d.title = details.title
-        d.facilityName = details.facilityName
-        d.facilityAddress = details.facilityAddress
-        d.facilityCategory = details.facilityCategory
-        d.comment = details.comment
-        d.groupId = details.groupId
-        d.resolvedAddress = details.resolvedAddress
-        d.labels = NSSet(array: try fetchLabelEntities(for: details.labelIds))
-        d.members = NSSet(array: try fetchMemberEntities(for: details.memberIds))
-
-        if !details.photoPaths.isEmpty {
-            let ordered = NSMutableOrderedSet()
-            for (idx, path) in details.photoPaths.enumerated() {
-                let p = VisitPhotoEntity(context: ctx)
-                p.id = UUID()
-                p.filePath = path
-                p.orderIndex = Int16(idx)
-                p.createdAt = Date()
-                p.details = d
-                ordered.add(p)
+        try ctx.performAndWait {
+            guard visit.isManualEntry else {
+                Logger.error("createManualEntry called with non-manual entry visit")
+                throw NSError(domain: "Visit", code: 3,
+                              userInfo: [NSLocalizedDescriptionKey: "後付け記録ではありません"])
             }
-            d.photos = ordered
+
+            // 既存のVisitをチェック（重複防止）
+            if try fetchVisitEntity(id: visit.id) != nil {
+                Logger.warning("Visit with ID \(visit.id) already exists, skipping creation")
+                throw NSError(domain: "Visit", code: 2,
+                              userInfo: [NSLocalizedDescriptionKey: "Visit with ID \(visit.id) already exists"])
+            }
+
+            let v = VisitEntity(context: ctx)
+
+            // ---- Visit（不変部）----
+            v.id = visit.id
+            v.timestampUTC = visit.timestampUTC
+            v.latitude = visit.latitude
+            v.longitude = visit.longitude
+
+            // Optional
+            v.horizontalAccuracy = visit.horizontalAccuracy.map { NSNumber(value: $0) }
+            v.isSimulatedBySoftware = nil
+            v.isProducedByAccessory = nil
+
+            // 後付け記録フラグ
+            v.isManualEntry = NSNumber(value: true)
+
+            // 署名なし（後付け記録なので）
+            v.integrityAlgo = nil
+            v.integritySigDER = nil
+            v.integrityPubRaw = nil
+            v.integrityPayloadHash = nil
+            v.integrityCreatedAtUTC = nil
+
+            // ---- VisitDetails（可変部） ----
+            let d = VisitDetailsEntity(context: ctx)
+            d.title = details.title
+            d.facilityName = details.facilityName
+            d.facilityAddress = details.facilityAddress
+            d.facilityCategory = details.facilityCategory
+            d.comment = details.comment
+            d.groupId = details.groupId
+            d.resolvedAddress = details.resolvedAddress
+            d.labels = NSSet(array: try fetchLabelEntities(for: details.labelIds))
+            d.members = NSSet(array: try fetchMemberEntities(for: details.memberIds))
+
+            if !details.photoPaths.isEmpty {
+                let ordered = NSMutableOrderedSet()
+                for (idx, path) in details.photoPaths.enumerated() {
+                    let p = VisitPhotoEntity(context: ctx)
+                    p.id = UUID()
+                    p.filePath = path
+                    p.orderIndex = Int16(idx)
+                    p.createdAt = Date()
+                    p.details = d
+                    ordered.add(p)
+                }
+                d.photos = ordered
+            }
+
+            // リレーション接続
+            v.details = d
+
+            preflightValidate([v, d])
+
+            if saveImmediately {
+                try ctx.save()
+            }
+
+            Logger.info("Created manual entry: \(visit.id)")
         }
-
-        // リレーション接続
-        v.details = d
-
-        preflightValidate([v, d])
-
-        if saveImmediately {
-            try ctx.save()
-        }
-
-        Logger.info("Created manual entry: \(visit.id)")
     }
 
     /// 後付け記録のVisit本体（日時・座標）を更新
     func updateManualEntryCore(id: UUID, timestamp: Date, latitude: Double, longitude: Double, accuracy: Double?) throws {
-        guard let v = try fetchVisitEntity(id: id) else {
-            Logger.warning("Visit not found for manual entry update: \(id)")
-            return
+        try ctx.performAndWait {
+            guard let v = try fetchVisitEntity(id: id) else {
+                Logger.warning("Visit not found for manual entry update: \(id)")
+                return
+            }
+            guard v.isManualEntry?.boolValue == true else {
+                Logger.error("updateManualEntryCore called on non-manual entry")
+                return
+            }
+            v.timestampUTC = timestamp
+            v.latitude = latitude
+            v.longitude = longitude
+            v.horizontalAccuracy = accuracy.map { NSNumber(value: $0) }
+            preflightValidate([v])
+            try ctx.save()
         }
-        guard v.isManualEntry?.boolValue == true else {
-            Logger.error("updateManualEntryCore called on non-manual entry")
-            return
-        }
-        v.timestampUTC = timestamp
-        v.latitude = latitude
-        v.longitude = longitude
-        v.horizontalAccuracy = accuracy.map { NSNumber(value: $0) }
-        preflightValidate([v])
-        try ctx.save()
     }
 
     /// 記録を別のブックへ移動する
     func updateBookId(id: UUID, bookId: UUID) throws {
-        guard let v = try fetchVisitEntity(id: id) else {
-            Logger.warning("Visit not found for bookId update: \(id)")
-            return
+        try ctx.performAndWait {
+            guard let v = try fetchVisitEntity(id: id) else {
+                Logger.warning("Visit not found for bookId update: \(id)")
+                return
+            }
+            v.bookId = bookId
+            try ctx.save()
+            Logger.info("ブックを移動しました: \(id) → \(bookId)")
         }
-        v.bookId = bookId
-        try ctx.save()
-        Logger.info("ブックを移動しました: \(id) → \(bookId)")
     }
 
     func updateDetails(id: UUID, transform: (inout VisitDetails) -> Void) throws {
-        guard let v = try fetchVisitEntity(id: id) else {
-            Logger.warning("Visit not found for update: \(id)")
-            return
-        }
-        guard let d = v.details else {
-            Logger.error("Visit details missing for id: \(id)")
-            return
-        }
-
-        // 現状値を Domain 型に戻してから編集クロージャを適用
-        var cur = VisitDetails(
-            title: d.title,
-            facilityName: d.facilityName,
-            facilityAddress: d.facilityAddress,
-            facilityCategory: d.facilityCategory,
-            comment: d.comment,
-            labelIds: (d.labels as? Set<LabelEntity>)?.compactMap { $0.id } ?? [],
-            groupId: d.groupId,
-            memberIds: (d.members as? Set<MemberEntity>)?.compactMap { $0.id } ?? [],
-            resolvedAddress: d.resolvedAddress,
-            photoPaths: photoEntities(from: d).compactMap { $0.filePath }
-        )
-        transform(&cur)
-
-        // 既存の PhotoEntity をマップ化（filePath を一意キー扱い）
-        let existing = photoEntities(from: d)
-        var byPath = Dictionary(uniqueKeysWithValues: existing.compactMap { e in
-            (e.filePath ?? "") .isEmpty ? nil : (e.filePath!, e)
-        })
-
-        // 削除（無くなったパス）
-        let newSet = Set(cur.photoPaths)
-        for e in existing {
-            let path = e.filePath ?? ""
-            if !newSet.contains(path) {
-                // ファイルも削除
-                if !path.isEmpty { ImageStore.delete(path) }
-                ctx.delete(e)
-                byPath.removeValue(forKey: path)
+        try ctx.performAndWait {
+            guard let v = try fetchVisitEntity(id: id) else {
+                Logger.warning("Visit not found for update: \(id)")
+                return
             }
-        }
-
-        // 追加/並べ替え
-        let ordered = NSMutableOrderedSet()
-        for (idx, path) in cur.photoPaths.enumerated() {
-            if let exist = byPath[path] {
-                exist.orderIndex = Int16(idx)
-                ordered.add(exist)
-            } else {
-                // 追加
-                let p = VisitPhotoEntity(context: ctx)
-                p.id = UUID()
-                p.filePath = path
-                p.orderIndex = Int16(idx)
-                p.createdAt = Date()
-                p.details = d
-                ordered.add(p)
+            guard let d = v.details else {
+                Logger.error("Visit details missing for id: \(id)")
+                return
             }
+
+            // 現状値を Domain 型に戻してから編集クロージャを適用
+            var cur = VisitDetails(
+                title: d.title,
+                facilityName: d.facilityName,
+                facilityAddress: d.facilityAddress,
+                facilityCategory: d.facilityCategory,
+                comment: d.comment,
+                labelIds: (d.labels as? Set<LabelEntity>)?.compactMap { $0.id } ?? [],
+                groupId: d.groupId,
+                memberIds: (d.members as? Set<MemberEntity>)?.compactMap { $0.id } ?? [],
+                resolvedAddress: d.resolvedAddress,
+                photoPaths: photoEntities(from: d).compactMap { $0.filePath }
+            )
+            transform(&cur)
+
+            // 既存の PhotoEntity をマップ化（filePath を一意キー扱い）
+            let existing = photoEntities(from: d)
+            var byPath = Dictionary(uniqueKeysWithValues: existing.compactMap { e in
+                (e.filePath ?? "") .isEmpty ? nil : (e.filePath!, e)
+            })
+
+            // 削除（無くなったパス）
+            let newSet = Set(cur.photoPaths)
+            for e in existing {
+                let path = e.filePath ?? ""
+                if !newSet.contains(path) {
+                    // ファイルも削除
+                    if !path.isEmpty { ImageStore.delete(path) }
+                    ctx.delete(e)
+                    byPath.removeValue(forKey: path)
+                }
+            }
+
+            // 追加/並べ替え
+            let ordered = NSMutableOrderedSet()
+            for (idx, path) in cur.photoPaths.enumerated() {
+                if let exist = byPath[path] {
+                    exist.orderIndex = Int16(idx)
+                    ordered.add(exist)
+                } else {
+                    // 追加
+                    let p = VisitPhotoEntity(context: ctx)
+                    p.id = UUID()
+                    p.filePath = path
+                    p.orderIndex = Int16(idx)
+                    p.createdAt = Date()
+                    p.details = d
+                    ordered.add(p)
+                }
+            }
+
+            // 反映
+            d.title     = cur.title
+            d.facilityName = cur.facilityName
+            d.facilityAddress = cur.facilityAddress
+            d.facilityCategory = cur.facilityCategory
+            d.comment   = cur.comment
+            d.groupId   = cur.groupId
+            d.resolvedAddress = cur.resolvedAddress
+            d.labels    = NSSet(array: try fetchLabelEntities(for: cur.labelIds))
+            d.members   = NSSet(array: try fetchMemberEntities(for: cur.memberIds))
+            d.photos    = ordered
+
+            // 不変部は触っていないので d のみチェックで十分
+            preflightValidate([d])
+
+            try ctx.save()
         }
-        
-        // 反映
-        d.title     = cur.title
-        d.facilityName = cur.facilityName
-        d.facilityAddress = cur.facilityAddress
-        d.facilityCategory = cur.facilityCategory
-        d.comment   = cur.comment
-        d.groupId   = cur.groupId
-        d.resolvedAddress = cur.resolvedAddress
-        d.labels    = NSSet(array: try fetchLabelEntities(for: cur.labelIds))
-        d.members   = NSSet(array: try fetchMemberEntities(for: cur.memberIds))
-        d.photos    = ordered
-
-        // 不変部は触っていないので d のみチェックで十分
-        preflightValidate([d])
-
-        try ctx.save()
     }
 
     #if DEBUG
     /// デバッグモード専用：既存VisitのtimestampUTCと署名を更新
     func updateVisitTimestamp(id: UUID, newTimestamp: Date, newIntegrity: Visit.Integrity) throws {
-        guard let v = try fetchVisitEntity(id: id) else {
-            Logger.warning("Visit not found for timestamp update: \(id)")
-            return
+        try ctx.performAndWait {
+            guard let v = try fetchVisitEntity(id: id) else {
+                Logger.warning("Visit not found for timestamp update: \(id)")
+                return
+            }
+
+            // timestampUTCを更新
+            v.timestampUTC = newTimestamp
+
+            // 署名情報を更新
+            v.integrityAlgo         = newIntegrity.algo
+            v.integritySigDER       = newIntegrity.signatureDERBase64
+            v.integrityPubRaw       = newIntegrity.publicKeyRawBase64
+            v.integrityPayloadHash  = newIntegrity.payloadHashHex
+            v.integrityCreatedAtUTC = newIntegrity.createdAtUTC
+
+            preflightValidate([v])
+            try ctx.save()
         }
-
-        // timestampUTCを更新
-        v.timestampUTC = newTimestamp
-
-        // 署名情報を更新
-        v.integrityAlgo         = newIntegrity.algo
-        v.integritySigDER       = newIntegrity.signatureDERBase64
-        v.integrityPubRaw       = newIntegrity.publicKeyRawBase64
-        v.integrityPayloadHash  = newIntegrity.payloadHashHex
-        v.integrityCreatedAtUTC = newIntegrity.createdAtUTC
-
-        preflightValidate([v])
-        try ctx.save()
     }
     #endif
 
     /// ゴミ箱へ移動（ソフト削除）。deletedAt にタイムスタンプをセットする
     func delete(id: UUID) throws {
-        guard let v = try fetchVisitEntity(id: id) else { return }
-        v.deletedAt = Date()
-        try ctx.save()
-        NotificationCenter.default.post(name: .visitsChanged, object: nil)
-        Logger.info("記録をゴミ箱に移動しました: \(id)")
+        try ctx.performAndWait {
+            guard let v = try fetchVisitEntity(id: id) else { return }
+            v.deletedAt = Date()
+            try ctx.save()
+            NotificationCenter.default.post(name: .visitsChanged, object: nil)
+            Logger.info("記録をゴミ箱に移動しました: \(id)")
+        }
     }
 
     // MARK: - Trash（ゴミ箱）
 
     /// ゴミ箱内の記録を deletedAt 降順で取得
     func fetchTrashed() throws -> [VisitAggregate] {
-        let request: NSFetchRequest<VisitEntity> = VisitEntity.fetchRequest()
-        request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [
-            NSPredicate(format: "deletedAt != nil"),
-            NSPredicate(format: "bookId == %@", currentBookId as NSUUID)
-        ])
-        request.sortDescriptors = [NSSortDescriptor(key: "deletedAt", ascending: false)]
-        request.relationshipKeyPathsForPrefetching = ["details", "details.labels", "details.members", "details.photos"]
-        let rows = try ctx.fetch(request)
-        return rows.compactMap { self.toAggregate($0) }
+        try ctx.performAndWait {
+            let request: NSFetchRequest<VisitEntity> = VisitEntity.fetchRequest()
+            request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [
+                NSPredicate(format: "deletedAt != nil"),
+                NSPredicate(format: "bookId == %@", currentBookId as NSUUID)
+            ])
+            request.sortDescriptors = [NSSortDescriptor(key: "deletedAt", ascending: false)]
+            request.relationshipKeyPathsForPrefetching = ["details", "details.labels", "details.members", "details.photos"]
+            let rows = try ctx.fetch(request)
+            return rows.compactMap { self.toAggregate($0) }
+        }
     }
 
     /// ゴミ箱の件数
     func countTrashed() throws -> Int {
-        let request: NSFetchRequest<VisitEntity> = VisitEntity.fetchRequest()
-        request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [
-            NSPredicate(format: "deletedAt != nil"),
-            NSPredicate(format: "bookId == %@", currentBookId as NSUUID)
-        ])
-        return try ctx.count(for: request)
+        try ctx.performAndWait {
+            let request: NSFetchRequest<VisitEntity> = VisitEntity.fetchRequest()
+            request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [
+                NSPredicate(format: "deletedAt != nil"),
+                NSPredicate(format: "bookId == %@", currentBookId as NSUUID)
+            ])
+            return try ctx.count(for: request)
+        }
     }
 
     /// ゴミ箱から復元（deletedAt をクリア）
     func restore(id: UUID) throws {
-        guard let v = try fetchVisitEntity(id: id) else { return }
-        v.deletedAt = nil
-        try ctx.save()
-        NotificationCenter.default.post(name: .visitsChanged, object: nil)
-        Logger.info("記録をゴミ箱から復元しました: \(id)")
+        try ctx.performAndWait {
+            guard let v = try fetchVisitEntity(id: id) else { return }
+            v.deletedAt = nil
+            try ctx.save()
+            NotificationCenter.default.post(name: .visitsChanged, object: nil)
+            Logger.info("記録をゴミ箱から復元しました: \(id)")
+        }
     }
 
     /// 完全削除（写真ファイルも削除）
     func permanentlyDelete(id: UUID) throws {
-        guard let v = try fetchVisitEntity(id: id) else { return }
-        let photos = photoEntities(from: v.details)
-        for p in photos { if let path = p.filePath { ImageStore.delete(path) } }
-        ctx.delete(v)
-        try ctx.save()
-        NotificationCenter.default.post(name: .visitsChanged, object: nil)
-        Logger.info("記録を完全削除しました: \(id)")
+        try ctx.performAndWait {
+            guard let v = try fetchVisitEntity(id: id) else { return }
+            let photos = photoEntities(from: v.details)
+            for p in photos { if let path = p.filePath { ImageStore.delete(path) } }
+            ctx.delete(v)
+            try ctx.save()
+            NotificationCenter.default.post(name: .visitsChanged, object: nil)
+            Logger.info("記録を完全削除しました: \(id)")
+        }
     }
 
     /// ゴミ箱を空にする（全件完全削除）
     func emptyTrash() throws {
-        let request: NSFetchRequest<VisitEntity> = VisitEntity.fetchRequest()
-        request.predicate = NSPredicate(format: "deletedAt != nil")
-        let rows = try ctx.fetch(request)
-        for v in rows {
-            let photos = photoEntities(from: v.details)
-            for p in photos { if let path = p.filePath { ImageStore.delete(path) } }
-            ctx.delete(v)
-        }
-        if !rows.isEmpty {
-            try ctx.save()
-            NotificationCenter.default.post(name: .visitsChanged, object: nil)
-            Logger.info("ゴミ箱を空にしました（\(rows.count)件削除）")
+        try ctx.performAndWait {
+            let request: NSFetchRequest<VisitEntity> = VisitEntity.fetchRequest()
+            request.predicate = NSPredicate(format: "deletedAt != nil")
+            let rows = try ctx.fetch(request)
+            for v in rows {
+                let photos = photoEntities(from: v.details)
+                for p in photos { if let path = p.filePath { ImageStore.delete(path) } }
+                ctx.delete(v)
+            }
+            if !rows.isEmpty {
+                try ctx.save()
+                NotificationCenter.default.post(name: .visitsChanged, object: nil)
+                Logger.info("ゴミ箱を空にしました（\(rows.count)件削除）")
+            }
         }
     }
 
     /// 保持期間を超えたゴミ箱内の記録を自動完全削除（起動時に呼ぶ）
     func cleanUpExpiredTrash() throws {
-        let cutoff = Date().addingTimeInterval(-AppConfig.trashRetentionDays * 86400)
-        let request: NSFetchRequest<VisitEntity> = VisitEntity.fetchRequest()
-        request.predicate = NSPredicate(format: "deletedAt != nil AND deletedAt < %@", cutoff as NSDate)
-        let rows = try ctx.fetch(request)
-        for v in rows {
-            let photos = photoEntities(from: v.details)
-            for p in photos { if let path = p.filePath { ImageStore.delete(path) } }
-            ctx.delete(v)
-        }
-        if !rows.isEmpty {
-            try ctx.save()
-            Logger.info("ゴミ箱の期限切れ記録を \(rows.count) 件完全削除しました")
+        try ctx.performAndWait {
+            let cutoff = Date().addingTimeInterval(-AppConfig.trashRetentionDays * 86400)
+            let request: NSFetchRequest<VisitEntity> = VisitEntity.fetchRequest()
+            request.predicate = NSPredicate(format: "deletedAt != nil AND deletedAt < %@", cutoff as NSDate)
+            let rows = try ctx.fetch(request)
+            for v in rows {
+                let photos = photoEntities(from: v.details)
+                for p in photos { if let path = p.filePath { ImageStore.delete(path) } }
+                ctx.delete(v)
+            }
+            if !rows.isEmpty {
+                try ctx.save()
+                Logger.info("ゴミ箱の期限切れ記録を \(rows.count) 件完全削除しました")
+            }
         }
     }
 
@@ -390,78 +419,84 @@ final class CoreDataVisitRepository {
         dateFrom: Date?,
         dateToExclusive: Date?
     ) throws -> [VisitAggregate] {
-        // 型を明示
-        let request: NSFetchRequest<VisitEntity> = VisitEntity.fetchRequest()
-        var predicates: [NSPredicate] = [
-            NSPredicate(format: "deletedAt == nil"),
-            NSPredicate(format: "bookId == %@", currentBookId as NSUUID)
-        ]
+        try ctx.performAndWait {
+            // 型を明示
+            let request: NSFetchRequest<VisitEntity> = VisitEntity.fetchRequest()
+            var predicates: [NSPredicate] = [
+                NSPredicate(format: "deletedAt == nil"),
+                NSPredicate(format: "bookId == %@", currentBookId as NSUUID)
+            ]
 
-        // VisitEntity(1) -details-> VisitDetailsEntity(1) -labels-> LabelEntity(*)
-        if let lf = filterLabel {
-            // details.labels の id にヒットするもの
-            predicates.append(NSPredicate(format: "ANY details.labels.id == %@", lf as CVarArg))
-        }
+            // VisitEntity(1) -details-> VisitDetailsEntity(1) -labels-> LabelEntity(*)
+            if let lf = filterLabel {
+                // details.labels の id にヒットするもの
+                predicates.append(NSPredicate(format: "ANY details.labels.id == %@", lf as CVarArg))
+            }
 
-        if let gf = filterGroup {
-            // details の groupId
-            predicates.append(NSPredicate(format: "details.groupId == %@", gf as CVarArg))
-        }
+            if let gf = filterGroup {
+                // details の groupId
+                predicates.append(NSPredicate(format: "details.groupId == %@", gf as CVarArg))
+            }
 
-        if let mf = filterMember {
-            // details.members の id にヒットするもの
-            predicates.append(NSPredicate(format: "ANY details.members.id == %@", mf as CVarArg))
-        }
-        if let q = titleQuery, !q.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            // タイトルまたは住所に含まれる（OR検索）
-            let titlePredicate = NSPredicate(format: "details.title CONTAINS[cd] %@", q)
-            let addressPredicate = NSPredicate(format: "details.resolvedAddress CONTAINS[cd] %@", q)
-            predicates.append(NSCompoundPredicate(orPredicateWithSubpredicates: [titlePredicate, addressPredicate]))
-        }
-        if let from = dateFrom {
-            // 日付は VisitEntity 側の timestampUTC を使用
-            predicates.append(NSPredicate(format: "timestampUTC >= %@", from as NSDate))
-        }
-        if let to = dateToExclusive {
-            // 半開区間上端（<）で指定
-            predicates.append(NSPredicate(format: "timestampUTC < %@", to as NSDate))
-        }
+            if let mf = filterMember {
+                // details.members の id にヒットするもの
+                predicates.append(NSPredicate(format: "ANY details.members.id == %@", mf as CVarArg))
+            }
+            if let q = titleQuery, !q.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                // タイトルまたは住所に含まれる（OR検索）
+                let titlePredicate = NSPredicate(format: "details.title CONTAINS[cd] %@", q)
+                let addressPredicate = NSPredicate(format: "details.resolvedAddress CONTAINS[cd] %@", q)
+                predicates.append(NSCompoundPredicate(orPredicateWithSubpredicates: [titlePredicate, addressPredicate]))
+            }
+            if let from = dateFrom {
+                // 日付は VisitEntity 側の timestampUTC を使用
+                predicates.append(NSPredicate(format: "timestampUTC >= %@", from as NSDate))
+            }
+            if let to = dateToExclusive {
+                // 半開区間上端（<）で指定
+                predicates.append(NSPredicate(format: "timestampUTC < %@", to as NSDate))
+            }
 
-        if !predicates.isEmpty {
-            request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: predicates)
+            if !predicates.isEmpty {
+                request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: predicates)
+            }
+
+            // ここを ctx に
+            let rows = try ctx.fetch(request)
+
+            // toAggregate(_:) は free関数/メンバ関数なので self.toAggregate(_:) で呼ぶ
+            // Optional を落とすために compactMap
+            return rows.compactMap { self.toAggregate($0) }
         }
-
-        // ここを ctx に
-        let rows = try ctx.fetch(request)
-
-        // toAggregate(_:) は free関数/メンバ関数なので self.toAggregate(_:) で呼ぶ
-        // Optional を落とすために compactMap
-        return rows.compactMap { self.toAggregate($0) }
     }
 
 
 
     /// 最新の訪問記録を指定件数だけ取得（Core Data レベルでソート・件数制限）
     func fetchRecent(limit: Int) throws -> [VisitAggregate] {
-        let request: NSFetchRequest<VisitEntity> = VisitEntity.fetchRequest()
-        request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [
-            NSPredicate(format: "deletedAt == nil"),
-            NSPredicate(format: "bookId == %@", currentBookId as NSUUID)
-        ])
-        request.sortDescriptors = [NSSortDescriptor(key: "timestampUTC", ascending: false)]
-        request.fetchLimit = limit
-        // リレーションを事前読み込みしてN+1を軽減
-        request.relationshipKeyPathsForPrefetching = ["details", "details.labels", "details.members", "details.photos"]
-        let rows = try ctx.fetch(request)
-        return rows.compactMap { self.toAggregate($0) }
+        try ctx.performAndWait {
+            let request: NSFetchRequest<VisitEntity> = VisitEntity.fetchRequest()
+            request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [
+                NSPredicate(format: "deletedAt == nil"),
+                NSPredicate(format: "bookId == %@", currentBookId as NSUUID)
+            ])
+            request.sortDescriptors = [NSSortDescriptor(key: "timestampUTC", ascending: false)]
+            request.fetchLimit = limit
+            // リレーションを事前読み込みしてN+1を軽減
+            request.relationshipKeyPathsForPrefetching = ["details", "details.labels", "details.members", "details.photos"]
+            let rows = try ctx.fetch(request)
+            return rows.compactMap { self.toAggregate($0) }
+        }
     }
 
     func get(by id: UUID) throws -> VisitAggregate? {
-        guard let v = try fetchVisitEntity(id: id) else {
-            Logger.debug("Visit not found: \(id)")
-            return nil
+        try ctx.performAndWait {
+            guard let v = try fetchVisitEntity(id: id) else {
+                Logger.debug("Visit not found: \(id)")
+                return nil
+            }
+            return toAggregate(v)
         }
-        return toAggregate(v)
     }
 
     /// 指定位置から近隣の過去記録を検索（新しい順、最大limit件）
@@ -472,46 +507,48 @@ final class CoreDataVisitRepository {
         excludingId: UUID? = nil,
         limit: Int? = 3
     ) throws -> [VisitAggregate] {
-        // バウンディングボックスで事前絞り込み
-        // 100m ≈ 0.001度（緯度経度の概算）
-        let degreeOffset = radius / 111000.0 // 1度 ≈ 111km
+        try ctx.performAndWait {
+            // バウンディングボックスで事前絞り込み
+            // 100m ≈ 0.001度（緯度経度の概算）
+            let degreeOffset = radius / 111000.0 // 1度 ≈ 111km
 
-        let request: NSFetchRequest<VisitEntity> = VisitEntity.fetchRequest()
+            let request: NSFetchRequest<VisitEntity> = VisitEntity.fetchRequest()
 
-        var predicates: [NSPredicate] = [
-            NSPredicate(format: "deletedAt == nil"),
-            NSPredicate(format: "bookId == %@", currentBookId as NSUUID),
-            NSPredicate(format: "latitude BETWEEN {%f, %f}", latitude - degreeOffset, latitude + degreeOffset),
-            NSPredicate(format: "longitude BETWEEN {%f, %f}", longitude - degreeOffset, longitude + degreeOffset)
-        ]
+            var predicates: [NSPredicate] = [
+                NSPredicate(format: "deletedAt == nil"),
+                NSPredicate(format: "bookId == %@", currentBookId as NSUUID),
+                NSPredicate(format: "latitude BETWEEN {%f, %f}", latitude - degreeOffset, latitude + degreeOffset),
+                NSPredicate(format: "longitude BETWEEN {%f, %f}", longitude - degreeOffset, longitude + degreeOffset)
+            ]
 
-        // 自分自身を除外
-        if let excludeId = excludingId {
-            predicates.append(NSPredicate(format: "id != %@", excludeId as CVarArg))
+            // 自分自身を除外
+            if let excludeId = excludingId {
+                predicates.append(NSPredicate(format: "id != %@", excludeId as CVarArg))
+            }
+
+            request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: predicates)
+            request.sortDescriptors = [NSSortDescriptor(key: #keyPath(VisitEntity.timestampUTC), ascending: false)]
+
+            let candidates = try ctx.fetch(request)
+
+            // 正確な距離で絞り込み
+            let nearby = candidates.filter { entity in
+                let distance = calculateDistance(
+                    lat1: latitude, lon1: longitude,
+                    lat2: entity.latitude, lon2: entity.longitude
+                )
+                return distance <= radius
+            }
+
+            // limitが指定されている場合は上位limit件のみ取得
+            let results = if let limit = limit {
+                Array(nearby.prefix(limit))
+            } else {
+                nearby
+            }
+
+            return results.compactMap { self.toAggregate($0) }
         }
-
-        request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: predicates)
-        request.sortDescriptors = [NSSortDescriptor(key: #keyPath(VisitEntity.timestampUTC), ascending: false)]
-
-        let candidates = try ctx.fetch(request)
-
-        // 正確な距離で絞り込み
-        let nearby = candidates.filter { entity in
-            let distance = calculateDistance(
-                lat1: latitude, lon1: longitude,
-                lat2: entity.latitude, lon2: entity.longitude
-            )
-            return distance <= radius
-        }
-
-        // limitが指定されている場合は上位limit件のみ取得
-        let results = if let limit = limit {
-            Array(nearby.prefix(limit))
-        } else {
-            nearby
-        }
-
-        return results.compactMap { self.toAggregate($0) }
     }
 
     /// Haversine公式で2点間の距離を計算（メートル単位）
@@ -533,108 +570,120 @@ final class CoreDataVisitRepository {
     // MARK: - TaxonomyRepository
 
     func allLabels() throws -> [LabelTag] {
-        let req: NSFetchRequest<LabelEntity> = LabelEntity.fetchRequest()
-        req.predicate = NSPredicate(format: "bookId == %@", currentBookId as NSUUID)
-        req.sortDescriptors = [NSSortDescriptor(key: #keyPath(LabelEntity.name), ascending: true)]
-        return try ctx.fetch(req).compactMap { row in
-            guard let id = row.id, let name = row.name else {
-                Logger.warning("Label entity missing required fields (id or name)")
-                return nil
+        try ctx.performAndWait {
+            let req: NSFetchRequest<LabelEntity> = LabelEntity.fetchRequest()
+            req.predicate = NSPredicate(format: "bookId == %@", currentBookId as NSUUID)
+            req.sortDescriptors = [NSSortDescriptor(key: #keyPath(LabelEntity.name), ascending: true)]
+            return try ctx.fetch(req).compactMap { row in
+                guard let id = row.id, let name = row.name else {
+                    Logger.warning("Label entity missing required fields (id or name)")
+                    return nil
+                }
+                return LabelTag(id: id, name: name, colorId: row.colorId)
             }
-            return LabelTag(id: id, name: name, colorId: row.colorId)
         }
     }
 
     func allGroups() throws -> [GroupTag] {
-        let req: NSFetchRequest<GroupEntity> = GroupEntity.fetchRequest()
-        req.predicate = NSPredicate(format: "bookId == %@", currentBookId as NSUUID)
-        req.sortDescriptors = [NSSortDescriptor(key: #keyPath(GroupEntity.name), ascending: true)]
-        return try ctx.fetch(req).compactMap { row in
-            guard let id = row.id, let name = row.name else {
-                Logger.warning("Group entity missing required fields (id or name)")
-                return nil
+        try ctx.performAndWait {
+            let req: NSFetchRequest<GroupEntity> = GroupEntity.fetchRequest()
+            req.predicate = NSPredicate(format: "bookId == %@", currentBookId as NSUUID)
+            req.sortDescriptors = [NSSortDescriptor(key: #keyPath(GroupEntity.name), ascending: true)]
+            return try ctx.fetch(req).compactMap { row in
+                guard let id = row.id, let name = row.name else {
+                    Logger.warning("Group entity missing required fields (id or name)")
+                    return nil
+                }
+                return GroupTag(id: id, name: name)
             }
-            return GroupTag(id: id, name: name)
         }
     }
 
     func allMembers() throws -> [MemberTag] {
-        let req: NSFetchRequest<MemberEntity> = MemberEntity.fetchRequest()
-        req.predicate = NSPredicate(format: "bookId == %@", currentBookId as NSUUID)
-        req.sortDescriptors = [NSSortDescriptor(key: #keyPath(MemberEntity.name), ascending: true)]
-        return try ctx.fetch(req).compactMap { row in
-            guard let id = row.id, let name = row.name else {
-                Logger.warning("Member entity missing required fields (id or name)")
-                return nil
+        try ctx.performAndWait {
+            let req: NSFetchRequest<MemberEntity> = MemberEntity.fetchRequest()
+            req.predicate = NSPredicate(format: "bookId == %@", currentBookId as NSUUID)
+            req.sortDescriptors = [NSSortDescriptor(key: #keyPath(MemberEntity.name), ascending: true)]
+            return try ctx.fetch(req).compactMap { row in
+                guard let id = row.id, let name = row.name else {
+                    Logger.warning("Member entity missing required fields (id or name)")
+                    return nil
+                }
+                return MemberTag(id: id, name: name)
             }
-            return MemberTag(id: id, name: name)
         }
     }
 
     func upsertLabel(name: String) throws -> LabelTag {
-        let req: NSFetchRequest<LabelEntity> = LabelEntity.fetchRequest()
-        req.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [
-            NSPredicate(format: "name == %@", name),
-            NSPredicate(format: "bookId == %@", currentBookId as NSUUID)
-        ])
-        if let hit = try ctx.fetch(req).first, let id = hit.id, let nm = hit.name {
-            return LabelTag(id: id, name: nm, colorId: hit.colorId)
+        try ctx.performAndWait {
+            let req: NSFetchRequest<LabelEntity> = LabelEntity.fetchRequest()
+            req.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [
+                NSPredicate(format: "name == %@", name),
+                NSPredicate(format: "bookId == %@", currentBookId as NSUUID)
+            ])
+            if let hit = try ctx.fetch(req).first, let id = hit.id, let nm = hit.name {
+                return LabelTag(id: id, name: nm, colorId: hit.colorId)
+            }
+            let e = LabelEntity(context: ctx)
+            let newId = UUID()
+            e.id = newId
+            e.name = name
+            e.bookId = currentBookId
+            try ctx.save()
+            guard let savedId = e.id, let savedName = e.name else {
+                Logger.error("Failed to save label entity properly")
+                throw NSError(domain: "Repository", code: 2, userInfo: [NSLocalizedDescriptionKey: "ラベルの保存に失敗しました"])
+            }
+            return LabelTag(id: savedId, name: savedName)
         }
-        let e = LabelEntity(context: ctx)
-        let newId = UUID()
-        e.id = newId
-        e.name = name
-        e.bookId = currentBookId
-        try ctx.save()
-        guard let savedId = e.id, let savedName = e.name else {
-            Logger.error("Failed to save label entity properly")
-            throw NSError(domain: "Repository", code: 2, userInfo: [NSLocalizedDescriptionKey: "ラベルの保存に失敗しました"])
-        }
-        return LabelTag(id: savedId, name: savedName)
     }
 
     func upsertGroup(name: String) throws -> GroupTag {
-        let req: NSFetchRequest<GroupEntity> = GroupEntity.fetchRequest()
-        req.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [
-            NSPredicate(format: "name == %@", name),
-            NSPredicate(format: "bookId == %@", currentBookId as NSUUID)
-        ])
-        if let hit = try ctx.fetch(req).first, let id = hit.id, let nm = hit.name {
-            return GroupTag(id: id, name: nm)
+        try ctx.performAndWait {
+            let req: NSFetchRequest<GroupEntity> = GroupEntity.fetchRequest()
+            req.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [
+                NSPredicate(format: "name == %@", name),
+                NSPredicate(format: "bookId == %@", currentBookId as NSUUID)
+            ])
+            if let hit = try ctx.fetch(req).first, let id = hit.id, let nm = hit.name {
+                return GroupTag(id: id, name: nm)
+            }
+            let e = GroupEntity(context: ctx)
+            let newId = UUID()
+            e.id = newId
+            e.name = name
+            e.bookId = currentBookId
+            try ctx.save()
+            guard let savedId = e.id, let savedName = e.name else {
+                Logger.error("Failed to save group entity properly")
+                throw NSError(domain: "Repository", code: 2, userInfo: [NSLocalizedDescriptionKey: "グループの保存に失敗しました"])
+            }
+            return GroupTag(id: savedId, name: savedName)
         }
-        let e = GroupEntity(context: ctx)
-        let newId = UUID()
-        e.id = newId
-        e.name = name
-        e.bookId = currentBookId
-        try ctx.save()
-        guard let savedId = e.id, let savedName = e.name else {
-            Logger.error("Failed to save group entity properly")
-            throw NSError(domain: "Repository", code: 2, userInfo: [NSLocalizedDescriptionKey: "グループの保存に失敗しました"])
-        }
-        return GroupTag(id: savedId, name: savedName)
     }
 
     func upsertMember(name: String) throws -> MemberTag {
-        let req: NSFetchRequest<MemberEntity> = MemberEntity.fetchRequest()
-        req.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [
-            NSPredicate(format: "name == %@", name),
-            NSPredicate(format: "bookId == %@", currentBookId as NSUUID)
-        ])
-        if let hit = try ctx.fetch(req).first, let id = hit.id, let nm = hit.name {
-            return MemberTag(id: id, name: nm)
+        try ctx.performAndWait {
+            let req: NSFetchRequest<MemberEntity> = MemberEntity.fetchRequest()
+            req.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [
+                NSPredicate(format: "name == %@", name),
+                NSPredicate(format: "bookId == %@", currentBookId as NSUUID)
+            ])
+            if let hit = try ctx.fetch(req).first, let id = hit.id, let nm = hit.name {
+                return MemberTag(id: id, name: nm)
+            }
+            let e = MemberEntity(context: ctx)
+            let newId = UUID()
+            e.id = newId
+            e.name = name
+            e.bookId = currentBookId
+            try ctx.save()
+            guard let savedId = e.id, let savedName = e.name else {
+                Logger.error("Failed to save member entity properly")
+                throw NSError(domain: "Repository", code: 2, userInfo: [NSLocalizedDescriptionKey: "メンバーの保存に失敗しました"])
+            }
+            return MemberTag(id: savedId, name: savedName)
         }
-        let e = MemberEntity(context: ctx)
-        let newId = UUID()
-        e.id = newId
-        e.name = name
-        e.bookId = currentBookId
-        try ctx.save()
-        guard let savedId = e.id, let savedName = e.name else {
-            Logger.error("Failed to save member entity properly")
-            throw NSError(domain: "Repository", code: 2, userInfo: [NSLocalizedDescriptionKey: "メンバーの保存に失敗しました"])
-        }
-        return MemberTag(id: savedId, name: savedName)
     }
 
     // MARK: - Helpers
@@ -711,8 +760,8 @@ final class CoreDataVisitRepository {
             integrity: integrity,
             isManualEntry: isManualEntry
         )
-        
-        
+
+
         // Details（可変部）
         let d = v.details
         let labelEntities = (d?.labels as? Set<LabelEntity>) ?? []
@@ -758,7 +807,7 @@ final class CoreDataVisitRepository {
         // 見つからない id があっても無視（スキップ）
         return found
     }
-    
+
     // ① 追加：保存直前に必須項目の nil を検知してログする
     private func preflightValidate(_ objs: [NSManagedObject]) {
         #if DEBUG
@@ -785,114 +834,130 @@ final class CoreDataVisitRepository {
         }
         #endif
     }
-    
+
     // MARK: - Taxonomy: Label
 
     func renameLabel(id: UUID, newName: String) throws {
-        guard let label = try fetchLabelEntity(id: id) else { return }
-        label.name = newName
-        try ctx.save()
+        try ctx.performAndWait {
+            guard let label = try fetchLabelEntity(id: id) else { return }
+            label.name = newName
+            try ctx.save()
+        }
     }
 
     func deleteLabel(id: UUID) throws {
-        guard let label = try fetchLabelEntity(id: id) else { return }
+        try ctx.performAndWait {
+            guard let label = try fetchLabelEntity(id: id) else { return }
 
-        // 関連から外す（安全のため）
-        let req = VisitDetailsEntity.fetchRequest()
-        req.predicate = NSPredicate(format: "ANY labels == %@", label)
-        let affected = try ctx.fetch(req)
-        for d in affected {
-            if var set = d.labels as? Set<LabelEntity> {
-                set.remove(label)
-                d.labels = NSSet(set: set)
+            // 関連から外す（安全のため）
+            let req = VisitDetailsEntity.fetchRequest()
+            req.predicate = NSPredicate(format: "ANY labels == %@", label)
+            let affected = try ctx.fetch(req)
+            for d in affected {
+                if var set = d.labels as? Set<LabelEntity> {
+                    set.remove(label)
+                    d.labels = NSSet(set: set)
+                }
             }
-        }
 
-        ctx.delete(label)
-        try ctx.save()
+            ctx.delete(label)
+            try ctx.save()
+        }
     }
 
     // MARK: - Taxonomy: Group
 
     func renameGroup(id: UUID, newName: String) throws {
-        guard let group = try fetchGroupEntity(id: id) else { return }
-        group.name = newName
-        try ctx.save()
+        try ctx.performAndWait {
+            guard let group = try fetchGroupEntity(id: id) else { return }
+            group.name = newName
+            try ctx.save()
+        }
     }
 
     func deleteGroup(id: UUID) throws {
-        guard let group = try fetchGroupEntity(id: id) else { return }
+        try ctx.performAndWait {
+            guard let group = try fetchGroupEntity(id: id) else { return }
 
-        // このグループを参照している詳細の groupId を外す
-        if let gid = group.id {
-            let req = VisitDetailsEntity.fetchRequest()
-            req.predicate = NSPredicate(format: "groupId == %@", gid as CVarArg)
-            let affected = try ctx.fetch(req)
-            for d in affected {
-                d.groupId = nil
+            // このグループを参照している詳細の groupId を外す
+            if let gid = group.id {
+                let req = VisitDetailsEntity.fetchRequest()
+                req.predicate = NSPredicate(format: "groupId == %@", gid as CVarArg)
+                let affected = try ctx.fetch(req)
+                for d in affected {
+                    d.groupId = nil
+                }
             }
-        }
 
-        ctx.delete(group)
-        try ctx.save()
+            ctx.delete(group)
+            try ctx.save()
+        }
     }
 
     // MARK: - Taxonomy: Member
 
     func renameMember(id: UUID, newName: String) throws {
-        guard let member = try fetchMemberEntity(id: id) else { return }
-        member.name = newName
-        try ctx.save()
+        try ctx.performAndWait {
+            guard let member = try fetchMemberEntity(id: id) else { return }
+            member.name = newName
+            try ctx.save()
+        }
     }
 
     func deleteMember(id: UUID) throws {
-        guard let member = try fetchMemberEntity(id: id) else { return }
+        try ctx.performAndWait {
+            guard let member = try fetchMemberEntity(id: id) else { return }
 
-        // 関連から外す（安全のため）
-        let req = VisitDetailsEntity.fetchRequest()
-        req.predicate = NSPredicate(format: "ANY members == %@", member)
-        let affected = try ctx.fetch(req)
-        for d in affected {
-            if var set = d.members as? Set<MemberEntity> {
-                set.remove(member)
-                d.members = NSSet(set: set)
+            // 関連から外す（安全のため）
+            let req = VisitDetailsEntity.fetchRequest()
+            req.predicate = NSPredicate(format: "ANY members == %@", member)
+            let affected = try ctx.fetch(req)
+            for d in affected {
+                if var set = d.members as? Set<MemberEntity> {
+                    set.remove(member)
+                    d.members = NSSet(set: set)
+                }
             }
-        }
 
-        ctx.delete(member)
-        try ctx.save()
+            ctx.delete(member)
+            try ctx.save()
+        }
     }
 
     // MARK: - Visit: カウント
 
     func allVisitsCount() throws -> Int {
-        let request: NSFetchRequest<VisitEntity> = VisitEntity.fetchRequest()
-        request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [
-            NSPredicate(format: "deletedAt == nil"),
-            NSPredicate(format: "bookId == %@", currentBookId as NSUUID)
-        ])
-        return try ctx.count(for: request)
+        try ctx.performAndWait {
+            let request: NSFetchRequest<VisitEntity> = VisitEntity.fetchRequest()
+            request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [
+                NSPredicate(format: "deletedAt == nil"),
+                NSPredicate(format: "bookId == %@", currentBookId as NSUUID)
+            ])
+            return try ctx.count(for: request)
+        }
     }
 
     // MARK: - Visit: 全削除（初期化）
 
     func deleteAllVisits() throws {
-        // VisitDetails から先に消す（参照整合のため）
-        do {
-            let del = NSBatchDeleteRequest(fetchRequest: VisitDetailsEntity.fetchRequest())
-            del.resultType = .resultTypeObjectIDs
-            let res = try ctx.execute(del) as? NSBatchDeleteResult
-            if let ids = res?.result as? [NSManagedObjectID] {
-                NSManagedObjectContext.mergeChanges(fromRemoteContextSave: [NSDeletedObjectsKey: ids], into: [ctx])
+        try ctx.performAndWait {
+            // VisitDetails から先に消す（参照整合のため）
+            do {
+                let del = NSBatchDeleteRequest(fetchRequest: VisitDetailsEntity.fetchRequest())
+                del.resultType = .resultTypeObjectIDs
+                let res = try ctx.execute(del) as? NSBatchDeleteResult
+                if let ids = res?.result as? [NSManagedObjectID] {
+                    NSManagedObjectContext.mergeChanges(fromRemoteContextSave: [NSDeletedObjectsKey: ids], into: [ctx])
+                }
             }
-        }
-        // Visit 本体
-        do {
-            let del = NSBatchDeleteRequest(fetchRequest: VisitEntity.fetchRequest())
-            del.resultType = .resultTypeObjectIDs
-            let res = try ctx.execute(del) as? NSBatchDeleteResult
-            if let ids = res?.result as? [NSManagedObjectID] {
-                NSManagedObjectContext.mergeChanges(fromRemoteContextSave: [NSDeletedObjectsKey: ids], into: [ctx])
+            // Visit 本体
+            do {
+                let del = NSBatchDeleteRequest(fetchRequest: VisitEntity.fetchRequest())
+                del.resultType = .resultTypeObjectIDs
+                let res = try ctx.execute(del) as? NSBatchDeleteResult
+                if let ids = res?.result as? [NSManagedObjectID] {
+                    NSManagedObjectContext.mergeChanges(fromRemoteContextSave: [NSDeletedObjectsKey: ids], into: [ctx])
+                }
             }
         }
     }
@@ -911,184 +976,197 @@ final class CoreDataVisitRepository {
     private func normalizedName(_ s: String) -> String {
         s.trimmingCharacters(in: .whitespacesAndNewlines)
     }
-    
+
     func createLabel(name: String) throws -> UUID {
-        let trimmed = name.trimmed
-        guard !trimmed.isEmpty else {
-            Logger.warning("Attempted to create label with empty name")
-            throw NSError(domain: "Label", code: 1,
-                          userInfo: [NSLocalizedDescriptionKey: "空名は作成できません"])
+        try ctx.performAndWait {
+            let trimmed = name.trimmed
+            guard !trimmed.isEmpty else {
+                Logger.warning("Attempted to create label with empty name")
+                throw NSError(domain: "Label", code: 1,
+                              userInfo: [NSLocalizedDescriptionKey: "空名は作成できません"])
+            }
+            let e = LabelEntity(context: ctx)
+            let newId = UUID()
+            e.id = newId
+            e.name = trimmed
+            e.bookId = currentBookId
+            try ctx.save()
+            guard let savedId = e.id else {
+                Logger.error("Label entity ID is nil after save")
+                throw NSError(domain: "Repository", code: 2, userInfo: [NSLocalizedDescriptionKey: "ラベルの保存に失敗しました"])
+            }
+            return savedId
         }
-        let e = LabelEntity(context: ctx)
-        let newId = UUID()
-        e.id = newId
-        e.name = trimmed
-        e.bookId = currentBookId
-        try ctx.save()
-        guard let savedId = e.id else {
-            Logger.error("Label entity ID is nil after save")
-            throw NSError(domain: "Repository", code: 2, userInfo: [NSLocalizedDescriptionKey: "ラベルの保存に失敗しました"])
-        }
-        return savedId
     }
 
     func createGroup(name: String) throws -> UUID {
-        let trimmed = name.trimmed
-        guard !trimmed.isEmpty else {
-            Logger.warning("Attempted to create group with empty name")
-            throw NSError(domain: "Group", code: 1,
-                          userInfo: [NSLocalizedDescriptionKey: "空名は作成できません"])
+        try ctx.performAndWait {
+            let trimmed = name.trimmed
+            guard !trimmed.isEmpty else {
+                Logger.warning("Attempted to create group with empty name")
+                throw NSError(domain: "Group", code: 1,
+                              userInfo: [NSLocalizedDescriptionKey: "空名は作成できません"])
+            }
+            let e = GroupEntity(context: ctx)
+            let newId = UUID()
+            e.id = newId
+            e.name = trimmed
+            e.bookId = currentBookId
+            try ctx.save()
+            guard let savedId = e.id else {
+                Logger.error("Group entity ID is nil after save")
+                throw NSError(domain: "Repository", code: 2, userInfo: [NSLocalizedDescriptionKey: "グループの保存に失敗しました"])
+            }
+            return savedId
         }
-        let e = GroupEntity(context: ctx)
-        let newId = UUID()
-        e.id = newId
-        e.name = trimmed
-        e.bookId = currentBookId
-        try ctx.save()
-        guard let savedId = e.id else {
-            Logger.error("Group entity ID is nil after save")
-            throw NSError(domain: "Repository", code: 2, userInfo: [NSLocalizedDescriptionKey: "グループの保存に失敗しました"])
-        }
-        return savedId
     }
 
     func createMember(name: String) throws -> UUID {
-        let trimmed = name.trimmed
-        guard !trimmed.isEmpty else {
-            Logger.warning("Attempted to create member with empty name")
-            throw NSError(domain: "Member", code: 1,
-                          userInfo: [NSLocalizedDescriptionKey: "空名は作成できません"])
+        try ctx.performAndWait {
+            let trimmed = name.trimmed
+            guard !trimmed.isEmpty else {
+                Logger.warning("Attempted to create member with empty name")
+                throw NSError(domain: "Member", code: 1,
+                              userInfo: [NSLocalizedDescriptionKey: "空名は作成できません"])
+            }
+            let e = MemberEntity(context: ctx)
+            let newId = UUID()
+            e.id = newId
+            e.name = trimmed
+            e.bookId = currentBookId
+            try ctx.save()
+            guard let savedId = e.id else {
+                Logger.error("Member entity ID is nil after save")
+                throw NSError(domain: "Repository", code: 2, userInfo: [NSLocalizedDescriptionKey: "メンバーの保存に失敗しました"])
+            }
+            return savedId
         }
-        let e = MemberEntity(context: ctx)
-        let newId = UUID()
-        e.id = newId
-        e.name = trimmed
-        e.bookId = currentBookId
-        try ctx.save()
-        guard let savedId = e.id else {
-            Logger.error("Member entity ID is nil after save")
-            throw NSError(domain: "Repository", code: 2, userInfo: [NSLocalizedDescriptionKey: "メンバーの保存に失敗しました"])
-        }
-        return savedId
     }
 
     // MARK: - Restore用：既存IDでの作成
 
     func createLabel(id: UUID, name: String, colorId: String? = nil, saveImmediately: Bool = true) throws {
-        let trimmed = name.trimmed
-        guard !trimmed.isEmpty else {
-            Logger.warning("Attempted to create label with empty name")
-            throw NSError(domain: "Label", code: 1,
-                          userInfo: [NSLocalizedDescriptionKey: "空名は作成できません"])
-        }
+        try ctx.performAndWait {
+            let trimmed = name.trimmed
+            guard !trimmed.isEmpty else {
+                Logger.warning("Attempted to create label with empty name")
+                throw NSError(domain: "Label", code: 1,
+                              userInfo: [NSLocalizedDescriptionKey: "空名は作成できません"])
+            }
 
-        // 既存のラベルをチェック
-        if let existing = try fetchLabelEntity(id: id) {
-            Logger.info("Label with ID \(id) already exists, skipping creation")
-            // 名前または色が異なる場合は更新
-            var updated = false
-            if existing.name != trimmed {
-                existing.name = trimmed
-                updated = true
+            // 既存のラベルをチェック
+            if let existing = try fetchLabelEntity(id: id) {
+                Logger.info("Label with ID \(id) already exists, skipping creation")
+                // 名前または色が異なる場合は更新
+                var updated = false
+                if existing.name != trimmed {
+                    existing.name = trimmed
+                    updated = true
+                }
+                if existing.colorId != colorId {
+                    existing.colorId = colorId
+                    updated = true
+                }
+                if updated && saveImmediately {
+                    try ctx.save()
+                    Logger.info("Updated label: \(trimmed) (colorId: \(colorId ?? "nil"))")
+                }
+                return
             }
-            if existing.colorId != colorId {
-                existing.colorId = colorId
-                updated = true
-            }
-            if updated && saveImmediately {
+
+            let e = LabelEntity(context: ctx)
+            e.id = id
+            e.name = trimmed
+            e.colorId = colorId
+            if saveImmediately {
                 try ctx.save()
-                Logger.info("Updated label: \(trimmed) (colorId: \(colorId ?? "nil"))")
             }
-            return
+            Logger.info("Created label with existing ID: \(trimmed) (\(id), colorId: \(colorId ?? "nil"))")
         }
-
-        let e = LabelEntity(context: ctx)
-        e.id = id
-        e.name = trimmed
-        e.colorId = colorId
-        if saveImmediately {
-            try ctx.save()
-        }
-        Logger.info("Created label with existing ID: \(trimmed) (\(id), colorId: \(colorId ?? "nil"))")
     }
 
     func createGroup(id: UUID, name: String, saveImmediately: Bool = true) throws {
-        let trimmed = name.trimmed
-        guard !trimmed.isEmpty else {
-            Logger.warning("Attempted to create group with empty name")
-            throw NSError(domain: "Group", code: 1,
-                          userInfo: [NSLocalizedDescriptionKey: "空名は作成できません"])
-        }
-
-        // 既存のグループをチェック
-        if let existing = try fetchGroupEntity(id: id) {
-            Logger.info("Group with ID \(id) already exists, skipping creation")
-            // 名前が異なる場合は更新
-            if existing.name != trimmed {
-                existing.name = trimmed
-                if saveImmediately {
-                    try ctx.save()
-                }
-                Logger.info("Updated group name to: \(trimmed)")
+        try ctx.performAndWait {
+            let trimmed = name.trimmed
+            guard !trimmed.isEmpty else {
+                Logger.warning("Attempted to create group with empty name")
+                throw NSError(domain: "Group", code: 1,
+                              userInfo: [NSLocalizedDescriptionKey: "空名は作成できません"])
             }
-            return
-        }
 
-        let e = GroupEntity(context: ctx)
-        e.id = id
-        e.name = trimmed
-        if saveImmediately {
-            try ctx.save()
+            // 既存のグループをチェック
+            if let existing = try fetchGroupEntity(id: id) {
+                Logger.info("Group with ID \(id) already exists, skipping creation")
+                // 名前が異なる場合は更新
+                if existing.name != trimmed {
+                    existing.name = trimmed
+                    if saveImmediately {
+                        try ctx.save()
+                    }
+                    Logger.info("Updated group name to: \(trimmed)")
+                }
+                return
+            }
+
+            let e = GroupEntity(context: ctx)
+            e.id = id
+            e.name = trimmed
+            if saveImmediately {
+                try ctx.save()
+            }
+            Logger.info("Created group with existing ID: \(trimmed) (\(id))")
         }
-        Logger.info("Created group with existing ID: \(trimmed) (\(id))")
     }
 
     func createMember(id: UUID, name: String, saveImmediately: Bool = true) throws {
-        let trimmed = name.trimmed
-        guard !trimmed.isEmpty else {
-            Logger.warning("Attempted to create member with empty name")
-            throw NSError(domain: "Member", code: 1,
-                          userInfo: [NSLocalizedDescriptionKey: "空名は作成できません"])
-        }
-
-        // 既存のメンバーをチェック
-        if let existing = try fetchMemberEntity(id: id) {
-            Logger.info("Member with ID \(id) already exists, skipping creation")
-            // 名前が異なる場合は更新
-            if existing.name != trimmed {
-                existing.name = trimmed
-                if saveImmediately {
-                    try ctx.save()
-                }
-                Logger.info("Updated member name to: \(trimmed)")
+        try ctx.performAndWait {
+            let trimmed = name.trimmed
+            guard !trimmed.isEmpty else {
+                Logger.warning("Attempted to create member with empty name")
+                throw NSError(domain: "Member", code: 1,
+                              userInfo: [NSLocalizedDescriptionKey: "空名は作成できません"])
             }
-            return
-        }
 
-        let e = MemberEntity(context: ctx)
-        e.id = id
-        e.name = trimmed
-        if saveImmediately {
-            try ctx.save()
+            // 既存のメンバーをチェック
+            if let existing = try fetchMemberEntity(id: id) {
+                Logger.info("Member with ID \(id) already exists, skipping creation")
+                // 名前が異なる場合は更新
+                if existing.name != trimmed {
+                    existing.name = trimmed
+                    if saveImmediately {
+                        try ctx.save()
+                    }
+                    Logger.info("Updated member name to: \(trimmed)")
+                }
+                return
+            }
+
+            let e = MemberEntity(context: ctx)
+            e.id = id
+            e.name = trimmed
+            if saveImmediately {
+                try ctx.save()
+            }
+            Logger.info("Created member with existing ID: \(trimmed) (\(id))")
         }
-        Logger.info("Created member with existing ID: \(trimmed) (\(id))")
     }
 
     /// CoreDataコンテキストをリフレッシュして一時ObjectIDを永続IDに変換
     func refreshContext() throws {
-        // 未保存の変更があれば保存
-        if ctx.hasChanges {
-            try ctx.save()
-        }
+        try ctx.performAndWait {
+            // 未保存の変更があれば保存
+            if ctx.hasChanges {
+                try ctx.save()
+            }
 
-        // 一時ObjectIDを永続IDに変換
-        let insertedObjects = Array(ctx.insertedObjects)
-        if !insertedObjects.isEmpty {
-            try ctx.obtainPermanentIDs(for: insertedObjects)
-            Logger.info("Obtained permanent IDs for \(insertedObjects.count) objects")
-        }
+            // 一時ObjectIDを永続IDに変換
+            let insertedObjects = Array(ctx.insertedObjects)
+            if !insertedObjects.isEmpty {
+                try ctx.obtainPermanentIDs(for: insertedObjects)
+                Logger.info("Obtained permanent IDs for \(insertedObjects.count) objects")
+            }
 
-        Logger.info("CoreData context refreshed")
+            Logger.info("CoreData context refreshed")
+        }
     }
 }
-
