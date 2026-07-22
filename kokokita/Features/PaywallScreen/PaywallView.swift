@@ -208,9 +208,9 @@ struct PaywallView: View {
             }
 
             HStack(spacing: 16) {
-                Link(L.Paywall.terms, destination: URL(string: "https://kokokita.app/terms")!)
+                Link(L.Paywall.terms, destination: URL(string: "https://kokokita.irodoriq.com/terms/")!)
                 Text("•").foregroundStyle(.secondary)
-                Link(L.Paywall.privacy, destination: URL(string: "https://kokokita.app/privacy")!)
+                Link(L.Paywall.privacy, destination: URL(string: "https://kokokita.irodoriq.com/privacy/")!)
             }
             .font(.caption)
             .foregroundStyle(.secondary)
