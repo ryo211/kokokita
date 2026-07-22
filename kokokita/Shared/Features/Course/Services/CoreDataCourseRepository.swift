@@ -34,7 +34,7 @@ final class CoreDataCourseRepository: CourseRepository {
     func save(_ course: Course) throws {
         try ctx.performAndWait {
             let entity = (try fetchEntity(id: course.id)) ?? CourseEntity(context: ctx)
-            apply(course: course, to: entity)
+            try apply(course: course, to: entity)
             try ctx.save()
         }
     }
@@ -43,7 +43,7 @@ final class CoreDataCourseRepository: CourseRepository {
         try ctx.performAndWait {
             for course in courses {
                 let entity = (try fetchEntity(id: course.id)) ?? CourseEntity(context: ctx)
-                apply(course: course, to: entity)
+                try apply(course: course, to: entity)
             }
             try ctx.save()
         }
@@ -117,7 +117,7 @@ final class CoreDataCourseRepository: CourseRepository {
     }
 
     /// Course ドメインモデル → CoreData エンティティへの書き込み
-    private func apply(course: Course, to entity: CourseEntity) {
+    private func apply(course: Course, to entity: CourseEntity) throws {
         entity.id = course.id
         entity.courseType = course.courseType.rawValue
         entity.title = course.title
@@ -138,40 +138,26 @@ final class CoreDataCourseRepository: CourseRepository {
         entity.updatedAt = course.updatedAt
 
         // セクション（内包スポット）を同期
-        syncSections(course.sections, to: entity)
+        try syncSections(course.sections, to: entity)
     }
 
     /// セクション一覧を同期
-    private func syncSections(_ sections: [CourseSection], to courseEntity: CourseEntity) {
-        // 既存セクションを sectionId でマッピング（nil の場合は id で識別）
-        let existingSections: [String: CourseSectionEntity] =
-            (courseEntity.sections?.array as? [CourseSectionEntity])?
-                .reduce(into: [:]) { dict, e in
-                    let key = e.sectionId ?? e.id?.uuidString ?? UUID().uuidString
-                    dict[key] = e
-                } ?? [:]
-
-        // 既存スポットを id でマッピング（セクション横断で収集）
-        let existingSpots: [UUID: CourseSpotEntity] =
-            (courseEntity.sections?.array as? [CourseSectionEntity])?
-                .flatMap { ($0.spots?.array as? [CourseSpotEntity]) ?? [] }
-                .reduce(into: [:]) { dict, e in
-                    if let id = e.id { dict[id] = e }
-                } ?? [:]
-
-        // v3 互換: course.spots 直下のスポットも収集
-        let legacySpots: [UUID: CourseSpotEntity] =
-            (courseEntity.spots?.array as? [CourseSpotEntity])?
-                .reduce(into: [:]) { dict, e in
-                    if let id = e.id { dict[id] = e }
-                } ?? [:]
-
-        let allExistingSpots = existingSpots.merging(legacySpots) { current, _ in current }
+    ///
+    /// 既存エンティティの突き合わせは「現在 courseEntity.sections にアタッチされているもの」ではなく、
+    /// ストア全体から決定論的ID（CourseJSONParser.uuidFromString 由来）で検索する。
+    /// section.id/spot.id は文字列から決定論的に導出されるため、過去のsyncで一時的にリレーションが
+    /// 切れて孤立したエンティティも同じIDで再登場しうる。孤立エンティティを無視して新規作成すると
+    /// 同一IDのエンティティが重複生成されてしまうため（Core Data には uniquenessConstraints が無く
+    /// 検知・拒否されない）、孤立分も含めて再利用することで重複生成を防ぐ。
+    private func syncSections(_ sections: [CourseSection], to courseEntity: CourseEntity) throws {
+        let existingSections = try fetchSectionEntities(ids: sections.map(\.id), scopedTo: courseEntity)
+        // スポットは checkIn(spotId:visitId:) が元々コース横断のグローバルIDとして扱う設計のため、
+        // ここでもコースに絞らずストア全体から検索する（同一スポットが複数コースに登場する場合の共有を維持）
+        let existingSpots = try fetchSpotEntities(ids: sections.flatMap { $0.spots.map(\.id) })
 
         var orderedSections: [CourseSectionEntity] = []
         for section in sections {
-            let key = section.sectionId ?? section.id.uuidString
-            let sectionEntity = existingSections[key] ?? CourseSectionEntity(context: ctx)
+            let sectionEntity = existingSections[section.id] ?? CourseSectionEntity(context: ctx)
             sectionEntity.id = section.id
             sectionEntity.sectionId = section.sectionId
             sectionEntity.name = section.name
@@ -181,13 +167,47 @@ final class CoreDataCourseRepository: CourseRepository {
             sectionEntity.course = courseEntity
 
             // スポットを同期
-            syncSpots(section.spots, to: sectionEntity, existingSpots: allExistingSpots)
+            syncSpots(section.spots, to: sectionEntity, existingSpots: existingSpots)
             orderedSections.append(sectionEntity)
         }
 
         courseEntity.sections = NSOrderedSet(array: orderedSections)
         // v3 互換の直下 spots リレーションはクリア（セクション経由に一本化）
         courseEntity.spots = NSOrderedSet()
+    }
+
+    /// 指定IDのセクションエンティティを検索する。対象はこのコースに現在属するもの、
+    /// および過去のsyncでリレーションが切れて孤立した（course == nil）ものに限定する。
+    /// 他コースに属する同名sectionIdのエンティティを誤って奪わないための絞り込み。
+    private func fetchSectionEntities(ids: [UUID], scopedTo courseEntity: CourseEntity) throws -> [UUID: CourseSectionEntity] {
+        guard !ids.isEmpty else { return [:] }
+        let req = CourseSectionEntity.fetchRequest()
+        req.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [
+            NSPredicate(format: "id IN %@", ids),
+            NSCompoundPredicate(orPredicateWithSubpredicates: [
+                NSPredicate(format: "course == %@", courseEntity),
+                NSPredicate(format: "course == nil")
+            ])
+        ])
+        let found = try ctx.fetch(req)
+        // 同一IDが既に複数存在する場合（既存の重複データ）は先勝ちで1件のみ採用する
+        return found.reduce(into: [:]) { dict, e in
+            guard let id = e.id, dict[id] == nil else { return }
+            dict[id] = e
+        }
+    }
+
+    /// 指定IDのスポットエンティティをストア全体から検索する（孤立エンティティも対象に含む）
+    private func fetchSpotEntities(ids: [UUID]) throws -> [UUID: CourseSpotEntity] {
+        guard !ids.isEmpty else { return [:] }
+        let req = CourseSpotEntity.fetchRequest()
+        req.predicate = NSPredicate(format: "id IN %@", ids)
+        let found = try ctx.fetch(req)
+        // 同一IDが既に複数存在する場合（既存の重複データ）は先勝ちで1件のみ採用する
+        return found.reduce(into: [:]) { dict, e in
+            guard let id = e.id, dict[id] == nil else { return }
+            dict[id] = e
+        }
     }
 
     /// スポット一覧を同期（チェックイン済みフラグは上書きしない）
