@@ -143,10 +143,14 @@ final class CoreDataCourseRepository: CourseRepository {
                 continue
             }
 
-            // セクションにアタッチされているものを優先して winner に選ぶ
-            let sorted = group.sorted { lhs, rhs in
-                (lhs.section != nil ? 0 : 1) < (rhs.section != nil ? 0 : 1)
+            // 有効なコースに紐づくセクションを持つものを最優先、次にセクションはあるが
+            // 孤立しているもの、最後にセクション自体がないものの順で winner に選ぶ
+            func priority(_ e: CourseSpotEntity) -> Int {
+                if e.section?.course != nil { return 0 }
+                if e.section != nil { return 1 }
+                return 2
             }
+            let sorted = group.sorted { priority($0) < priority($1) }
             let winner = sorted[0]
             let losers = sorted.dropFirst()
 
@@ -302,8 +306,11 @@ final class CoreDataCourseRepository: CourseRepository {
     }
 
     /// 指定IDのスポットエンティティを検索する。対象はこのコースに現在属するもの、
-    /// および過去のsyncでリレーションが切れて孤立した（section == nil）ものに限定する。
-    /// 他コースに属する同名spotIdのエンティティを誤って奪わないための絞り込み。
+    /// スポット自体が孤立している（section == nil）もの、および所属セクションが
+    /// 別の不具合等で孤立している（section != nil だが section.course == nil）ものに限定する。
+    /// 「セクションIDの衝突解消により旧セクションが孤立し、その配下のスポットがぶら下がったまま
+    /// になっている」ケースを正しく回収できるよう、孤立セクション配下のスポットも対象に含める。
+    /// 他コースに正当に属している（section.course が別の有効なコース）スポットのみを除外する。
     private func fetchSpotEntities(ids: [UUID], scopedTo courseEntity: CourseEntity) throws -> [UUID: CourseSpotEntity] {
         guard !ids.isEmpty else { return [:] }
         let req = CourseSpotEntity.fetchRequest()
@@ -311,7 +318,8 @@ final class CoreDataCourseRepository: CourseRepository {
             NSPredicate(format: "id IN %@", ids),
             NSCompoundPredicate(orPredicateWithSubpredicates: [
                 NSPredicate(format: "section.course == %@", courseEntity),
-                NSPredicate(format: "section == nil")
+                NSPredicate(format: "section == nil"),
+                NSPredicate(format: "section.course == nil")
             ])
         ])
         let found = try ctx.fetch(req)
