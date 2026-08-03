@@ -50,16 +50,9 @@ struct RecordingOverlay: ViewModifier {
                         onEnterInfo: { id in
                             recording.confirmationSheetVisitId = nil
                             recording.editVisitId = id
-                        },
-                        onViewDetail: { id in
-                            recording.confirmationSheetVisitId = nil
-                            recording.detailVisitId = id
-                        },
-                        onDelete: { id in
-                            recording.deleteVisit(id: id)
                         }
                     )
-                    .iPadSheetSize()
+                    .iPadSheetSize(iPhoneDetents: nil)
                 }
             }
             // チェックイン結果シート

@@ -300,17 +300,13 @@
 
 // MARK: - Confirmation Sheet
 "confirmation.enterInfo" = "情報を入力";
-"confirmation.viewDetail" = "記録を見る";
-"confirmation.deleteRecord" = "記録を取り消し";
 "confirmation.recordedLocation" = "現在地を記録しました";
 "confirmation.loadingPOI" = "周辺施設を検索中...";
-"confirmation.noInternet" = "インターネットに接続されていないため、周辺施設情報を取得できません。";
 "confirmation.noPOIFound" = "周辺に施設が見つかりませんでした";
-"confirmation.selectFacility" = "候補のスポットから選択";
+"confirmation.pastVisitsLabel" = "以前の記録";
+"confirmation.nearbyPlacesLabel" = "周辺の施設";
 "confirmation.deleteConfirmTitle" = "ゴミ箱へ移動";
 "confirmation.deleteConfirmMessage" = "削除した記録はゴミ箱に30日間保存されます。";
-"confirmation.recentVisitsHeader" = "この近くで過去に記録した場所";
-"confirmation.nearbyPlacesHeader" = "周辺の施設";
 
 // MARK: - New Home Screen
 "newhome.title" = "ココキタ";
@@ -392,17 +388,30 @@
 "course.sort.updatedAt" = "更新日";
 "course.sort.spotCount" = "スポット数";
 
-// MARK: - Mode Selection
-"modeSelection.title" = "モードを選んでください";
-"modeSelection.subtitle" = "あとで自由に切り替えられます";
-"modeSelection.pilgrimageTitle" = "巡礼モード";
-"modeSelection.pilgrimageDescription" = "世界遺産やアニメの聖地などの巡礼コースを巡る";
-"modeSelection.recordTitle" = "記録モード";
-"modeSelection.recordDescription" = "今いる場所を記録し、地図やカレンダーで振り返る";
-"modeSelection.canChangeInSettings" = "記録したデータはどちらのモードにも反映されます";
+// MARK: - Mode Selection（SettingsSheetのモード切替行でのみ使用）
 "modeSelection.appModeSection" = "アプリモード";
 "modeSelection.switchToRecord" = "記録モードに切り替え";
 "modeSelection.switchToPilgrimage" = "巡礼モードに切り替え";
+
+// MARK: - Welcome（初回起動時のウェルカム画面）
+"welcome.title" = "ココキタへ ようこそ";
+"welcome.setupSectionTitle" = "ご利用に以下の設定が必要です。";
+"welcome.locationPermissionTitle" = "位置情報の使用中の許可";
+"welcome.locationPermissionDescription" = "現在地の記録や、近くのスポット探索に使用します";
+"welcome.autoRecordPermissionTitle" = "位置情報の常に許可（任意）";
+"welcome.autoRecordPermissionDescription" = "自動記録機能をご利用の場合に必要です。今は設定不要で、あとから設定画面でONにできます";
+"welcome.permissionDialogNote" = "「はじめる」をタップすると、確認画面が表示されます";
+"welcome.syncProgressLabel" = "アプリの準備をしています…";
+"welcome.syncProgressCompleteLabel" = "アプリの準備ができました";
+"welcome.startButton" = "はじめる";
+
+// MARK: - Coachmark（初回チュートリアルのガイド付きツアー）
+"coachmark.recordButton.title" = "現在地を記録してみよう";
+"coachmark.recordButton.message" = "このボタンをタップして、今いる場所を記録しましょう";
+"coachmark.modeSwitch.title" = "記録を確認しよう";
+"coachmark.modeSwitch.message" = "記録モードに切り替えて、たった今の記録を見てみましょう";
+"coachmark.autoRecordToggle.title" = "自動記録機能を使ってみよう";
+"coachmark.autoRecordToggle.message" = "訪れた場所を自動で記録候補に貯める機能です。タップしてONにしてみましょう";
 
 // MARK: - Pilgrimage Home
 "pilgrimageHome.navTitle" = "聖地巡礼";
@@ -653,6 +662,8 @@
 "autoRecord.dismissAll.confirmMessage" = "%d件の候補をすべて削除します。元に戻せません。";
 "autoRecord.home.pendingBanner" = "自動記録の候補が%d件あります";
 "autoRecord.settings.reviewCandidates" = "記録候補を確認する";
+"autoRecord.home.toggleOnLabel" = "自動記録: ON";
+"autoRecord.home.toggleOffLabel" = "自動記録をONにする";
 "autoRecord.exclude" = "この場所を自動検知しない";
 "autoRecord.exclude.title" = "場所を除外する";
 "autoRecord.exclude.message" = "この場所の周辺（約%dm以内）を自動記録から除外します。名前を付けておくと管理しやすくなります。";
@@ -662,6 +673,10 @@
 "autoRecord.excludedLocations.empty" = "除外した場所はありません。\n自動記録の候補から「この場所を自動検知しない」を選ぶと追加されます。";
 "autoRecord.excludedLocations.footer" = "左にスワイプすると除外を解除できます";
 "autoRecord.excludedLocations.radius" = "半径%dm";
+"autoRecord.intro.title" = "自動記録機能について";
+"autoRecord.intro.mechanismDescription" = "訪れた場所をアプリが自動で検知し、記録候補として貯めておきます。あとでまとめて確認し、記録として残すか選べます。";
+"autoRecord.intro.permissionNotice" = "この機能を使うには、位置情報の「常に許可」が必要です";
+"autoRecord.intro.dismissAction" = "使ってみる";
 
 // MARK: - Trash（ゴミ箱）
 "trash.title" = "ゴミ箱";

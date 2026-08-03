@@ -8,6 +8,8 @@ final class AutoRecordService: NSObject {
     private let candidateRepo: VisitCandidateRepository
     private let excludedRepo: ExcludedLocationRepository
     private let settings: AutoRecordSettings
+    /// 許可ダイアログの回答（またはOSがダイアログを出さなかった場合のタイムアウト）を待つための継続
+    private var authorizationContinuation: CheckedContinuation<CLAuthorizationStatus, Never>?
 
     init(
         candidateRepo: VisitCandidateRepository = VisitCandidateRepository(),
@@ -39,21 +41,51 @@ final class AutoRecordService: NSObject {
 
     // MARK: - Always 権限要求
 
-    /// 自動記録を有効化する際に Always 権限を要求する
-    func requestAlwaysAuthorization() {
+    var authorizationStatus: CLAuthorizationStatus {
+        manager.authorizationStatus
+    }
+
+    /// Always許可を要求し、ユーザーの回答（または昇格ダイアログが表示されなかった場合の結果）を待って
+    /// 最終的な許可状態を返す。
+    /// - notDetermined: まずWhenInUseを要求し、許可されればAlwaysへの昇格を続けて要求する
+    /// - authorizedWhenInUse: Alwaysへの昇格ダイアログを要求する
+    ///   （iOSはこのダイアログを端末ごとに一度しか出さないため、2回目以降は呼び出し側で
+    ///   `AutoRecordSettings.hasAttemptedAlwaysUpgrade` を見て、そもそも呼ばない判断をすること）
+    /// - それ以外（denied/restricted/authorizedAlways）: 何もせず現在のステータスを返す
+    @MainActor
+    func requestAlwaysAuthorizationAndAwaitResult() async -> CLAuthorizationStatus {
         let status = manager.authorizationStatus
         switch status {
         case .notDetermined:
             manager.requestWhenInUseAuthorization()
-        case .authorizedWhenInUse:
+            let afterWhenInUse = await waitForNextAuthorizationChange()
+            guard afterWhenInUse == .authorizedWhenInUse else { return afterWhenInUse }
+            settings.hasAttemptedAlwaysUpgrade = true
             manager.requestAlwaysAuthorization()
+            return await waitForNextAuthorizationChange()
+        case .authorizedWhenInUse:
+            settings.hasAttemptedAlwaysUpgrade = true
+            manager.requestAlwaysAuthorization()
+            return await waitForNextAuthorizationChange()
         default:
-            break
+            return status
         }
     }
 
-    var authorizationStatus: CLAuthorizationStatus {
-        manager.authorizationStatus
+    /// 許可ダイアログへの回答を待つ。ダイアログが表示されず即座に状態が確定するケースもあるため、
+    /// 保険として短いタイムアウトを設ける（先に確定した方が継続を解決する）
+    @MainActor
+    private func waitForNextAuthorizationChange(timeout: TimeInterval = 8.0) async -> CLAuthorizationStatus {
+        await withCheckedContinuation { (continuation: CheckedContinuation<CLAuthorizationStatus, Never>) in
+            self.authorizationContinuation = continuation
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(timeout))
+                if let pending = self.authorizationContinuation {
+                    self.authorizationContinuation = nil
+                    pending.resume(returning: self.manager.authorizationStatus)
+                }
+            }
+        }
     }
 
     // MARK: - 古い候補の削除
@@ -151,6 +183,12 @@ extension AutoRecordService: CLLocationManagerDelegate {
         if status == .authorizedAlways && settings.isEnabled {
             manager.startMonitoringVisits()
             Logger.info("自動記録: Always 権限取得, CLVisit 監視を開始")
+        }
+
+        // requestAlwaysAuthorizationAndAwaitResult() の待機を解決する
+        if let continuation = authorizationContinuation {
+            authorizationContinuation = nil
+            continuation.resume(returning: status)
         }
     }
 }

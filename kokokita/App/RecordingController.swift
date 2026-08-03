@@ -268,16 +268,6 @@ final class RecordingController {
 
     // MARK: - その他
 
-    func deleteVisit(id: UUID) {
-        do {
-            try AppContainer.shared.repo.delete(id: id)
-            NotificationCenter.default.post(name: .visitsChanged, object: nil)
-        } catch {
-            Logger.error("Failed to delete visit", error: error)
-            locationErrorMessage = L.Error.deleteFailed
-        }
-    }
-
     func openSettings() {
         if let url = URL(string: UIApplication.openSettingsURLString) {
             UIApplication.shared.open(url)

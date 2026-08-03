@@ -420,17 +420,13 @@ enum L {
     // MARK: - Confirmation Sheet
     enum Confirmation {
         static let enterInfo = localized("confirmation.enterInfo")
-        static let viewDetail = localized("confirmation.viewDetail")
-        static let deleteRecord = localized("confirmation.deleteRecord")
         static let recordedLocation = localized("confirmation.recordedLocation")
         static let loadingPOI = localized("confirmation.loadingPOI")
-        static let noInternet = localized("confirmation.noInternet")
         static let noPOIFound = localized("confirmation.noPOIFound")
-        static let selectFacility = localized("confirmation.selectFacility")
+        static let pastVisitsLabel = localized("confirmation.pastVisitsLabel")
+        static let nearbyPlacesLabel = localized("confirmation.nearbyPlacesLabel")
         static let deleteConfirmTitle = localized("confirmation.deleteConfirmTitle")
         static let deleteConfirmMessage = localized("confirmation.deleteConfirmMessage")
-        static let recentVisitsHeader = localized("confirmation.recentVisitsHeader")
-        static let nearbyPlacesHeader = localized("confirmation.nearbyPlacesHeader")
     }
 
     // MARK: - New Home Screen
@@ -581,18 +577,35 @@ enum L {
         static let manualDescription = localized("recordBadge.manualDescription")
     }
 
-    // MARK: - Mode Selection
+    // MARK: - Mode Selection（SettingsSheetのモード切替行でのみ使用）
     enum ModeSelection {
-        static let title = localized("modeSelection.title")
-        static let subtitle = localized("modeSelection.subtitle")
-        static let pilgrimageTitle = localized("modeSelection.pilgrimageTitle")
-        static let pilgrimageDescription = localized("modeSelection.pilgrimageDescription")
-        static let recordTitle = localized("modeSelection.recordTitle")
-        static let recordDescription = localized("modeSelection.recordDescription")
-        static let canChangeInSettings = localized("modeSelection.canChangeInSettings")
         static let appModeSection = localized("modeSelection.appModeSection")
         static let switchToRecord = localized("modeSelection.switchToRecord")
         static let switchToPilgrimage = localized("modeSelection.switchToPilgrimage")
+    }
+
+    // MARK: - Welcome（初回起動時のウェルカム画面）
+    enum Welcome {
+        static let title = localized("welcome.title")
+        static let setupSectionTitle = localized("welcome.setupSectionTitle")
+        static let locationPermissionTitle = localized("welcome.locationPermissionTitle")
+        static let locationPermissionDescription = localized("welcome.locationPermissionDescription")
+        static let autoRecordPermissionTitle = localized("welcome.autoRecordPermissionTitle")
+        static let autoRecordPermissionDescription = localized("welcome.autoRecordPermissionDescription")
+        static let syncProgressLabel = localized("welcome.syncProgressLabel")
+        static let syncProgressCompleteLabel = localized("welcome.syncProgressCompleteLabel")
+        static let permissionDialogNote = localized("welcome.permissionDialogNote")
+        static let startButton = localized("welcome.startButton")
+    }
+
+    // MARK: - Coachmark（初回チュートリアルのガイド付きツアー）
+    enum Coachmark {
+        static let recordButtonTitle = localized("coachmark.recordButton.title")
+        static let recordButtonMessage = localized("coachmark.recordButton.message")
+        static let modeSwitchTitle = localized("coachmark.modeSwitch.title")
+        static let modeSwitchMessage = localized("coachmark.modeSwitch.message")
+        static let autoRecordToggleTitle = localized("coachmark.autoRecordToggle.title")
+        static let autoRecordToggleMessage = localized("coachmark.autoRecordToggle.message")
     }
 
     // MARK: - Pilgrimage Home
@@ -741,6 +754,8 @@ enum L {
         static let settingsToggle = localized("autoRecord.settings.toggle")
         static let settingsToggleDescription = localized("autoRecord.settings.toggleDescription")
         static let reviewCandidates = localized("autoRecord.settings.reviewCandidates")
+        static let homeToggleOnLabel = localized("autoRecord.home.toggleOnLabel")
+        static let homeToggleOffLabel = localized("autoRecord.home.toggleOffLabel")
         static let permissionTitle = localized("autoRecord.permission.title")
         static let permissionMessage = localized("autoRecord.permission.message")
         static let permissionOpenSettings = localized("autoRecord.permission.openSettings")
@@ -758,6 +773,11 @@ enum L {
         static let excludedLocationsEmpty = localized("autoRecord.excludedLocations.empty")
         static let excludedLocationsFooter = localized("autoRecord.excludedLocations.footer")
         static func excludedLocationsRadius(_ meters: Int) -> String { String(format: localized("autoRecord.excludedLocations.radius"), meters) }
+        // 初回ON時の説明シート（AutoRecordIntroSheet）
+        static let introTitle = localized("autoRecord.intro.title")
+        static let introMechanismDescription = localized("autoRecord.intro.mechanismDescription")
+        static let introPermissionNotice = localized("autoRecord.intro.permissionNotice")
+        static let introDismissAction = localized("autoRecord.intro.dismissAction")
     }
 
     // MARK: - Trash（ゴミ箱）

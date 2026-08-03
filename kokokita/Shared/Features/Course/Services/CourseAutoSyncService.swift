@@ -18,7 +18,9 @@ final class CourseAutoSyncService {
 
     // MARK: - 同期実行
 
-    func sync() async {
+    /// - Parameter onProgress: ダウンロード件数ベースの進捗（0.0〜1.0）を通知するコールバック（省略可）
+    ///   ウェルカム画面のプログレスバー表示用。既存呼び出し元は省略可能で挙動は変わらない
+    func sync(onProgress: (@MainActor (Double) -> Void)? = nil) async {
         do {
             let index = try await storeService.fetchIndex()
             let localCourses = try courseRepo.fetchAll()
@@ -30,13 +32,22 @@ final class CourseAutoSyncService {
 
             var hasNewCourse = false
 
-            for summary in index.courses {
+            // 新規 or バージョンアップが必要なコースのみを対象に進捗を計算
+            let targets = index.courses.filter { summary in
                 let courseId = CourseJSONParser.uuidFromString(summary.id)
                 let existing = localDownloaded[courseId]
+                return existing == nil || existing!.version < summary.version
+            }
+            let total = max(targets.count, 1)
+            var completed = 0
 
-                // 新規 or バージョンアップがある場合のみダウンロード
-                let needsDownload = existing == nil || existing!.version < summary.version
-                guard needsDownload else { continue }
+            if targets.isEmpty {
+                await onProgress?(1.0)
+            }
+
+            for summary in targets {
+                let courseId = CourseJSONParser.uuidFromString(summary.id)
+                let existing = localDownloaded[courseId]
 
                 do {
                     let isNew = existing == nil
@@ -56,6 +67,9 @@ final class CourseAutoSyncService {
                 } catch {
                     Logger.error("コース同期エラー: \(summary.title)", error: error)
                 }
+
+                completed += 1
+                await onProgress?(Double(completed) / Double(total))
             }
 
             // index.json から消えたダウンロードコースを削除
@@ -76,6 +90,7 @@ final class CourseAutoSyncService {
             Logger.info("コース自動同期完了")
         } catch {
             Logger.error("コース自動同期エラー", error: error)
+            await onProgress?(1.0)  // 失敗時もプログレスバー・ボタンをブロックしたままにしない
         }
     }
 }

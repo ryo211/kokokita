@@ -4,6 +4,7 @@ struct SettingsSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(AppModeManager.self) private var modeManager
     @ObservedObject private var autoRecordSettings = AutoRecordSettings.shared
+    @State private var autoRecordEffects = AutoRecordToggleEffects()
     @State private var showCandidateReview = false
     @State private var showExcludedLocations = false
     @State private var pendingCandidateCount: Int = 0
@@ -22,11 +23,13 @@ struct SettingsSheet: View {
                         Label(L.AutoRecord.settingsToggle, systemImage: "waveform.path.ecg")
                     }
                     .onChange(of: autoRecordSettings.isEnabled) { _, isEnabled in
+                        // ToggleはisEnabledを直接bindingで更新するが、実際にはAlways許可が
+                        // 確定するまで有効化しないため、Effects側の非同期処理の結果次第で
+                        // trueにした直後にfalseへ戻ることがある（意図した挙動）
                         if isEnabled {
-                            AppContainer.shared.autoRecord.requestAlwaysAuthorization()
-                            AppContainer.shared.autoRecord.startMonitoring()
+                            autoRecordEffects.handleToggleOn()
                         } else {
-                            AppContainer.shared.autoRecord.stopMonitoring()
+                            autoRecordEffects.handleToggleOff()
                         }
                     }
 
@@ -144,6 +147,15 @@ struct SettingsSheet: View {
             }
             .sheet(isPresented: $showPaywall) {
                 PaywallView()
+            }
+            .sheet(isPresented: $autoRecordEffects.showIntroSheet) {
+                AutoRecordIntroSheet(onDismiss: { autoRecordEffects.introSheetDismissed() })
+            }
+            .alert(L.AutoRecord.permissionTitle, isPresented: $autoRecordEffects.showSettingsGuidance) {
+                Button(L.AutoRecord.permissionOpenSettings) { autoRecordEffects.openSettings() }
+                Button(L.Common.cancel, role: .cancel) {}
+            } message: {
+                Text(L.AutoRecord.permissionMessage)
             }
             .onAppear { loadPendingCount() }
         }

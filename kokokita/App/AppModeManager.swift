@@ -6,22 +6,22 @@ import Observation
 final class AppModeManager {
     /// UserDefaults キー: 現在のアプリモード
     private static let modeKey = "appMode"
-    /// UserDefaults キー: モード選択画面を表示済みかどうか
-    private static let hasSeenKey = "hasSeenModeSelection"
+    /// UserDefaults キー: ウェルカム画面を表示済みかどうか
+    private static let hasSeenKey = "hasSeenWelcome"
 
     private let defaults: UserDefaults
 
     /// 現在のアプリモード
     private(set) var mode: AppMode
 
-    /// モード選択画面を一度でも見たことがあるか
-    private(set) var hasSeenModeSelection: Bool
+    /// ウェルカム画面を一度でも見たことがあるか
+    private(set) var hasSeenWelcome: Bool
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
-        let rawMode = defaults.string(forKey: Self.modeKey) ?? AppMode.record.rawValue
-        self.mode = AppMode(rawValue: rawMode) ?? .record
-        self.hasSeenModeSelection = defaults.bool(forKey: Self.hasSeenKey)
+        let rawMode = defaults.string(forKey: Self.modeKey) ?? AppMode.pilgrimage.rawValue
+        self.mode = AppMode(rawValue: rawMode) ?? .pilgrimage
+        self.hasSeenWelcome = defaults.bool(forKey: Self.hasSeenKey)
     }
 
     /// モードを切り替える
@@ -30,9 +30,9 @@ final class AppModeManager {
         defaults.set(newMode.rawValue, forKey: Self.modeKey)
     }
 
-    /// モード選択画面を表示済みとしてマーク
-    func markModeSelectionSeen() {
-        hasSeenModeSelection = true
+    /// ウェルカム画面を表示済みとしてマーク
+    func markWelcomeSeen() {
+        hasSeenWelcome = true
         defaults.set(true, forKey: Self.hasSeenKey)
     }
 }

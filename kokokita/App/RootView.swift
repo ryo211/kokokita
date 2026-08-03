@@ -1,7 +1,7 @@
 import SwiftUI
 
 // アプリのルートビュー
-// AppModeManager を参照して初回起動時のモード選択画面を表示し、
+// AppModeManager を参照して初回起動時のウェルカム画面を表示し、
 // モードに応じて RootTabView または PilgrimageRootTabView に分岐する
 struct RootView: View {
     @State private var modeManager = AppModeManager()
@@ -11,9 +11,9 @@ struct RootView: View {
 
     var body: some View {
         Group {
-            if !modeManager.hasSeenModeSelection {
-                // 初回起動: モード選択画面を表示
-                ModeSelectionView()
+            if !modeManager.hasSeenWelcome {
+                // 初回起動: ウェルカム画面を表示
+                WelcomeScreen()
                     .environment(modeManager)
             } else {
                 modeContent(for: renderMode)
@@ -64,7 +64,7 @@ struct RootView: View {
     // MARK: - 初期モード取得（UserDefaults から直接読み取り）
 
     private static func savedMode() -> AppMode {
-        let raw = UserDefaults.standard.string(forKey: "appMode") ?? AppMode.record.rawValue
-        return AppMode(rawValue: raw) ?? .record
+        let raw = UserDefaults.standard.string(forKey: "appMode") ?? AppMode.pilgrimage.rawValue
+        return AppMode(rawValue: raw) ?? .pilgrimage
     }
 }
