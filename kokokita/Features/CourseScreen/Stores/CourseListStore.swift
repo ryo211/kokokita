@@ -23,7 +23,9 @@ final class CourseListStore {
 
     private let repo: CourseRepository
     private let autoSyncService: CourseAutoSyncService
-    private var observers: [NSObjectProtocol] = []
+    // NotificationCenterのトークン削除はスレッドセーフなAPIであり、deinit（nonisolated）から
+    // MainActor隔離プロパティに直接アクセスするための回避
+    nonisolated(unsafe) private var observers: [NSObjectProtocol] = []
 
     private static let userDefaultsKey = "newlyAddedCourses"
     private static let newCourseExpirationSeconds: TimeInterval = 86400 // 24時間
@@ -73,6 +75,10 @@ final class CourseListStore {
         }
 
         observers = [courseObserver, downloadObserver, enabledObserver]
+    }
+
+    deinit {
+        observers.forEach(NotificationCenter.default.removeObserver)
     }
 
     // MARK: - 新着判定

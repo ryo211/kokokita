@@ -2,12 +2,18 @@ import SwiftUI
 
 // アプリのルートビュー
 // AppModeManager を参照して初回起動時のウェルカム画面を表示し、
-// モードに応じて RootTabView または PilgrimageRootTabView に分岐する
+// モードに応じて RootTabView または PilgrimageRootTabView を表示する
+//
+// 以前は modeManager.mode を switch して RootTabView()/PilgrimageRootTabView() を
+// 都度生成し直しており、切替のたびに RecordingController・CourseListStore・
+// 各種GeometryReaderを含むビュー階層をまるごと破棄→再構築していたことが重さの本質だった。
+// そのため両モードを常時マウントし、表示切替（クロスフェード）だけで済む設計に変更した。
+// 3D回転フリップも試したが、再構築コストをなくした状態でも回転そのものの描画コストで
+// カクつきが残ったため、単純なフェードに留めている。
+// トレードオフとして、一度でも両モードを開くとその状態（位置情報・コース一覧・
+// 通知購読など）はアプリ終了までメモリ上に残り続ける。
 struct RootView: View {
     @State private var modeManager = AppModeManager()
-    /// 現在描画しているモード（アニメーション中は切り替えタイミングを制御するため modeManager.mode と一時的にズレる）
-    @State private var renderMode: AppMode = RootView.savedMode()
-    @State private var flipAngle: Double = 0
 
     var body: some View {
         Group {
@@ -16,55 +22,28 @@ struct RootView: View {
                 WelcomeScreen()
                     .environment(modeManager)
             } else {
-                modeContent(for: renderMode)
-                    .rotation3DEffect(
-                        .degrees(flipAngle),
-                        axis: (x: 0, y: 1, z: 0),
-                        perspective: 0.4
-                    )
+                ZStack {
+                    RootTabView(isActiveMode: modeManager.mode == .record)
+                        .modeVisibility(isActive: modeManager.mode == .record)
+
+                    PilgrimageRootTabView(isActiveMode: modeManager.mode == .pilgrimage)
+                        .environment(modeManager)
+                        .modeVisibility(isActive: modeManager.mode == .pilgrimage)
+                }
+                .animation(.easeInOut(duration: 0.2), value: modeManager.mode)
             }
         }
         .environment(modeManager)
-        .onChange(of: modeManager.mode) { _, newMode in
-            performFlip(to: newMode)
-        }
     }
+}
 
-    // MARK: - コンテンツ分岐
-
-    @ViewBuilder
-    private func modeContent(for mode: AppMode) -> some View {
-        switch mode {
-        case .record:
-            RootTabView()
-        case .pilgrimage:
-            PilgrimageRootTabView()
-                .environment(modeManager)
-        }
-    }
-
-    // MARK: - フリップアニメーション
-
-    private func performFlip(to newMode: AppMode) {
-        // Phase 1: 現在のビューを90°回転（画面端に消える）
-        withAnimation(.easeIn(duration: 0.2)) {
-            flipAngle = 90
-        }
-        // Phase 2: コンテンツ切り替え → 反対側から登場
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.22) {
-            renderMode = newMode
-            flipAngle = -90
-            // Phase 3: 新しいビューを0°に戻す（正面に現れる）
-            withAnimation(.easeOut(duration: 0.2)) {
-                flipAngle = 0
-            }
-        }
-    }
-
-    // MARK: - 初期モード取得（UserDefaults から直接読み取り）
-
-    private static func savedMode() -> AppMode {
-        let raw = UserDefaults.standard.string(forKey: "appMode") ?? AppMode.pilgrimage.rawValue
-        return AppMode(rawValue: raw) ?? .pilgrimage
+private extension View {
+    /// 非アクティブ側は不可視化・操作無効化・アクセシビリティから除外するだけで、
+    /// ビュー階層自体は破棄しない（常駐させることで切替時の再構築コストをゼロにする）
+    func modeVisibility(isActive: Bool) -> some View {
+        self
+            .opacity(isActive ? 1 : 0)
+            .allowsHitTesting(isActive)
+            .accessibilityHidden(!isActive)
     }
 }

@@ -3,6 +3,9 @@ import SwiftUI
 // 巡礼モードのルートタブビュー（3タブ: ホーム / コース / マイリスト）
 // 記録モードと同じカスタムタブバー UI を使用
 struct PilgrimageRootTabView: View {
+    /// 現在このモードが表示中か（RootViewが両モードを常駐させているため、
+    /// 非アクティブな間は広告バナーを不要にマウントしないよう判定する）
+    let isActiveMode: Bool
     @Environment(AppModeManager.self) private var modeManager
     @Environment(AppUIState.self) private var ui
     @State private var tab: PilgrimageTab = .home
@@ -38,6 +41,12 @@ struct PilgrimageRootTabView: View {
     private var debugSettings = DebugSettings.shared
     #endif
 
+    // private な@Stateプロパティを含むため自動合成されるメンバーワイズイニシャライザが
+    // privateになってしまう。isActiveModeだけを受け取る公開イニシャライザを明示的に用意する
+    init(isActiveMode: Bool) {
+        self.isActiveMode = isActiveMode
+    }
+
     var body: some View {
         ZStack {
             // サイズ測定用（ZStackの直接の子として置くことで、確実にZStack自身のサイズを取得する。
@@ -56,7 +65,7 @@ struct PilgrimageRootTabView: View {
                         .opacity(tab == .home ? 1 : 0)
                         .zIndex(tab == .home ? 1 : 0)
 
-                    CourseScreen(externalStore: courseStore)
+                    CourseScreen(store: courseStore)
                         .opacity(tab == .map ? 1 : 0)
                         .zIndex(tab == .map ? 1 : 0)
 
@@ -76,12 +85,12 @@ struct PilgrimageRootTabView: View {
                 if !ui.isTabBarHidden {
                     VStack(spacing: 0) {
                         #if DEBUG
-                        if debugSettings.isAdDisplayEnabled && !PremiumManager.shared.isPremium {
+                        if debugSettings.isAdDisplayEnabled && !PremiumManager.shared.isPremium && isActiveMode {
                             BannerAdView(adUnitID: pilgrimageBannerAdUnitID)
                                 .background(.thinMaterial)
                         }
                         #else
-                        if !PremiumManager.shared.isPremium {
+                        if !PremiumManager.shared.isPremium && isActiveMode {
                             BannerAdView(adUnitID: pilgrimageBannerAdUnitID)
                                 .background(.thinMaterial)
                         }
@@ -173,6 +182,8 @@ struct PilgrimageRootTabView: View {
             withAnimation(.spring(duration: 0.4)) { showCourseTabBadge = true }
         }
         .onAppear {
+            // RootViewが両モードを常駐させているため、これはモード切り替えのたびではなく
+            // アプリ起動時に一度だけ発火する
             refreshAutoRecordCandidateBadge()
             // 起動時に未視認の新着コースがあればバッジを表示
             if courseStore.hasUnseenCourses {

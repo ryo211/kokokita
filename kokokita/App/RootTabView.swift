@@ -26,6 +26,9 @@ struct CreateScreenData: Identifiable {
 }
 
 struct RootTabView: View {
+    /// 現在このモードが表示中か（RootViewが両モードを常駐させているため、
+    /// 非アクティブな間は広告バナーを不要にマウントしないよう判定する）
+    let isActiveMode: Bool
     @State private var tab: RootTab = .home
     @State private var recording = RecordingController()
     @Environment(AppUIState.self) private var ui
@@ -33,6 +36,12 @@ struct RootTabView: View {
     #if DEBUG
     private var debugSettings = DebugSettings.shared
     #endif
+
+    // private な@Stateプロパティを含むため自動合成されるメンバーワイズイニシャライザが
+    // privateになってしまう。isActiveModeだけを受け取る公開イニシャライザを明示的に用意する
+    init(isActiveMode: Bool) {
+        self.isActiveMode = isActiveMode
+    }
 
     var body: some View {
         // CoreDataの読み込み状態をチェック
@@ -84,15 +93,16 @@ struct RootTabView: View {
 
             // ===== フッター領域（バナー + カスタムタブバー） =====
             VStack(spacing: 0) {
-                // 固定バナー（Premium会員には非表示）
+                // 固定バナー（Premium会員には非表示。記録モードが非アクティブな間は
+                // 両モード常駐化に伴いネイティブ広告ビューを不要にマウントしないよう外す）
                 #if DEBUG
-                if debugSettings.isAdDisplayEnabled && !PremiumManager.shared.isPremium {
+                if debugSettings.isAdDisplayEnabled && !PremiumManager.shared.isPremium && isActiveMode {
                     BannerAdView(adUnitID: bannerAdUnitID)
                         .background(.thinMaterial)
                         .transition(.opacity)
                 }
                 #else
-                if !PremiumManager.shared.isPremium {
+                if !PremiumManager.shared.isPremium && isActiveMode {
                     BannerAdView(adUnitID: bannerAdUnitID)
                         .background(.thinMaterial)
                         .transition(.opacity)
