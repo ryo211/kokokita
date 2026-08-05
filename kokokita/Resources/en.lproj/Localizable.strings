@@ -446,6 +446,7 @@
 "checkIn.retroactiveTitle" = "Check-in Recognized from Past Records!";
 "checkIn.retroactiveSubtitle" = "Your past visits matched spots in this course";
 "checkIn.retroactiveDateSuffix" = " (from past record)";
+"checkIn.shareAchievement" = "Share Your Achievement";
 
 // MARK: - Manual Entry
 "manualEntry.title" = "Add Record";
@@ -792,3 +793,10 @@
 "share.layoutMap" = "Map First";
 "share.showSubThumbnail" = "Show Thumbnail";
 "share.selectPhoto" = "Select Photo";
+"share.stampSettingsLabel" = "Achievement Stamp";
+"share.showStamp" = "Show Stamp";
+"share.dateStampStyleLabel" = "Date Stamp";
+"share.dateStampNone" = "None";
+"share.dateStampTab" = "Tab";
+"share.dateStampPlate" = "Plate";
+"share.achievedLabel" = "Achieved";

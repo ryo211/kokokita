@@ -1,12 +1,55 @@
 import SwiftUI
 import MapKit
 
+// MARK: - 達成情報（スポット共有カードにスタンプ・実座標ピンを追加するための情報）
+
+/// 達成済みスポットを共有する際に使う、実際にチェックインした際のGPS座標と日時。
+/// コース定義上のspot.latitude/longitude（施設の正式な位置）とは別物。
+struct SpotAchievementInfo {
+    let coordinate: CLLocationCoordinate2D
+    let achievedAt: Date
+}
+
+/// 達成日スタンプの見た目。丸いハンコスタンプ（achievementStamp）と形が被らないよう、
+/// どれも円形は避けている。色調・フォントはカード全体のインディゴ基調・標準システムフォントに揃える
+enum DateStampStyle: String, CaseIterable, Identifiable {
+    case none
+    /// 写真の右端に張り付くタブ（旧ribbon）
+    case tab
+    /// 写真の下端に張り付くプレート（旧shield）
+    case plate
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .none: return L.Share.dateStampNone
+        case .tab: return L.Share.dateStampTab
+        case .plate: return L.Share.dateStampPlate
+        }
+    }
+}
+
+extension CourseRecognitionService.RecognitionResult {
+    /// チェックイン達成通知（CheckInResultSheet）から共有する際、判定済みの実座標・達成日時をそのまま使う
+    var spotAchievementInfo: SpotAchievementInfo {
+        SpotAchievementInfo(
+            coordinate: CLLocationCoordinate2D(latitude: visitLatitude, longitude: visitLongitude),
+            achievedAt: achievedAt
+        )
+    }
+}
+
 // MARK: - スポット共有カード（ImageRenderer用）
 
 struct SpotShareCard: View {
     let spot: CourseSpot
     let course: Course
     let coverImage: UIImage?
+    /// 達成済みの場合のみ指定。ココキタスタンプ・達成日バッジの表示に使う
+    var achievement: SpotAchievementInfo? = nil
+    var showStamp: Bool = true
+    var dateStampStyle: DateStampStyle = .tab
 
     static let cardWidth: CGFloat = 390
 
@@ -68,9 +111,125 @@ struct SpotShareCard: View {
             }
             .padding(.horizontal, 16)
             .padding(.bottom, 14)
+
+            if achievement != nil, showStamp {
+                achievementStamp
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
+                    .padding(14)
+            }
+
+            if let achievement, dateStampStyle != .none {
+                // 配置はスタイルごとに異なる（リボンは右端、プレートは下端に張り付く）ため、
+                // 各スタイルの実装側でframe/paddingを持たせている
+                dateStampView(style: dateStampStyle, date: achievement.achievedAt)
+            }
         }
         .frame(width: Self.cardWidth, height: 220)
         .clipped()
+    }
+
+    // MARK: - 達成スタンプ・日付スタンプ
+
+    private var achievementStamp: some View {
+        Image("kokokita_hanko")
+            .resizable()
+            .scaledToFit()
+            .frame(width: 92, height: 92)
+            .rotationEffect(.degrees(-12))
+            .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 2)
+    }
+
+    // 上部のハンコ（円形）と形が被らないよう、日付スタンプはどれも非円形にしている。
+    // 色調はカードのインディゴグラデーション（枠線・CTA等）に揃え、フォントもタイトルと
+    // 同じ標準システムフォント（rounded/serif不使用）に統一する
+    @ViewBuilder
+    private func dateStampView(style: DateStampStyle, date: Date) -> some View {
+        switch style {
+        case .none:
+            EmptyView()
+        case .tab:
+            tabDateStamp(date)
+        case .plate:
+            plateDateStamp(date)
+        }
+    }
+
+    // 右の壁から生えているタブ。角丸は壁と反対側（左）のみに付け、右端は完全にフラットにして
+    // 写真の右端にぴったり張り付かせる。角度は付けない
+    private func tabDateStamp(_ date: Date) -> some View {
+        HStack(spacing: 5) {
+            Text(date, format: .dateTime.month(.abbreviated).day())
+                .font(.system(size: 13, weight: .heavy))
+            Text(date, format: .dateTime.year())
+                .font(.system(size: 10, weight: .semibold))
+                .opacity(0.8)
+        }
+        .foregroundStyle(.white)
+        .padding(.leading, 12)
+        .padding(.trailing, 14)
+        .padding(.vertical, 8)
+        .background(
+            UnevenRoundedRectangle(
+                topLeadingRadius: 10, bottomLeadingRadius: 10,
+                bottomTrailingRadius: 0, topTrailingRadius: 0,
+                style: .continuous
+            )
+            .fill(Color.indigo)
+        )
+        .overlay(
+            UnevenRoundedRectangle(
+                topLeadingRadius: 10, bottomLeadingRadius: 10,
+                bottomTrailingRadius: 0, topTrailingRadius: 0,
+                style: .continuous
+            )
+            .strokeBorder(Color.white.opacity(0.35), lineWidth: 1)
+        )
+        .shadow(color: .black.opacity(0.25), radius: 4, x: 0, y: 2)
+        // .trailing（縦センタリング）+ bottom paddingでは「下からの余白を除いた範囲で中央寄せ」に
+        // なってしまい、狙った下寄りの位置にならなかった。.bottomTrailingで直接下端基準に置く
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+        .padding(.trailing, 0)
+        .padding(.bottom, 20)
+    }
+
+    // 下の縁から生えてくるプレート。角丸は縁と反対側（上）のみに付け、下端は完全にフラットにして
+    // 写真の下端にぴったり張り付かせる。角度は付けない
+    private func plateDateStamp(_ date: Date) -> some View {
+        VStack(spacing: 2) {
+            Text(L.Share.achievedLabel)
+                .font(.system(size: 8, weight: .bold))
+                .tracking(1.6)
+                .opacity(0.9)
+            Text(date, format: .dateTime.month(.abbreviated).day())
+                .font(.system(size: 14, weight: .heavy))
+            Text(date, format: .dateTime.year())
+                .font(.system(size: 8, weight: .semibold))
+                .opacity(0.75)
+        }
+        .foregroundStyle(.white)
+        .padding(.horizontal, 13)
+        .padding(.top, 10)
+        .padding(.bottom, 8)
+        .background(
+            UnevenRoundedRectangle(
+                topLeadingRadius: 14, bottomLeadingRadius: 0,
+                bottomTrailingRadius: 0, topTrailingRadius: 14,
+                style: .continuous
+            )
+            .fill(Color.indigo)
+        )
+        .overlay(
+            UnevenRoundedRectangle(
+                topLeadingRadius: 14, bottomLeadingRadius: 0,
+                bottomTrailingRadius: 0, topTrailingRadius: 14,
+                style: .continuous
+            )
+            .strokeBorder(Color.white.opacity(0.35), lineWidth: 1)
+        )
+        .shadow(color: .black.opacity(0.25), radius: 4, x: 0, y: 2)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+        .padding(.trailing, 20)
+        .padding(.bottom, 0)
     }
 
     private var contentSection: some View {
@@ -482,6 +641,9 @@ struct VisitShareCard: View {
 struct SpotSharePreviewSheet: View {
     let spot: CourseSpot
     let course: Course
+    /// 達成情報を明示的に渡す場合（達成通知シートからの共有など、実座標・達成日時が既に判明している場合）に使用。
+    /// nilの場合でもspot.isCheckedInがtrueなら.task内で自動的に解決する
+    var achievement: SpotAchievementInfo? = nil
     @Environment(\.dismiss) private var dismiss
 
     @State private var coverImage: UIImage? = nil
@@ -490,14 +652,23 @@ struct SpotSharePreviewSheet: View {
     @State private var isRendering = false
     @State private var editableText: String = ""
     @State private var showMapEditor = false
+    @State private var resolvedAchievement: SpotAchievementInfo? = nil
+    @State private var showStamp = true
+    @State private var dateStampStyle: DateStampStyle = .tab
+
+    private var effectiveAchievement: SpotAchievementInfo? { achievement ?? resolvedAchievement }
+    private var hasMapContent: Bool { spot.hasValidCoordinate || effectiveAchievement != nil }
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
                     textPreviewSection
+                    if effectiveAchievement != nil {
+                        achievementSettingsSection
+                    }
                     imagePreviewSection
-                    if spot.hasValidCoordinate {
+                    if hasMapContent {
                         mapPreviewSection
                     }
                 }
@@ -521,8 +692,9 @@ struct SpotSharePreviewSheet: View {
             }
         }
         .sheet(isPresented: $showMapEditor) {
-            if spot.hasValidCoordinate {
-                let coord = CLLocationCoordinate2D(latitude: spot.latitude, longitude: spot.longitude)
+            if hasMapContent {
+                let coord = effectiveAchievement?.coordinate
+                    ?? CLLocationCoordinate2D(latitude: spot.latitude, longitude: spot.longitude)
                 let radius = spot.recognitionRadiusMeters ?? course.recognitionRadiusMeters
                 let displayRadius = max(radius * 8, 500)
                 let region = MKCoordinateRegion(
@@ -530,16 +702,58 @@ struct SpotSharePreviewSheet: View {
                     latitudinalMeters: displayRadius,
                     longitudinalMeters: displayRadius
                 )
-                ShareMapEditorSheet(spots: course.spots, initialRegion: region) { image in
-                    mapImage = image
+                if effectiveAchievement != nil {
+                    ShareMapEditorSheet(visitCoordinate: coord, initialRegion: region) { image in
+                        mapImage = image
+                    }
+                } else {
+                    ShareMapEditorSheet(spots: course.spots, initialRegion: region) { image in
+                        mapImage = image
+                    }
                 }
             }
         }
         .task {
             editableText = L.Share.spotShareText(course.title, spot.name)
+            if achievement == nil, spot.isCheckedIn {
+                resolvedAchievement = await resolveAchievement()
+            }
             await loadImages()
             await renderShareImage()
         }
+        .onChange(of: showStamp) { _, _ in
+            Task { await renderShareImage() }
+        }
+        .onChange(of: dateStampStyle) { _, _ in
+            Task { await renderShareImage() }
+        }
+    }
+
+    // MARK: - 達成演出の設定
+
+    private var achievementSettingsSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label(L.Share.stampSettingsLabel, systemImage: "seal")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+
+            Toggle(isOn: $showStamp) {
+                Text(L.Share.showStamp)
+                    .font(.subheadline)
+            }
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text(L.Share.dateStampStyleLabel)
+                    .font(.subheadline)
+                Picker("", selection: $dateStampStyle) {
+                    ForEach(DateStampStyle.allCases) { style in
+                        Text(style.title).tag(style)
+                    }
+                }
+                .pickerStyle(.segmented)
+            }
+        }
+        .padding(.horizontal)
     }
 
     // MARK: - テキストプレビュー
@@ -620,21 +834,47 @@ struct SpotSharePreviewSheet: View {
             coverImage = await downloadImage(from: url)
         }
 
-        if spot.hasValidCoordinate {
+        let radius = spot.recognitionRadiusMeters ?? course.recognitionRadiusMeters
+        let displayRadius = max(radius * 8, 500)
+
+        if let achievement = effectiveAchievement {
+            // 達成済み: コース定義上の座標ではなく、実際にチェックインした地点にピンを刺す
+            let region = MKCoordinateRegion(
+                center: achievement.coordinate,
+                latitudinalMeters: displayRadius,
+                longitudinalMeters: displayRadius
+            )
+            mapImage = await makeShareMapSnapshot(
+                region: region, spots: [], orderNumbers: [:],
+                pinCoordinate: achievement.coordinate, pinColor: .systemIndigo
+            )
+        } else if spot.hasValidCoordinate {
             let coord = CLLocationCoordinate2D(latitude: spot.latitude, longitude: spot.longitude)
-            let radius = spot.recognitionRadiusMeters ?? course.recognitionRadiusMeters
-            let displayRadius = max(radius * 8, 500)
             let region = MKCoordinateRegion(center: coord, latitudinalMeters: displayRadius, longitudinalMeters: displayRadius)
             let orderNumber = (course.spots.firstIndex(where: { $0.id == spot.id }) ?? 0) + 1
             mapImage = await makeShareMapSnapshot(region: region, spots: [spot], orderNumbers: [0: orderNumber])
         }
     }
 
+    /// spot.visitIdsから実際のチェックイン記録（Visit）を取得し、達成情報として組み立てる
+    @MainActor
+    private func resolveAchievement() async -> SpotAchievementInfo? {
+        guard let visitId = spot.visitIds.first,
+              let visit = try? AppContainer.shared.repo.get(by: visitId) else { return nil }
+        return SpotAchievementInfo(
+            coordinate: CLLocationCoordinate2D(latitude: visit.visit.latitude, longitude: visit.visit.longitude),
+            achievedAt: spot.firstCheckedInAt ?? visit.visit.timestampUTC
+        )
+    }
+
     @MainActor
     private func renderShareImage() async {
         isRendering = true
         defer { isRendering = false }
-        let view = SpotShareCard(spot: spot, course: course, coverImage: coverImage)
+        let view = SpotShareCard(
+            spot: spot, course: course, coverImage: coverImage,
+            achievement: effectiveAchievement, showStamp: showStamp, dateStampStyle: dateStampStyle
+        )
         let renderer = ImageRenderer(content: view)
         renderer.scale = 3.0
         renderedShareImage = renderer.uiImage
@@ -1234,7 +1474,8 @@ private func makeShareMapSnapshot(
     region: MKCoordinateRegion,
     spots: [CourseSpot],
     orderNumbers: [Int: Int],
-    pinCoordinate: CLLocationCoordinate2D? = nil
+    pinCoordinate: CLLocationCoordinate2D? = nil,
+    pinColor: UIColor = .systemBlue
 ) async -> UIImage? {
     let options = MKMapSnapshotter.Options()
     options.region = region
@@ -1256,12 +1497,12 @@ private func makeShareMapSnapshot(
                   point.y >= 0, point.y <= size.height else { continue }
             drawSpotPin(at: point)
         }
-        // 単一座標ピン（訪問記録共有用：青）
+        // 単一座標ピン（訪問記録共有・達成スポット共有用）
         if let coord = pinCoordinate {
             let point = snapshot.point(for: coord)
             if point.x >= 0, point.x <= size.width,
                point.y >= 0, point.y <= size.height {
-                drawSpotPin(at: point, color: .systemBlue)
+                drawSpotPin(at: point, color: pinColor)
             }
         }
     }

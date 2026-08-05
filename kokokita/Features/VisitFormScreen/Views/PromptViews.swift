@@ -277,6 +277,12 @@ struct PostKokokitaConfirmationSheet: View {
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(.primary)
                     .lineLimit(1)
+                if let date = item.date {
+                    Text(date.kokokitaShortDateString)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
                 Image(systemName: "chevron.right")
                     .font(.caption2.weight(.bold))
                     .foregroundStyle(.secondary)
@@ -508,6 +514,14 @@ private enum CandidateItem: Identifiable {
         switch self {
         case .pastVisit: return "clock.arrow.circlepath"
         case .poi: return "building.2"
+        }
+    }
+
+    /// 以前の記録のみ、訪問日を小さく添える
+    var date: Date? {
+        switch self {
+        case .pastVisit(let visit): return visit.visit.timestampUTC
+        case .poi: return nil
         }
     }
 }

@@ -257,7 +257,8 @@ final class RecordingController {
                 let updatedSpot = updatedSpots.first(where: { $0.id == result.spot.id }) ?? result.spot
                 return CourseRecognitionService.RecognitionResult(
                     course: updatedCourse, spot: updatedSpot,
-                    distanceMeters: result.distanceMeters, achievedAt: result.achievedAt
+                    distanceMeters: result.distanceMeters, achievedAt: result.achievedAt,
+                    visitLatitude: result.visitLatitude, visitLongitude: result.visitLongitude
                 )
             }
         } catch {

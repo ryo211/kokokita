@@ -450,6 +450,7 @@
 "checkIn.retroactiveTitle" = "過去の記録から巡礼スポット達成認定！";
 "checkIn.retroactiveSubtitle" = "以前に訪れた記録がこのコースのスポットと一致しました";
 "checkIn.retroactiveDateSuffix" = "の記録より";
+"checkIn.shareAchievement" = "達成を共有しよう";
 
 // MARK: - Manual Entry (後付け記録)
 "manualEntry.title" = "記録を追加";
@@ -796,3 +797,10 @@
 "share.layoutMap" = "地図メイン";
 "share.showSubThumbnail" = "サブサムネイルを表示";
 "share.selectPhoto" = "写真を選択";
+"share.stampSettingsLabel" = "達成演出";
+"share.showStamp" = "スタンプを表示";
+"share.dateStampStyleLabel" = "日付スタンプ";
+"share.dateStampNone" = "なし";
+"share.dateStampTab" = "タブ";
+"share.dateStampPlate" = "プレート";
+"share.achievedLabel" = "達成";
