@@ -488,7 +488,10 @@ enum L {
         static let favoriteViewAll = localized("course.favoriteViewAll")
         static let favoriteEmptyDescription = localized("course.favoriteEmptyDescription")
         static let achieved = localized("course.achieved")
-        static let addHint = localized("course.addHint")
+        static let syncingMessage = localized("course.syncingMessage")
+        static let syncFailedTitle = localized("course.syncFailedTitle")
+        static let syncFailedDescription = localized("course.syncFailedDescription")
+        static let searchPlaceholder = localized("course.searchPlaceholder")
 
         static let notVisited = localized("course.notVisited")
         static let noAddress = localized("course.noAddress")
@@ -501,22 +504,6 @@ enum L {
         static let sortDistance = localized("course.sort.distance")
         static let sortUpdatedAt = localized("course.sort.updatedAt")
         static let sortSpotCount = localized("course.sort.spotCount")
-    }
-
-    // MARK: - Course Store（コースダウンロード）
-    enum CourseStore {
-        static let title = localized("courseStore.title")
-        static let emptyTitle = localized("courseStore.emptyTitle")
-        static let emptyDescription = localized("courseStore.emptyDescription")
-        static let downloadButton = localized("courseStore.downloadButton")
-        static let downloadedBadge = localized("courseStore.downloadedBadge")
-        static let updateButton = localized("courseStore.updateButton")
-        static func spotCount(_ count: Int) -> String { String(format: localized("courseStore.spotCount"), count) }
-        static let filterNew = localized("courseStore.filter.new")
-        static let filterAvailable = localized("courseStore.filter.available")
-        static let filterInstalled = localized("courseStore.filter.installed")
-        static let filterAll = localized("courseStore.filter.all")
-        static let searchPlaceholder = localized("courseStore.searchPlaceholder")
     }
 
     // MARK: - Manual Entry (後付け記録)

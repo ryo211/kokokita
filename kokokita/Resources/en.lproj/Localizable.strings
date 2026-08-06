@@ -331,20 +331,12 @@
 "course.comingSoon" = "Coming Soon";
 "course.description" = "Course feature will be available soon";
 "course.listTitle" = "Course List";
-"courseStore.title" = "Add Courses";
-"courseStore.emptyTitle" = "No Courses Available";
-"courseStore.emptyDescription" = "No courses are available for download at this time";
-"courseStore.downloadButton" = "+ Add";
-"courseStore.downloadedBadge" = "Added";
-"courseStore.updateButton" = "Update";
-"courseStore.spotCount" = "%d spots";
-"courseStore.filter.new" = "New";
-"courseStore.filter.available" = "Available";
-"courseStore.filter.installed" = "Installed";
-"courseStore.filter.all" = "All";
-"courseStore.searchPlaceholder" = "Search courses";
 "course.emptyTitle" = "No Courses";
-"course.emptyDescription" = "Tap + in the top right to add a course";
+"course.emptyDescription" = "Please try again later";
+"course.syncingMessage" = "Loading courses…";
+"course.syncFailedTitle" = "Couldn't Load Courses";
+"course.syncFailedDescription" = "Please check your internet connection and try again";
+"course.searchPlaceholder" = "Search courses";
 "course.enable" = "Enable";
 "course.disable" = "Disable";
 "course.enableToggle" = "Enable this course";
@@ -370,7 +362,6 @@
 "course.favoriteViewAll" = "See All";
 "course.favoriteEmptyDescription" = "Add courses to favorites and they will appear here";
 "course.achieved" = "done";
-"course.addHint" = "Add a course here";
 
 "course.notVisited" = "Not Visited";
 "course.noAddress" = "No Address";

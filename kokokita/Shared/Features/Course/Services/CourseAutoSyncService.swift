@@ -20,7 +20,10 @@ final class CourseAutoSyncService {
 
     /// - Parameter onProgress: ダウンロード件数ベースの進捗（0.0〜1.0）を通知するコールバック（省略可）
     ///   ウェルカム画面のプログレスバー表示用。既存呼び出し元は省略可能で挙動は変わらない
-    func sync(onProgress: (@MainActor (Double) -> Void)? = nil) async {
+    /// - Returns: index.jsonの取得に成功したか（ネットワーク到達性の指標。個別コースのダウンロード
+    ///   失敗はコースごとにログするだけで全体の成否には影響させない）
+    @discardableResult
+    func sync(onProgress: (@MainActor (Double) -> Void)? = nil) async -> Bool {
         do {
             let index = try await storeService.fetchIndex()
             let localCourses = try courseRepo.fetchAll()
@@ -88,9 +91,11 @@ final class CourseAutoSyncService {
             }
 
             Logger.info("コース自動同期完了")
+            return true
         } catch {
             Logger.error("コース自動同期エラー", error: error)
             await onProgress?(1.0)  // 失敗時もプログレスバー・ボタンをブロックしたままにしない
+            return false
         }
     }
 }

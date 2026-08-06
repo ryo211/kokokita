@@ -333,20 +333,12 @@
 "course.comingSoon" = "準備中";
 "course.description" = "コース機能は近日公開予定です";
 "course.listTitle" = "コース一覧";
-"courseStore.title" = "コースを追加";
-"courseStore.emptyTitle" = "コースがありません";
-"courseStore.emptyDescription" = "現在ダウンロード可能なコースはありません";
-"courseStore.downloadButton" = "+ 追加";
-"courseStore.downloadedBadge" = "追加済み";
-"courseStore.updateButton" = "更新";
-"courseStore.spotCount" = "%d スポット";
-"courseStore.filter.new" = "新着";
-"courseStore.filter.available" = "未入手";
-"courseStore.filter.installed" = "追加済み";
-"courseStore.filter.all" = "すべて";
-"courseStore.searchPlaceholder" = "コースを検索";
 "course.emptyTitle" = "コースがありません";
-"course.emptyDescription" = "右上の＋からコースを追加できます";
+"course.emptyDescription" = "しばらくしてからもう一度お試しください";
+"course.syncingMessage" = "コースを読み込んでいます";
+"course.syncFailedTitle" = "コースを取得できませんでした";
+"course.syncFailedDescription" = "インターネット接続を確認してもう一度お試しください";
+"course.searchPlaceholder" = "コースを検索";
 "course.enable" = "有効にする";
 "course.disable" = "無効にする";
 "course.enableToggle" = "このコースを有効にする";
@@ -374,7 +366,6 @@
 "course.favoriteViewAll" = "すべて見る";
 "course.favoriteEmptyDescription" = "コースをお気に入りに追加すると、ここに表示されます";
 "course.achieved" = "達成";
-"course.addHint" = "コースを追加できます";
 
 "course.notVisited" = "未訪問";
 "course.noAddress" = "住所未登録";
