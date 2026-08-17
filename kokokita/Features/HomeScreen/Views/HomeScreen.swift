@@ -70,7 +70,7 @@ struct HomeScreen: View {
                 )
                 .ignoresSafeArea()
 
-                VStack(spacing: 40) {
+                VStack(spacing: 24) {
                     VStack(spacing: 12) {
                         // 自動記録候補バナー（控えめな導線）
                         if pendingCandidateCount > 0 {
@@ -81,6 +81,7 @@ struct HomeScreen: View {
                         // 正確な位置が測れずコーチマークがずれるため、本編コンテンツ内に配置する）
                         autoRecordToggleRow
                     }
+                    .padding(.top, 8)
 
                     Spacer()
 
@@ -103,6 +104,10 @@ struct HomeScreen: View {
                     }
                     .frame(height: 150)
                 }
+                // ZStackのデフォルト中央揃えのままだと、広告バナー表示分で高さが足りない時に
+                // 上（ツールバー側）・下（広告側）の両方向へ均等にはみ出して隠れてしまっていた。
+                // 上端基準に固定し、はみ出しが起きても下方向のみになるようにする
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                 .padding(.bottom, 24)
 
                 // ガイド付きツアー③: 自動記録ON/OFFボタンのコーチマーク（自前実装。ボタン直下に確実に表示する）
