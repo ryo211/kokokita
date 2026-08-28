@@ -13,3 +13,6 @@
 
 /* Location access description */
 "NSLocationWhenInUseUsageDescription" = "Kokokita uses your location to record where you have been. For example, when you tap the \"Kokokita\" button, the app captures your current GPS coordinates and saves them with a tamper-proof digital signature. Location data is stored locally on your device and never shared without your permission.";
+
+/* Auto record feature (Always) description */
+"NSLocationAlwaysAndWhenInUseUsageDescription" = "Kokokita uses your location in the background to automatically detect places you visit and save them as record candidates. You can review and confirm these candidates later. Location data is stored locally on your device and never shared without your permission.";

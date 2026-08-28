@@ -39,6 +39,8 @@ struct AppConfig {
     static let autoRecordMaxAccuracyMeters: Double = 200
     /// 滞在時間足切り: これより短い滞在は候補化しない（秒）
     static let autoRecordMinStaySeconds: TimeInterval = 5 * 60
+    /// 滞在時間上限: これより長い滞在は候補化しない（秒）
+    static let autoRecordMaxStaySeconds: TimeInterval = 72 * 60 * 60
     /// 候補の保持日数（これより古い候補は自動削除）
     static let autoRecordRetentionDays: TimeInterval = 30
     /// pending 候補の上限件数

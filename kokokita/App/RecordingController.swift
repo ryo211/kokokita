@@ -257,7 +257,8 @@ final class RecordingController {
                 let updatedSpot = updatedSpots.first(where: { $0.id == result.spot.id }) ?? result.spot
                 return CourseRecognitionService.RecognitionResult(
                     course: updatedCourse, spot: updatedSpot,
-                    distanceMeters: result.distanceMeters, achievedAt: result.achievedAt
+                    distanceMeters: result.distanceMeters, achievedAt: result.achievedAt,
+                    visitLatitude: result.visitLatitude, visitLongitude: result.visitLongitude
                 )
             }
         } catch {
@@ -267,16 +268,6 @@ final class RecordingController {
     }
 
     // MARK: - その他
-
-    func deleteVisit(id: UUID) {
-        do {
-            try AppContainer.shared.repo.delete(id: id)
-            NotificationCenter.default.post(name: .visitsChanged, object: nil)
-        } catch {
-            Logger.error("Failed to delete visit", error: error)
-            locationErrorMessage = L.Error.deleteFailed
-        }
-    }
 
     func openSettings() {
         if let url = URL(string: UIApplication.openSettingsURLString) {

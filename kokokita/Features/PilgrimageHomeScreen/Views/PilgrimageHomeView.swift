@@ -6,7 +6,9 @@ import CoreLocation
 // NavigationLink(value:) で統一する
 struct PilgrimageHomeView: View {
     @State private var store = CourseListStore()
-    @State private var userLocation: CLLocation? = CLLocationManager().location
+    // CLLocationManager().location はプロセス内でまだ誰も位置情報を取得していない場合 nil になる
+    // （許可直後の初回起動等）。初期値はキャッシュに頼らず、.task で能動的に取得する
+    @State private var userLocation: CLLocation? = nil
     @State private var isRefreshingNearbySpots = false
     @State private var showSettings = false
     @State private var showHowToUse = false
@@ -158,12 +160,19 @@ struct PilgrimageHomeView: View {
             }
             .task {
                 await store.load()
-                userLocation = CLLocationManager().location
+                // 能動的に位置情報を取得する（CLLocationManager().location のキャッシュ読み取りは
+                // プロセス内で誰も取得要求していないと必ず nil になるため使わない）
+                if userLocation == nil {
+                    await refreshNearbySpots()
+                }
                 normalizeSelectedCourseIndex()
             }
             .onReceive(NotificationCenter.default.publisher(for: .courseChanged)) { _ in
                 Task { await store.load() }
-                userLocation = CLLocationManager().location
+                // 位置情報は上書きせず、未取得の場合のみ能動的に取得する
+                if userLocation == nil {
+                    Task { await refreshNearbySpots() }
+                }
             }
             .onChange(of: store.courses) { _, _ in
                 normalizeSelectedCourseIndex()
@@ -463,15 +472,21 @@ struct PilgrimageHomeView: View {
         guard !isRefreshingNearbySpots else { return }
         isRefreshingNearbySpots = true
 
+        let status = CLLocationManager().authorizationStatus
+        Logger.info("近くタブ: 位置情報取得を開始します（許可状態: \(status.rawValue)）")
+
         do {
             let locationService = DefaultLocationService()
+            // 初期表示用の取得のため、精度は粗めタイムアウトは長めにして成功率を優先する
+            // （許可直後はGPS/WiFi測位のコールドスタートで高精度な結果がすぐに得られないことがあるため）
             let (location, _) = try await locationService.requestOneShotLocation(
-                accuracy: kCLLocationAccuracyHundredMeters,
-                timeout: 8.0
+                accuracy: kCLLocationAccuracyKilometer,
+                timeout: 15.0
             )
             userLocation = location
+            Logger.success("近くタブ: 位置情報を取得しました (\(location.coordinate.latitude), \(location.coordinate.longitude))")
         } catch {
-            Logger.warning("Failed to refresh nearby pilgrimage spots location: \(error.localizedDescription)")
+            Logger.warning("近くタブ: 位置情報の取得に失敗しました（許可状態: \(status.rawValue)）: \(error.localizedDescription)")
         }
 
         isRefreshingNearbySpots = false

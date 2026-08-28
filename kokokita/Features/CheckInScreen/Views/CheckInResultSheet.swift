@@ -7,6 +7,7 @@ struct CheckInResultSheet: View {
     var onDismiss: (() -> Void)?
 
     @Environment(\.dismiss) private var dismiss
+    @State private var showShare = false
 
     var body: some View {
         NavigationStack {
@@ -38,26 +39,67 @@ struct CheckInResultSheet: View {
             }
         }
         .iPadSheetSize(iPhoneDetents: [.medium, .large])
+        .sheet(isPresented: $showShare) {
+            if let first = results.first {
+                SpotSharePreviewSheet(spot: first.spot, course: first.course, achievement: first.spotAchievementInfo)
+            }
+        }
     }
 
-    // ヘッダー：チェックマーク＋テキスト（ハンコはシート全体の背景に配置）
+    // ヘッダー：チェックマーク＋テキスト＋達成共有ボタン（ハンコはシート全体の背景に配置）
+    // 共有ボタンは通常のレイアウトフロー内に置くことで、オーバーレイ配置による
+    // 他要素との重なりを避け、常に確実な位置に表示されるようにしている
     private var sheetHeader: some View {
-        VStack(spacing: 10) {
-            Image(systemName: "checkmark.seal.fill")
-                .font(.system(size: 64))
-                .foregroundStyle(.indigo)
-                .symbolEffect(.bounce, value: true)
+        VStack(spacing: 18) {
+            VStack(spacing: 10) {
+                Image(systemName: "checkmark.seal.fill")
+                    .font(.system(size: 64))
+                    .foregroundStyle(.indigo)
+                    .symbolEffect(.bounce, value: true)
 
-            Text(L.CheckIn.resultTitle)
-                .font(.title2.bold())
-                .foregroundStyle(.primary)
+                Text(L.CheckIn.resultTitle)
+                    .font(.title2.bold())
+                    .foregroundStyle(.primary)
 
-            Text(L.CheckIn.stampAcquired)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+                Text(L.CheckIn.stampAcquired)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+
+            shareAchievementButton
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 24)
+    }
+
+    private var shareAchievementButton: some View {
+        Button {
+            showShare = true
+        } label: {
+            HStack(spacing: 7) {
+                Image(systemName: "square.and.arrow.up.fill")
+                    .font(.subheadline.weight(.semibold))
+                Text(L.CheckIn.shareAchievement)
+                    .font(.subheadline.weight(.semibold))
+            }
+            .foregroundStyle(.white)
+            .padding(.horizontal, 22)
+            .padding(.vertical, 11)
+            .background(
+                Capsule().fill(
+                    LinearGradient(
+                        colors: [Color.indigo, Color.indigo.opacity(0.82)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+            )
+            .overlay(
+                Capsule().strokeBorder(Color.white.opacity(0.25), lineWidth: 1)
+            )
+            .shadow(color: Color.indigo.opacity(0.35), radius: 10, x: 0, y: 4)
+        }
+        .buttonStyle(.plain)
     }
 }
 

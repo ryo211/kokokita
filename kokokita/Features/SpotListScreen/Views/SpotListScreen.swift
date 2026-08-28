@@ -63,7 +63,7 @@ struct SpotListScreen: View {
 
     // フォーカス機能
     @AppStorage("spotList.zoomOnSpotFocus") private var zoomOnSpotFocus = false
-    @AppStorage("spotList.spotPhotoSize") private var spotPhotoSizeRaw = CourseSpotPhotoSize.medium.rawValue
+    @AppStorage("spotList.spotPhotoSize") private var spotPhotoSizeRaw = CourseSpotPhotoSize.large.rawValue
     @State private var visibleMapSpan = MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
     @State private var selectedSpotScreenPoint: CGPoint? = nil
     @State private var showMapSettings = false
@@ -84,7 +84,7 @@ struct SpotListScreen: View {
 
     /// 現在のスポット写真サイズ
     private var spotPhotoSize: CourseSpotPhotoSize {
-        CourseSpotPhotoSize(rawValue: spotPhotoSizeRaw) ?? .medium
+        CourseSpotPhotoSize(rawValue: spotPhotoSizeRaw) ?? .large
     }
 
     /// 地点選択が有効かどうか（近くのスポットモード、または距離ソート時）

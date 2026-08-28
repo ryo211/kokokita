@@ -3,6 +3,9 @@ import SwiftUI
 // 巡礼モードのルートタブビュー（3タブ: ホーム / コース / マイリスト）
 // 記録モードと同じカスタムタブバー UI を使用
 struct PilgrimageRootTabView: View {
+    /// 現在このモードが表示中か（RootViewが両モードを常駐させているため、
+    /// 非アクティブな間は広告バナーを不要にマウントしないよう判定する）
+    let isActiveMode: Bool
     @Environment(AppModeManager.self) private var modeManager
     @Environment(AppUIState.self) private var ui
     @State private var tab: PilgrimageTab = .home
@@ -15,19 +18,46 @@ struct PilgrimageRootTabView: View {
     @State private var hasAutoRecordCandidates = false
     /// 飛翔アニメーション実行中フラグ
     @State private var isFlyAnimating = false
-    /// マイリストタブのグローバルフレーム
+    /// マイリストタブのグローバルフレーム（飛翔アニメーション用）
     @State private var myListTabFrame: CGRect = .zero
-    /// コースタブのグローバルフレーム
+    /// コースタブのグローバルフレーム（飛翔アニメーション用）
     @State private var courseTabFrame: CGRect = .zero
-    /// 親 ZStack のグローバルフレーム（ローカル変換用）
+    /// 親 ZStack のグローバルフレーム（飛翔アニメーションのtoLocal()専用。コーチマークはrootSize/named spaceを使う）
     @State private var rootFrame: CGRect = .zero
+    /// 記録ボタンのフレーム（"pilgrimageCoachmark"座標空間、コーチマーク位置計算用）
+    @State private var recordButtonFrame: CGRect = .zero
+    /// モード切替ボタンのフレーム（"pilgrimageCoachmark"座標空間、コーチマーク位置計算用）
+    @State private var modeSwitchButtonFrame: CGRect = .zero
+    /// 親 ZStack 自身のサイズ（"pilgrimageCoachmark"座標空間の原点は常に(0,0)なので、サイズだけ分かればよい）
+    @State private var rootSize: CGSize = .zero
+    /// ガイド付きツアー①完了（初回記録）。他画面（HomeScreen）とも共有するため@AppStorageで永続化する
+    @AppStorage("coachmark.hasCompletedFirstRecord") private var hasCompletedFirstRecord = false
+    /// ガイド付きツアー②完了（記録モードへの遷移）
+    @AppStorage("coachmark.hasSwitchedToRecordMode") private var hasSwitchedToRecordMode = false
+    /// コーチマークを閉じる（×）操作で二度と表示しないようにするフラグ。他画面とも共有する
+    @AppStorage("coachmark.dismissed") private var isCoachmarkDismissed = false
 
     #if DEBUG
     private var debugSettings = DebugSettings.shared
     #endif
 
+    // private な@Stateプロパティを含むため自動合成されるメンバーワイズイニシャライザが
+    // privateになってしまう。isActiveModeだけを受け取る公開イニシャライザを明示的に用意する
+    init(isActiveMode: Bool) {
+        self.isActiveMode = isActiveMode
+    }
+
     var body: some View {
         ZStack {
+            // サイズ測定用（ZStackの直接の子として置くことで、確実にZStack自身のサイズを取得する。
+            // .background(GeometryReader{...})による自己測定は.coordinateSpace(name:)のスコープと
+            // 噛み合わないことがあり、原点が(0,0)にならないバグの原因になっていた）
+            GeometryReader { geo in
+                Color.clear
+                    .onAppear { rootSize = geo.size }
+                    .onChange(of: geo.size) { _, newSize in rootSize = newSize }
+            }
+
             VStack(spacing: 0) {
                 // コンテンツ領域
                 ZStack {
@@ -35,7 +65,7 @@ struct PilgrimageRootTabView: View {
                         .opacity(tab == .home ? 1 : 0)
                         .zIndex(tab == .home ? 1 : 0)
 
-                    CourseScreen(externalStore: courseStore)
+                    CourseScreen(store: courseStore)
                         .opacity(tab == .map ? 1 : 0)
                         .zIndex(tab == .map ? 1 : 0)
 
@@ -55,12 +85,12 @@ struct PilgrimageRootTabView: View {
                 if !ui.isTabBarHidden {
                     VStack(spacing: 0) {
                         #if DEBUG
-                        if debugSettings.isAdDisplayEnabled && !PremiumManager.shared.isPremium {
+                        if debugSettings.isAdDisplayEnabled && !PremiumManager.shared.isPremium && isActiveMode {
                             BannerAdView(adUnitID: pilgrimageBannerAdUnitID)
                                 .background(.thinMaterial)
                         }
                         #else
-                        if !PremiumManager.shared.isPremium {
+                        if !PremiumManager.shared.isPremium && isActiveMode {
                             BannerAdView(adUnitID: pilgrimageBannerAdUnitID)
                                 .background(.thinMaterial)
                         }
@@ -81,15 +111,23 @@ struct PilgrimageRootTabView: View {
                                 recording.checkLocationPermissionAndCreate()
                             },
                             showRecordModeBadge: hasAutoRecordCandidates,
-                            onModeSwitch: { modeManager.setMode(.record) },
+                            onModeSwitch: {
+                                hasSwitchedToRecordMode = true
+                                modeManager.setMode(.record)
+                            },
                             onMyListTabFrame: { myListTabFrame = $0 },
-                            onCourseTabFrame: { courseTabFrame = $0 }
+                            onCourseTabFrame: { courseTabFrame = $0 },
+                            onRecordButtonFrame: { recordButtonFrame = $0 },
+                            onModeSwitchButtonFrame: { modeSwitchButtonFrame = $0 },
+                            // コーチマークが表示されている間だけ光らせる（× で閉じた後は静止させる）
+                            pulseRecordButton: !isCoachmarkDismissed && !hasCompletedFirstRecord,
+                            pulseModeSwitch: !isCoachmarkDismissed && hasCompletedFirstRecord && !hasSwitchedToRecordMode
                         )
                     }
                     .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
             }
-            // ルートフレームを取得（グローバル→ローカル変換用）
+            // 飛翔アニメーション用のルートフレーム取得（.global→ローカル変換用）
             .background(
                 GeometryReader { geo in
                     Color.clear.onAppear { rootFrame = geo.frame(in: .global) }
@@ -110,7 +148,29 @@ struct PilgrimageRootTabView: View {
                 )
                 .allowsHitTesting(false)
             }
+
+            // ガイド付きツアー: コーチマーク吹き出し（自前実装。ボタン直上に確実に表示する）
+            if !isCoachmarkDismissed, !hasCompletedFirstRecord, recordButtonFrame != .zero {
+                CoachmarkOverlay(
+                    title: L.Coachmark.recordButtonTitle,
+                    message: L.Coachmark.recordButtonMessage,
+                    anchorFrame: recordButtonFrame,
+                    containerFrame: CGRect(origin: .zero, size: rootSize),
+                    placement: .above,
+                    onDismiss: { isCoachmarkDismissed = true }
+                )
+            } else if !isCoachmarkDismissed, hasCompletedFirstRecord, !hasSwitchedToRecordMode, modeSwitchButtonFrame != .zero {
+                CoachmarkOverlay(
+                    title: L.Coachmark.modeSwitchTitle,
+                    message: L.Coachmark.modeSwitchMessage,
+                    anchorFrame: modeSwitchButtonFrame,
+                    containerFrame: CGRect(origin: .zero, size: rootSize),
+                    placement: .above,
+                    onDismiss: { isCoachmarkDismissed = true }
+                )
+            }
         }
+        .coordinateSpace(name: "pilgrimageCoachmark")
         .animation(.snappy, value: ui.isTabBarHidden)
         .recordingOverlay(recording)
         .ignoresSafeArea(.keyboard, edges: .bottom)
@@ -122,6 +182,8 @@ struct PilgrimageRootTabView: View {
             withAnimation(.spring(duration: 0.4)) { showCourseTabBadge = true }
         }
         .onAppear {
+            // RootViewが両モードを常駐させているため、これはモード切り替えのたびではなく
+            // アプリ起動時に一度だけ発火する
             refreshAutoRecordCandidateBadge()
             // 起動時に未視認の新着コースがあればバッジを表示
             if courseStore.hasUnseenCourses {
@@ -132,6 +194,12 @@ struct PilgrimageRootTabView: View {
             Task { @MainActor in
                 refreshAutoRecordCandidateBadge()
             }
+        }
+        .onChange(of: recording.confirmationSheetVisitId) { oldValue, newValue in
+            // ガイド付きツアー①: 記録直後の確認シートが閉じたタイミングで完了とみなす
+            // （.visitsChangedの時点ではシートがまだ開いており、コーチマークが重なってしまうため）
+            guard oldValue != nil, newValue == nil, !hasCompletedFirstRecord else { return }
+            hasCompletedFirstRecord = true
         }
     }
 
@@ -241,6 +309,12 @@ private struct PilgrimageBottomBar: View {
     let onModeSwitch: () -> Void
     let onMyListTabFrame: (CGRect) -> Void
     let onCourseTabFrame: (CGRect) -> Void
+    let onRecordButtonFrame: (CGRect) -> Void
+    let onModeSwitchButtonFrame: (CGRect) -> Void
+    /// ガイド付きツアー①: 記録ボタンをパルス発光させるか
+    let pulseRecordButton: Bool
+    /// ガイド付きツアー②: モード切替ボタンをパルス発光させるか
+    let pulseModeSwitch: Bool
     @Environment(\.colorScheme) private var colorScheme
 
     private let tabItems: [(PilgrimageTab, String, String)] = [
@@ -272,11 +346,14 @@ private struct PilgrimageBottomBar: View {
 
             HStack(spacing: 8) {
                 // ккокита（記録）ボタン（左端）
+                // ガイド付きツアー①: 初回のみパルス発光 + 「現在地を記録してみよう」
                 KokokitaTabActionButton(
                     imageName: "kokokita_irodori_indigo_v2",
                     tintColor: colorScheme == .dark ? Color(red: 0.74, green: 0.70, blue: 1.0) : Color.indigo,
                     action: onRecord
                 )
+                .pulsingHighlight(isActive: pulseRecordButton)
+                .reportFrame(in: .named("pilgrimageCoachmark"), onRecordButtonFrame)
 
                 // カスタムタブバー（フレーム取得付き）
                 CustomTabBar(
@@ -289,6 +366,7 @@ private struct PilgrimageBottomBar: View {
                 )
 
                 // モード切り替えボタン（記録モードへ）
+                // ガイド付きツアー②: 初回記録完了後のみパルス発光 + 「記録を確認しよう」
                 Button {
                     onModeSwitch()
                 } label: {
@@ -314,6 +392,8 @@ private struct PilgrimageBottomBar: View {
                     }
                 }
                 .buttonStyle(.plain)
+                .pulsingHighlight(isActive: pulseModeSwitch)
+                .reportFrame(in: .named("pilgrimageCoachmark"), onModeSwitchButtonFrame)
             }
             .padding(.horizontal, UIConstants.Spacing.extraLarge + 8)
             .padding(.bottom, UIConstants.Spacing.medium)

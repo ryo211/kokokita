@@ -10,6 +10,16 @@ struct HomeScreen: View {
     @State private var hasStartedAnimation = false
     @State private var pendingCandidateCount: Int = 0
     @State private var showAutoRecordReview = false
+    @State private var autoRecordEffects = AutoRecordToggleEffects()
+    @ObservedObject private var autoRecordSettings = AutoRecordSettings.shared
+    /// ガイド付きツアー②完了（記録モードへの遷移）。PilgrimageRootTabViewと@AppStorageで共有する
+    @AppStorage("coachmark.hasSwitchedToRecordMode") private var hasSwitchedToRecordMode = false
+    /// コーチマークを閉じる（×）操作で二度と表示しないようにするフラグ。他画面とも共有する
+    @AppStorage("coachmark.dismissed") private var isCoachmarkDismissed = false
+    /// 自動記録ON/OFFボタンのフレーム（"homeCoachmark"座標空間、コーチマーク位置計算用）
+    @State private var autoRecordButtonFrame: CGRect = .zero
+    /// このビュー自身のサイズ（"homeCoachmark"座標空間の原点は常に(0,0)なので、サイズだけ分かればよい）
+    @State private var homeRootSize: CGSize = .zero
 
     let onKokokitaTap: () -> Void
     let onViewAllTap: () -> Void
@@ -17,6 +27,15 @@ struct HomeScreen: View {
     var body: some View {
         NavigationStack {
             ZStack {
+                // サイズ測定用（ZStackの直接の子として置くことで、確実にZStack自身のサイズを取得する。
+                // .background(GeometryReader{...})による自己測定は.coordinateSpace(name:)のスコープと
+                // 噛み合わないことがあり、原点が(0,0)にならないバグの原因になっていた）
+                GeometryReader { geo in
+                    Color.clear
+                        .onAppear { homeRootSize = geo.size }
+                        .onChange(of: geo.size) { _, newSize in homeRootSize = newSize }
+                }
+
                 // 背景グラデーション
                 LinearGradient(
                     colors: [
@@ -51,11 +70,18 @@ struct HomeScreen: View {
                 )
                 .ignoresSafeArea()
 
-                VStack(spacing: 40) {
-                    // 自動記録候補バナー（控えめな導線）
-                    if pendingCandidateCount > 0 {
-                        autoRecordPendingBanner
+                VStack(spacing: 24) {
+                    VStack(spacing: 12) {
+                        // 自動記録候補バナー（控えめな導線）
+                        if pendingCandidateCount > 0 {
+                            autoRecordPendingBanner
+                        }
+
+                        // 自動記録ON/OFFボタン（トグル代わりの行。ツールバーだとGeometryReaderで
+                        // 正確な位置が測れずコーチマークがずれるため、本編コンテンツ内に配置する）
+                        autoRecordToggleRow
                     }
+                    .padding(.top, 8)
 
                     Spacer()
 
@@ -78,8 +104,25 @@ struct HomeScreen: View {
                     }
                     .frame(height: 150)
                 }
+                // ZStackのデフォルト中央揃えのままだと、広告バナー表示分で高さが足りない時に
+                // 上（ツールバー側）・下（広告側）の両方向へ均等にはみ出して隠れてしまっていた。
+                // 上端基準に固定し、はみ出しが起きても下方向のみになるようにする
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                 .padding(.bottom, 24)
+
+                // ガイド付きツアー③: 自動記録ON/OFFボタンのコーチマーク（自前実装。ボタン直下に確実に表示する）
+                if !isCoachmarkDismissed, hasSwitchedToRecordMode, !autoRecordSettings.isEnabled, autoRecordButtonFrame != .zero {
+                    CoachmarkOverlay(
+                        title: L.Coachmark.autoRecordToggleTitle,
+                        message: L.Coachmark.autoRecordToggleMessage,
+                        anchorFrame: autoRecordButtonFrame,
+                        containerFrame: CGRect(origin: .zero, size: homeRootSize),
+                        placement: .below,
+                        onDismiss: { isCoachmarkDismissed = true }
+                    )
+                }
             }
+            .coordinateSpace(name: "homeCoachmark")
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button {
@@ -116,6 +159,15 @@ struct HomeScreen: View {
             .sheet(isPresented: $showAutoRecordReview) {
                 AutoRecordCandidateReviewScreen()
                     .onDisappear { loadPendingCandidateCount() }
+            }
+            .sheet(isPresented: $autoRecordEffects.showIntroSheet) {
+                AutoRecordIntroSheet(onDismiss: { autoRecordEffects.introSheetDismissed() })
+            }
+            .alert(L.AutoRecord.permissionTitle, isPresented: $autoRecordEffects.showSettingsGuidance) {
+                Button(L.AutoRecord.permissionOpenSettings) { autoRecordEffects.openSettings() }
+                Button(L.Common.cancel, role: .cancel) {}
+            } message: {
+                Text(L.AutoRecord.permissionMessage)
             }
             .overlay(alignment: .leading) {
                 if showBookDrawer {
@@ -176,6 +228,39 @@ struct HomeScreen: View {
         .buttonStyle(.plain)
         .padding(.horizontal, 20)
         .padding(.top, 8)
+    }
+
+    // MARK: - Auto Record Toggle Row
+
+    private var autoRecordToggleRow: some View {
+        Button {
+            if autoRecordSettings.isEnabled {
+                autoRecordEffects.handleToggleOff()
+            } else {
+                autoRecordEffects.handleToggleOn()
+            }
+        } label: {
+            HStack(spacing: 8) {
+                Image(systemName: "waveform.path.ecg")
+                    .font(.subheadline)
+                Text(autoRecordSettings.isEnabled ? L.AutoRecord.homeToggleOnLabel : L.AutoRecord.homeToggleOffLabel)
+                    .font(.subheadline.weight(.medium))
+                Spacer()
+                Image(systemName: autoRecordSettings.isEnabled ? "checkmark.circle.fill" : "circle")
+                    .font(.subheadline)
+            }
+            .frame(maxWidth: .infinity)
+            .foregroundStyle(autoRecordSettings.isEnabled ? .white : .primary)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
+            .background(autoRecordSettings.isEnabled ? Color.accentColor.opacity(0.85) : Color(.tertiarySystemBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+        }
+        .buttonStyle(.plain)
+        .padding(.horizontal, 20)
+        // コーチマークが表示されている間だけ光らせる（× で閉じた後は静止させる）
+        .pulsingHighlight(isActive: !isCoachmarkDismissed && hasSwitchedToRecordMode && !autoRecordSettings.isEnabled)
+        .reportFrame(in: .named("homeCoachmark")) { autoRecordButtonFrame = $0 }
     }
 
     // MARK: - Kokokita Button

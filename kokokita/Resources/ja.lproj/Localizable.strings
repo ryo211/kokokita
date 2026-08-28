@@ -300,17 +300,13 @@
 
 // MARK: - Confirmation Sheet
 "confirmation.enterInfo" = "情報を入力";
-"confirmation.viewDetail" = "記録を見る";
-"confirmation.deleteRecord" = "記録を取り消し";
 "confirmation.recordedLocation" = "現在地を記録しました";
 "confirmation.loadingPOI" = "周辺施設を検索中...";
-"confirmation.noInternet" = "インターネットに接続されていないため、周辺施設情報を取得できません。";
 "confirmation.noPOIFound" = "周辺に施設が見つかりませんでした";
-"confirmation.selectFacility" = "候補のスポットから選択";
+"confirmation.pastVisitsLabel" = "以前の記録";
+"confirmation.nearbyPlacesLabel" = "周辺の施設";
 "confirmation.deleteConfirmTitle" = "ゴミ箱へ移動";
 "confirmation.deleteConfirmMessage" = "削除した記録はゴミ箱に30日間保存されます。";
-"confirmation.recentVisitsHeader" = "この近くで過去に記録した場所";
-"confirmation.nearbyPlacesHeader" = "周辺の施設";
 
 // MARK: - New Home Screen
 "newhome.title" = "ココキタ";
@@ -337,20 +333,12 @@
 "course.comingSoon" = "準備中";
 "course.description" = "コース機能は近日公開予定です";
 "course.listTitle" = "コース一覧";
-"courseStore.title" = "コースを追加";
-"courseStore.emptyTitle" = "コースがありません";
-"courseStore.emptyDescription" = "現在ダウンロード可能なコースはありません";
-"courseStore.downloadButton" = "+ 追加";
-"courseStore.downloadedBadge" = "追加済み";
-"courseStore.updateButton" = "更新";
-"courseStore.spotCount" = "%d スポット";
-"courseStore.filter.new" = "新着";
-"courseStore.filter.available" = "未入手";
-"courseStore.filter.installed" = "追加済み";
-"courseStore.filter.all" = "すべて";
-"courseStore.searchPlaceholder" = "コースを検索";
 "course.emptyTitle" = "コースがありません";
-"course.emptyDescription" = "右上の＋からコースを追加できます";
+"course.emptyDescription" = "しばらくしてからもう一度お試しください";
+"course.syncingMessage" = "コースを読み込んでいます";
+"course.syncFailedTitle" = "コースを取得できませんでした";
+"course.syncFailedDescription" = "インターネット接続を確認してもう一度お試しください";
+"course.searchPlaceholder" = "コースを検索";
 "course.enable" = "有効にする";
 "course.disable" = "無効にする";
 "course.enableToggle" = "このコースを有効にする";
@@ -378,7 +366,6 @@
 "course.favoriteViewAll" = "すべて見る";
 "course.favoriteEmptyDescription" = "コースをお気に入りに追加すると、ここに表示されます";
 "course.achieved" = "達成";
-"course.addHint" = "コースを追加できます";
 
 "course.notVisited" = "未訪問";
 "course.noAddress" = "住所未登録";
@@ -392,17 +379,30 @@
 "course.sort.updatedAt" = "更新日";
 "course.sort.spotCount" = "スポット数";
 
-// MARK: - Mode Selection
-"modeSelection.title" = "モードを選んでください";
-"modeSelection.subtitle" = "あとで自由に切り替えられます";
-"modeSelection.pilgrimageTitle" = "巡礼モード";
-"modeSelection.pilgrimageDescription" = "世界遺産やアニメの聖地などの巡礼コースを巡る";
-"modeSelection.recordTitle" = "記録モード";
-"modeSelection.recordDescription" = "今いる場所を記録し、地図やカレンダーで振り返る";
-"modeSelection.canChangeInSettings" = "記録したデータはどちらのモードにも反映されます";
+// MARK: - Mode Selection（SettingsSheetのモード切替行でのみ使用）
 "modeSelection.appModeSection" = "アプリモード";
 "modeSelection.switchToRecord" = "記録モードに切り替え";
 "modeSelection.switchToPilgrimage" = "巡礼モードに切り替え";
+
+// MARK: - Welcome（初回起動時のウェルカム画面）
+"welcome.title" = "ココキタへ ようこそ";
+"welcome.setupSectionTitle" = "ご利用に以下の設定が必要です。";
+"welcome.locationPermissionTitle" = "位置情報の使用中の許可";
+"welcome.locationPermissionDescription" = "現在地の記録や、近くのスポット探索に使用します";
+"welcome.autoRecordPermissionTitle" = "位置情報の常に許可（任意）";
+"welcome.autoRecordPermissionDescription" = "自動記録機能をご利用の場合に必要です。今は設定不要で、あとから設定画面でONにできます";
+"welcome.permissionDialogNote" = "「はじめる」をタップすると、確認画面が表示されます";
+"welcome.syncProgressLabel" = "アプリの準備をしています…";
+"welcome.syncProgressCompleteLabel" = "アプリの準備ができました";
+"welcome.startButton" = "はじめる";
+
+// MARK: - Coachmark（初回チュートリアルのガイド付きツアー）
+"coachmark.recordButton.title" = "現在地を記録してみよう";
+"coachmark.recordButton.message" = "このボタンをタップして、今いる場所を記録しましょう";
+"coachmark.modeSwitch.title" = "記録を確認しよう";
+"coachmark.modeSwitch.message" = "記録モードに切り替えて、たった今の記録を見てみましょう";
+"coachmark.autoRecordToggle.title" = "自動記録機能を使ってみよう";
+"coachmark.autoRecordToggle.message" = "訪れた場所を自動で記録候補に貯める機能です。タップしてONにしてみましょう";
 
 // MARK: - Pilgrimage Home
 "pilgrimageHome.navTitle" = "聖地巡礼";
@@ -441,6 +441,7 @@
 "checkIn.retroactiveTitle" = "過去の記録から巡礼スポット達成認定！";
 "checkIn.retroactiveSubtitle" = "以前に訪れた記録がこのコースのスポットと一致しました";
 "checkIn.retroactiveDateSuffix" = "の記録より";
+"checkIn.shareAchievement" = "達成を共有しよう";
 
 // MARK: - Manual Entry (後付け記録)
 "manualEntry.title" = "記録を追加";
@@ -653,6 +654,8 @@
 "autoRecord.dismissAll.confirmMessage" = "%d件の候補をすべて削除します。元に戻せません。";
 "autoRecord.home.pendingBanner" = "自動記録の候補が%d件あります";
 "autoRecord.settings.reviewCandidates" = "記録候補を確認する";
+"autoRecord.home.toggleOnLabel" = "自動記録: ON";
+"autoRecord.home.toggleOffLabel" = "自動記録をONにする";
 "autoRecord.exclude" = "この場所を自動検知しない";
 "autoRecord.exclude.title" = "場所を除外する";
 "autoRecord.exclude.message" = "この場所の周辺（約%dm以内）を自動記録から除外します。名前を付けておくと管理しやすくなります。";
@@ -662,6 +665,10 @@
 "autoRecord.excludedLocations.empty" = "除外した場所はありません。\n自動記録の候補から「この場所を自動検知しない」を選ぶと追加されます。";
 "autoRecord.excludedLocations.footer" = "左にスワイプすると除外を解除できます";
 "autoRecord.excludedLocations.radius" = "半径%dm";
+"autoRecord.intro.title" = "自動記録機能について";
+"autoRecord.intro.mechanismDescription" = "訪れた場所をアプリが自動で検知し、記録候補として貯めておきます。あとでまとめて確認し、記録として残すか選べます。";
+"autoRecord.intro.permissionNotice" = "この機能を使うには、位置情報の「常に許可」が必要です";
+"autoRecord.intro.dismissAction" = "使ってみる";
 
 // MARK: - Trash（ゴミ箱）
 "trash.title" = "ゴミ箱";
@@ -759,6 +766,7 @@
 "paywall.debugOverrideOn" = "デバッグ: Premium強制ON";
 "paywall.debugOverrideOff" = "デバッグ: Premium強制OFF";
 "paywall.debugOverrideNone" = "デバッグ: 実際の課金状態を使用";
+"paywall.subscriptionDisclosure" = "• 料金はApple IDアカウントに請求されます\n• 現在の期間終了の24時間前までにキャンセルしない限り、サブスクリプションは自動更新されます\n• 更新料金は期間終了の24時間以内に請求されます\n• 購入後は「設定」→「Apple ID」→「サブスクリプション」から管理・解約できます";
 
 // MARK: - CourseDetail メニュー（追加）
 "courseDetail.menu.share" = "共有";
@@ -780,3 +788,10 @@
 "share.layoutMap" = "地図メイン";
 "share.showSubThumbnail" = "サブサムネイルを表示";
 "share.selectPhoto" = "写真を選択";
+"share.stampSettingsLabel" = "達成演出";
+"share.showStamp" = "スタンプを表示";
+"share.dateStampStyleLabel" = "日付スタンプ";
+"share.dateStampNone" = "なし";
+"share.dateStampTab" = "タブ";
+"share.dateStampPlate" = "プレート";
+"share.achievedLabel" = "達成";
