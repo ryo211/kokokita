@@ -25,9 +25,9 @@ struct CourseListView: View {
         return store.courses.filter { $0.title.localizedCaseInsensitiveContains(searchText) }
     }
 
-    // 新着コース（未視認 or 視認から24時間以内）
+    // 新着コース（未視認 or 視認から24時間以内）、新しいものを左に表示
     private var newCourses: [Course] {
-        store.courses.filter { store.isNew($0.id) }
+        store.courses.filter { store.isNew($0.id) }.reversed()
     }
 
     // お気に入りコース（追加した順、新しい順）
@@ -64,12 +64,8 @@ struct CourseListView: View {
                 // 通常：カテゴリグリッド
                 ScrollView {
                     if store.courses.isEmpty {
-                        ContentUnavailableView(
-                            L.Course.emptyTitle,
-                            systemImage: "plus.circle",
-                            description: Text(L.Course.emptyDescription)
-                        )
-                        .padding(.top, 60)
+                        courseListEmptyState
+                            .padding(.top, 60)
                     } else {
                         VStack(spacing: 0) {
                             // 新着コースセクション
@@ -146,6 +142,38 @@ struct CourseListView: View {
         }
         .task {
             await store.syncAndLoad()
+        }
+    }
+
+    // コースが1件もない場合の表示。「同期中」「同期失敗（主にネットワーク不通）」
+    // 「同期は成功したが本当に0件」を区別する。以前はストア画面から手動追加する仕様だった名残で
+    // 「右上の＋から追加できます」という、現存しないUIを指す文言が出ていたため整理した
+    @ViewBuilder
+    private var courseListEmptyState: some View {
+        if store.isSyncing {
+            VStack(spacing: 14) {
+                ProgressView()
+                Text(L.Course.syncingMessage)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+            .frame(maxWidth: .infinity)
+        } else if store.lastSyncFailed {
+            ContentUnavailableView {
+                Label(L.Course.syncFailedTitle, systemImage: "wifi.slash")
+            } description: {
+                Text(L.Course.syncFailedDescription)
+            } actions: {
+                Button(L.Common.retry) {
+                    Task { await store.syncAndLoad() }
+                }
+            }
+        } else {
+            ContentUnavailableView(
+                L.Course.emptyTitle,
+                systemImage: "map",
+                description: Text(L.Course.emptyDescription)
+            )
         }
     }
 }
@@ -378,7 +406,7 @@ struct CourseSearchBar: View {
                 .foregroundStyle(.secondary)
                 .font(.system(size: 15))
 
-            TextField(L.CourseStore.searchPlaceholder, text: $searchText)
+            TextField(L.Course.searchPlaceholder, text: $searchText)
                 .focused(isFocused)
                 .font(.body)
                 .submitLabel(.search)

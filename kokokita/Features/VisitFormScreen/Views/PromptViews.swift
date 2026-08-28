@@ -4,122 +4,109 @@ import CoreLocation
 // MARK: - PostKokokitaConfirmationSheet
 
 /// ココキタ保存後の確認シート
-/// 保存直後に表示され、周辺施設の自動検索と編集・削除の選択肢を提供
+/// 保存直後に表示され、記録完了を「ハンコを押す」演出で伝えつつ、
+/// 周辺施設・近くの過去記録を候補チップとして提示する
+///
+/// 誤記録の削除はゴミ箱機能（記録一覧からの通常の削除操作）でカバーされるため、
+/// このシート自体に削除アクションは置かない。右上の閉じるボタンはスワイプ同様、単に閉じるだけ
 struct PostKokokitaConfirmationSheet: View {
     let visitId: UUID
     let onEnterInfo: (UUID) -> Void
-    let onViewDetail: (UUID) -> Void
-    let onDelete: (UUID) -> Void
     @Environment(\.dismiss) private var dismiss
 
     @State private var visit: VisitAggregate?
     @State private var poiState: POISearchState = .idle
     @State private var nearbyVisits: [VisitAggregate] = []
+    @State private var selectedPOICategory: KKCategory? = nil
 
     // 1%の確率でレア画像を表示
-    private var logoImageName: String {
+    private var stampImageName: String {
         Double.random(in: 0..<1) < 0.01 ? "kokokita_irodori" : "kokokita_irodori_blue"
     }
 
+    // 候補行（以前の記録／周辺の施設）の表示段数
+    private var candidateRowCount: Int {
+        var count = 0
+        if !nearbyVisits.isEmpty { count += 1 }
+        switch poiState {
+        case .success(let pois) where !pois.isEmpty: count += 1
+        case .loading: count += 1
+        default: break
+        }
+        return count
+    }
+
+    // 候補行の段数ごとに固定の高さを持たせる（0件/1種類/2種類の3パターン）
+    // 行を1つ増やすごとの増分は「行ラベル+チップ」約62pt、2段目以降は段間スペース12ptが加わる分やや大きくなる
+    // 周辺の施設行はカテゴリ絞り込みアイコン分だけラベル行が少し高くなるため、その分も見込む
+    private var sheetHeight: CGFloat {
+        switch candidateRowCount {
+        case 0: return 460
+        case 1: return 530
+        default: return 600
+        }
+    }
+
     var body: some View {
-        GeometryReader { geometry in
+        ZStack(alignment: .topTrailing) {
             VStack(spacing: 0) {
-                // 固定ヘッダー部分（スクロールしない）
-                VStack(spacing: 16) {
-                    // 見出し
-                    header
-                        .padding(.top, 20)
+                VStack(spacing: 14) {
+                    RecordStampView(imageName: stampImageName)
+                        .padding(.top, 24)
 
-                    // 基本情報（日付・住所）
-                    if let visit = visit {
-                        basicInfo(visit: visit)
-                    }
+                    VStack(spacing: 6) {
+                        Text(L.Confirmation.recordedLocation)
+                            .font(.title3.weight(.bold))
+                            .foregroundStyle(.primary)
 
-                    // 地図
-                    if let visit = visit {
-                        mapSection(visit: visit, maxHeight: geometry.size.height * 0.3)
-                    }
-                }
-                .padding(.horizontal)
-                .padding(.bottom, 16)
-
-                // ココカモセクション全体（背景付き）
-                VStack(spacing: 0) {
-                    // ココカモセクションのヘッダー
-                    VStack(alignment: .leading, spacing: 8) {
-                        // ココカモセクションのタイトル
-                        HStack(spacing: 6) {
-                            Image(systemName: "building.2.crop.circle.fill")
-                                .foregroundStyle(Color.accentColor)
-                                .font(.title3)
-                            Text(L.Confirmation.selectFacility)
-                                .font(.headline)
-                            Spacer()
+                        if let visit {
+                            basicInfo(visit: visit)
                         }
                     }
-                    .padding(.horizontal)
-                    .padding(.top, 12)
-                    .padding(.bottom, 8)
 
-                    // スクロール可能なココカモセクション
-                    kokokamoScrollSection
-                        .frame(maxHeight: .infinity)
+                    if let visit {
+                        mapSection(visit: visit)
+                    }
+
+                    candidatesSection
                 }
-                .background(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .fill(Color(.systemGray5))
-                )
-                .padding(.horizontal, 8)
+                .padding(.horizontal)
 
-                // 下部ボタン（固定）
-                bottomButtons
+                Spacer(minLength: 0)
+
+                ctaButton
             }
+            .frame(maxHeight: .infinity)
+
+            closeButton
         }
         .background(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
                 .fill(.regularMaterial)
         )
+        .presentationDetents([.height(sheetHeight)])
         .presentationDragIndicator(.visible)
+        .animation(.easeInOut(duration: 0.25), value: candidateRowCount)
         .task {
             await loadVisitAndSearchPOI()
         }
     }
 
-    // MARK: - Header
+    // MARK: - Close Button
 
-    private var header: some View {
-        VStack(spacing: 12) {
-            // ココキタ完了ヘッダー
-            HStack(spacing: 10) {
-                Image(logoImageName)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 42, height: 42)
-                Text(L.Location.kokokitaCompleted)
-                    .font(.system(size: 24, weight: .semibold, design: .rounded))
-                    .tracking(1.2)
-                    .foregroundColor(.accentColor)
-                Image(systemName: "checkmark.seal.fill")
-                    .font(.system(size: 20, weight: .semibold))
-                    .foregroundColor(.blue)
-            }
-
-            // 現在地を記録しました + 記録を見るリンク
-            VStack(spacing: 4) {
-                Text(L.Confirmation.recordedLocation)
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-
-                Button {
-                    onViewDetail(visitId)
-                } label: {
-                    Text(L.Confirmation.viewDetail)
-                        .font(.caption)
-                        .foregroundStyle(Color.accentColor)
-                }
-                .buttonStyle(.plain)
-            }
+    private var closeButton: some View {
+        Button {
+            dismiss()
+        } label: {
+            Image(systemName: "xmark")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(.secondary)
+                .frame(width: 30, height: 30)
+                .background(Color(.systemGray6), in: Circle())
         }
+        .buttonStyle(.plain)
+        .padding(.top, 16)
+        .padding(.trailing, 16)
     }
 
     // MARK: - Basic Info
@@ -143,331 +130,247 @@ struct PostKokokitaConfirmationSheet: View {
 
     // MARK: - Map
 
-    private func mapSection(visit: VisitAggregate, maxHeight: CGFloat) -> some View {
+    private func mapSection(visit: VisitAggregate) -> some View {
         MapPreview(
             lat: visit.visit.latitude,
             lon: visit.visit.longitude,
-            showCoordinateOverlay: true,
-            decimals: 5
+            showCoordinateOverlay: false,
+            cornerRadius: 20,
+            pulsing: true,
+            openMapButtonStyle: .icon
         )
-        .frame(height: min(maxHeight, 200))
-        .cornerRadius(12)
+        .frame(height: 150)
     }
 
-    // MARK: - Kokokamo Section
+    // MARK: - Candidates（以前の記録 / 周辺の施設を行で分ける）
 
     @ViewBuilder
-    private var kokokamoScrollSection: some View {
-        switch poiState {
-        case .idle:
-            EmptyView()
-
-        case .loading:
-            loadingView
-
-        case .success(let pois):
-            if pois.isEmpty {
-                emptyPOIView
-            } else {
-                ScrollView {
-                    LazyVStack(spacing: 0, pinnedViews: .sectionHeaders) {
-                        poiListView(pois: pois)
-                    }
-                }
+    private var candidatesSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            if !nearbyVisits.isEmpty {
+                candidateRow(
+                    label: L.Confirmation.pastVisitsLabel,
+                    items: nearbyVisits.map(CandidateItem.pastVisit)
+                )
             }
 
-        case .noInternet:
-            noInternetView
+            switch poiState {
+            case .success(let pois) where !pois.isEmpty:
+                nearbyPlacesRow(pois: pois)
+            case .loading:
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(L.Confirmation.nearbyPlacesLabel)
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(.secondary)
+                        .padding(.leading, 2)
 
-        case .error(let message):
-            errorView(message: message)
-        }
-    }
-
-    private var loadingView: some View {
-        VStack(spacing: 12) {
-            ProgressView()
-            Text(L.Confirmation.loadingPOI)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-        }
-        .frame(maxWidth: .infinity)
-        .padding()
-    }
-
-    private var emptyPOIView: some View {
-        Text(L.Confirmation.noPOIFound)
-            .font(.caption)
-            .foregroundStyle(.secondary)
-            .frame(maxWidth: .infinity)
-            .padding()
-    }
-
-    private var noInternetView: some View {
-        VStack(spacing: 8) {
-            Image(systemName: "wifi.slash")
-                .font(.title2)
-                .foregroundStyle(.secondary)
-            Text(L.Confirmation.noInternet)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-        }
-        .frame(maxWidth: .infinity)
-        .padding()
-    }
-
-    private func errorView(message: String) -> some View {
-        VStack(spacing: 8) {
-            Image(systemName: "exclamationmark.triangle")
-                .font(.title2)
-                .foregroundStyle(.orange)
-            Text(message)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-        }
-        .frame(maxWidth: .infinity)
-        .padding()
-    }
-
-    @ViewBuilder
-    private func poiListView(pois: [PlacePOI]) -> some View {
-        // 近隣の過去記録セクション
-        if !nearbyVisits.isEmpty {
-            Section {
-                ForEach(nearbyVisits, id: \.visit.id) { pastVisit in
-                    Button {
-                        applyPastVisitAndOpenEditor(pastVisit)
-                    } label: {
-                        nearbyVisitRow(pastVisit)
-                    }
-                    .buttonStyle(.plain)
-                    .padding(.horizontal)
-                }
-                .padding(.vertical, 8)
-            } header: {
-                stickyHeader(L.Confirmation.recentVisitsHeader)
-            }
-        }
-
-        // POIリストセクション
-        Section {
-            ForEach(pois) { poi in
-                Button {
-                    applyPOIAndOpenEditor(poi)
-                } label: {
-                    HStack(alignment: .top, spacing: 12) {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(poi.name)
-                                .font(.subheadline.bold())
-                                .foregroundStyle(.primary)
-
-                            if let poiCategory = poi.poiCategory {
-                                Text(poiCategory.localizedName)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
-
-                            if let addr = poi.address, !addr.isEmpty {
-                                Text(addr)
-                                    .font(.caption2)
-                                    .foregroundStyle(.secondary)
-                                    .lineLimit(2)
-                            }
-                        }
-                        Spacer()
-                        Image(systemName: "chevron.right")
+                    HStack(spacing: 8) {
+                        ProgressView()
+                        Text(L.Confirmation.loadingPOI)
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
-                    .padding()
-                    .background(Color(.systemGray6))
-                    .cornerRadius(10)
                 }
-                .buttonStyle(.plain)
-                .padding(.horizontal)
+            default:
+                EmptyView()
             }
-            .padding(.vertical, 8)
-        } header: {
-            stickyHeader(L.Confirmation.nearbyPlacesHeader)
         }
     }
 
-    // MARK: - Sticky Header
+    private func candidateRow(label: String, items: [CandidateItem]) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(label)
+                .font(.caption.weight(.bold))
+                .foregroundStyle(.secondary)
+                .padding(.leading, 2)
 
-    private func stickyHeader(_ text: String) -> some View {
-        Text(text)
-            .font(.caption.bold())
-            .foregroundStyle(.secondary)
-            .textCase(.uppercase)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal)
-            .padding(.vertical, 8)
-            .background(Color(.systemGray5))
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    ForEach(items) { item in
+                        candidateChip(item)
+                    }
+                }
+            }
+        }
     }
 
-    // MARK: - Nearby Visit Row
+    // 周辺の施設のみ、ココカモと同じ3カテゴリでの絞り込みをラベル行に添える
+    private func nearbyPlacesRow(pois: [PlacePOI]) -> some View {
+        let filtered = filteredPOIs(pois)
+        return VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 8) {
+                Text(L.Confirmation.nearbyPlacesLabel)
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(.secondary)
+                    .padding(.leading, 2)
+                Spacer(minLength: 0)
+                poiCategoryFilterBar
+            }
 
-    private func nearbyVisitRow(_ pastVisit: VisitAggregate) -> some View {
-        HStack(alignment: .top, spacing: 12) {
-            VStack(alignment: .leading, spacing: 4) {
-                // タイトルまたは施設名
-                Text(displayName(for: pastVisit))
-                    .font(.subheadline.bold())
-                    .foregroundStyle(.primary)
-
-                // 日付
-                Text(pastVisit.visit.timestampUTC.kokokitaVisitString)
+            if filtered.isEmpty {
+                Text(L.Confirmation.noPOIFound)
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                    .padding(.vertical, 9)
+            } else {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(filtered.map(CandidateItem.poi)) { item in
+                            candidateChip(item)
+                        }
+                    }
+                }
+            }
+        }
+    }
 
-                // 住所
-                if let addr = pastVisit.details.resolvedAddress, !addr.isEmpty {
-                    Text(addr)
+    private var poiCategoryFilterBar: some View {
+        HStack(spacing: 6) {
+            ForEach(KKCategory.allCases) { category in
+                let isOn = selectedPOICategory == category
+                Button {
+                    withAnimation(.easeOut(duration: 0.15)) {
+                        selectedPOICategory = isOn ? nil : category
+                    }
+                } label: {
+                    Image(systemName: category.symbolBase + (isOn ? ".fill" : ""))
+                        .font(.caption2)
+                        .foregroundStyle(isOn ? Color.white : Color.secondary)
+                        .frame(width: 22, height: 22)
+                        .background(
+                            Circle().fill(isOn ? category.highlightColor : Color(.systemGray6))
+                        )
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(Text(category.localizedName))
+            }
+        }
+    }
+
+    private func filteredPOIs(_ pois: [PlacePOI]) -> [PlacePOI] {
+        guard let selectedPOICategory else { return pois }
+        return pois.filter { $0.kkCategory == selectedPOICategory }
+    }
+
+    private func candidateChip(_ item: CandidateItem) -> some View {
+        Button {
+            switch item {
+            case .pastVisit(let pastVisit):
+                applyPastVisitAndOpenEditor(pastVisit)
+            case .poi(let poi):
+                applyPOIAndOpenEditor(poi)
+            }
+        } label: {
+            HStack(spacing: 7) {
+                switch item {
+                case .pastVisit:
+                    // 以前の記録は一目でわかるようアクセントカラーの時計アイコンにする
+                    Image(systemName: item.iconName)
+                        .font(.subheadline)
+                        .foregroundStyle(Color.accentColor)
+                case .poi:
+                    Image(systemName: item.iconName)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                Text(item.displayName)
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+                if let date = item.date {
+                    Text(date.kokokitaShortDateString)
                         .font(.caption2)
                         .foregroundStyle(.secondary)
-                        .lineLimit(2)
+                        .lineLimit(1)
                 }
+                Image(systemName: "chevron.right")
+                    .font(.caption2.weight(.bold))
+                    .foregroundStyle(.secondary)
+                    .opacity(0.4)
             }
-            Spacer()
-            Image(systemName: "chevron.right")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+            .padding(.leading, 14)
+            .padding(.trailing, 10)
+            .padding(.vertical, 9)
+            .background(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .fill(chipBackground(for: item))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .strokeBorder(chipBorder(for: item), lineWidth: 1)
+            )
+            .shadow(color: .black.opacity(0.08), radius: 5, x: 0, y: 2)
         }
-        .padding()
-        .background(Color(.systemGray6))
-        .cornerRadius(10)
+        .buttonStyle(.plain)
     }
 
-    private func displayName(for visit: VisitAggregate) -> String {
-        if let title = visit.details.title, !title.isEmpty {
-            return title
-        } else if let facilityName = visit.details.facilityName, !facilityName.isEmpty {
-            return facilityName
-        } else {
-            return L.Home.noTitle
+    // 背景がregularMaterialのシート上でも埋もれないよう、種別ごとに濃淡を変える
+    private func chipBackground(for item: CandidateItem) -> AnyShapeStyle {
+        switch item {
+        case .pastVisit:
+            return AnyShapeStyle(Color.accentColor.opacity(0.14))
+        case .poi:
+            return AnyShapeStyle(Color(.systemBackground))
         }
     }
 
-    // MARK: - Bottom Buttons (Liquid Glass)
+    private func chipBorder(for item: CandidateItem) -> AnyShapeStyle {
+        switch item {
+        case .pastVisit:
+            return AnyShapeStyle(Color.accentColor.opacity(0.4))
+        case .poi:
+            return AnyShapeStyle(Color.primary.opacity(0.1))
+        }
+    }
 
-    private var bottomButtons: some View {
+    // MARK: - CTA（「情報を入力」単独ボタン。Liquid Glass）
+
+    private var ctaButton: some View {
         VStack(spacing: 0) {
-            Divider()
-
-            HStack(spacing: 12) {
-                // 情報を入力ボタン（Liquid Glassプライマリ）
-                Button {
-                    onEnterInfo(visitId)
-                } label: {
-                    Text(L.Confirmation.enterInfo)
-                        .font(.headline)
-                        .foregroundStyle(Color.white)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 50)
-                        .background(
-                            ZStack {
-                                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                    .fill(
-                                        LinearGradient(
-                                            colors: [
-                                                Color.accentColor.opacity(0.95),
-                                                Color.accentColor.opacity(0.75)
-                                            ],
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        )
+            Button {
+                onEnterInfo(visitId)
+            } label: {
+                Text(L.Confirmation.enterInfo)
+                    .font(.headline)
+                    .foregroundStyle(Color.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 50)
+                    .background(
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .fill(
+                                    LinearGradient(
+                                        colors: [
+                                            Color.accentColor.opacity(0.95),
+                                            Color.accentColor.opacity(0.75)
+                                        ],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
                                     )
-                                    .overlay {
-                                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                            .fill(
-                                                LinearGradient(
-                                                    colors: [
-                                                        Color.white.opacity(0.25),
-                                                        Color.clear
-                                                    ],
-                                                    startPoint: .top,
-                                                    endPoint: .bottom
-                                                )
-                                            )
-                                    }
-                                    .shadow(color: Color.accentColor.opacity(0.35), radius: 8, x: 0, y: 2)
-                                    .shadow(color: Color.accentColor.opacity(0.15), radius: 3, x: 0, y: 1)
-                            }
-                        )
-                }
-                .buttonStyle(.plain)
-
-                // 削除ボタン（Liquid Glassセカンダリ、赤色強調）
-                Button {
-                    onDelete(visitId)
-                    dismiss()
-                } label: {
-                    Text(L.Confirmation.deleteRecord)
-                        .font(.headline)
-                        .foregroundStyle(Color.red)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 50)
-                        .background(
-                            ZStack {
-                                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                    .fill(.ultraThinMaterial)
-                                    .overlay {
-                                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                            .fill(
-                                                LinearGradient(
-                                                    colors: [
-                                                        Color.white.opacity(0.12),
-                                                        Color.white.opacity(0.03)
-                                                    ],
-                                                    startPoint: .topLeading,
-                                                    endPoint: .bottomTrailing
-                                                )
-                                            )
-                                    }
-                                    .overlay {
-                                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                            .strokeBorder(
-                                                LinearGradient(
-                                                    colors: [
-                                                        Color.red.opacity(0.3),
-                                                        Color.red.opacity(0.1)
-                                                    ],
-                                                    startPoint: .topLeading,
-                                                    endPoint: .bottomTrailing
-                                                ),
-                                                lineWidth: 1
-                                            )
-                                    }
-                                    .shadow(color: Color.black.opacity(0.08), radius: 6, x: 0, y: 2)
-                            }
-                        )
-                }
-                .buttonStyle(.plain)
-            }
-            .padding()
-        }
-        .background(
-            // Liquid Glass背景
-            ZStack {
-                Rectangle()
-                    .fill(.ultraThinMaterial)
-                    .overlay {
-                        Rectangle()
-                            .fill(
-                                LinearGradient(
-                                    colors: [
-                                        Color.white.opacity(0.05),
-                                        Color.clear
-                                    ],
-                                    startPoint: .top,
-                                    endPoint: .bottom
                                 )
-                            )
-                    }
+                                .overlay {
+                                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                        .fill(
+                                            LinearGradient(
+                                                colors: [
+                                                    Color.white.opacity(0.25),
+                                                    Color.clear
+                                                ],
+                                                startPoint: .top,
+                                                endPoint: .bottom
+                                            )
+                                        )
+                                }
+                                .shadow(color: Color.accentColor.opacity(0.35), radius: 8, x: 0, y: 2)
+                                .shadow(color: Color.accentColor.opacity(0.15), radius: 3, x: 0, y: 1)
+                        }
+                    )
             }
-        )
+            .buttonStyle(.plain)
+            .padding(.horizontal)
+            .padding(.top, 8)
+            .padding(.bottom, 14)
+        }
     }
 
     // MARK: - Data Loading & POI Search
@@ -579,9 +482,84 @@ struct PostKokokitaConfirmationSheet: View {
     }
 }
 
+// MARK: - Candidate Item（近くの過去記録 / 周辺施設を統合した候補チップのモデル）
+
+private enum CandidateItem: Identifiable {
+    case pastVisit(VisitAggregate)
+    case poi(PlacePOI)
+
+    var id: String {
+        switch self {
+        case .pastVisit(let visit): return "visit-\(visit.visit.id)"
+        case .poi(let poi): return "poi-\(poi.id)"
+        }
+    }
+
+    var displayName: String {
+        switch self {
+        case .pastVisit(let visit):
+            if let title = visit.details.title, !title.isEmpty {
+                return title
+            } else if let facilityName = visit.details.facilityName, !facilityName.isEmpty {
+                return facilityName
+            } else {
+                return L.Home.noTitle
+            }
+        case .poi(let poi):
+            return poi.name
+        }
+    }
+
+    var iconName: String {
+        switch self {
+        case .pastVisit: return "clock.arrow.circlepath"
+        case .poi: return "building.2"
+        }
+    }
+
+    /// 以前の記録のみ、訪問日を小さく添える
+    var date: Date? {
+        switch self {
+        case .pastVisit(let visit): return visit.visit.timestampUTC
+        case .poi: return nil
+        }
+    }
+}
+
+// MARK: - Record Stamp View（記録完了の「ハンコ」演出）
+
+/// 記録完了時に一度だけ再生される、ハンコを押すような着地アニメーション付きのスタンプ
+private struct RecordStampView: View {
+    let imageName: String
+    @State private var animateIn = false
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .strokeBorder(Color.accentColor.opacity(0.55), style: StrokeStyle(lineWidth: 2.5, dash: [3, 2.5]))
+            Circle()
+                .strokeBorder(Color.accentColor.opacity(0.35), lineWidth: 1.5)
+                .padding(6)
+            Image(imageName)
+                .resizable()
+                .scaledToFit()
+                .frame(width: 36, height: 36)
+        }
+        .frame(width: 74, height: 74)
+        .scaleEffect(animateIn ? 1.0 : 2.1)
+        .rotationEffect(.degrees(animateIn ? 0 : -14))
+        .opacity(animateIn ? 1 : 0)
+        .onAppear {
+            withAnimation(.spring(response: 0.55, dampingFraction: 0.62)) {
+                animateIn = true
+            }
+        }
+    }
+}
+
 // MARK: - POI Search State
 
-private enum POISearchState {
+private enum POISearchState: Equatable {
     case idle
     case loading
     case success([PlacePOI])

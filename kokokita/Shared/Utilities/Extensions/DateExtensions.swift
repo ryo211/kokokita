@@ -47,6 +47,22 @@ enum AppDateFormatters {
         return f
     }
 
+    /// チップなど省スペース表示用の短い日付（例: 10/4 / Oct 4）
+    static var chipDate: DateFormatter {
+        let f = DateFormatter()
+        f.locale = Locale.current
+        f.calendar = Calendar(identifier: .gregorian)
+        f.timeZone = .current
+
+        // ロケールに応じて日付フォーマットを切り替え
+        if Locale.current.language.languageCode?.identifier == "ja" {
+            f.dateFormat = "M/d"
+        } else {
+            f.dateFormat = "MMM d"
+        }
+        return f
+    }
+
     /// フィルター表示用の短い日付（例: 2025/10/04 / Oct 4, 2025）
     static var filterDate: DateFormatter {
         let f = DateFormatter()
@@ -70,5 +86,10 @@ extension Date {
     /// ココキタの統一日時表示
     var kokokitaVisitString: String {
         AppDateFormatters.visitDateTime.string(from: self)
+    }
+
+    /// チップなど省スペース表示用の短い日付
+    var kokokitaShortDateString: String {
+        AppDateFormatters.chipDate.string(from: self)
     }
 }

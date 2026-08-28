@@ -16,6 +16,8 @@ final class CourseListStore {
     var errorMessage: String?
     /// 自動同期中フラグ（ツールバーのインジケーター表示用）
     var isSyncing: Bool = false
+    /// 直近の自動同期が失敗したか（主にネットワーク不通時）。空状態の表示分岐に使う
+    var lastSyncFailed: Bool = false
     /// 新着コースの視認状態（キーなし = 新着ではない）
     /// 永続化: UserDefaults "newlyAddedCourses" に [UUID文字列: Double] で保存
     /// Double < 0 → unseen、それ以外 → 視認日時（TimeIntervalSinceReferenceDate）
@@ -23,7 +25,9 @@ final class CourseListStore {
 
     private let repo: CourseRepository
     private let autoSyncService: CourseAutoSyncService
-    private var observers: [NSObjectProtocol] = []
+    // NotificationCenterのトークン削除はスレッドセーフなAPIであり、deinit（nonisolated）から
+    // MainActor隔離プロパティに直接アクセスするための回避
+    nonisolated(unsafe) private var observers: [NSObjectProtocol] = []
 
     private static let userDefaultsKey = "newlyAddedCourses"
     private static let newCourseExpirationSeconds: TimeInterval = 86400 // 24時間
@@ -73,6 +77,10 @@ final class CourseListStore {
         }
 
         observers = [courseObserver, downloadObserver, enabledObserver]
+    }
+
+    deinit {
+        observers.forEach(NotificationCenter.default.removeObserver)
     }
 
     // MARK: - 新着判定
@@ -174,11 +182,12 @@ final class CourseListStore {
         }
     }
 
-    /// 自動同期してからコース一覧を読み込む（画面初期表示時に呼ぶ）
+    /// 自動同期してからコース一覧を読み込む（画面初期表示時・再試行時に呼ぶ）
     func syncAndLoad() async {
         isSyncing = true
-        await autoSyncService.sync()
+        let succeeded = await autoSyncService.sync()
         isSyncing = false
+        lastSyncFailed = !succeeded
         await load()
     }
 

@@ -420,17 +420,13 @@ enum L {
     // MARK: - Confirmation Sheet
     enum Confirmation {
         static let enterInfo = localized("confirmation.enterInfo")
-        static let viewDetail = localized("confirmation.viewDetail")
-        static let deleteRecord = localized("confirmation.deleteRecord")
         static let recordedLocation = localized("confirmation.recordedLocation")
         static let loadingPOI = localized("confirmation.loadingPOI")
-        static let noInternet = localized("confirmation.noInternet")
         static let noPOIFound = localized("confirmation.noPOIFound")
-        static let selectFacility = localized("confirmation.selectFacility")
+        static let pastVisitsLabel = localized("confirmation.pastVisitsLabel")
+        static let nearbyPlacesLabel = localized("confirmation.nearbyPlacesLabel")
         static let deleteConfirmTitle = localized("confirmation.deleteConfirmTitle")
         static let deleteConfirmMessage = localized("confirmation.deleteConfirmMessage")
-        static let recentVisitsHeader = localized("confirmation.recentVisitsHeader")
-        static let nearbyPlacesHeader = localized("confirmation.nearbyPlacesHeader")
     }
 
     // MARK: - New Home Screen
@@ -492,7 +488,10 @@ enum L {
         static let favoriteViewAll = localized("course.favoriteViewAll")
         static let favoriteEmptyDescription = localized("course.favoriteEmptyDescription")
         static let achieved = localized("course.achieved")
-        static let addHint = localized("course.addHint")
+        static let syncingMessage = localized("course.syncingMessage")
+        static let syncFailedTitle = localized("course.syncFailedTitle")
+        static let syncFailedDescription = localized("course.syncFailedDescription")
+        static let searchPlaceholder = localized("course.searchPlaceholder")
 
         static let notVisited = localized("course.notVisited")
         static let noAddress = localized("course.noAddress")
@@ -505,22 +504,6 @@ enum L {
         static let sortDistance = localized("course.sort.distance")
         static let sortUpdatedAt = localized("course.sort.updatedAt")
         static let sortSpotCount = localized("course.sort.spotCount")
-    }
-
-    // MARK: - Course Store（コースダウンロード）
-    enum CourseStore {
-        static let title = localized("courseStore.title")
-        static let emptyTitle = localized("courseStore.emptyTitle")
-        static let emptyDescription = localized("courseStore.emptyDescription")
-        static let downloadButton = localized("courseStore.downloadButton")
-        static let downloadedBadge = localized("courseStore.downloadedBadge")
-        static let updateButton = localized("courseStore.updateButton")
-        static func spotCount(_ count: Int) -> String { String(format: localized("courseStore.spotCount"), count) }
-        static let filterNew = localized("courseStore.filter.new")
-        static let filterAvailable = localized("courseStore.filter.available")
-        static let filterInstalled = localized("courseStore.filter.installed")
-        static let filterAll = localized("courseStore.filter.all")
-        static let searchPlaceholder = localized("courseStore.searchPlaceholder")
     }
 
     // MARK: - Manual Entry (後付け記録)
@@ -581,18 +564,35 @@ enum L {
         static let manualDescription = localized("recordBadge.manualDescription")
     }
 
-    // MARK: - Mode Selection
+    // MARK: - Mode Selection（SettingsSheetのモード切替行でのみ使用）
     enum ModeSelection {
-        static let title = localized("modeSelection.title")
-        static let subtitle = localized("modeSelection.subtitle")
-        static let pilgrimageTitle = localized("modeSelection.pilgrimageTitle")
-        static let pilgrimageDescription = localized("modeSelection.pilgrimageDescription")
-        static let recordTitle = localized("modeSelection.recordTitle")
-        static let recordDescription = localized("modeSelection.recordDescription")
-        static let canChangeInSettings = localized("modeSelection.canChangeInSettings")
         static let appModeSection = localized("modeSelection.appModeSection")
         static let switchToRecord = localized("modeSelection.switchToRecord")
         static let switchToPilgrimage = localized("modeSelection.switchToPilgrimage")
+    }
+
+    // MARK: - Welcome（初回起動時のウェルカム画面）
+    enum Welcome {
+        static let title = localized("welcome.title")
+        static let setupSectionTitle = localized("welcome.setupSectionTitle")
+        static let locationPermissionTitle = localized("welcome.locationPermissionTitle")
+        static let locationPermissionDescription = localized("welcome.locationPermissionDescription")
+        static let autoRecordPermissionTitle = localized("welcome.autoRecordPermissionTitle")
+        static let autoRecordPermissionDescription = localized("welcome.autoRecordPermissionDescription")
+        static let syncProgressLabel = localized("welcome.syncProgressLabel")
+        static let syncProgressCompleteLabel = localized("welcome.syncProgressCompleteLabel")
+        static let permissionDialogNote = localized("welcome.permissionDialogNote")
+        static let startButton = localized("welcome.startButton")
+    }
+
+    // MARK: - Coachmark（初回チュートリアルのガイド付きツアー）
+    enum Coachmark {
+        static let recordButtonTitle = localized("coachmark.recordButton.title")
+        static let recordButtonMessage = localized("coachmark.recordButton.message")
+        static let modeSwitchTitle = localized("coachmark.modeSwitch.title")
+        static let modeSwitchMessage = localized("coachmark.modeSwitch.message")
+        static let autoRecordToggleTitle = localized("coachmark.autoRecordToggle.title")
+        static let autoRecordToggleMessage = localized("coachmark.autoRecordToggle.message")
     }
 
     // MARK: - Pilgrimage Home
@@ -719,6 +719,7 @@ enum L {
         static let retroactiveTitle = localized("checkIn.retroactiveTitle")
         static let retroactiveSubtitle = localized("checkIn.retroactiveSubtitle")
         static let retroactiveDateSuffix = localized("checkIn.retroactiveDateSuffix")
+        static let shareAchievement = localized("checkIn.shareAchievement")
     }
 
     // MARK: - AutoRecord（自動記録）
@@ -741,6 +742,8 @@ enum L {
         static let settingsToggle = localized("autoRecord.settings.toggle")
         static let settingsToggleDescription = localized("autoRecord.settings.toggleDescription")
         static let reviewCandidates = localized("autoRecord.settings.reviewCandidates")
+        static let homeToggleOnLabel = localized("autoRecord.home.toggleOnLabel")
+        static let homeToggleOffLabel = localized("autoRecord.home.toggleOffLabel")
         static let permissionTitle = localized("autoRecord.permission.title")
         static let permissionMessage = localized("autoRecord.permission.message")
         static let permissionOpenSettings = localized("autoRecord.permission.openSettings")
@@ -758,6 +761,11 @@ enum L {
         static let excludedLocationsEmpty = localized("autoRecord.excludedLocations.empty")
         static let excludedLocationsFooter = localized("autoRecord.excludedLocations.footer")
         static func excludedLocationsRadius(_ meters: Int) -> String { String(format: localized("autoRecord.excludedLocations.radius"), meters) }
+        // 初回ON時の説明シート（AutoRecordIntroSheet）
+        static let introTitle = localized("autoRecord.intro.title")
+        static let introMechanismDescription = localized("autoRecord.intro.mechanismDescription")
+        static let introPermissionNotice = localized("autoRecord.intro.permissionNotice")
+        static let introDismissAction = localized("autoRecord.intro.dismissAction")
     }
 
     // MARK: - Trash（ゴミ箱）
@@ -856,6 +864,13 @@ enum L {
         static let layoutMap = localized("share.layoutMap")
         static let showSubThumbnail = localized("share.showSubThumbnail")
         static let selectPhoto = localized("share.selectPhoto")
+        static let stampSettingsLabel = localized("share.stampSettingsLabel")
+        static let showStamp = localized("share.showStamp")
+        static let achievedLabel = localized("share.achievedLabel")
+        static let dateStampStyleLabel = localized("share.dateStampStyleLabel")
+        static let dateStampNone = localized("share.dateStampNone")
+        static let dateStampTab = localized("share.dateStampTab")
+        static let dateStampPlate = localized("share.dateStampPlate")
         static func spotShareText(_ course: String, _ spot: String) -> String {
             String(format: localized("share.spotShareText"), course, spot)
         }
@@ -894,9 +909,10 @@ enum L {
         static let restoreFailed        = localized("paywall.restoreFailed")
         static let purchaseError        = localized("paywall.purchaseError")
         static let alreadyPremium       = localized("paywall.alreadyPremium")
-        static let debugOverrideOn      = localized("paywall.debugOverrideOn")
-        static let debugOverrideOff     = localized("paywall.debugOverrideOff")
-        static let debugOverrideNone    = localized("paywall.debugOverrideNone")
+        static let debugOverrideOn           = localized("paywall.debugOverrideOn")
+        static let debugOverrideOff          = localized("paywall.debugOverrideOff")
+        static let debugOverrideNone         = localized("paywall.debugOverrideNone")
+        static let subscriptionDisclosure    = localized("paywall.subscriptionDisclosure")
     }
 
     // MARK: - Helper

@@ -18,6 +18,9 @@ final class CourseRecognitionService {
         let distanceMeters: Double
         /// 達成日時
         let achievedAt: Date
+        /// 実際にチェックインしたGPS座標（コース定義上のspot.latitude/longitudeとは異なる場合がある）
+        let visitLatitude: Double
+        let visitLongitude: Double
     }
 
     // MARK: - 判定
@@ -68,7 +71,9 @@ final class CourseRecognitionService {
                     course: course,
                     spot: spot,
                     distanceMeters: dist,
-                    achievedAt: now
+                    achievedAt: now,
+                    visitLatitude: latitude,
+                    visitLongitude: longitude
                 ))
             }
         }

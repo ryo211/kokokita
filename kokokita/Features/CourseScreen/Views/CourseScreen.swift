@@ -29,13 +29,11 @@ enum CourseSortOrder: CaseIterable, Identifiable {
 }
 
 // 記録モードのコースタブ（CourseListViewのラッパー）
-// ストアを所有し、navigationDestination をルートに配置
+// ストアは唯一の呼び出し元（PilgrimageRootTabView）から常に注入される。
+// NotificationCenter登録やUserDefaults読み込みを伴うCourseListStoreを
+// 内部で無駄に二重生成しないよう、フォールバックは持たず必須パラメータにしている
 struct CourseScreen: View {
-    /// 外部から注入されるストア（nilの場合は内部で生成）
-    var externalStore: CourseListStore? = nil
-    @State private var ownStore = CourseListStore()
-
-    private var store: CourseListStore { externalStore ?? ownStore }
+    let store: CourseListStore
 
     var body: some View {
         NavigationStack {

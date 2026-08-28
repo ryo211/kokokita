@@ -298,17 +298,13 @@
 
 // MARK: - Confirmation Sheet
 "confirmation.enterInfo" = "Enter Info";
-"confirmation.viewDetail" = "View Record";
-"confirmation.deleteRecord" = "Cancel Record";
 "confirmation.recordedLocation" = "Location Recorded";
 "confirmation.loadingPOI" = "Searching nearby places...";
-"confirmation.noInternet" = "Cannot fetch nearby places without an internet connection.";
 "confirmation.noPOIFound" = "No places found nearby";
-"confirmation.selectFacility" = "Choose from Candidate Spots";
+"confirmation.pastVisitsLabel" = "Past Records";
+"confirmation.nearbyPlacesLabel" = "Nearby Places";
 "confirmation.deleteConfirmTitle" = "Move to Trash";
 "confirmation.deleteConfirmMessage" = "Deleted records are saved in the Trash for 30 days.";
-"confirmation.recentVisitsHeader" = "Past Records Nearby";
-"confirmation.nearbyPlacesHeader" = "Nearby Places";
 
 // MARK: - New Home Screen
 "newhome.title" = "Kokokita";
@@ -335,20 +331,12 @@
 "course.comingSoon" = "Coming Soon";
 "course.description" = "Course feature will be available soon";
 "course.listTitle" = "Course List";
-"courseStore.title" = "Add Courses";
-"courseStore.emptyTitle" = "No Courses Available";
-"courseStore.emptyDescription" = "No courses are available for download at this time";
-"courseStore.downloadButton" = "+ Add";
-"courseStore.downloadedBadge" = "Added";
-"courseStore.updateButton" = "Update";
-"courseStore.spotCount" = "%d spots";
-"courseStore.filter.new" = "New";
-"courseStore.filter.available" = "Available";
-"courseStore.filter.installed" = "Installed";
-"courseStore.filter.all" = "All";
-"courseStore.searchPlaceholder" = "Search courses";
 "course.emptyTitle" = "No Courses";
-"course.emptyDescription" = "Tap + in the top right to add a course";
+"course.emptyDescription" = "Please try again later";
+"course.syncingMessage" = "Loading courses…";
+"course.syncFailedTitle" = "Couldn't Load Courses";
+"course.syncFailedDescription" = "Please check your internet connection and try again";
+"course.searchPlaceholder" = "Search courses";
 "course.enable" = "Enable";
 "course.disable" = "Disable";
 "course.enableToggle" = "Enable this course";
@@ -374,7 +362,6 @@
 "course.favoriteViewAll" = "See All";
 "course.favoriteEmptyDescription" = "Add courses to favorites and they will appear here";
 "course.achieved" = "done";
-"course.addHint" = "Add a course here";
 
 "course.notVisited" = "Not Visited";
 "course.noAddress" = "No Address";
@@ -388,17 +375,30 @@
 "course.sort.updatedAt" = "Updated Date";
 "course.sort.spotCount" = "Spot Count";
 
-// MARK: - Mode Selection
-"modeSelection.title" = "Choose Your Mode";
-"modeSelection.subtitle" = "You can change this later in Settings";
-"modeSelection.pilgrimageTitle" = "Pilgrimage Mode";
-"modeSelection.pilgrimageDescription" = "Check in at sacred places and World Heritage sites along courses";
-"modeSelection.recordTitle" = "Record Mode";
-"modeSelection.recordDescription" = "Freely record the places you visit";
-"modeSelection.canChangeInSettings" = "You can change this later in Settings";
+// MARK: - Mode Selection (used only in SettingsSheet's mode switch row)
 "modeSelection.appModeSection" = "App Mode";
 "modeSelection.switchToRecord" = "Switch to Record Mode";
 "modeSelection.switchToPilgrimage" = "Switch to Pilgrimage Mode";
+
+// MARK: - Welcome (first-launch welcome screen)
+"welcome.title" = "Welcome";
+"welcome.setupSectionTitle" = "The following settings are required to use this app.";
+"welcome.locationPermissionTitle" = "\"While Using the App\" Location Access";
+"welcome.locationPermissionDescription" = "Used for recording your location and finding nearby spots";
+"welcome.autoRecordPermissionTitle" = "\"Always\" Location Access (optional)";
+"welcome.autoRecordPermissionDescription" = "Needed only if you use Auto Record. No setup required now — you can turn it on later in Settings";
+"welcome.permissionDialogNote" = "Tapping \"Get Started\" will show the permission prompt.";
+"welcome.syncProgressLabel" = "Preparing the app…";
+"welcome.syncProgressCompleteLabel" = "The app is ready";
+"welcome.startButton" = "Get Started";
+
+// MARK: - Coachmark (first-time guided tour)
+"coachmark.recordButton.title" = "Try recording your location";
+"coachmark.recordButton.message" = "Tap this button to record the place you're at right now";
+"coachmark.modeSwitch.title" = "Check your record";
+"coachmark.modeSwitch.message" = "Switch to Record Mode to see the record you just made";
+"coachmark.autoRecordToggle.title" = "Try Auto Record";
+"coachmark.autoRecordToggle.message" = "Automatically collects places you visit as record candidates. Tap to turn it on";
 
 // MARK: - Pilgrimage Home
 "pilgrimageHome.navTitle" = "Pilgrimage";
@@ -437,6 +437,7 @@
 "checkIn.retroactiveTitle" = "Check-in Recognized from Past Records!";
 "checkIn.retroactiveSubtitle" = "Your past visits matched spots in this course";
 "checkIn.retroactiveDateSuffix" = " (from past record)";
+"checkIn.shareAchievement" = "Share Your Achievement";
 
 // MARK: - Manual Entry
 "manualEntry.title" = "Add Record";
@@ -649,6 +650,8 @@
 "autoRecord.dismissAll.confirmMessage" = "All %d candidates will be deleted and cannot be undone.";
 "autoRecord.home.pendingBanner" = "%d auto-recorded visit(s) pending";
 "autoRecord.settings.reviewCandidates" = "Review Candidates";
+"autoRecord.home.toggleOnLabel" = "Auto Record: ON";
+"autoRecord.home.toggleOffLabel" = "Turn On Auto Record";
 "autoRecord.exclude" = "Don't Detect This Place";
 "autoRecord.exclude.title" = "Exclude This Place";
 "autoRecord.exclude.message" = "Auto-recording will be disabled within approximately %dm of this location. Adding a name makes it easier to manage.";
@@ -658,6 +661,10 @@
 "autoRecord.excludedLocations.empty" = "No excluded places.\nTap \"Don't Detect This Place\" on a candidate to add one.";
 "autoRecord.excludedLocations.footer" = "Swipe left to remove an exclusion";
 "autoRecord.excludedLocations.radius" = "%dm radius";
+"autoRecord.intro.title" = "About Auto Record";
+"autoRecord.intro.mechanismDescription" = "The app automatically detects places you visit and saves them as record candidates. You can review them later and choose which ones to keep as records.";
+"autoRecord.intro.permissionNotice" = "This feature requires \"Always\" location access";
+"autoRecord.intro.dismissAction" = "Try it out";
 
 // MARK: - Trash
 "trash.title" = "Trash";
@@ -755,6 +762,7 @@
 "paywall.debugOverrideOn" = "Debug: Premium forced ON";
 "paywall.debugOverrideOff" = "Debug: Premium forced OFF";
 "paywall.debugOverrideNone" = "Debug: Using real purchase state";
+"paywall.subscriptionDisclosure" = "• Payment will be charged to your Apple ID account.\n• Subscription automatically renews unless cancelled at least 24 hours before the end of the current period.\n• Renewal price is charged within 24 hours before the end of the current period.\n• Manage or cancel in Settings → Apple ID → Subscriptions after purchase.";
 
 // MARK: - CourseDetail menu (added)
 "courseDetail.menu.share" = "Share";
@@ -776,3 +784,10 @@
 "share.layoutMap" = "Map First";
 "share.showSubThumbnail" = "Show Thumbnail";
 "share.selectPhoto" = "Select Photo";
+"share.stampSettingsLabel" = "Achievement Stamp";
+"share.showStamp" = "Show Stamp";
+"share.dateStampStyleLabel" = "Date Stamp";
+"share.dateStampNone" = "None";
+"share.dateStampTab" = "Tab";
+"share.dateStampPlate" = "Plate";
+"share.achievedLabel" = "Achieved";

@@ -30,6 +30,13 @@ final class DefaultLocationService: NSObject, CLLocationManagerDelegate {
         manager.delegate = self
     }
 
+    /// 位置情報取得は行わず、WhenInUse許可のリクエストのみを発火する（結果を待たない）
+    /// ウェルカム画面の「はじめる」タップ時など、許可ダイアログを出したいだけの場面で使う
+    func requestWhenInUsePermissionOnly() {
+        guard manager.authorizationStatus == .notDetermined else { return }
+        manager.requestWhenInUseAuthorization()
+    }
+
     func requestOneShotLocation(
         accuracy: CLLocationAccuracy? = nil,
         timeout: TimeInterval = AppConfig.locationTimeout
@@ -135,6 +142,12 @@ final class DefaultLocationService: NSObject, CLLocationManagerDelegate {
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         let status = manager.authorizationStatus
         Logger.info("Location authorization changed to: \(status.rawValue)")
+
+        // requestWhenInUseAuthorization() 直後、ユーザーがダイアログに回答するより前に
+        // status=notDetermined のままこのコールバックが呼ばれることがある（中間コールバック）。
+        // ここで continuation を解決してしまうと「拒否された」と誤判定し、
+        // 本当のユーザー回答（2回目以降のコールバック）を取りこぼしてしまうため無視する
+        guard status != .notDetermined else { return }
 
         // 権限ダイアログの結果を返す
         if let authCont = authCont {
