@@ -1,11 +1,5 @@
 import SwiftUI
 
-// お気に入り一覧へのナビゲーション識別子
-struct FavoritesNavTarget: Hashable {}
-
-// すべてのコース一覧へのナビゲーション識別子
-struct AllCoursesNavTarget: Hashable {}
-
 // コース一覧のソート順
 enum CourseSortOrder: CaseIterable, Identifiable {
     case updatedAt   // 更新日（デフォルト）
@@ -37,7 +31,7 @@ enum CourseListDisplayMode: String {
     static let storageKey = "courseList.displayModeRaw"
 }
 
-// 記録モードのコースタブ（CourseListViewのラッパー）
+// 記録モードのコースタブ（AllCourseListViewのラッパー）
 // ストアは唯一の呼び出し元（PilgrimageRootTabView）から常に注入される。
 // NotificationCenter登録やUserDefaults読み込みを伴うCourseListStoreを
 // 内部で無駄に二重生成しないよう、フォールバックは持たず必須パラメータにしている
@@ -46,19 +40,7 @@ struct CourseScreen: View {
 
     var body: some View {
         NavigationStack {
-            CourseListView(store: store)
-                // カテゴリ選択 → フィルター済みコース一覧（ネイティブ push でスワイプバック対応）
-                .navigationDestination(for: CourseCategory.self) { category in
-                    CategoryCourseListView(category: category, store: store)
-                }
-                // すべてのコース一覧
-                .navigationDestination(for: AllCoursesNavTarget.self) { _ in
-                    AllCourseListView(store: store)
-                }
-                // お気に入り一覧
-                .navigationDestination(for: FavoritesNavTarget.self) { _ in
-                    FavoriteCourseListView(store: store)
-                }
+            AllCourseListView(store: store)
                 // コース詳細
                 .navigationDestination(for: UUID.self) { courseId in
                     if let course = store.courses.first(where: { $0.id == courseId }) {
@@ -82,9 +64,9 @@ private enum AllCourseFilter: Hashable {
     case category(CourseCategory)
 }
 
-// MARK: - すべてのコース一覧
+// MARK: - すべてのコース一覧（コースタブのトップ画面）
 
-private struct AllCourseListView: View {
+struct AllCourseListView: View {
     @Bindable var store: CourseListStore
     @Environment(\.courseFavoriteStore) private var favoriteStore
     @State private var searchText: String = ""
@@ -92,6 +74,13 @@ private struct AllCourseListView: View {
     @State private var sortOrder: CourseSortOrder = .updatedAt
     @AppStorage(CourseListDisplayMode.storageKey) private var displayModeRaw = CourseListDisplayMode.list.rawValue
     @State private var selectedFilter: AllCourseFilter = .all
+    @State private var showCreateEditor = false
+
+    // private な@Stateプロパティを含むため自動合成されるメンバーワイズイニシャライザが
+    // privateになってしまう。storeだけを受け取る公開イニシャライザを明示的に用意する
+    init(store: CourseListStore) {
+        self.store = store
+    }
 
     private var displayMode: CourseListDisplayMode {
         get { CourseListDisplayMode(rawValue: displayModeRaw) ?? .list }
@@ -144,10 +133,10 @@ private struct AllCourseListView: View {
         .toolbar {
             ToolbarItem(placement: .principal) {
                 HStack(spacing: 6) {
-                    Image(systemName: "square.grid.2x2")
+                    Image(systemName: "map")
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(.indigo)
-                    Text(L.Course.categoryAll)
+                    Text(L.Course.listTitle)
                         .font(.headline)
                 }
             }
@@ -160,6 +149,39 @@ private struct AllCourseListView: View {
             ToolbarItem(placement: .navigationBarTrailing) {
                 CourseSortMenu(sortOrder: $sortOrder)
             }
+            ToolbarItem(placement: .navigationBarTrailing) {
+                if store.isSyncing {
+                    ProgressView()
+                        .controlSize(.small)
+                }
+            }
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button {
+                    showCreateEditor = true
+                } label: {
+                    Image(systemName: "plus")
+                        .fontWeight(.semibold)
+                }
+                .accessibilityLabel(L.Course.createNewButton)
+            }
+        }
+        .navigationDestination(isPresented: $showCreateEditor) {
+            CourseEditorView(mode: .create)
+        }
+        .alert(L.Common.error, isPresented: $store.showError) {
+            Button(L.Common.ok) {}
+        } message: {
+            Text(store.errorMessage ?? "")
+        }
+        .task {
+            await store.syncAndLoad()
+        }
+        // 表示中の新着コースを視認済みにする（旧NewCoursesSectionが担っていた役割の代替）
+        .onAppear {
+            store.markAsSeen(ids: displayedCourses.filter { store.isNew($0.id) }.map { $0.id })
+        }
+        .onChange(of: displayedCourses) { _, newValue in
+            store.markAsSeen(ids: newValue.filter { store.isNew($0.id) }.map { $0.id })
         }
     }
 
@@ -177,13 +199,9 @@ private struct AllCourseListView: View {
             }
         } else if store.courses.isEmpty {
             List {
-                ContentUnavailableView(
-                    L.Course.emptyTitle,
-                    systemImage: "plus.circle",
-                    description: Text(L.Course.emptyDescription)
-                )
-                .listRowBackground(Color.clear)
-                .listRowSeparator(.hidden)
+                courseListEmptyState
+                    .listRowBackground(Color.clear)
+                    .listRowSeparator(.hidden)
             }
         } else if filteredCourses.isEmpty {
             List {
@@ -225,6 +243,37 @@ private struct AllCourseListView: View {
                     .padding(16)
                 }
             }
+        }
+    }
+
+    // コースが1件もない場合の表示。「同期中」「同期失敗（主にネットワーク不通）」
+    // 「同期は成功したが本当に0件」を区別する
+    @ViewBuilder
+    private var courseListEmptyState: some View {
+        if store.isSyncing {
+            VStack(spacing: 14) {
+                ProgressView()
+                Text(L.Course.syncingMessage)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+            .frame(maxWidth: .infinity)
+        } else if store.lastSyncFailed {
+            ContentUnavailableView {
+                Label(L.Course.syncFailedTitle, systemImage: "wifi.slash")
+            } description: {
+                Text(L.Course.syncFailedDescription)
+            } actions: {
+                Button(L.Common.retry) {
+                    Task { await store.syncAndLoad() }
+                }
+            }
+        } else {
+            ContentUnavailableView(
+                L.Course.emptyTitle,
+                systemImage: "map",
+                description: Text(L.Course.emptyDescription)
+            )
         }
     }
 }
@@ -274,121 +323,6 @@ private struct AllCourseFilterBar: View {
     }
 }
 
-// MARK: - カテゴリ別コース一覧
-
-private struct CategoryCourseListView: View {
-    let category: CourseCategory
-    @Bindable var store: CourseListStore
-    @State private var searchText: String = ""
-    @FocusState private var isSearchFocused: Bool
-    @State private var sortOrder: CourseSortOrder = .updatedAt
-    @AppStorage(CourseListDisplayMode.storageKey) private var displayModeRaw = CourseListDisplayMode.list.rawValue
-
-    private var displayMode: CourseListDisplayMode {
-        get { CourseListDisplayMode(rawValue: displayModeRaw) ?? .list }
-        nonmutating set { displayModeRaw = newValue.rawValue }
-    }
-
-    private var baseCourses: [Course] {
-        store.courses.filter { $0.categories.contains(category) }
-    }
-
-    private var displayedCourses: [Course] {
-        let filtered = searchText.isEmpty
-            ? baseCourses
-            : baseCourses.filter { $0.title.localizedCaseInsensitiveContains(searchText) }
-        return sortOrder.applied(to: filtered)
-    }
-
-    var body: some View {
-        ZStack {
-            CourseListBackground()
-            courseList
-        }
-        .scrollContentBackground(.hidden)
-        .listStyle(.plain)
-        .safeAreaInset(edge: .bottom) {
-            CourseSearchBar(searchText: $searchText, isFocused: $isSearchFocused)
-        }
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .principal) {
-                HStack(spacing: 6) {
-                    Image(systemName: category.iconName)
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.indigo)
-                    Text(category.displayName)
-                        .font(.headline)
-                }
-            }
-            ToolbarItem(placement: .navigationBarTrailing) {
-                CourseDisplayModeToggleButton(displayMode: Binding(
-                    get: { displayMode },
-                    set: { displayMode = $0 }
-                ))
-            }
-            ToolbarItem(placement: .navigationBarTrailing) {
-                CourseSortMenu(sortOrder: $sortOrder)
-            }
-        }
-    }
-
-    @ViewBuilder
-    private var courseList: some View {
-        if !searchText.isEmpty && displayedCourses.isEmpty {
-            List {
-                ContentUnavailableView(
-                    L.Course.emptyTitle,
-                    systemImage: "magnifyingglass",
-                    description: Text("「\(searchText)」に一致するコースはありません")
-                )
-                .listRowBackground(Color.clear)
-                .listRowSeparator(.hidden)
-            }
-        } else if baseCourses.isEmpty {
-            List {
-                ContentUnavailableView(
-                    L.Course.emptyTitle,
-                    systemImage: "plus.circle",
-                    description: Text(L.Course.emptyDescription)
-                )
-                .listRowBackground(Color.clear)
-                .listRowSeparator(.hidden)
-            }
-        } else {
-            switch displayMode {
-            case .list:
-                List {
-                    ForEach(displayedCourses) { course in
-                        let isNew = store.isNew(course.id)
-                        NavigationLink(value: course.id) {
-                            CourseRowView(course: course, isNew: isNew)
-                        }
-                    }
-                }
-            case .grid:
-                ScrollView {
-                    LazyVGrid(
-                        columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)],
-                        spacing: 10
-                    ) {
-                        ForEach(Array(displayedCourses.enumerated()), id: \.element.id) { index, course in
-                            let isNew = store.isNew(course.id)
-                            NavigationLink(value: course.id) {
-                                CourseGridEntranceCell(index: index) {
-                                    CourseHeroGridCard(course: course, isNew: isNew)
-                                }
-                            }
-                            .buttonStyle(.plain)
-                        }
-                    }
-                    .padding(16)
-                }
-            }
-        }
-    }
-}
-
 // MARK: - 表示形式切り替えボタン
 
 private struct CourseDisplayModeToggleButton: View {
@@ -429,86 +363,6 @@ private struct CourseGridEntranceCell<Content: View>: View {
                     appeared = true
                 }
             }
-    }
-}
-
-// MARK: - お気に入りコース一覧
-
-private struct FavoriteCourseListView: View {
-    @Bindable var store: CourseListStore
-    @Environment(\.courseFavoriteStore) private var favoriteStore
-    @State private var searchText: String = ""
-    @FocusState private var isSearchFocused: Bool
-    @State private var sortOrder: CourseSortOrder = .updatedAt
-
-    private var baseCourses: [Course] {
-        favoriteStore.orderedFavoriteIds
-            .reversed()
-            .compactMap { id in store.courses.first(where: { $0.id == id }) }
-    }
-
-    private var displayedCourses: [Course] {
-        let filtered = searchText.isEmpty
-            ? baseCourses
-            : baseCourses.filter { $0.title.localizedCaseInsensitiveContains(searchText) }
-        return sortOrder.applied(to: filtered)
-    }
-
-    var body: some View {
-        courseList
-            .listStyle(.plain)
-            .safeAreaInset(edge: .bottom) {
-                CourseSearchBar(searchText: $searchText, isFocused: $isSearchFocused)
-            }
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .principal) {
-                    HStack(spacing: 6) {
-                        Image(systemName: "heart.fill")
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(.indigo)
-                        Text(L.Course.favoriteSectionTitle)
-                            .font(.headline)
-                    }
-                }
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    CourseSortMenu(sortOrder: $sortOrder)
-                }
-            }
-    }
-
-    @ViewBuilder
-    private var courseList: some View {
-        if !searchText.isEmpty && displayedCourses.isEmpty {
-            List {
-                ContentUnavailableView(
-                    L.Course.emptyTitle,
-                    systemImage: "magnifyingglass",
-                    description: Text("「\(searchText)」に一致するコースはありません")
-                )
-                .listRowBackground(Color.clear)
-                .listRowSeparator(.hidden)
-            }
-        } else if baseCourses.isEmpty {
-            List {
-                ContentUnavailableView(
-                    L.Course.favoriteSectionTitle,
-                    systemImage: "heart",
-                    description: Text(L.Course.favoriteEmptyDescription)
-                )
-                .listRowBackground(Color.clear)
-                .listRowSeparator(.hidden)
-            }
-        } else {
-            List {
-                ForEach(displayedCourses) { course in
-                    let isNew = store.isNew(course.id)
-                    NavigationLink(value: course.id) {
-                        CourseRowView(course: course, isNew: isNew)
-                    }
-                }
-            }
-        }
     }
 }
 

@@ -341,7 +341,6 @@
 "course.searchPlaceholder" = "コースを検索";
 "course.displayMode.switchToGrid" = "グリッド表示に切り替え";
 "course.displayMode.switchToList" = "リスト表示に切り替え";
-"course.etc" = "など";
 "course.createNewButton" = "コースを作る";
 "course.filterNew" = "新着";
 "course.filterUserCreated" = "自作コース";
@@ -366,12 +365,9 @@
 "course.category.anime" = "アニメ・漫画";
 "course.category.user_created" = "自作コース";
 "course.newBadge" = "NEW";
-"course.newSectionTitle" = "新着コース";
 "course.favoriteSectionTitle" = "お気に入り";
 "course.favoriteToggleAdd" = "お気に入りに追加";
 "course.favoriteToggleRemove" = "お気に入りから削除";
-"course.favoriteViewAll" = "すべて見る";
-"course.favoriteEmptyDescription" = "コースをお気に入りに追加すると、ここに表示されます";
 "course.achieved" = "達成";
 
 "course.notVisited" = "未訪問";

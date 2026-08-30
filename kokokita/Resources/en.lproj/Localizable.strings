@@ -339,7 +339,6 @@
 "course.searchPlaceholder" = "Search courses";
 "course.displayMode.switchToGrid" = "Switch to grid view";
 "course.displayMode.switchToList" = "Switch to list view";
-"course.etc" = "and more";
 "course.createNewButton" = "Create course";
 "course.filterNew" = "New";
 "course.filterUserCreated" = "My Courses";
@@ -362,12 +361,9 @@
 "course.category.anime" = "Anime & Manga";
 "course.category.user_created" = "My Courses";
 "course.newBadge" = "NEW";
-"course.newSectionTitle" = "New Courses";
 "course.favoriteSectionTitle" = "Favorites";
 "course.favoriteToggleAdd" = "Add to Favorites";
 "course.favoriteToggleRemove" = "Remove from Favorites";
-"course.favoriteViewAll" = "See All";
-"course.favoriteEmptyDescription" = "Add courses to favorites and they will appear here";
 "course.achieved" = "done";
 
 "course.notVisited" = "Not Visited";

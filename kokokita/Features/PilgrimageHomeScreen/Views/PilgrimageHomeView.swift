@@ -181,7 +181,7 @@ struct PilgrimageHomeView: View {
             .navigationDestination(for: PilgrimageHomeRoute.self) { route in
                 switch route {
                 case .courseList:
-                    CourseListView(store: store)
+                    AllCourseListView(store: store)
                 case .courseDetail(let courseId, let spotId):
                     if let course = store.courses.first(where: { $0.id == courseId }) {
                         CourseDetailView(course: course, initialSelectedSpotId: spotId)
