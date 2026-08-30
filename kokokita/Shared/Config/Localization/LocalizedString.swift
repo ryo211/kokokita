@@ -153,20 +153,15 @@ enum L {
         static let course = localized("tab.course")
         static let modePilgrimage = localized("tab.modePilgrimage")
         static let modeRecord = localized("tab.modeRecord")
-        static let myList = localized("tab.myList")
-        static let create = localized("tab.create")
+        static let stamp = localized("tab.stamp")
         static let spotList = localized("tab.spotList")
     }
 
-    // MARK: - My List（マイリスト）
-    enum MyList {
-        static let title = localized("myList.title")
-        static let emptyTitle = localized("myList.emptyTitle")
-        static let emptyDescription = localized("myList.emptyDescription")
-        static let newCourseButton = localized("myList.newCourseButton")
-        static let deleteConfirmTitle = localized("myList.deleteConfirmTitle")
-        static let deleteConfirmMessage = localized("myList.deleteConfirmMessage")
-        static func spotsCount(_ count: Int) -> String { String(format: localized("myList.spotsCount"), count) }
+    // MARK: - Stamp（スタンプ、仮実装）
+    enum Stamp {
+        static let emptyDescription = localized("stamp.emptyDescription")
+        static let countSummarySuffix = localized("stamp.countSummarySuffix")
+        static let noVisitHistory = localized("stamp.noVisitHistory")
     }
 
     // MARK: - Course Editor（コース作成・編集）
@@ -492,6 +487,13 @@ enum L {
         static let syncFailedTitle = localized("course.syncFailedTitle")
         static let syncFailedDescription = localized("course.syncFailedDescription")
         static let searchPlaceholder = localized("course.searchPlaceholder")
+        static let displayModeSwitchToGrid = localized("course.displayMode.switchToGrid")
+        static let displayModeSwitchToList = localized("course.displayMode.switchToList")
+        static let etc = localized("course.etc")
+        static let createNewButton = localized("course.createNewButton")
+        static let filterNew = localized("course.filterNew")
+        static let filterUserCreated = localized("course.filterUserCreated")
+        static let filterEmptyDescription = localized("course.filterEmptyDescription")
 
         static let notVisited = localized("course.notVisited")
         static let noAddress = localized("course.noAddress")
@@ -842,6 +844,9 @@ enum L {
     enum CourseDetail {
         static let menuCourseInfo = localized("courseDetail.menu.courseInfo")
         static let menuShare = localized("courseDetail.menu.share")
+        static let menuEdit = localized("courseDetail.menu.edit")
+        static let deleteConfirmTitle = localized("courseDetail.deleteConfirmTitle")
+        static let deleteConfirmMessage = localized("courseDetail.deleteConfirmMessage")
         static let menuSectionMapSettings = localized("courseDetail.menu.sectionMapSettings")
         static let menuSectionPlayback = localized("courseDetail.menu.sectionPlayback")
         static let menuZoomOnFocus = localized("courseDetail.menu.zoomOnFocus")

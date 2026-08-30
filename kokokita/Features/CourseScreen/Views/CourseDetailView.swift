@@ -42,7 +42,11 @@ struct CourseDetailView: View {
     var showTitle: Bool = true
     private let showSummaryOnAppear: Bool
     @Environment(AppUIState.self) private var appUIState
+    @Environment(\.dismiss) private var dismiss
     @State private var course: Course
+    // 自作コースの編集・削除導線
+    @State private var showEditCourse = false
+    @State private var showDeleteConfirm = false
 
     @State private var selectedSpotId: UUID? = nil
     @State private var cameraPosition: MapCameraPosition
@@ -263,6 +267,17 @@ struct CourseDetailView: View {
                             Label(L.CourseDetail.menuShare, systemImage: "square.and.arrow.up")
                         }
 
+                        if course.isUserCreated {
+                            Section {
+                                Button { showEditCourse = true } label: {
+                                    Label(L.CourseDetail.menuEdit, systemImage: "pencil")
+                                }
+                                Button(role: .destructive) { showDeleteConfirm = true } label: {
+                                    Label(L.Common.delete, systemImage: "trash")
+                                }
+                            }
+                        }
+
                         Section(L.CourseDetail.menuSectionMapSettings) {
                             Button {
                                 zoomOnSpotFocus.toggle()
@@ -333,6 +348,21 @@ struct CourseDetailView: View {
         }
         .sheet(isPresented: $showCourseShare) {
             CourseSharePreviewSheet(course: course)
+        }
+        .navigationDestination(isPresented: $showEditCourse) {
+            CourseEditorView(mode: .edit(courseId: courseId))
+        }
+        .confirmationDialog(
+            L.CourseDetail.deleteConfirmTitle,
+            isPresented: $showDeleteConfirm,
+            titleVisibility: .visible
+        ) {
+            Button(L.Common.delete, role: .destructive) {
+                deleteCourse()
+            }
+            Button(L.Common.cancel, role: .cancel) {}
+        } message: {
+            Text(L.CourseDetail.deleteConfirmMessage)
         }
         // 遡り判定結果シート（ストアシートとの競合を避けるためここに配置）
         .sheet(item: $pendingRetroactiveResult) { result in
@@ -715,6 +745,18 @@ struct CourseDetailView: View {
     private func reloadCourse() {
         if let updated = try? AppContainer.shared.courseRepo.fetch(id: courseId) {
             course = updated
+        }
+    }
+
+    // MARK: - 自作コースの削除
+
+    private func deleteCourse() {
+        do {
+            try AppContainer.shared.courseRepo.delete(courseId)
+            NotificationCenter.default.post(name: .courseChanged, object: nil)
+            dismiss()
+        } catch {
+            Logger.error("コース削除失敗: \(error)")
         }
     }
 

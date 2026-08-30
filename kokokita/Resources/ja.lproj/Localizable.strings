@@ -339,6 +339,13 @@
 "course.syncFailedTitle" = "コースを取得できませんでした";
 "course.syncFailedDescription" = "インターネット接続を確認してもう一度お試しください";
 "course.searchPlaceholder" = "コースを検索";
+"course.displayMode.switchToGrid" = "グリッド表示に切り替え";
+"course.displayMode.switchToList" = "リスト表示に切り替え";
+"course.etc" = "など";
+"course.createNewButton" = "コースを作る";
+"course.filterNew" = "新着";
+"course.filterUserCreated" = "自作コース";
+"course.filterEmptyDescription" = "このフィルタに該当するコースはありません";
 "course.enable" = "有効にする";
 "course.disable" = "無効にする";
 "course.enableToggle" = "このコースを有効にする";
@@ -494,14 +501,10 @@
 "recordBadge.manualTitle" = "後付け記録";
 "recordBadge.manualDescription" = "後から手動で追加した記録です。実際に訪れたかどうかの証明はありません。";
 
-// MARK: - My List（マイリスト）
-"myList.title" = "コースを作る";
-"myList.emptyTitle" = "まだコースがありません";
-"myList.emptyDescription" = "+ 新しいコースを作成する";
-"myList.newCourseButton" = "新規コース作成";
-"myList.deleteConfirmTitle" = "コースを削除";
-"myList.deleteConfirmMessage" = "このコースとスポットをすべて削除します。この操作は取り消せません。";
-"myList.spotsCount" = "%d件のスポット";
+// MARK: - Stamp（スタンプ、仮実装）
+"stamp.emptyDescription" = "巡礼でスポットにチェックインするとスタンプが増えていきます";
+"stamp.noVisitHistory" = "記録が見つかりませんでした";
+"stamp.countSummarySuffix" = "個のスタンプを集めました";
 
 // MARK: - Course Editor（コース作成・編集）
 "courseEditor.createTitle" = "新しいコース";
@@ -558,8 +561,7 @@
 "spotEditor.longitude" = "経度";
 
 // MARK: - Tab Bar（追加分）
-"tab.myList" = "マイリスト";
-"tab.create" = "作る";
+"tab.stamp" = "スタンプ";
 "tab.spotList" = "スポット";
 
 // MARK: - SpotList（スポット一覧）
@@ -730,6 +732,9 @@
 
 // MARK: - CourseDetail メニュー
 "courseDetail.menu.courseInfo" = "コース概要";
+"courseDetail.menu.edit" = "編集";
+"courseDetail.deleteConfirmTitle" = "コースを削除";
+"courseDetail.deleteConfirmMessage" = "このコースとスポットをすべて削除します。この操作は取り消せません。";
 "courseDetail.menu.sectionMapSettings" = "地図設定";
 "courseDetail.menu.sectionPlayback" = "再生機能";
 "courseDetail.menu.zoomOnFocus" = "フォーカスズーム";

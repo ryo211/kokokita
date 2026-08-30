@@ -1,5 +1,29 @@
 import SwiftUI
 
+// コースのカバー画像表示ロジック（ローカル → リモート(キャッシュ付き) → プレースホルダー）を共通化
+// CourseRowView / CategoryGridCard / AllCoursesGridCard / CourseHeroGridCard / StampCard で共有
+@ViewBuilder
+func courseCoverImage<Placeholder: View>(
+    localPath: String?,
+    remoteURLString: String?,
+    @ViewBuilder placeholder: () -> Placeholder
+) -> some View {
+    if let path = localPath,
+       let uiImage = LocalImageStorage.shared.load(from: path) {
+        Color.clear.overlay {
+            Image(uiImage: uiImage).resizable().scaledToFill()
+        }
+        .clipped()
+    } else if let urlStr = remoteURLString, let url = URL(string: urlStr) {
+        ZStack {
+            placeholder()
+            CachedCourseImage(url: url)
+        }
+    } else {
+        placeholder()
+    }
+}
+
 // コース一覧画面（カテゴリグリッド）
 // navigationDestination は呼び出し元の NavigationStack ルートに配置すること
 struct CourseListView: View {
@@ -8,6 +32,7 @@ struct CourseListView: View {
     @State private var searchText: String = ""
     @FocusState private var isSearchFocused: Bool
     @State private var isNewSectionDismissed: Bool = false
+    @State private var showCreateEditor = false
 
     // カテゴリに属するコースを返す
     private func courses(for category: CourseCategory) -> [Course] {
@@ -134,6 +159,18 @@ struct CourseListView: View {
                         .controlSize(.small)
                 }
             }
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button {
+                    showCreateEditor = true
+                } label: {
+                    Image(systemName: "plus")
+                        .fontWeight(.semibold)
+                }
+                .accessibilityLabel(L.Course.createNewButton)
+            }
+        }
+        .navigationDestination(isPresented: $showCreateEditor) {
+            CourseEditorView(mode: .create)
         }
         .alert(L.Common.error, isPresented: $store.showError) {
             Button(L.Common.ok) {}
@@ -266,19 +303,11 @@ private struct NewCourseCard: View {
 
     @ViewBuilder
     private var coverImage: some View {
-        if let path = course.localCoverImagePath,
-           let uiImage = LocalImageStorage.shared.load(from: path) {
-            Color.clear.overlay {
-                Image(uiImage: uiImage).resizable().scaledToFill()
-            }
-        } else if let urlStr = course.coverImageUrl, let url = URL(string: urlStr) {
-            ZStack {
-                cardPlaceholder
-                CachedCourseImage(url: url)
-            }
-        } else {
-            cardPlaceholder
-        }
+        courseCoverImage(
+            localPath: course.localCoverImagePath,
+            remoteURLString: course.coverImageUrl,
+            placeholder: { cardPlaceholder }
+        )
     }
 
     private var cardPlaceholder: some View {
@@ -369,19 +398,11 @@ private struct FavoriteCourseCard: View {
 
     @ViewBuilder
     private var coverImage: some View {
-        if let path = course.localCoverImagePath,
-           let uiImage = LocalImageStorage.shared.load(from: path) {
-            Color.clear.overlay {
-                Image(uiImage: uiImage).resizable().scaledToFill()
-            }
-        } else if let urlStr = course.coverImageUrl, let url = URL(string: urlStr) {
-            ZStack {
-                cardPlaceholder
-                CachedCourseImage(url: url)
-            }
-        } else {
-            cardPlaceholder
-        }
+        courseCoverImage(
+            localPath: course.localCoverImagePath,
+            remoteURLString: course.coverImageUrl,
+            placeholder: { cardPlaceholder }
+        )
     }
 
     private var cardPlaceholder: some View {
@@ -432,7 +453,7 @@ struct CourseSearchBar: View {
 
 // MARK: - 背景レイヤー
 
-private struct CourseListBackground: View {
+struct CourseListBackground: View {
     var body: some View {
         ZStack {
             LinearGradient(
@@ -475,14 +496,20 @@ private struct CourseListBackground: View {
 private struct AllCoursesGridCard: View {
     let courses: [Course]
 
-    // 画像を持つコースからシード乱数で1件を決定的に選択
-    private var representativeCourse: Course? {
+    // 画像を持つコースからシード乱数で最大3件を重複なく決定的に選出（コラージュ表示用）
+    private var collageCourses: [Course] {
         let withImages = courses.filter { $0.coverImageUrl != nil || $0.localCoverImagePath != nil }
-        guard !withImages.isEmpty else { return courses.first }
+        guard !withImages.isEmpty else { return [] }
         let seed = courses.first.map { UInt64(bitPattern: Int64($0.id.hashValue)) } ?? UInt64(courses.count)
         var rng = CourseSeededRandom(state: seed == 0 ? 12345 : seed)
-        let index = Int(rng.next() % UInt64(withImages.count))
-        return withImages[index]
+        var pool = withImages
+        var picked: [Course] = []
+        let pickCount = min(3, pool.count)
+        for _ in 0..<pickCount {
+            let index = Int(rng.next() % UInt64(pool.count))
+            picked.append(pool.remove(at: index))
+        }
+        return picked
     }
 
     var body: some View {
@@ -495,19 +522,13 @@ private struct AllCoursesGridCard: View {
                 endPoint: .bottom
             )
 
-            VStack(alignment: .leading, spacing: 5) {
-                HStack(spacing: 5) {
-                    Image(systemName: "square.grid.2x2")
-                        .font(.caption.weight(.semibold))
-                    Text(L.Course.categoryAll)
-                        .font(.subheadline.bold())
-                }
-                .foregroundStyle(.white)
-
-                Text("\(courses.count)コース")
-                    .font(.caption2)
-                    .foregroundStyle(.white.opacity(0.80))
+            HStack(spacing: 5) {
+                Image(systemName: "square.grid.2x2")
+                    .font(.caption.weight(.semibold))
+                Text("\(L.Course.categoryAll)（\(courses.count)）")
+                    .font(.subheadline.bold())
             }
+            .foregroundStyle(.white)
             .padding(12)
         }
         .frame(height: 148)
@@ -515,25 +536,48 @@ private struct AllCoursesGridCard: View {
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 
+    // 複数コースのカバー写真を少しずつ回転・オフセットさせて重ねたコラージュ表示
     @ViewBuilder
     private var backgroundLayer: some View {
-        if let path = representativeCourse?.localCoverImagePath,
-           let uiImage = LocalImageStorage.shared.load(from: path) {
-            Color.clear.overlay {
-                Image(uiImage: uiImage)
-                    .resizable()
-                    .scaledToFill()
-            }
-            .clipped()
-        } else if let urlStr = representativeCourse?.coverImageUrl,
-                  let url = URL(string: urlStr) {
-            ZStack {
-                placeholderBackground
-                CachedCourseImage(url: url)
-            }
-        } else {
+        if collageCourses.isEmpty {
             placeholderBackground
+        } else {
+            GeometryReader { proxy in
+                ZStack {
+                    ForEach(Array(collageCourses.enumerated()), id: \.element.id) { index, course in
+                        courseCoverImage(
+                            localPath: course.localCoverImagePath,
+                            remoteURLString: course.coverImageUrl,
+                            placeholder: { Color(white: 0.68) }
+                        )
+                        .frame(width: proxy.size.width * 0.58, height: proxy.size.height * 0.58)
+                        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                .stroke(.white.opacity(0.6), lineWidth: 1.5)
+                        )
+                        .shadow(color: .black.opacity(0.25), radius: 4, x: 0, y: 2)
+                        .rotationEffect(.degrees(collageRotation(for: index)))
+                        .offset(collageOffset(for: index, in: proxy.size))
+                    }
+                }
+                .frame(width: proxy.size.width, height: proxy.size.height)
+            }
         }
+    }
+
+    private func collageRotation(for index: Int) -> Double {
+        let angles: [Double] = [-9, 7, -4]
+        return angles[index % angles.count]
+    }
+
+    private func collageOffset(for index: Int, in size: CGSize) -> CGSize {
+        let positions: [CGSize] = [
+            CGSize(width: -size.width * 0.15, height: -size.height * 0.10),
+            CGSize(width: size.width * 0.16, height: -size.height * 0.02),
+            CGSize(width: 0, height: size.height * 0.15)
+        ]
+        return positions[index % positions.count]
     }
 
     private var placeholderBackground: some View {
@@ -575,7 +619,7 @@ private struct CategoryGridCard: View {
                 HStack(spacing: 5) {
                     Image(systemName: category.iconName)
                         .font(.caption.weight(.semibold))
-                    Text(category.displayName)
+                    Text("\(category.displayName)（\(courses.count)）")
                         .font(.subheadline.bold())
                 }
                 .foregroundStyle(.white)
@@ -589,7 +633,7 @@ private struct CategoryGridCard: View {
                             .lineLimit(1)
                     }
                     if courses.count > 2 {
-                        Text("ほか\(courses.count - 2)コース")
+                        Text(L.Course.etc)
                             .font(.caption2)
                             .foregroundStyle(.white.opacity(0.55))
                     }
@@ -605,23 +649,11 @@ private struct CategoryGridCard: View {
     // 画像レイヤー（ローカル → キャッシュ付きリモート → プレースホルダーの順）
     @ViewBuilder
     private var backgroundLayer: some View {
-        if let path = representativeCourse?.localCoverImagePath,
-           let uiImage = LocalImageStorage.shared.load(from: path) {
-            Color.clear.overlay {
-                Image(uiImage: uiImage)
-                    .resizable()
-                    .scaledToFill()
-            }
-            .clipped()
-        } else if let urlStr = representativeCourse?.coverImageUrl,
-                  let url = URL(string: urlStr) {
-            ZStack {
-                placeholderBackground
-                CachedCourseImage(url: url)
-            }
-        } else {
-            placeholderBackground
-        }
+        courseCoverImage(
+            localPath: representativeCourse?.localCoverImagePath,
+            remoteURLString: representativeCourse?.coverImageUrl,
+            placeholder: { placeholderBackground }
+        )
     }
 
     // 画像なしプレースホルダー
@@ -707,20 +739,11 @@ struct CourseRowView: View {
 
     @ViewBuilder
     private var thumbnailImage: some View {
-        if let path = course.localCoverImagePath,
-           let uiImage = LocalImageStorage.shared.load(from: path) {
-            Color.clear.overlay {
-                Image(uiImage: uiImage).resizable().scaledToFill()
-            }
-            .clipped()
-        } else if let urlStr = course.coverImageUrl, let url = URL(string: urlStr) {
-            ZStack {
-                thumbnailPlaceholder
-                CachedCourseImage(url: url)
-            }
-        } else {
-            thumbnailPlaceholder
-        }
+        courseCoverImage(
+            localPath: course.localCoverImagePath,
+            remoteURLString: course.coverImageUrl,
+            placeholder: { thumbnailPlaceholder }
+        )
     }
 
     private var thumbnailPlaceholder: some View {
@@ -730,6 +753,110 @@ struct CourseRowView: View {
                 .font(.title3)
                 .foregroundStyle(.indigo.opacity(0.5))
         }
+    }
+}
+
+// MARK: - コースヒーローグリッドカード（3列グリッド表示用）
+
+struct CourseHeroGridCard: View {
+    let course: Course
+    var isNew: Bool = false
+    // 「すべて」一覧など複数カテゴリが混在する文脈でのみ、代表カテゴリを1つ表示する
+    var showCategory: Bool = false
+    @Environment(\.courseFavoriteStore) private var favoriteStore
+
+    var body: some View {
+        ZStack(alignment: .bottomLeading) {
+            courseCoverImage(
+                localPath: course.localCoverImagePath,
+                remoteURLString: course.coverImageUrl,
+                placeholder: { coverPlaceholder }
+            )
+
+            LinearGradient(
+                colors: [Color.black.opacity(0.10), Color.black.opacity(0.68)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+
+            if isNew {
+                Text(L.Course.newBadge)
+                    .font(.caption2.bold())
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(Color.indigo, in: Capsule())
+                    .padding(6)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            }
+
+            favoriteButton
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
+
+            VStack(alignment: .leading, spacing: 3) {
+                if showCategory, let category = course.categories.first {
+                    HStack(spacing: 2) {
+                        Image(systemName: category.iconName)
+                        Text(category.displayName)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.85)
+                    }
+                    .font(.system(size: 7, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 5)
+                    .padding(.vertical, 2)
+                    .background(.white.opacity(0.22), in: Capsule())
+                    .fixedSize()
+                }
+
+                Text(course.title)
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(.white)
+                    .lineLimit(2)
+                    .shadow(color: .black.opacity(0.3), radius: 2)
+
+                if course.totalSpotCount > 0 {
+                    HStack(spacing: 4) {
+                        ProgressView(value: Double(course.checkedInCount), total: Double(course.totalSpotCount))
+                            .tint(course.isCompleted ? Color.green : Color.white)
+                        Text("\(course.checkedInCount)/\(course.totalSpotCount)")
+                            .font(.caption2.bold())
+                            .foregroundStyle(.white.opacity(0.85))
+                            .monospacedDigit()
+                    }
+                }
+            }
+            .padding(8)
+        }
+        .frame(maxWidth: .infinity)
+        .aspectRatio(1, contentMode: .fill)
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+
+    private var coverPlaceholder: some View {
+        ZStack {
+            Color.indigo.opacity(0.12)
+            Image(systemName: course.categories.first?.iconName ?? "map")
+                .font(.system(size: 26, weight: .thin))
+                .foregroundStyle(.indigo.opacity(0.5))
+        }
+    }
+
+    private var favoriteButton: some View {
+        let isFavorite = favoriteStore.isFavorite(course.id)
+        return Button {
+            favoriteStore.toggle(course.id)
+        } label: {
+            Image(systemName: isFavorite ? "heart.fill" : "heart")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(isFavorite ? Color.red : Color.white)
+                .frame(width: 26, height: 26)
+                .background(.black.opacity(0.32), in: Circle())
+                .contentShape(Circle())
+        }
+        .buttonStyle(.plain)
+        .padding(6)
+        .accessibilityLabel(isFavorite ? L.Course.favoriteToggleRemove : L.Course.favoriteToggleAdd)
     }
 }
 

@@ -876,8 +876,10 @@
       const draftSpot      = getDraftSpot(spot.spotId);
       const hasDraftChange = !!(draftSpot && draftSpot.coverImageUrl !== spot.coverImageUrl);
       const draftDispUrl   = hasDraftChange ? getDisplayUrl(draftSpot.coverImageUrl) : null;
-      const mapsUrl        = spot.latitude != null && spot.longitude != null
-        ? `https://www.google.com/maps?q=${spot.latitude},${spot.longitude}`
+      // テキスト系（住所・説明・緯度経度）はドラフット版を優先して表示
+      const ds             = draftSpot || spot;
+      const mapsUrl        = ds.latitude != null && ds.longitude != null
+        ? `https://www.google.com/maps?q=${ds.latitude},${ds.longitude}`
         : null;
       const imageId = getSpotImageId(spot);
 
@@ -967,13 +969,13 @@
                   : `<span class="text-xs px-1.5 py-0.5 rounded-md bg-orange-100 text-orange-600 font-medium flex-shrink-0">画像なし</span>`
               }
             </div>
-            ${spot.address ? `<p class="text-xs text-gray-400">📍 ${e(spot.address)}</p>` : ''}
-            ${spot.spotDescription
-              ? `<p class="text-xs text-gray-500 mt-0.5 line-clamp-2">${e(spot.spotDescription)}</p>`
+            ${ds.address ? `<p class="text-xs text-gray-400">📍 ${e(ds.address)}</p>` : ''}
+            ${ds.spotDescription
+              ? `<p class="text-xs text-gray-500 mt-0.5 line-clamp-2">${e(ds.spotDescription)}</p>`
               : ''}
             <div class="flex items-center gap-3 mt-1 text-xs text-gray-400 flex-wrap">
-              ${spot.latitude != null && spot.longitude != null
-                ? `<span class="font-mono">${spot.latitude.toFixed(5)}, ${spot.longitude.toFixed(5)}</span>`
+              ${ds.latitude != null && ds.longitude != null
+                ? `<span class="font-mono">${ds.latitude.toFixed(5)}, ${ds.longitude.toFixed(5)}</span>`
                 : `<span class="text-orange-400">座標なし</span>`}
               ${spot.recognitionRadiusMeters != null
                 ? `<span>半径 ${spot.recognitionRadiusMeters}m</span>` : ''}
@@ -2541,7 +2543,7 @@
             </button>
           </div>
           <p class="text-xs text-gray-400 mb-4">
-            Google Maps Geocoding API でスポット名・住所から座標を取得し、ドラフットに保存します。<br>
+            Google Maps Geocoding API でスポット名・住所から座標と住所を取得し、ドラフットに保存します。<br>
             対象: ${target.length} 件（緯度経度が null のスポットはスキップ）
           </p>
 
@@ -2653,15 +2655,16 @@
           const query = `${name} ${addr}`.trim();
           gmLog('info', `[検索] ${query}`);
 
-          let newLat, newLon;
+          let newLat, newLon, newAddr;
           try {
             const url    = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&key=${gmApiKey}&language=ja`;
             const res    = await fetch(url);
             const data   = await res.json();
             if (data.status === 'OK') {
               const loc = data.results[0].geometry.location;
-              newLat = loc.lat;
-              newLon = loc.lng;
+              newLat  = loc.lat;
+              newLon  = loc.lng;
+              newAddr = data.results[0].formatted_address || '';
             } else {
               gmLog('warn', `  [WARN] Geocoding失敗 status=${data.status}`);
               skipped++;
@@ -2675,8 +2678,8 @@
             continue;
           }
 
-          gmLog('info',  `  旧: (${oldLat}, ${oldLon})`);
-          gmLog('ok',    `  新: (${newLat}, ${newLon})`);
+          gmLog('info',  `  旧: (${oldLat}, ${oldLon})  住所: ${addr || '（未設定）'}`);
+          gmLog('ok',    `  新: (${newLat}, ${newLon})  住所: ${newAddr}`);
 
           const latDiff = Math.abs(newLat - (oldLat || 0));
           const lonDiff = Math.abs(newLon - (oldLon || 0));
@@ -2686,6 +2689,7 @@
 
           spot.latitude  = newLat;
           spot.longitude = newLon;
+          if (newAddr) spot.address = newAddr;
           updated++;
           gmLog('info', '');
 

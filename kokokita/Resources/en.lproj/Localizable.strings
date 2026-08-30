@@ -337,6 +337,13 @@
 "course.syncFailedTitle" = "Couldn't Load Courses";
 "course.syncFailedDescription" = "Please check your internet connection and try again";
 "course.searchPlaceholder" = "Search courses";
+"course.displayMode.switchToGrid" = "Switch to grid view";
+"course.displayMode.switchToList" = "Switch to list view";
+"course.etc" = "and more";
+"course.createNewButton" = "Create course";
+"course.filterNew" = "New";
+"course.filterUserCreated" = "My Courses";
+"course.filterEmptyDescription" = "No courses match this filter";
 "course.enable" = "Enable";
 "course.disable" = "Disable";
 "course.enableToggle" = "Enable this course";
@@ -490,14 +497,10 @@
 "recordBadge.manualTitle" = "Manual Entry";
 "recordBadge.manualDescription" = "This record was added manually later. There is no proof that you actually visited the location.";
 
-// MARK: - My List
-"myList.title" = "My List";
-"myList.emptyTitle" = "No courses yet";
-"myList.emptyDescription" = "+ Create a new course";
-"myList.newCourseButton" = "New Course";
-"myList.deleteConfirmTitle" = "Delete Course";
-"myList.deleteConfirmMessage" = "This will delete the course and all its spots. This action cannot be undone.";
-"myList.spotsCount" = "%d spots";
+// MARK: - Stamp (placeholder)
+"stamp.emptyDescription" = "Check in at pilgrimage spots to start collecting stamps";
+"stamp.noVisitHistory" = "No visit records found";
+"stamp.countSummarySuffix" = " stamps collected";
 
 // MARK: - Course Editor
 "courseEditor.createTitle" = "New Course";
@@ -554,8 +557,7 @@
 "spotEditor.longitude" = "Longitude";
 
 // MARK: - Tab Bar (additions)
-"tab.myList" = "My List";
-"tab.create" = "Create";
+"tab.stamp" = "Stamps";
 "tab.spotList" = "Spots";
 
 // MARK: - SpotList
@@ -726,6 +728,9 @@
 
 // MARK: - CourseDetail Menu
 "courseDetail.menu.courseInfo" = "Course Info";
+"courseDetail.menu.edit" = "Edit";
+"courseDetail.deleteConfirmTitle" = "Delete Course";
+"courseDetail.deleteConfirmMessage" = "This will delete the course and all its spots. This action cannot be undone.";
 "courseDetail.menu.sectionMapSettings" = "Map Settings";
 "courseDetail.menu.sectionPlayback" = "Playback";
 "courseDetail.menu.zoomOnFocus" = "Focus Zoom";
