@@ -483,13 +483,15 @@ enum L {
         static let syncingMessage = localized("course.syncingMessage")
         static let syncFailedTitle = localized("course.syncFailedTitle")
         static let syncFailedDescription = localized("course.syncFailedDescription")
-        static let searchPlaceholder = localized("course.searchPlaceholder")
         static let displayModeSwitchToGrid = localized("course.displayMode.switchToGrid")
         static let displayModeSwitchToList = localized("course.displayMode.switchToList")
         static let createNewButton = localized("course.createNewButton")
+        static func courseCount(_ count: Int) -> String { String(format: localized("course.courseCount"), count) }
         static let filterNew = localized("course.filterNew")
         static let filterUserCreated = localized("course.filterUserCreated")
         static let filterEmptyDescription = localized("course.filterEmptyDescription")
+        static let filterExpand = localized("course.filterExpand")
+        static let filterCollapse = localized("course.filterCollapse")
 
         static let notVisited = localized("course.notVisited")
         static let noAddress = localized("course.noAddress")
@@ -502,6 +504,7 @@ enum L {
         static let sortDistance = localized("course.sort.distance")
         static let sortUpdatedAt = localized("course.sort.updatedAt")
         static let sortSpotCount = localized("course.sort.spotCount")
+        static let sortAchievedCount = localized("course.sort.achievedCount")
     }
 
     // MARK: - Manual Entry (後付け記録)

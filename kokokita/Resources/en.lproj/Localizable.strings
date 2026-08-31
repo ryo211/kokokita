@@ -336,13 +336,15 @@
 "course.syncingMessage" = "Loading courses…";
 "course.syncFailedTitle" = "Couldn't Load Courses";
 "course.syncFailedDescription" = "Please check your internet connection and try again";
-"course.searchPlaceholder" = "Search courses";
 "course.displayMode.switchToGrid" = "Switch to grid view";
 "course.displayMode.switchToList" = "Switch to list view";
 "course.createNewButton" = "Create course";
+"course.courseCount" = "%d courses";
 "course.filterNew" = "New";
 "course.filterUserCreated" = "My Courses";
 "course.filterEmptyDescription" = "No courses match this filter";
+"course.filterExpand" = "Show filters";
+"course.filterCollapse" = "Hide filters";
 "course.enable" = "Enable";
 "course.disable" = "Disable";
 "course.enableToggle" = "Enable this course";
@@ -375,8 +377,9 @@
 "course.sort.nearby" = "Nearest first";
 "course.sort.default" = "Default";
 "course.sort.distance" = "Nearest";
-"course.sort.updatedAt" = "Updated Date";
+"course.sort.updatedAt" = "Recently Updated";
 "course.sort.spotCount" = "Spot Count";
+"course.sort.achievedCount" = "Achieved Spots";
 
 // MARK: - Mode Selection (used only in SettingsSheet's mode switch row)
 "modeSelection.appModeSection" = "App Mode";

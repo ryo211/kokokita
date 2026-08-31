@@ -338,13 +338,15 @@
 "course.syncingMessage" = "コースを読み込んでいます";
 "course.syncFailedTitle" = "コースを取得できませんでした";
 "course.syncFailedDescription" = "インターネット接続を確認してもう一度お試しください";
-"course.searchPlaceholder" = "コースを検索";
 "course.displayMode.switchToGrid" = "グリッド表示に切り替え";
 "course.displayMode.switchToList" = "リスト表示に切り替え";
 "course.createNewButton" = "コースを作る";
+"course.courseCount" = "%d件";
 "course.filterNew" = "新着";
 "course.filterUserCreated" = "自作コース";
 "course.filterEmptyDescription" = "このフィルタに該当するコースはありません";
+"course.filterExpand" = "絞り込みを開く";
+"course.filterCollapse" = "絞り込みを閉じる";
 "course.enable" = "有効にする";
 "course.disable" = "無効にする";
 "course.enableToggle" = "このコースを有効にする";
@@ -379,8 +381,9 @@
 "course.sort.nearby" = "現在地から近い順";
 "course.sort.default" = "デフォルト順";
 "course.sort.distance" = "近い順";
-"course.sort.updatedAt" = "更新日";
-"course.sort.spotCount" = "スポット数";
+"course.sort.updatedAt" = "更新日順";
+"course.sort.spotCount" = "スポット数順";
+"course.sort.achievedCount" = "達成スポット数順";
 
 // MARK: - Mode Selection（SettingsSheetのモード切替行でのみ使用）
 "modeSelection.appModeSection" = "アプリモード";

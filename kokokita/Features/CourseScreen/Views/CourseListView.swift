@@ -24,42 +24,6 @@ func courseCoverImage<Placeholder: View>(
     }
 }
 
-// MARK: - 検索バー（画面下部固定）
-
-struct CourseSearchBar: View {
-    @Binding var searchText: String
-    var isFocused: FocusState<Bool>.Binding
-
-    var body: some View {
-        HStack(spacing: 10) {
-            Image(systemName: "magnifyingglass")
-                .foregroundStyle(.secondary)
-                .font(.system(size: 15))
-
-            TextField(L.Course.searchPlaceholder, text: $searchText)
-                .focused(isFocused)
-                .font(.body)
-                .submitLabel(.search)
-
-            Button {
-                searchText = ""
-                isFocused.wrappedValue = false
-            } label: {
-                Image(systemName: "xmark.circle.fill")
-                    .foregroundStyle(searchText.isEmpty ? Color.secondary.opacity(0.4) : Color.secondary)
-                    .font(.system(size: 16))
-            }
-            .buttonStyle(.plain)
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 9)
-        .background(Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-        .padding(.horizontal, 16)
-        .padding(.vertical, 8)
-        .background(.bar)
-    }
-}
-
 // MARK: - 背景レイヤー
 
 struct CourseListBackground: View {

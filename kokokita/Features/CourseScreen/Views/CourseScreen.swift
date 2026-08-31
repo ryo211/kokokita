@@ -4,6 +4,7 @@ import SwiftUI
 enum CourseSortOrder: CaseIterable, Identifiable {
     case updatedAt   // 更新日（デフォルト）
     case spotCount   // スポット数
+    case achievedCount // 達成スポット数
 
     var id: Self { self }
 
@@ -11,6 +12,7 @@ enum CourseSortOrder: CaseIterable, Identifiable {
         switch self {
         case .updatedAt: return L.Course.sortUpdatedAt
         case .spotCount: return L.Course.sortSpotCount
+        case .achievedCount: return L.Course.sortAchievedCount
         }
     }
 
@@ -18,6 +20,7 @@ enum CourseSortOrder: CaseIterable, Identifiable {
         switch self {
         case .updatedAt: return "clock"
         case .spotCount: return "mappin.and.ellipse"
+        case .achievedCount: return "checkmark.seal"
         }
     }
 }
@@ -69,12 +72,12 @@ private enum AllCourseFilter: Hashable {
 struct AllCourseListView: View {
     @Bindable var store: CourseListStore
     @Environment(\.courseFavoriteStore) private var favoriteStore
-    @State private var searchText: String = ""
-    @FocusState private var isSearchFocused: Bool
     @State private var sortOrder: CourseSortOrder = .updatedAt
     @AppStorage(CourseListDisplayMode.storageKey) private var displayModeRaw = CourseListDisplayMode.list.rawValue
     @State private var selectedFilter: AllCourseFilter = .all
     @State private var showCreateEditor = false
+    @State private var isFilterExpanded = true
+    @Namespace private var filterNamespace
 
     // private な@Stateプロパティを含むため自動合成されるメンバーワイズイニシャライザが
     // privateになってしまう。storeだけを受け取る公開イニシャライザを明示的に用意する
@@ -88,9 +91,10 @@ struct AllCourseListView: View {
     }
 
     // 絞り込みチップに表示するカテゴリ（1件以上コースがあるもののみ）
+    // .userCreated は専用の「自作コース」フィルタと重複するためここでは除外する
     private var availableCategories: [CourseCategory] {
         CourseCategory.allCases.filter { category in
-            store.courses.contains { $0.categories.contains(category) }
+            category != .userCreated && store.courses.contains { $0.categories.contains(category) }
         }
     }
 
@@ -110,10 +114,7 @@ struct AllCourseListView: View {
     }
 
     private var displayedCourses: [Course] {
-        let filtered = searchText.isEmpty
-            ? filteredCourses
-            : filteredCourses.filter { $0.title.localizedCaseInsensitiveContains(searchText) }
-        return sortOrder.applied(to: filtered)
+        sortOrder.applied(to: filteredCourses)
     }
 
     var body: some View {
@@ -123,11 +124,8 @@ struct AllCourseListView: View {
         }
         .scrollContentBackground(.hidden)
         .listStyle(.plain)
-        .safeAreaInset(edge: .top) {
-            AllCourseFilterBar(selectedFilter: $selectedFilter, availableCategories: availableCategories)
-        }
         .safeAreaInset(edge: .bottom) {
-            CourseSearchBar(searchText: $searchText, isFocused: $isSearchFocused)
+            filterAreaContent
         }
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -140,14 +138,11 @@ struct AllCourseListView: View {
                         .font(.headline)
                 }
             }
-            ToolbarItem(placement: .navigationBarTrailing) {
+            ToolbarItem(placement: .navigationBarLeading) {
                 CourseDisplayModeToggleButton(displayMode: Binding(
                     get: { displayMode },
                     set: { displayMode = $0 }
                 ))
-            }
-            ToolbarItem(placement: .navigationBarTrailing) {
-                CourseSortMenu(sortOrder: $sortOrder)
             }
             ToolbarItem(placement: .navigationBarTrailing) {
                 if store.isSyncing {
@@ -185,19 +180,47 @@ struct AllCourseListView: View {
         }
     }
 
+    // 絞り込みバー本体と、畳んだ時の再展開ボタンを切り替える
+    // matchedGeometryEffectで両者をつなぎ、「ボタンに吸い込まれる/せり出す」動きを出す
+    @ViewBuilder
+    private var filterAreaContent: some View {
+        if isFilterExpanded {
+            AllCourseFilterBar(
+                selectedFilter: $selectedFilter,
+                availableCategories: availableCategories,
+                namespace: filterNamespace
+            ) {
+                withAnimation(.spring(response: 0.32, dampingFraction: 0.82)) {
+                    isFilterExpanded = false
+                }
+            }
+        } else {
+            HStack {
+                Spacer()
+                Button {
+                    withAnimation(.spring(response: 0.32, dampingFraction: 0.82)) {
+                        isFilterExpanded = true
+                    }
+                } label: {
+                    Image(systemName: "line.3.horizontal.decrease")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(.indigo)
+                        .frame(width: 30, height: 30)
+                        .background(.ultraThinMaterial, in: Circle())
+                        .overlay(Circle().strokeBorder(Color.indigo.opacity(0.5), lineWidth: 1.2))
+                        .shadow(color: .black.opacity(0.12), radius: 4, y: 2)
+                }
+                .matchedGeometryEffect(id: "filterToggleButton", in: filterNamespace)
+                .accessibilityLabel(L.Course.filterExpand)
+            }
+            .padding(.horizontal, 16)
+            .padding(.bottom, 12)
+        }
+    }
+
     @ViewBuilder
     private var courseList: some View {
-        if !searchText.isEmpty && displayedCourses.isEmpty {
-            List {
-                ContentUnavailableView(
-                    L.Course.emptyTitle,
-                    systemImage: "magnifyingglass",
-                    description: Text("「\(searchText)」に一致するコースはありません")
-                )
-                .listRowBackground(Color.clear)
-                .listRowSeparator(.hidden)
-            }
-        } else if store.courses.isEmpty {
+        if store.courses.isEmpty {
             List {
                 courseListEmptyState
                     .listRowBackground(Color.clear)
@@ -214,36 +237,56 @@ struct AllCourseListView: View {
                 .listRowSeparator(.hidden)
             }
         } else {
-            switch displayMode {
-            case .list:
-                List {
-                    ForEach(displayedCourses) { course in
-                        let isNew = store.isNew(course.id)
-                        NavigationLink(value: course.id) {
-                            CourseRowView(course: course, isNew: isNew)
-                        }
-                    }
-                }
-            case .grid:
-                ScrollView {
-                    LazyVGrid(
-                        columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)],
-                        spacing: 10
-                    ) {
-                        ForEach(Array(displayedCourses.enumerated()), id: \.element.id) { index, course in
+            VStack(spacing: 0) {
+                courseListHeader
+
+                switch displayMode {
+                case .list:
+                    List {
+                        ForEach(displayedCourses) { course in
                             let isNew = store.isNew(course.id)
                             NavigationLink(value: course.id) {
-                                CourseGridEntranceCell(index: index) {
-                                    CourseHeroGridCard(course: course, isNew: isNew, showCategory: true)
-                                }
+                                CourseRowView(course: course, isNew: isNew)
                             }
-                            .buttonStyle(.plain)
                         }
                     }
-                    .padding(16)
+                case .grid:
+                    ScrollView {
+                        LazyVGrid(
+                            columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)],
+                            spacing: 10
+                        ) {
+                            ForEach(Array(displayedCourses.enumerated()), id: \.element.id) { index, course in
+                                let isNew = store.isNew(course.id)
+                                NavigationLink(value: course.id) {
+                                    CourseGridEntranceCell(index: index) {
+                                        CourseHeroGridCard(course: course, isNew: isNew, showCategory: true)
+                                    }
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                        .padding(16)
+                    }
                 }
             }
         }
+    }
+
+    // コース一覧の直上に表示する見出し行（左: 件数 / 右: ソート切り替え）
+    // フィルタバーと背景トーンを揃え、一続きのヘッダーに見えるようにする
+    private var courseListHeader: some View {
+        HStack {
+            Text(L.Course.courseCount(displayedCourses.count))
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            Spacer()
+            CourseSortMenu(sortOrder: $sortOrder)
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 4)
+        .padding(.bottom, 8)
+        .background(Color(.systemBackground))
     }
 
     // コースが1件もない場合の表示。「同期中」「同期失敗（主にネットワーク不通）」
@@ -283,24 +326,45 @@ struct AllCourseListView: View {
 private struct AllCourseFilterBar: View {
     @Binding var selectedFilter: AllCourseFilter
     let availableCategories: [CourseCategory]
+    var namespace: Namespace.ID
+    let onClose: () -> Void
 
     var body: some View {
         VStack(spacing: 0) {
-            FlowLayout(spacing: 6) {
-                chip(title: L.Course.categoryAll, icon: "square.grid.2x2", filter: .all)
-                chip(title: L.Course.filterNew, icon: "star.fill", filter: .new)
-                chip(title: L.Course.favoriteSectionTitle, icon: "heart.fill", filter: .favorite)
-                chip(title: L.Course.filterUserCreated, icon: "person.crop.square", filter: .userCreated)
-                ForEach(availableCategories, id: \.rawValue) { category in
-                    chip(title: category.displayName, icon: category.iconName, filter: .category(category))
+            HStack(alignment: .top, spacing: 8) {
+                FlowLayout(spacing: 6) {
+                    chip(title: L.Course.categoryAll, icon: "square.grid.2x2", filter: .all)
+                    chip(title: L.Course.filterNew, icon: "star.fill", filter: .new)
+                    chip(title: L.Course.favoriteSectionTitle, icon: "heart.fill", filter: .favorite)
+                    chip(title: L.Course.filterUserCreated, icon: "person.crop.square", filter: .userCreated)
+                    ForEach(availableCategories, id: \.rawValue) { category in
+                        chip(title: category.displayName, icon: category.iconName, filter: .category(category))
+                    }
                 }
+                // チップ群が閉じるボタンの方向へ収束するように縮んで消える
+                .transition(.scale(scale: 0.05, anchor: .trailing).combined(with: .opacity))
+
+                Button(action: onClose) {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(.indigo)
+                        .frame(width: 30, height: 30)
+                        .background(.ultraThinMaterial, in: Circle())
+                        .overlay(Circle().strokeBorder(Color.indigo.opacity(0.5), lineWidth: 1.2))
+                        .shadow(color: .black.opacity(0.12), radius: 4, y: 2)
+                }
+                .matchedGeometryEffect(id: "filterToggleButton", in: namespace)
+                .accessibilityLabel(L.Course.filterCollapse)
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 10)
 
             Divider()
+                .transition(.opacity)
         }
-        .background(Color(.systemBackground))
+        .background(.ultraThinMaterial)
+        // バー全体も閉じるボタンの位置(右下)へ縮みながら消える
+        .transition(.scale(scale: 0.15, anchor: .bottomTrailing).combined(with: .opacity))
     }
 
     @ViewBuilder
@@ -379,8 +443,16 @@ private struct CourseSortMenu: View {
                 }
             } label: {}
         } label: {
-            Image(systemName: "arrow.up.arrow.down")
-                .font(.system(size: 15, weight: .medium))
+            HStack(spacing: 3) {
+                Image(systemName: sortOrder.iconName)
+                Text(sortOrder.label)
+                Image(systemName: "chevron.up.chevron.down")
+                    .font(.system(size: 9, weight: .semibold))
+            }
+            .font(.caption.weight(.medium))
+            .foregroundStyle(.secondary)
+            // ラベルの文字数(更新日順/スポット数順)が変わっても位置がずれないよう幅を固定
+            .frame(minWidth: 128, alignment: .trailing)
         }
     }
 }
@@ -394,6 +466,8 @@ private extension CourseSortOrder {
             return courses.sorted { $0.updatedAt > $1.updatedAt }
         case .spotCount:
             return courses.sorted { $0.totalSpotCount > $1.totalSpotCount }
+        case .achievedCount:
+            return courses.sorted { $0.checkedInCount > $1.checkedInCount }
         }
     }
 }
