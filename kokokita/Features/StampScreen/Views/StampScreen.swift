@@ -31,10 +31,10 @@ struct StampScreen: View {
         }
     }
 
-    // 手帳のマス目総数。画面が埋まる最低数（2列×3行）は常に確保しつつ、
+    // 手帳のマス目総数。画面が埋まる最低数（3列×3行）は常に確保しつつ、
     // 達成数が増えてもマス目が尽きないよう常に+2枚の空欄を残す
     private var totalSlotCount: Int {
-        max(6, achievedStamps.count + 2)
+        max(9, achievedStamps.count + 2)
     }
 
     var body: some View {
@@ -57,7 +57,11 @@ struct StampScreen: View {
                         }
 
                         LazyVGrid(
-                            columns: [GridItem(.flexible(), spacing: 6), GridItem(.flexible(), spacing: 6)],
+                            columns: [
+                                GridItem(.flexible(), spacing: 6),
+                                GridItem(.flexible(), spacing: 6),
+                                GridItem(.flexible(), spacing: 6)
+                            ],
                             spacing: 6
                         ) {
                             ForEach(0..<totalSlotCount, id: \.self) { index in
@@ -72,7 +76,7 @@ struct StampScreen: View {
                                 }
                             }
                         }
-                        .padding(.horizontal, 28)
+                        .padding(.horizontal, 16)
                         .padding(.bottom, 24)
                     }
                 }

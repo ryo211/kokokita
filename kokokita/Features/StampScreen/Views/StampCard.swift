@@ -20,39 +20,43 @@ struct StampCard: View {
             )
 
             // ハンコ（少し右上寄りに大きく重ねて「押した」存在感を出す）
+            // 面の下地だと「シール」に見えるため、線の輪郭にだけ白い縁取りを重ねて視認性を確保する
             Image("kokokita_hanko")
                 .resizable()
                 .scaledToFit()
-                .frame(width: 88, height: 88)
+                .frame(width: 56, height: 56)
+                .shadow(color: .white.opacity(0.6), radius: 0.6)
+                .shadow(color: .white.opacity(0.6), radius: 0.6)
+                .shadow(color: .white.opacity(0.4), radius: 1.5)
                 .rotationEffect(.degrees(-11))
-                .shadow(color: .black.opacity(0.35), radius: 4, x: 0, y: 2)
+                .shadow(color: .black.opacity(0.25), radius: 3, x: 0, y: 1.5)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
-                .padding(.top, 6)
-                .padding(.trailing, -4)
+                .padding(.top, 4)
+                .padding(.trailing, -3)
 
-            VStack(alignment: .leading, spacing: 3) {
+            VStack(alignment: .leading, spacing: 2) {
                 Text(course.title)
-                    .font(.system(size: 9, weight: .semibold))
+                    .font(.system(size: 7, weight: .semibold))
                     .foregroundStyle(.white.opacity(0.75))
                     .lineLimit(1)
 
                 Text(spot.name)
-                    .font(.subheadline.weight(.bold))
+                    .font(.caption.weight(.bold))
                     .foregroundStyle(.white)
                     .lineLimit(2)
                     .shadow(color: .black.opacity(0.3), radius: 2)
 
                 if let achievedAt = spot.firstCheckedInAt {
                     Text(achievedAt, format: .dateTime.year().month().day())
-                        .font(.caption2.weight(.semibold))
+                        .font(.system(size: 8, weight: .semibold))
                         .foregroundStyle(.white)
                         .monospacedDigit()
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 3)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
                         .background(.white.opacity(0.22), in: Capsule())
                 }
             }
-            .padding(10)
+            .padding(7)
         }
         .frame(maxWidth: .infinity)
         .aspectRatio(1, contentMode: .fill)
@@ -60,7 +64,7 @@ struct StampCard: View {
         .overlay {
             // 手帳にあらかじめ印刷された「マス目」に見立てた実線の枠
             RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .strokeBorder(Color.indigo.opacity(0.6), lineWidth: 2.5)
+                .strokeBorder(Color.indigo.opacity(0.6), lineWidth: 2)
         }
         .shadow(color: .black.opacity(0.08), radius: 4, x: 0, y: 2)
     }
@@ -90,7 +94,7 @@ struct EmptyStampSlot: View {
             Image("kokokita_hanko")
                 .resizable()
                 .scaledToFit()
-                .frame(width: 56, height: 56)
+                .frame(width: 40, height: 40)
                 .opacity(0.14)
                 .grayscale(1.0)
         }

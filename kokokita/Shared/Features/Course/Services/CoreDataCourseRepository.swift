@@ -53,7 +53,8 @@ final class CoreDataCourseRepository: CourseRepository {
         try ctx.performAndWait {
             guard let entity = try fetchEntity(id: courseId) else { return }
             entity.everEnabled = NSNumber(value: true)
-            entity.updatedAt = Date()
+            // updatedAt はコースJSON側の更新日時を保持するフィールドのため、
+            // アプリ内部のフラグ更新では書き換えない
             try ctx.save()
         }
     }

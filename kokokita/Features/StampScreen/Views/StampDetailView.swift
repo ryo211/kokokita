@@ -159,12 +159,16 @@ private struct StampHeroCard: View {
             )
 
             // ハンコ（グリッドカードより大きく、存在感のある押し方に）
+            // 面の下地だと「シール」に見えるため、線の輪郭にだけ白い縁取りを重ねて視認性を確保する
             Image("kokokita_hanko")
                 .resizable()
                 .scaledToFit()
-                .frame(width: 160, height: 160)
+                .frame(width: 152, height: 152)
+                .shadow(color: .white.opacity(0.6), radius: 1.6)
+                .shadow(color: .white.opacity(0.6), radius: 1.6)
+                .shadow(color: .white.opacity(0.4), radius: 4)
                 .rotationEffect(.degrees(-11))
-                .shadow(color: .black.opacity(0.35), radius: 6, x: 0, y: 3)
+                .shadow(color: .black.opacity(0.25), radius: 6, x: 0, y: 3)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
                 .padding(.top, 14)
                 .padding(.trailing, -6)
