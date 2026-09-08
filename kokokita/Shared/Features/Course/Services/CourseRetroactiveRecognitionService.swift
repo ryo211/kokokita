@@ -5,10 +5,16 @@ import CoreData
 // コースを初めて有効化した時に、過去の証明付き訪問記録を遡って判定するサービス
 final class CourseRetroactiveRecognitionService {
     private let courseRepo: CourseRepository
+    private let visitRepo: CoreDataVisitRepository
     private let ctx: NSManagedObjectContext
 
-    init(courseRepo: CourseRepository, context: NSManagedObjectContext = CoreDataStack.shared.context) {
+    init(
+        courseRepo: CourseRepository,
+        visitRepo: CoreDataVisitRepository,
+        context: NSManagedObjectContext = CoreDataStack.shared.context
+    ) {
         self.courseRepo = courseRepo
+        self.visitRepo = visitRepo
         self.ctx = context
     }
 
@@ -18,6 +24,16 @@ final class CourseRetroactiveRecognitionService {
         let course: Course
         /// チェックインに成功したスポット（チェックイン済みに更新済み）
         let checkedInSpots: [CourseSpot]
+    }
+
+    // MARK: - 手動確認用の候補
+
+    struct RetroactiveCandidate: Identifiable {
+        var id: UUID { spot.id }
+        let course: Course
+        let spot: CourseSpot
+        /// 認識半径内にある証明付き訪問記録（複数の場合あり、新しい順）
+        let matchedVisits: [VisitAggregate]
     }
 
     // MARK: - 遡り判定
@@ -74,6 +90,39 @@ final class CourseRetroactiveRecognitionService {
         guard !updatedCheckedInSpots.isEmpty else { return nil }
 
         return RetroactiveResult(course: course, checkedInSpots: updatedCheckedInSpots)
+    }
+
+    // MARK: - 手動確認用の候補検出
+
+    /// 全コース横断で、未達成スポットと条件を満たす訪問記録の組み合わせを検出する（checkIn は行わない）
+    func findCandidates() throws -> [RetroactiveCandidate] {
+        let proofVisits = try fetchProofVisits()
+        guard !proofVisits.isEmpty else { return [] }
+
+        let courses = try courseRepo.fetchAll()
+        var results: [RetroactiveCandidate] = []
+
+        for course in courses {
+            let defaultRadius = course.recognitionRadiusMeters
+            for spot in course.spots where !spot.isCheckedIn {
+                let spotLocation = CLLocation(latitude: spot.latitude, longitude: spot.longitude)
+                let spotRadius = spot.recognitionRadiusMeters ?? defaultRadius
+
+                let matchedRecords = proofVisits.filter { visit in
+                    let visitLocation = CLLocation(latitude: visit.latitude, longitude: visit.longitude)
+                    return visitLocation.distance(from: spotLocation) <= spotRadius
+                }.sorted { $0.timestampUTC > $1.timestampUTC }
+
+                guard !matchedRecords.isEmpty else { continue }
+
+                let matchedVisits = matchedRecords.compactMap { try? visitRepo.get(by: $0.id) }
+                guard !matchedVisits.isEmpty else { continue }
+
+                results.append(RetroactiveCandidate(course: course, spot: spot, matchedVisits: matchedVisits))
+            }
+        }
+
+        return results
     }
 
     // MARK: - Private

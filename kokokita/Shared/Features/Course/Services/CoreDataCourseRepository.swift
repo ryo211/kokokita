@@ -93,6 +93,27 @@ final class CoreDataCourseRepository: CourseRepository {
         }
     }
 
+    func unlinkVisit(spotId: UUID, visitId: UUID) throws {
+        try ctx.performAndWait {
+            // fetchLimit を設けず同UUID の全エンティティを更新する（checkIn と同様、重複エンティティ対策）
+            let req = CourseSpotEntity.fetchRequest()
+            req.predicate = NSPredicate(format: "id == %@", spotId as NSUUID)
+            let found = try ctx.fetch(req)
+            guard !found.isEmpty else { return }
+
+            let vReq = VisitEntity.fetchRequest()
+            vReq.predicate = NSPredicate(format: "id == %@", visitId as NSUUID)
+            vReq.fetchLimit = 1
+            guard let details = try ctx.fetch(vReq).first?.details else { return }
+
+            for spot in found where spot.visits?.contains(details) ?? false {
+                spot.removeFromVisits(details)
+            }
+            try ctx.save()
+            ctx.refreshAllObjects()
+        }
+    }
+
     func delete(_ courseId: UUID) throws {
         try ctx.performAndWait {
             guard let entity = try fetchEntity(id: courseId) else { return }

@@ -504,6 +504,13 @@
 "stamp.emptyDescription" = "巡礼でスポットにチェックインするとスタンプが増えていきます";
 "stamp.noVisitHistory" = "記録が見つかりませんでした";
 "stamp.countSummarySuffix" = "個のスタンプを集めました";
+"stamp.unlinkVisit" = "この記録の紐づけを解除";
+"stamp.unlinkConfirmTitle" = "このスポットとの紐づけを解除しますか？";
+"stamp.unlinkConfirmMessage" = "訪問記録自体は削除されません";
+"stamp.candidateListTitle" = "取得可能なスタンプ";
+"stamp.candidateEmptyDescription" = "該当する記録は見つかりませんでした";
+"stamp.claimButton" = "この記録で獲得する";
+"stamp.candidateMatchCount" = "%d件該当";
 
 // MARK: - Course Editor（コース作成・編集）
 "courseEditor.createTitle" = "新しいコース";

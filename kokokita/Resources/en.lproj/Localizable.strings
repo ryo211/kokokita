@@ -500,6 +500,13 @@
 "stamp.emptyDescription" = "Check in at pilgrimage spots to start collecting stamps";
 "stamp.noVisitHistory" = "No visit records found";
 "stamp.countSummarySuffix" = " stamps collected";
+"stamp.unlinkVisit" = "Unlink this visit";
+"stamp.unlinkConfirmTitle" = "Unlink this visit from the spot?";
+"stamp.unlinkConfirmMessage" = "The visit record itself will not be deleted";
+"stamp.candidateListTitle" = "Available Stamps";
+"stamp.candidateEmptyDescription" = "No matching records found";
+"stamp.claimButton" = "Claim with this record";
+"stamp.candidateMatchCount" = "%d matched";
 
 // MARK: - Course Editor
 "courseEditor.createTitle" = "New Course";

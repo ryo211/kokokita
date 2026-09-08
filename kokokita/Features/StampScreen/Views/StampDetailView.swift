@@ -10,6 +10,9 @@ struct StampDetailView: View {
     @State private var labelMap: [UUID: String] = [:]
     @State private var groupMap: [UUID: String] = [:]
     @State private var memberMap: [UUID: String] = [:]
+    @State private var pendingUnlinkVisitId: UUID? = nil
+    @State private var showUnlinkConfirm = false
+    @Environment(\.dismiss) private var dismiss
 
     private let horizontalPadding: CGFloat = 16
 
@@ -20,9 +23,14 @@ struct StampDetailView: View {
 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 0) {
-                        StampHeroCard(course: course, spot: spot)
-                            .padding(.horizontal, 20)
-                            .padding(.top, 16)
+                        NavigationLink {
+                            CourseDetailView(course: course, initialSelectedSpotId: spot.id)
+                        } label: {
+                            StampHeroCard(course: course, spot: spot)
+                        }
+                        .buttonStyle(.plain)
+                        .padding(.horizontal, 20)
+                        .padding(.top, 16)
 
                         // CheckInVisitCard は frame(width:) の外側に自前で
                         // .padding(.horizontal, 12) を持つため、その分(24pt)を差し引く
@@ -42,6 +50,20 @@ struct StampDetailView: View {
         .onReceive(NotificationCenter.default.publisher(for: .visitsChanged)) { _ in
             reloadLinkedVisits()
         }
+        .confirmationDialog(
+            L.Stamp.unlinkConfirmTitle,
+            isPresented: $showUnlinkConfirm,
+            titleVisibility: .visible
+        ) {
+            Button(L.Stamp.unlinkVisit, role: .destructive) {
+                if let visitId = pendingUnlinkVisitId {
+                    unlinkVisit(visitId)
+                }
+            }
+            Button(L.Common.cancel, role: .cancel) {}
+        } message: {
+            Text(L.Stamp.unlinkConfirmMessage)
+        }
     }
 
     @ViewBuilder
@@ -55,28 +77,45 @@ struct StampDetailView: View {
         } else {
             VStack(spacing: 12) {
                 ForEach(linkedVisits, id: \.visit.id) { aggregate in
-                    NavigationLink {
-                        VisitDetailScreen(
-                            data: toDetailData(aggregate),
-                            visitId: aggregate.id,
-                            onBack: {},
-                            onEdit: {},
-                            onShare: {},
-                            onDelete: {
-                                try? AppContainer.shared.repo.delete(id: aggregate.id)
-                                NotificationCenter.default.post(name: .visitsChanged, object: nil)
-                                reloadLinkedVisits()
-                            },
-                            onUpdate: {
-                                NotificationCenter.default.post(name: .visitsChanged, object: nil)
-                                reloadLinkedVisits()
-                            },
-                            onMapTap: nil
-                        )
-                    } label: {
-                        CheckInVisitCard(aggregate: aggregate, cardWidth: cardWidth)
+                    ZStack(alignment: .topTrailing) {
+                        NavigationLink {
+                            VisitDetailScreen(
+                                data: toDetailData(aggregate),
+                                visitId: aggregate.id,
+                                onBack: {},
+                                onEdit: {},
+                                onShare: {},
+                                onDelete: {
+                                    try? AppContainer.shared.repo.delete(id: aggregate.id)
+                                    NotificationCenter.default.post(name: .visitsChanged, object: nil)
+                                    reloadLinkedVisits()
+                                },
+                                onUpdate: {
+                                    NotificationCenter.default.post(name: .visitsChanged, object: nil)
+                                    reloadLinkedVisits()
+                                },
+                                onMapTap: nil
+                            )
+                        } label: {
+                            CheckInVisitCard(aggregate: aggregate, cardWidth: cardWidth)
+                        }
+                        .buttonStyle(.plain)
+
+                        Button {
+                            pendingUnlinkVisitId = aggregate.id
+                            showUnlinkConfirm = true
+                        } label: {
+                            Image(systemName: "minus")
+                                .font(.system(size: 11, weight: .bold))
+                                .foregroundStyle(.white)
+                                .frame(width: 22, height: 22)
+                                .background(Color.red, in: Circle())
+                                .overlay(Circle().strokeBorder(.white, lineWidth: 1.5))
+                        }
+                        .buttonStyle(.plain)
+                        .offset(x: 4, y: -4)
+                        .accessibilityLabel(L.Stamp.unlinkVisit)
                     }
-                    .buttonStyle(.plain)
                 }
             }
         }
@@ -90,6 +129,23 @@ struct StampDetailView: View {
         groupMap = (try? repo.allGroups())?.reduce(into: [:]) { $0[$1.id] = $1.name } ?? [:]
         memberMap = (try? repo.allMembers())?.reduce(into: [:]) { $0[$1.id] = $1.name } ?? [:]
         reloadLinkedVisits()
+    }
+
+    // MARK: - スタンプの取り消し
+
+    // spot は不変のスナップショットのため visitIds は更新されない。
+    // CoreData側の解除は済んでいるので、ここでは表示中の配列から直接取り除く
+    private func unlinkVisit(_ visitId: UUID) {
+        do {
+            try AppContainer.shared.courseRepo.unlinkVisit(spotId: spot.id, visitId: visitId)
+            NotificationCenter.default.post(name: .courseChanged, object: nil)
+            linkedVisits.removeAll { $0.visit.id == visitId }
+            if linkedVisits.isEmpty {
+                dismiss()
+            }
+        } catch {
+            Logger.error("スタンプの取り消しに失敗しました: \(error)")
+        }
     }
 
     private func reloadLinkedVisits() {

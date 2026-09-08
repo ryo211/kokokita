@@ -162,6 +162,13 @@ enum L {
         static let emptyDescription = localized("stamp.emptyDescription")
         static let countSummarySuffix = localized("stamp.countSummarySuffix")
         static let noVisitHistory = localized("stamp.noVisitHistory")
+        static let unlinkVisit = localized("stamp.unlinkVisit")
+        static let unlinkConfirmTitle = localized("stamp.unlinkConfirmTitle")
+        static let unlinkConfirmMessage = localized("stamp.unlinkConfirmMessage")
+        static let candidateListTitle = localized("stamp.candidateListTitle")
+        static let candidateEmptyDescription = localized("stamp.candidateEmptyDescription")
+        static let claimButton = localized("stamp.claimButton")
+        static func candidateMatchCount(_ count: Int) -> String { String(format: localized("stamp.candidateMatchCount"), count) }
     }
 
     // MARK: - Course Editor（コース作成・編集）

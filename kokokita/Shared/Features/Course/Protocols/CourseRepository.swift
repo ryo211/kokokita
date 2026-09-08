@@ -24,6 +24,9 @@ protocol CourseRepository {
     /// 指定スポットに訪問記録を紐づける（isCheckedIn は visitIds から自動導出）
     func checkIn(spotId: UUID, visitId: UUID?) throws
 
+    /// 指定スポットから、指定の訪問記録との紐づけを解除する（誤判定の取り消し用）
+    func unlinkVisit(spotId: UUID, visitId: UUID) throws
+
     /// コースを削除
     func delete(_ courseId: UUID) throws
 

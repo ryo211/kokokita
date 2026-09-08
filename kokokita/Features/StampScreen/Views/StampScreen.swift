@@ -16,6 +16,8 @@ struct StampScreen: View {
         let spotId: UUID
     }
 
+    @State private var showCandidateList = false
+
     // 達成済みスポットを全コース横断で集約し、達成日時が新しい順に並べる
     private var achievedStamps: [AchievedStamp] {
         var result: [AchievedStamp] = []
@@ -92,6 +94,17 @@ struct StampScreen: View {
                             .font(.headline)
                     }
                 }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button {
+                        showCandidateList = true
+                    } label: {
+                        Text(L.Stamp.candidateListTitle)
+                            .font(.subheadline)
+                    }
+                }
+            }
+            .navigationDestination(isPresented: $showCandidateList) {
+                StampCandidateListView()
             }
             .navigationDestination(for: StampNavTarget.self) { target in
                 if let course = store.courses.first(where: { $0.id == target.courseId }),
