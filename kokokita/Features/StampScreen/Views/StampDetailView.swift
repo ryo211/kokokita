@@ -12,6 +12,7 @@ struct StampDetailView: View {
     @State private var memberMap: [UUID: String] = [:]
     @State private var pendingUnlinkVisitId: UUID? = nil
     @State private var showUnlinkConfirm = false
+    @State private var showShare = false
     @Environment(\.dismiss) private var dismiss
 
     // カスタム写真。要素の位置がそのままスロット（0=メイン、1〜3=サブ）を表す。
@@ -69,6 +70,19 @@ struct StampDetailView: View {
         }
         .navigationTitle(spot.name)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button {
+                    showShare = true
+                } label: {
+                    Image(systemName: "square.and.arrow.up")
+                        .fontWeight(.semibold)
+                }
+            }
+        }
+        .sheet(isPresented: $showShare) {
+            SpotSharePreviewSheet(spot: spot, course: course)
+        }
         .task(id: spot.id) {
             customPhotoPaths = spot.customPhotoPaths
             await loadData()

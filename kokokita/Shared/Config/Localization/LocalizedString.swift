@@ -886,13 +886,6 @@ enum L {
         static let layoutMap = localized("share.layoutMap")
         static let showSubThumbnail = localized("share.showSubThumbnail")
         static let selectPhoto = localized("share.selectPhoto")
-        static let stampSettingsLabel = localized("share.stampSettingsLabel")
-        static let showStamp = localized("share.showStamp")
-        static let achievedLabel = localized("share.achievedLabel")
-        static let dateStampStyleLabel = localized("share.dateStampStyleLabel")
-        static let dateStampNone = localized("share.dateStampNone")
-        static let dateStampTab = localized("share.dateStampTab")
-        static let dateStampPlate = localized("share.dateStampPlate")
         static func spotShareText(_ course: String, _ spot: String) -> String {
             String(format: localized("share.spotShareText"), course, spot)
         }
