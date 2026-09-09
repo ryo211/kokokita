@@ -77,7 +77,7 @@ struct AllCourseListView: View {
     @State private var selectedFilter: AllCourseFilter = .all
     @State private var showCreateEditor = false
     @State private var isFilterExpanded = true
-    @Namespace private var filterNamespace
+    @State private var scrollAccumulator: CGFloat = 0
 
     // private な@Stateプロパティを含むため自動合成されるメンバーワイズイニシャライザが
     // privateになってしまう。storeだけを受け取る公開イニシャライザを明示的に用意する
@@ -180,41 +180,57 @@ struct AllCourseListView: View {
         }
     }
 
-    // 絞り込みバー本体と、畳んだ時の再展開ボタンを切り替える
-    // matchedGeometryEffectで両者をつなぎ、「ボタンに吸い込まれる/せり出す」動きを出す
+    // 下スクロールで絞り込みパネルを引っ込め、上スクロールで再度出す
+    // （YouTube/X等を踏襲し、瞬間の動きではなく「同方向にまとまった量スクロールしたか」で判定する。
+    // 逆方向に動いたら累積をリセットするので、指を止めた際の微小な揺り戻しでは反応しない）
+    private static let scrollDirectionThreshold: CGFloat = 60
+
+    private func handleCourseListScroll(oldValue: CGFloat, newValue: CGFloat) {
+        let delta = newValue - oldValue
+        guard delta != 0 else { return }
+
+        // 先頭付近まで戻ってきたら常にパネルを見せる
+        if newValue <= 0 {
+            scrollAccumulator = 0
+            guard !isFilterExpanded else { return }
+            setFilterExpanded(true)
+            return
+        }
+
+        // 直前と逆方向に動いた場合は累積をリセットして数え直す
+        if (delta > 0 && scrollAccumulator < 0) || (delta < 0 && scrollAccumulator > 0) {
+            scrollAccumulator = 0
+        }
+        scrollAccumulator += delta
+
+        if scrollAccumulator > Self.scrollDirectionThreshold, isFilterExpanded {
+            setFilterExpanded(false)
+            scrollAccumulator = 0
+        } else if scrollAccumulator < -Self.scrollDirectionThreshold, !isFilterExpanded {
+            setFilterExpanded(true)
+            scrollAccumulator = 0
+        }
+    }
+
+    // スクロール中のコールバック（onScrollGeometryChange）と同一フレームでレイアウト変更を
+    // 伴うアニメーションを開始すると、スクロールの慣性計算と競合してカクつくため、
+    // 次のRunLoopに開始タイミングをずらす
+    private func setFilterExpanded(_ expanded: Bool) {
+        DispatchQueue.main.async {
+            withAnimation(.easeOut(duration: 0.22)) { isFilterExpanded = expanded }
+        }
+    }
+
+    // 絞り込みバー本体。スクロール方向に応じて上下にスライドしながら開閉する
+    // （手動での開閉ボタンは一旦廃止し、自動開閉のみとする）
     @ViewBuilder
     private var filterAreaContent: some View {
         if isFilterExpanded {
             AllCourseFilterBar(
                 selectedFilter: $selectedFilter,
-                availableCategories: availableCategories,
-                namespace: filterNamespace
-            ) {
-                withAnimation(.spring(response: 0.32, dampingFraction: 0.82)) {
-                    isFilterExpanded = false
-                }
-            }
-        } else {
-            HStack {
-                Spacer()
-                Button {
-                    withAnimation(.spring(response: 0.32, dampingFraction: 0.82)) {
-                        isFilterExpanded = true
-                    }
-                } label: {
-                    Image(systemName: "line.3.horizontal.decrease")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundStyle(.indigo)
-                        .frame(width: 30, height: 30)
-                        .background(.ultraThinMaterial, in: Circle())
-                        .overlay(Circle().strokeBorder(Color.indigo.opacity(0.5), lineWidth: 1.2))
-                        .shadow(color: .black.opacity(0.12), radius: 4, y: 2)
-                }
-                .matchedGeometryEffect(id: "filterToggleButton", in: filterNamespace)
-                .accessibilityLabel(L.Course.filterExpand)
-            }
-            .padding(.horizontal, 16)
-            .padding(.bottom, 12)
+                availableCategories: availableCategories
+            )
+            .transition(.move(edge: .bottom).combined(with: .opacity))
         }
     }
 
@@ -250,6 +266,11 @@ struct AllCourseListView: View {
                             }
                         }
                     }
+                    .onScrollGeometryChange(for: CGFloat.self) { geometry in
+                        geometry.contentOffset.y
+                    } action: { oldValue, newValue in
+                        handleCourseListScroll(oldValue: oldValue, newValue: newValue)
+                    }
                 case .grid:
                     ScrollView {
                         LazyVGrid(
@@ -267,6 +288,11 @@ struct AllCourseListView: View {
                             }
                         }
                         .padding(16)
+                    }
+                    .onScrollGeometryChange(for: CGFloat.self) { geometry in
+                        geometry.contentOffset.y
+                    } action: { oldValue, newValue in
+                        handleCourseListScroll(oldValue: oldValue, newValue: newValue)
                     }
                 }
             }
@@ -326,45 +352,25 @@ struct AllCourseListView: View {
 private struct AllCourseFilterBar: View {
     @Binding var selectedFilter: AllCourseFilter
     let availableCategories: [CourseCategory]
-    var namespace: Namespace.ID
-    let onClose: () -> Void
 
     var body: some View {
         VStack(spacing: 0) {
-            HStack(alignment: .top, spacing: 8) {
-                FlowLayout(spacing: 6) {
-                    chip(title: L.Course.categoryAll, icon: "square.grid.2x2", filter: .all)
-                    chip(title: L.Course.filterNew, icon: "star.fill", filter: .new)
-                    chip(title: L.Course.favoriteSectionTitle, icon: "heart.fill", filter: .favorite)
-                    chip(title: L.Course.filterUserCreated, icon: "person.crop.square", filter: .userCreated)
-                    ForEach(availableCategories, id: \.rawValue) { category in
-                        chip(title: category.displayName, icon: category.iconName, filter: .category(category))
-                    }
+            FlowLayout(spacing: 6) {
+                chip(title: L.Course.categoryAll, icon: "square.grid.2x2", filter: .all)
+                chip(title: L.Course.filterNew, icon: "star.fill", filter: .new)
+                chip(title: L.Course.favoriteSectionTitle, icon: "heart.fill", filter: .favorite)
+                chip(title: L.Course.filterUserCreated, icon: "person.crop.square", filter: .userCreated)
+                ForEach(availableCategories, id: \.rawValue) { category in
+                    chip(title: category.displayName, icon: category.iconName, filter: .category(category))
                 }
-                // チップ群が閉じるボタンの方向へ収束するように縮んで消える
-                .transition(.scale(scale: 0.05, anchor: .trailing).combined(with: .opacity))
-
-                Button(action: onClose) {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundStyle(.indigo)
-                        .frame(width: 30, height: 30)
-                        .background(.ultraThinMaterial, in: Circle())
-                        .overlay(Circle().strokeBorder(Color.indigo.opacity(0.5), lineWidth: 1.2))
-                        .shadow(color: .black.opacity(0.12), radius: 4, y: 2)
-                }
-                .matchedGeometryEffect(id: "filterToggleButton", in: namespace)
-                .accessibilityLabel(L.Course.filterCollapse)
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 10)
 
             Divider()
-                .transition(.opacity)
         }
-        .background(.ultraThinMaterial)
-        // バー全体も閉じるボタンの位置(右下)へ縮みながら消える
-        .transition(.scale(scale: 0.15, anchor: .bottomTrailing).combined(with: .opacity))
+        .background(Color.indigo.opacity(0.1))
+        .background(Color(.secondarySystemBackground))
     }
 
     @ViewBuilder
