@@ -14,14 +14,20 @@ struct StampDetailView: View {
     @State private var showUnlinkConfirm = false
     @Environment(\.dismiss) private var dismiss
 
-    // カスタム写真（先頭がメイン）。spotは不変スナップショットのため、
-    // 編集シートでの保存後はここを更新してカードに反映する
-    @State private var customPhotoPaths: [String] = []
-    // カード内で「今どれを大きく表示しているか」。閲覧中の一時的な状態で保存はしない
-    @State private var displayedPhotoIndex = 0
+    // カスタム写真。要素の位置がそのままスロット（0=メイン、1〜3=サブ）を表す。
+    // spotは不変スナップショットのため、編集シートでの保存後はここを更新してカードに反映する
+    @State private var customPhotoPaths: [String?] = []
     @State private var showPhotoEditor = false
     // シート内のonSaveでは即座に反映されない場合があるため、シートが完全に閉じた後(onDismiss)に確定反映する
-    @State private var pendingPhotoPaths: [String]? = nil
+    @State private var pendingPhotoPaths: [String?]? = nil
+    // サムネイルタップで開くライトボックス（拡大表示）の開始インデックス。
+    // 背景画像自体はメイン写真固定とし、他の写真は拡大表示だけで見せる
+    @State private var lightboxStartIndex: Int? = nil
+
+    // ライトボックスで見せる一覧（設定済みの写真のみ、スロット順）
+    private var galleryPhotos: [String] {
+        customPhotoPaths.compactMap { $0 }
+    }
 
     private let horizontalPadding: CGFloat = 16
 
@@ -39,8 +45,12 @@ struct StampDetailView: View {
                                 course: course,
                                 spot: spot,
                                 customPhotoPaths: customPhotoPaths,
-                                displayedPhotoIndex: $displayedPhotoIndex,
-                                onEditTapped: { showPhotoEditor = true }
+                                onEditTapped: { showPhotoEditor = true },
+                                onThumbnailTapped: { galleryIndex in
+                                    withAnimation(.easeInOut(duration: 0.2)) {
+                                        lightboxStartIndex = galleryIndex
+                                    }
+                                }
                             )
                         }
                         .buttonStyle(.plain)
@@ -61,7 +71,6 @@ struct StampDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .task(id: spot.id) {
             customPhotoPaths = spot.customPhotoPaths
-            displayedPhotoIndex = 0
             await loadData()
         }
         .onReceive(NotificationCenter.default.publisher(for: .visitsChanged)) { _ in
@@ -72,7 +81,6 @@ struct StampDetailView: View {
             // 反映はシートが完全に閉じ切った後にまとめて行う
             if let pending = pendingPhotoPaths {
                 customPhotoPaths = pending
-                displayedPhotoIndex = 0
                 pendingPhotoPaths = nil
             }
         }) {
@@ -84,6 +92,18 @@ struct StampDetailView: View {
                     pendingPhotoPaths = newPaths
                 }
             )
+        }
+        // 写真ライトボックス（コース詳細画面の地図スポット画像タップと同じ、
+        // 暗転オーバーレイ + フェード&スケールで出す軽量な見せ方を踏襲）
+        .overlay {
+            if let startIndex = lightboxStartIndex {
+                PhotoLightboxView(photoPaths: galleryPhotos, startIndex: startIndex) {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        lightboxStartIndex = nil
+                    }
+                }
+                .transition(.opacity.combined(with: .scale(scale: 0.92)))
+            }
         }
         .confirmationDialog(
             L.Stamp.unlinkConfirmTitle,
@@ -234,15 +254,29 @@ struct StampDetailView: View {
 private struct StampHeroCard: View {
     let course: Course
     let spot: CourseSpot
-    let customPhotoPaths: [String]
-    @Binding var displayedPhotoIndex: Int
+    let customPhotoPaths: [String?]
     let onEditTapped: () -> Void
+    // サムネイルタップ時、ライトボックス表示用の一覧（galleryPhotos）内でのインデックスを渡す
+    let onThumbnailTapped: (Int) -> Void
 
-    // 現在大きく表示していない写真（サムネイルとして左上に並べる対象）
-    private var otherPhotos: [(index: Int, path: String)] {
-        customPhotoPaths.enumerated()
-            .filter { $0.offset != displayedPhotoIndex }
-            .map { (index: $0.offset, path: $0.element) }
+    // 設定済み写真一覧（スロット順、nilは除く）
+    private var availablePhotos: [(slotIndex: Int, path: String)] {
+        customPhotoPaths.enumerated().compactMap { offset, path in
+            path.map { (slotIndex: offset, path: $0) }
+        }
+    }
+
+    // 背景に固定表示するメイン写真。サムネイルタップでは切り替わらない
+    private var mainImage: UIImage? {
+        guard let mainPath = spot.customMainPhotoPath else { return nil }
+        return LocalImageStorage.shared.load(from: mainPath)
+    }
+
+    // サムネイルとして左上に並べるのは、背景に使っているメイン(スロット0)以外
+    private var thumbnailPhotos: [(galleryIndex: Int, path: String)] {
+        Array(availablePhotos.enumerated())
+            .filter { $0.element.slotIndex != 0 }
+            .map { (galleryIndex: $0.offset, path: $0.element.path) }
     }
 
     var body: some View {
@@ -283,9 +317,9 @@ private struct StampHeroCard: View {
                 .buttonStyle(.plain)
                 .accessibilityLabel(L.Stamp.editPhotosButton)
 
-                ForEach(otherPhotos, id: \.index) { item in
+                ForEach(thumbnailPhotos, id: \.galleryIndex) { item in
                     Button {
-                        displayedPhotoIndex = item.index
+                        onThumbnailTapped(item.galleryIndex)
                     } label: {
                         thumbnail(path: item.path)
                     }
@@ -333,12 +367,10 @@ private struct StampHeroCard: View {
         .shadow(color: .black.opacity(0.15), radius: 10, x: 0, y: 6)
     }
 
-    // カスタム写真があればそれを優先し、無ければ既存のコースJSON由来画像にフォールバックする
+    // メイン写真があればそれを優先し、無ければ既存のコースJSON由来画像にフォールバックする
     @ViewBuilder
     private var backgroundLayer: some View {
-        if !customPhotoPaths.isEmpty,
-           customPhotoPaths.indices.contains(displayedPhotoIndex),
-           let uiImage = LocalImageStorage.shared.load(from: customPhotoPaths[displayedPhotoIndex]) {
+        if let uiImage = mainImage {
             Color.clear.overlay {
                 Image(uiImage: uiImage).resizable().scaledToFill()
             }
@@ -384,5 +416,47 @@ private struct StampHeroCard: View {
                 .font(.system(size: 60, weight: .thin))
                 .foregroundStyle(.white.opacity(0.3))
         }
+    }
+}
+
+// MARK: - 写真拡大表示（ライトボックス）
+
+// サムネイルタップ時に、その写真をスワイプ可能なフルスクリーンで拡大表示する
+private struct PhotoLightboxView: View {
+    let photoPaths: [String]
+    let onClose: () -> Void
+    @State private var currentIndex: Int
+
+    init(photoPaths: [String], startIndex: Int, onClose: @escaping () -> Void) {
+        self.photoPaths = photoPaths
+        self.onClose = onClose
+        _currentIndex = State(initialValue: startIndex)
+    }
+
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.65)
+                .ignoresSafeArea()
+
+            TabView(selection: $currentIndex) {
+                ForEach(Array(photoPaths.enumerated()), id: \.offset) { index, path in
+                    Group {
+                        if let uiImage = LocalImageStorage.shared.load(from: path) {
+                            Image(uiImage: uiImage)
+                                .resizable()
+                                .scaledToFit()
+                                .padding(32)
+                                .shadow(color: .black.opacity(0.35), radius: 24, x: 0, y: 8)
+                        } else {
+                            Color.clear
+                        }
+                    }
+                    .tag(index)
+                }
+            }
+            .tabViewStyle(.page(indexDisplayMode: photoPaths.count > 1 ? .always : .never))
+        }
+        .contentShape(Rectangle())
+        .onTapGesture { onClose() }
     }
 }

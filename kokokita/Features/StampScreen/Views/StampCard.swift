@@ -7,11 +7,7 @@ struct StampCard: View {
 
     var body: some View {
         ZStack(alignment: .bottomLeading) {
-            courseCoverImage(
-                localPath: spot.localCoverImagePath,
-                remoteURLString: spot.coverImageUrl,
-                placeholder: { coverPlaceholder }
-            )
+            backgroundImage
 
             LinearGradient(
                 colors: [Color.black.opacity(0.05), Color.black.opacity(0.30), Color.black.opacity(0.78)],
@@ -67,6 +63,24 @@ struct StampCard: View {
                 .strokeBorder(Color.indigo.opacity(0.6), lineWidth: 2)
         }
         .shadow(color: .black.opacity(0.08), radius: 4, x: 0, y: 2)
+    }
+
+    // カスタムのメイン写真があればそれを優先し、無ければ既存のコースJSON由来画像にフォールバックする
+    @ViewBuilder
+    private var backgroundImage: some View {
+        if let mainPath = spot.customMainPhotoPath,
+           let uiImage = LocalImageStorage.shared.load(from: mainPath) {
+            Color.clear.overlay {
+                Image(uiImage: uiImage).resizable().scaledToFill()
+            }
+            .clipped()
+        } else {
+            courseCoverImage(
+                localPath: spot.localCoverImagePath,
+                remoteURLString: spot.coverImageUrl,
+                placeholder: { coverPlaceholder }
+            )
+        }
     }
 
     private var coverPlaceholder: some View {

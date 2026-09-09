@@ -6,7 +6,7 @@ import PhotosUI
 struct SpotPhotoEditorSheet: View {
     let spot: CourseSpot
     let visitPhotoPaths: [String]
-    let onSave: ([String]) -> Void
+    let onSave: ([String?]) -> Void
 
     @Environment(\.dismiss) private var dismiss
     @State private var photoPaths: [String?]
@@ -17,7 +17,10 @@ struct SpotPhotoEditorSheet: View {
     // PhotosPicker表示制御用（confirmationDialogとは別トリガーにして表示タイミングの競合を避ける）
     @State private var showLibraryPickerRequested = false
 
-    init(spot: CourseSpot, initialPhotoPaths: [String], visitPhotoPaths: [String], onSave: @escaping ([String]) -> Void) {
+    // initialPhotoPathsは要素の位置がそのままスロット（0=メイン、1〜3=サブ）を表す。
+    // ここをcompactMapで詰めてしまうと、サブだけ設定している状態でメインが
+    // 前に詰められてしまいメイン扱いになる不具合が起きるため、位置を保ったまま扱う
+    init(spot: CourseSpot, initialPhotoPaths: [String?], visitPhotoPaths: [String], onSave: @escaping ([String?]) -> Void) {
         self.spot = spot
         self.visitPhotoPaths = visitPhotoPaths
         self.onSave = onSave
@@ -39,14 +42,27 @@ struct SpotPhotoEditorSheet: View {
                     .padding(.top, 12)
 
                 // メインを大きく中心に、サブ3枚をその下に小さく並べる
-                VStack(spacing: 12) {
+                VStack(spacing: 28) {
                     slotView(index: 0)
                         .frame(width: 180, height: 180)
 
-                    HStack(spacing: 10) {
+                    HStack(alignment: .top, spacing: 20) {
                         ForEach(1..<4, id: \.self) { index in
-                            slotView(index: index)
-                                .frame(width: 96, height: 96)
+                            VStack(spacing: 6) {
+                                slotView(index: index)
+                                    .frame(width: 96, height: 96)
+
+                                Button {
+                                    photoPaths.swapAt(0, index)
+                                } label: {
+                                    Text(L.Stamp.swapWithMain)
+                                        .font(.caption2.weight(.semibold))
+                                        .foregroundStyle(.indigo)
+                                        .multilineTextAlignment(.center)
+                                }
+                                .opacity(photoPaths[index] != nil ? 1 : 0)
+                                .disabled(photoPaths[index] == nil)
+                            }
                         }
                     }
                 }
@@ -92,8 +108,16 @@ struct SpotPhotoEditorSheet: View {
         }
     }
 
+    // サブスロットは手前から順に埋める仕様。1個目が空のまま2個目・3個目だけ
+    // 設定できてしまうと歯抜けで気持ち悪いため、直前のサブスロットが埋まるまで非活性にする
+    private func isSlotEnabled(_ index: Int) -> Bool {
+        guard index > 1 else { return true }
+        return (1..<index).allSatisfy { photoPaths[$0] != nil }
+    }
+
     @ViewBuilder
     private func slotView(index: Int) -> some View {
+        let enabled = isSlotEnabled(index)
         Button {
             activeSlotIndex = index
             showSourceDialog = true
@@ -129,6 +153,8 @@ struct SpotPhotoEditorSheet: View {
             }
         }
         .buttonStyle(.plain)
+        .disabled(!enabled)
+        .opacity(enabled ? 1 : 0.35)
         .aspectRatio(1, contentMode: .fill)
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         .overlay(
@@ -178,11 +204,10 @@ struct SpotPhotoEditorSheet: View {
     }
 
     private func save() {
-        let paths = photoPaths.compactMap { $0 }
         do {
-            try AppContainer.shared.courseRepo.updateSpotPhotos(spotId: spot.id, paths: paths)
+            try AppContainer.shared.courseRepo.updateSpotPhotos(spotId: spot.id, paths: photoPaths)
             NotificationCenter.default.post(name: .courseChanged, object: nil)
-            onSave(paths)
+            onSave(photoPaths)
         } catch {
             Logger.error("スポット写真の保存に失敗しました: \(error)")
         }

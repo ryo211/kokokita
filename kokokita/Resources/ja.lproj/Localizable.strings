@@ -519,6 +519,7 @@
 "stamp.photoSlotMain" = "メイン";
 "stamp.photoEditorDescription" = "スタンプの背景に使う写真を設定できます";
 "stamp.photoResetToDefault" = "スポット画像に戻す";
+"stamp.swapWithMain" = "メインと入れ替え";
 "stamp.visitPhotoPickerTitle" = "訪問記録の写真";
 "stamp.visitPhotoPickerEmpty" = "選べる写真がありません";
 

@@ -27,8 +27,8 @@ protocol CourseRepository {
     /// 指定スポットから、指定の訪問記録との紐づけを解除する（誤判定の取り消し用）
     func unlinkVisit(spotId: UUID, visitId: UUID) throws
 
-    /// スポットのカスタム写真パスを更新する（先頭がメイン、自動同期では上書きされない）
-    func updateSpotPhotos(spotId: UUID, paths: [String]) throws
+    /// スポットのカスタム写真パスを更新する（要素の位置がスロット。0=メイン、1〜3=サブ。自動同期では上書きされない）
+    func updateSpotPhotos(spotId: UUID, paths: [String?]) throws
 
     /// コースを削除
     func delete(_ courseId: UUID) throws

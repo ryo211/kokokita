@@ -177,6 +177,7 @@ enum L {
         static let photoSlotMain = localized("stamp.photoSlotMain")
         static let photoEditorDescription = localized("stamp.photoEditorDescription")
         static let photoResetToDefault = localized("stamp.photoResetToDefault")
+        static let swapWithMain = localized("stamp.swapWithMain")
         static let visitPhotoPickerTitle = localized("stamp.visitPhotoPickerTitle")
         static let visitPhotoPickerEmpty = localized("stamp.visitPhotoPickerEmpty")
     }

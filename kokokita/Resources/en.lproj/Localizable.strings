@@ -515,6 +515,7 @@
 "stamp.photoSlotMain" = "Main";
 "stamp.photoEditorDescription" = "Choose photos for your stamp background";
 "stamp.photoResetToDefault" = "Reset to Spot Image";
+"stamp.swapWithMain" = "Swap with Main";
 "stamp.visitPhotoPickerTitle" = "Visit Photos";
 "stamp.visitPhotoPickerEmpty" = "No photos available";
 
