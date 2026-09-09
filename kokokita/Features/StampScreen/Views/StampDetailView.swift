@@ -14,6 +14,15 @@ struct StampDetailView: View {
     @State private var showUnlinkConfirm = false
     @Environment(\.dismiss) private var dismiss
 
+    // カスタム写真（先頭がメイン）。spotは不変スナップショットのため、
+    // 編集シートでの保存後はここを更新してカードに反映する
+    @State private var customPhotoPaths: [String] = []
+    // カード内で「今どれを大きく表示しているか」。閲覧中の一時的な状態で保存はしない
+    @State private var displayedPhotoIndex = 0
+    @State private var showPhotoEditor = false
+    // シート内のonSaveでは即座に反映されない場合があるため、シートが完全に閉じた後(onDismiss)に確定反映する
+    @State private var pendingPhotoPaths: [String]? = nil
+
     private let horizontalPadding: CGFloat = 16
 
     var body: some View {
@@ -26,7 +35,13 @@ struct StampDetailView: View {
                         NavigationLink {
                             CourseDetailView(course: course, initialSelectedSpotId: spot.id)
                         } label: {
-                            StampHeroCard(course: course, spot: spot)
+                            StampHeroCard(
+                                course: course,
+                                spot: spot,
+                                customPhotoPaths: customPhotoPaths,
+                                displayedPhotoIndex: $displayedPhotoIndex,
+                                onEditTapped: { showPhotoEditor = true }
+                            )
                         }
                         .buttonStyle(.plain)
                         .padding(.horizontal, 20)
@@ -45,10 +60,30 @@ struct StampDetailView: View {
         .navigationTitle(spot.name)
         .navigationBarTitleDisplayMode(.inline)
         .task(id: spot.id) {
+            customPhotoPaths = spot.customPhotoPaths
+            displayedPhotoIndex = 0
             await loadData()
         }
         .onReceive(NotificationCenter.default.publisher(for: .visitsChanged)) { _ in
             reloadLinkedVisits()
+        }
+        .sheet(isPresented: $showPhotoEditor, onDismiss: {
+            // シートを閉じるアニメーションと状態更新のタイミング競合を避けるため、
+            // 反映はシートが完全に閉じ切った後にまとめて行う
+            if let pending = pendingPhotoPaths {
+                customPhotoPaths = pending
+                displayedPhotoIndex = 0
+                pendingPhotoPaths = nil
+            }
+        }) {
+            SpotPhotoEditorSheet(
+                spot: spot,
+                initialPhotoPaths: customPhotoPaths,
+                visitPhotoPaths: linkedVisits.flatMap { $0.details.photoPaths },
+                onSave: { newPaths in
+                    pendingPhotoPaths = newPaths
+                }
+            )
         }
         .confirmationDialog(
             L.Stamp.unlinkConfirmTitle,
@@ -199,14 +234,20 @@ struct StampDetailView: View {
 private struct StampHeroCard: View {
     let course: Course
     let spot: CourseSpot
+    let customPhotoPaths: [String]
+    @Binding var displayedPhotoIndex: Int
+    let onEditTapped: () -> Void
+
+    // 現在大きく表示していない写真（サムネイルとして左上に並べる対象）
+    private var otherPhotos: [(index: Int, path: String)] {
+        customPhotoPaths.enumerated()
+            .filter { $0.offset != displayedPhotoIndex }
+            .map { (index: $0.offset, path: $0.element) }
+    }
 
     var body: some View {
         ZStack(alignment: .bottomLeading) {
-            courseCoverImage(
-                localPath: spot.localCoverImagePath,
-                remoteURLString: spot.coverImageUrl,
-                placeholder: { coverPlaceholder }
-            )
+            backgroundLayer
 
             LinearGradient(
                 colors: [Color.black.opacity(0.05), Color.black.opacity(0.30), Color.black.opacity(0.75)],
@@ -228,6 +269,31 @@ private struct StampHeroCard: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
                 .padding(.top, 14)
                 .padding(.trailing, -6)
+
+            // 編集ボタン + 他の写真のサムネイル（左上）
+            VStack(alignment: .leading, spacing: 6) {
+                Button(action: onEditTapped) {
+                    Image(systemName: "camera.fill")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .frame(width: 30, height: 30)
+                        .background(.black.opacity(0.35), in: Circle())
+                        .overlay(Circle().strokeBorder(.white.opacity(0.6), lineWidth: 1))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(L.Stamp.editPhotosButton)
+
+                ForEach(otherPhotos, id: \.index) { item in
+                    Button {
+                        displayedPhotoIndex = item.index
+                    } label: {
+                        thumbnail(path: item.path)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(10)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
 
             VStack(alignment: .leading, spacing: 6) {
                 HStack(spacing: 4) {
@@ -265,6 +331,46 @@ private struct StampHeroCard: View {
                 .strokeBorder(Color.indigo.opacity(0.6), lineWidth: 3)
         }
         .shadow(color: .black.opacity(0.15), radius: 10, x: 0, y: 6)
+    }
+
+    // カスタム写真があればそれを優先し、無ければ既存のコースJSON由来画像にフォールバックする
+    @ViewBuilder
+    private var backgroundLayer: some View {
+        if !customPhotoPaths.isEmpty,
+           customPhotoPaths.indices.contains(displayedPhotoIndex),
+           let uiImage = LocalImageStorage.shared.load(from: customPhotoPaths[displayedPhotoIndex]) {
+            Color.clear.overlay {
+                Image(uiImage: uiImage).resizable().scaledToFill()
+            }
+            .clipped()
+        } else {
+            courseCoverImage(
+                localPath: spot.localCoverImagePath,
+                remoteURLString: spot.coverImageUrl,
+                placeholder: { coverPlaceholder }
+            )
+        }
+    }
+
+    @ViewBuilder
+    private func thumbnail(path: String) -> some View {
+        Group {
+            if let uiImage = LocalImageStorage.shared.load(from: path) {
+                Color.clear.overlay {
+                    Image(uiImage: uiImage).resizable().scaledToFill()
+                }
+                .clipped()
+            } else {
+                Color.black.opacity(0.25)
+            }
+        }
+        .frame(width: 36, height: 36)
+        .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                .strokeBorder(.white.opacity(0.75), lineWidth: 1.5)
+        )
+        .shadow(color: .black.opacity(0.2), radius: 2, y: 1)
     }
 
     private var coverPlaceholder: some View {

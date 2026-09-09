@@ -472,7 +472,10 @@ final class CoreDataCourseRepository: CourseRepository {
         let visitIds: [UUID] = linkedVisits.compactMap { $0.id }
         // firstCheckedInAt は visits の最古の訪問日時から導出（CoreData フラグは参照しない）
         let firstCheckedInAt: Date? = linkedVisits.first?.timestampUTC
-        return CourseSpot(
+        let customPhotoPaths: [String] = s.customPhotoPaths
+            .flatMap { $0.data(using: .utf8) }
+            .flatMap { try? JSONDecoder().decode([String].self, from: $0) } ?? []
+        var spot = CourseSpot(
             id: s.id ?? UUID(),
             spotId: s.spotId ?? "",
             name: s.name ?? "",
@@ -488,5 +491,24 @@ final class CoreDataCourseRepository: CourseRepository {
             firstCheckedInAt: firstCheckedInAt,
             visitIds: visitIds
         )
+        spot.customPhotoPaths = customPhotoPaths
+        return spot
+    }
+
+    /// スポットのカスタム写真パスを更新する（先頭がメイン）。自動同期(syncSpots)では一切触れない
+    func updateSpotPhotos(spotId: UUID, paths: [String]) throws {
+        try ctx.performAndWait {
+            let req = CourseSpotEntity.fetchRequest()
+            req.predicate = NSPredicate(format: "id == %@", spotId as NSUUID)
+            let found = try ctx.fetch(req)
+            guard !found.isEmpty else { return }
+
+            let json = (try? JSONEncoder().encode(paths)).flatMap { String(data: $0, encoding: .utf8) }
+            for spot in found {
+                spot.customPhotoPaths = json
+            }
+            try ctx.save()
+            ctx.refreshAllObjects()
+        }
     }
 }

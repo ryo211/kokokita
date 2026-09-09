@@ -507,6 +507,16 @@
 "stamp.candidateEmptyDescription" = "No matching records found";
 "stamp.claimButton" = "Claim with this record";
 "stamp.candidateMatchCount" = "%d matched";
+"stamp.editPhotosButton" = "Edit Photos";
+"stamp.photoSourceTitle" = "Choose Photo";
+"stamp.photoSourceLibrary" = "Choose from Library";
+"stamp.photoSourceVisit" = "Choose from Visit Photos";
+"stamp.photoSlotEmpty" = "Add Photo";
+"stamp.photoSlotMain" = "Main";
+"stamp.photoEditorDescription" = "Choose photos for your stamp background";
+"stamp.photoResetToDefault" = "Reset to Spot Image";
+"stamp.visitPhotoPickerTitle" = "Visit Photos";
+"stamp.visitPhotoPickerEmpty" = "No photos available";
 
 // MARK: - Course Editor
 "courseEditor.createTitle" = "New Course";

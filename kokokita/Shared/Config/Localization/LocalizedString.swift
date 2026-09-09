@@ -169,6 +169,16 @@ enum L {
         static let candidateEmptyDescription = localized("stamp.candidateEmptyDescription")
         static let claimButton = localized("stamp.claimButton")
         static func candidateMatchCount(_ count: Int) -> String { String(format: localized("stamp.candidateMatchCount"), count) }
+        static let editPhotosButton = localized("stamp.editPhotosButton")
+        static let photoSourceTitle = localized("stamp.photoSourceTitle")
+        static let photoSourceLibrary = localized("stamp.photoSourceLibrary")
+        static let photoSourceVisit = localized("stamp.photoSourceVisit")
+        static let photoSlotEmpty = localized("stamp.photoSlotEmpty")
+        static let photoSlotMain = localized("stamp.photoSlotMain")
+        static let photoEditorDescription = localized("stamp.photoEditorDescription")
+        static let photoResetToDefault = localized("stamp.photoResetToDefault")
+        static let visitPhotoPickerTitle = localized("stamp.visitPhotoPickerTitle")
+        static let visitPhotoPickerEmpty = localized("stamp.visitPhotoPickerEmpty")
     }
 
     // MARK: - Course Editor（コース作成・編集）

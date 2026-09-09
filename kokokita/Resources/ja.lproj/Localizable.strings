@@ -511,6 +511,16 @@
 "stamp.candidateEmptyDescription" = "該当する記録は見つかりませんでした";
 "stamp.claimButton" = "この記録で獲得する";
 "stamp.candidateMatchCount" = "%d件該当";
+"stamp.editPhotosButton" = "写真を編集";
+"stamp.photoSourceTitle" = "写真を選ぶ";
+"stamp.photoSourceLibrary" = "フォトライブラリから選択";
+"stamp.photoSourceVisit" = "訪問記録の写真から選択";
+"stamp.photoSlotEmpty" = "写真を追加";
+"stamp.photoSlotMain" = "メイン";
+"stamp.photoEditorDescription" = "スタンプの背景に使う写真を設定できます";
+"stamp.photoResetToDefault" = "スポット画像に戻す";
+"stamp.visitPhotoPickerTitle" = "訪問記録の写真";
+"stamp.visitPhotoPickerEmpty" = "選べる写真がありません";
 
 // MARK: - Course Editor（コース作成・編集）
 "courseEditor.createTitle" = "新しいコース";

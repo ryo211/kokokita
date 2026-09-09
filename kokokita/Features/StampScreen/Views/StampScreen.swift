@@ -33,10 +33,17 @@ struct StampScreen: View {
         }
     }
 
+    private static let columnCount = 3
+
     // 手帳のマス目総数。画面が埋まる最低数（3列×3行）は常に確保しつつ、
-    // 達成数が増えてもマス目が尽きないよう常に+2枚の空欄を残す
+    // 行の途中で半端に切れないよう、達成数の次の行境界まで埋めた上で
+    // 常にまるまる1行分の空欄を残す
     private var totalSlotCount: Int {
-        max(9, achievedStamps.count + 2)
+        let achievedCount = achievedStamps.count
+        let remainder = achievedCount % Self.columnCount
+        let toNextRowBoundary = remainder == 0 ? 0 : Self.columnCount - remainder
+        let emptySlots = toNextRowBoundary + Self.columnCount
+        return max(9, achievedCount + emptySlots)
     }
 
     var body: some View {
@@ -59,11 +66,10 @@ struct StampScreen: View {
                         }
 
                         LazyVGrid(
-                            columns: [
-                                GridItem(.flexible(), spacing: 6),
-                                GridItem(.flexible(), spacing: 6),
-                                GridItem(.flexible(), spacing: 6)
-                            ],
+                            columns: Array(
+                                repeating: GridItem(.flexible(), spacing: 6),
+                                count: Self.columnCount
+                            ),
                             spacing: 6
                         ) {
                             ForEach(0..<totalSlotCount, id: \.self) { index in

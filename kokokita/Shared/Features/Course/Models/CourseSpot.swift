@@ -33,4 +33,6 @@ struct CourseSpot: Identifiable, Equatable {
     let firstCheckedInAt: Date?
     /// このスポットにリンクされた訪問記録の ID 一覧（VisitEntity.id）
     let visitIds: [UUID]
+    /// ユーザーが設定したカスタム写真（先頭がメイン、最大4件）。LocalImageStorage管理のファイル名のみを保持する
+    var customPhotoPaths: [String] = []
 }
