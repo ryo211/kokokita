@@ -39,9 +39,9 @@ final class VisitDetailStore {
 
     /// タクソノミー（ラベル・グループ・メンバー）を読み込む
     func loadTaxonomyData() async {
-        labelOptions = ((try? repo.allLabels()) ?? []).sortedByName
-        groupOptions = ((try? repo.allGroups()) ?? []).sortedByName
-        memberOptions = ((try? repo.allMembers()) ?? []).sortedByName
+        labelOptions = ((try? repo.allLabels()) ?? []).excludingBlankNames
+        groupOptions = ((try? repo.allGroups()) ?? []).excludingBlankNames
+        memberOptions = ((try? repo.allMembers()) ?? []).excludingBlankNames
     }
 
     /// 近くの過去記録を読み込む

@@ -547,10 +547,10 @@ struct VisitEditScreen: View {
     }
 
     private func onAppearTask() async {
-        // 候補をロード（空白除外 & 名前順）
-        labelOptions = ((try? AppContainer.shared.repo.allLabels()) ?? []).sortedByName
-        groupOptions = ((try? AppContainer.shared.repo.allGroups()) ?? []).sortedByName
-        memberOptions = ((try? AppContainer.shared.repo.allMembers()) ?? []).sortedByName
+        // 候補をロード（空白除外、順序はリポジトリ側の最後に使った順）
+        labelOptions = ((try? AppContainer.shared.repo.allLabels()) ?? []).excludingBlankNames
+        groupOptions = ((try? AppContainer.shared.repo.allGroups()) ?? []).excludingBlankNames
+        memberOptions = ((try? AppContainer.shared.repo.allMembers()) ?? []).excludingBlankNames
         bookOptions = (try? AppContainer.shared.bookRepo.allBooks()) ?? []
     }
 

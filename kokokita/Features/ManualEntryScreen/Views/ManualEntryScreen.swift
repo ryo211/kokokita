@@ -151,9 +151,9 @@ struct ManualEntryScreen: View {
     // MARK: - Load Taxonomy Options
 
     private func loadTaxonomyOptions() async {
-        labelOptions = ((try? AppContainer.shared.repo.allLabels()) ?? []).sortedByName
-        groupOptions = ((try? AppContainer.shared.repo.allGroups()) ?? []).sortedByName
-        memberOptions = ((try? AppContainer.shared.repo.allMembers()) ?? []).sortedByName
+        labelOptions = ((try? AppContainer.shared.repo.allLabels()) ?? []).excludingBlankNames
+        groupOptions = ((try? AppContainer.shared.repo.allGroups()) ?? []).excludingBlankNames
+        memberOptions = ((try? AppContainer.shared.repo.allMembers()) ?? []).excludingBlankNames
     }
 
     // MARK: - Toolbar
