@@ -20,51 +20,87 @@ struct VisitMapView: View {
     @State private var currentLocation: CLLocationCoordinate2D?
     @State private var currentMapRegion: MKCoordinateRegion?
     @State private var showMapSettings = false
+    // フォーカス中アイテムのスクリーン座標。MapKitのz-orderに頼らず、
+    // ここに大きいピンをoverlayで重ねて描画することで必ず最前面に表示する
+    @State private var selectedItemScreenPoint: CGPoint? = nil
     @AppStorage(Self.zoomOnVisitFocusKey) private var zoomOnVisitFocus = true
-
-    // 選択されたアイテムを最後に配置するようソート（最前面に描画）
-    private var sortedItems: [VisitAggregate] {
-        items.sorted { item1, item2 in
-            let isItem1Selected = item1.id == selectedItemId
-            let isItem2Selected = item2.id == selectedItemId
-            if isItem1Selected == isItem2Selected { return false }
-            return isItem2Selected
-        }
-    }
 
     var body: some View {
         VStack(spacing: 0) {
             // 上部 2/3：地図
             ZStack(alignment: .topTrailing) {
-                Map(position: $cameraPosition) {
-                    ForEach(sortedItems) { agg in
-                        if agg.visit.latitude != 0 || agg.visit.longitude != 0 {
-                            let isSelected = selectedItemId == agg.id
-                            let pinColor = firstLabelColor(for: agg)
-                            Annotation("", coordinate: CLLocationCoordinate2D(
-                                latitude: agg.visit.latitude,
-                                longitude: agg.visit.longitude
-                            )) {
-                                MapPinView(isSelected: isSelected, pinColor: pinColor)
-                                    .onTapGesture {
-                                        selectedItemId = (selectedItemId == agg.id ? nil : agg.id)
-                                    }
+                MapReader { proxy in
+                    Map(position: $cameraPosition) {
+                        // 非選択ピンを先に描画（z-order: 下）。選択中のピンも
+                        // ここでは常に非選択の見た目のまま描画し、大きい選択ピンは
+                        // overlayで別途最前面に重ねる
+                        ForEach(items) { agg in
+                            if agg.visit.latitude != 0 || agg.visit.longitude != 0 {
+                                let pinColor = firstLabelColor(for: agg)
+                                Annotation("", coordinate: CLLocationCoordinate2D(
+                                    latitude: agg.visit.latitude,
+                                    longitude: agg.visit.longitude
+                                )) {
+                                    MapPinView(isSelected: false, pinColor: pinColor)
+                                        .onTapGesture {
+                                            selectedItemId = (selectedItemId == agg.id ? nil : agg.id)
+                                        }
+                                }
+                                .annotationTitles(.hidden)
+                            }
+                        }
+
+                        // 現在地のピン
+                        if showCurrentLocation, let location = currentLocation {
+                            Annotation("現在地", coordinate: location) {
+                                CurrentLocationPinView()
                             }
                             .annotationTitles(.hidden)
                         }
                     }
-
-                    // 現在地のピン
-                    if showCurrentLocation, let location = currentLocation {
-                        Annotation("現在地", coordinate: location) {
-                            CurrentLocationPinView()
+                    .mapStyle(.standard)
+                    .task(id: selectedItemId) {
+                        guard selectedItemId != nil else { return }
+                        // Programmatic camera moves do not always emit onEnd, so retry after layout/camera settle.
+                        try? await Task.sleep(nanoseconds: 180_000_000)
+                        guard !Task.isCancelled else { return }
+                        await MainActor.run {
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                updateSelectedItemScreenPoint(proxy: proxy)
+                            }
                         }
-                        .annotationTitles(.hidden)
+                        try? await Task.sleep(nanoseconds: 320_000_000)
+                        guard !Task.isCancelled else { return }
+                        await MainActor.run {
+                            if selectedItemScreenPoint == nil {
+                                withAnimation(.easeInOut(duration: 0.2)) {
+                                    updateSelectedItemScreenPoint(proxy: proxy)
+                                }
+                            }
+                        }
                     }
-                }
-                .mapStyle(.standard)
-                .onMapCameraChange { context in
-                    currentMapRegion = context.region
+                    .onMapCameraChange(frequency: .onEnd) { context in
+                        currentMapRegion = context.region
+                        // カメラ停止後にアイテム座標を確定してフェードイン表示
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            updateSelectedItemScreenPoint(proxy: proxy)
+                        }
+                    }
+                    .onMapCameraChange(frequency: .continuous) { context in
+                        currentMapRegion = context.region
+                        // 座標が表示済みの場合のみリアルタイム追従（手動パン中）
+                        guard selectedItemScreenPoint != nil else { return }
+                        updateSelectedItemScreenPoint(proxy: proxy)
+                    }
+                    // 選択ピンを SwiftUI overlay として最前面に描画（MapKit z-order に依存しない）
+                    .overlay {
+                        if let point = selectedItemScreenPoint,
+                           let agg = items.first(where: { $0.id == selectedItemId }) {
+                            MapPinView(isSelected: true, pinColor: firstLabelColor(for: agg))
+                                .onTapGesture { selectedItemId = nil }
+                                .position(point)
+                        }
+                    }
                 }
 
                 // 右上ボタン群
@@ -110,6 +146,9 @@ struct VisitMapView: View {
             updateCameraPosition()
         }
         .onChange(of: selectedItemId) { _, newId in
+            // スポット変更（選択・解除問わず）は即座に非表示
+            // → カメラ停止後に onEnd で座標を確定して再表示
+            selectedItemScreenPoint = nil
             if let newId {
                 focusOnItem(id: newId, animated: true)
             } else {
@@ -187,6 +226,18 @@ struct VisitMapView: View {
         } else {
             cameraPosition = .region(region)
         }
+    }
+
+    /// フォーカス中アイテムのスクリーン座標を MapProxy で更新する
+    private func updateSelectedItemScreenPoint(proxy: MapProxy) {
+        guard let id = selectedItemId,
+              let agg = items.first(where: { $0.id == id }),
+              agg.visit.latitude != 0 || agg.visit.longitude != 0 else {
+            selectedItemScreenPoint = nil
+            return
+        }
+        let coord = CLLocationCoordinate2D(latitude: agg.visit.latitude, longitude: agg.visit.longitude)
+        selectedItemScreenPoint = proxy.convert(coord, to: .local)
     }
 
     private func updateCameraPosition() {
