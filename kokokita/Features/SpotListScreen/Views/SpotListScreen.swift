@@ -270,7 +270,7 @@ struct SpotListScreen: View {
                             )
                             Annotation("", coordinate: coord, anchor: .center) {
                                 SpotPinView(
-                                    orderNumber: index + 1,
+                                    iconName: item.course.primaryCategory?.iconName ?? "mappin",
                                     isCheckedIn: item.spot.isCheckedIn,
                                     isSelected: false
                                 )
@@ -364,7 +364,7 @@ struct SpotListScreen: View {
                        let entry = store.nearbySpots.enumerated().first(where: { $0.element.spot.id == selectedSpotId }),
                        entry.element.spot.hasValidCoordinate {
                         SpotPinView(
-                            orderNumber: entry.offset + 1,
+                            iconName: entry.element.course.primaryCategory?.iconName ?? "mappin",
                             isCheckedIn: entry.element.spot.isCheckedIn,
                             isSelected: true
                         )
@@ -663,7 +663,6 @@ struct SpotListScreen: View {
                                         SpotListRowView(
                                             spot: item.spot,
                                             course: item.course,
-                                            orderNumber: index + 1,
                                             isSelected: selectedSpotId == item.spot.id,
                                             distance: nil,
                                             onCourseTap: { courseDetailRoute = CourseRoute(course: item.course, initialSpotId: item.spot.id) },
@@ -693,7 +692,6 @@ struct SpotListScreen: View {
                                     SpotListRowView(
                                         spot: item.spot,
                                         course: item.course,
-                                        orderNumber: index + 1,
                                         isSelected: selectedSpotId == item.spot.id,
                                         distance: isLocationSelectionActive ? item.distance : nil,
                                         onCourseTap: { courseDetailRoute = CourseRoute(course: item.course, initialSpotId: item.spot.id) }
@@ -1408,18 +1406,19 @@ private struct SpotModeTabShape: Shape {
 // MARK: - スポットピンビュー
 
 private struct SpotPinView: View {
-    let orderNumber: Int
+    /// コースの代表カテゴリのSF Symbol名（連番の代わりに表示するロゴ）
+    let iconName: String
     let isCheckedIn: Bool
     let isSelected: Bool
 
-    private var size: CGFloat { isSelected ? 20 : 14 }
+    private var size: CGFloat { isSelected ? 30 : 22 }
 
     var body: some View {
         ZStack {
             // フォーカス時のスポットライト（背後からの照射グロー）
             Circle()
                 .fill(Color.indigo.opacity(0.38))
-                .frame(width: 42, height: 42)
+                .frame(width: 48, height: 48)
                 .blur(radius: 9)
                 .scaleEffect(isSelected ? 1 : 0.01)
                 .opacity(isSelected ? 1 : 0)
@@ -1431,13 +1430,13 @@ private struct SpotPinView: View {
                 .shadow(color: .black.opacity(isSelected ? 0.4 : 0.25),
                         radius: isSelected ? 6 : 3, x: 0, y: 2)
 
-            // インディゴ + 番号（達成済みも同色）
+            // インディゴ + カテゴリロゴ（達成済みも同色）
             ZStack {
                 Circle()
                     .fill(Color.indigo)
                     .frame(width: size, height: size)
-                Text("\(orderNumber)")
-                    .font(.system(size: isSelected ? 9 : 6, weight: .bold))
+                Image(systemName: iconName)
+                    .font(.system(size: isSelected ? 15 : 11, weight: .semibold))
                     .foregroundStyle(.white)
             }
             .overlay(alignment: .bottomTrailing) {
@@ -1446,9 +1445,9 @@ private struct SpotPinView: View {
                     ZStack {
                         Circle()
                             .fill(Color.white)
-                            .frame(width: isSelected ? 9 : 7, height: isSelected ? 9 : 7)
+                            .frame(width: isSelected ? 12 : 9, height: isSelected ? 12 : 9)
                         Image(systemName: "checkmark")
-                            .font(.system(size: isSelected ? 5 : 4, weight: .bold))
+                            .font(.system(size: isSelected ? 7 : 5, weight: .bold))
                             .foregroundStyle(Color.indigo)
                     }
                     .offset(x: isSelected ? 3 : 2, y: isSelected ? 3 : 2)
@@ -1464,7 +1463,6 @@ private struct SpotPinView: View {
 private struct SpotListRowView: View {
     let spot: CourseSpot
     let course: Course
-    let orderNumber: Int
     let isSelected: Bool
     var distance: Double? = nil
     var onCourseTap: () -> Void = {}
@@ -1485,13 +1483,13 @@ private struct SpotListRowView: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 12) {
-                // 番号バッジ（インディゴ統一 / 達成済みは右下チェックバッジ付き）
+                // カテゴリロゴバッジ（インディゴ統一 / 達成済みは右下チェックバッジ付き）
                 ZStack {
                     Circle()
                         .fill(Color.indigo)
                         .frame(width: 32, height: 32)
-                    Text("\(orderNumber)")
-                        .font(.caption.bold())
+                    Image(systemName: course.primaryCategory?.iconName ?? "mappin")
+                        .font(.system(size: 15, weight: .semibold))
                         .foregroundStyle(.white)
                 }
                 .overlay(alignment: .bottomTrailing) {
