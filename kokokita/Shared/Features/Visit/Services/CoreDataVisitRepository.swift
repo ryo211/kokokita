@@ -131,6 +131,10 @@ final class CoreDataVisitRepository {
             v.integrityPayloadHash = nil
             v.integrityCreatedAtUTC = nil
 
+            // ブック割り当て（これが無いと bookId == currentBookId で絞り込む
+            // 一覧フェッチに一切ヒットせず、保存した記録が永久に表示されなくなる）
+            v.bookId = currentBookId
+
             // ---- VisitDetails（可変部） ----
             let d = VisitDetailsEntity(context: ctx)
             d.title = details.title
