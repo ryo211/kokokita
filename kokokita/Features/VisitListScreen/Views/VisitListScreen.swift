@@ -176,6 +176,7 @@ struct VisitListScreen: View {
                 }
             }
             .listStyle(.plain)
+            .scrollContentBackground(.hidden)
             .onChange(of: selectedDate) { _, newDate in
                 if let date = newDate {
                     withAnimation {
@@ -284,30 +285,35 @@ struct VisitListScreen: View {
     }
     
     private var contentStack: some View {
-        VStack(spacing: 0) {
-            HomeFilterHeader(
-                store: store,
-                displayMode: displayMode,
-                onTapSearch: {
-                    showSearchSheet = true
-                },
-                onToggleDisplayMode: { newMode in
-                    displayMode = newMode
-                }
-            )
-            .sheet(isPresented: $showSearchSheet) {
-                NavigationStack { SearchFilterSheet(store: store) { showSearchSheet = false } }
-                .iPadSheetSize()
-            }
+        ZStack {
+            // 背景（ホーム画面と同じグラデーション + 抽象ライン装飾）
+            HomeStyleBackground()
 
-            // 表示モードで切り替え
-            switch displayMode {
-            case .list:
-                listContent()
-            case .map:
-                mapContent()
-            case .calendar:
-                calendarContent()
+            VStack(spacing: 0) {
+                HomeFilterHeader(
+                    store: store,
+                    displayMode: displayMode,
+                    onTapSearch: {
+                        showSearchSheet = true
+                    },
+                    onToggleDisplayMode: { newMode in
+                        displayMode = newMode
+                    }
+                )
+                .sheet(isPresented: $showSearchSheet) {
+                    NavigationStack { SearchFilterSheet(store: store) { showSearchSheet = false } }
+                    .iPadSheetSize()
+                }
+
+                // 表示モードで切り替え
+                switch displayMode {
+                case .list:
+                    listContent()
+                case .map:
+                    mapContent()
+                case .calendar:
+                    calendarContent()
+                }
             }
         }
         .navigationDestination(isPresented: Binding(
@@ -448,7 +454,6 @@ struct VisitListScreen: View {
             Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color(.systemBackground))
     }
 
     // MARK: - Map Content
