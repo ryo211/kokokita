@@ -79,8 +79,9 @@ struct RootTabView: View {
                     .opacity(tab == .menu ? 1 : 0)
                     .zIndex(tab == .menu ? 1 : 0)
 
-                // 記録画面のみ: 右下にフローティングボタン（地図シート・カレンダー表示中は非表示）
-                if tab == .records && !ui.isMapSheetVisible && !ui.isCalendarVisible {
+                // 記録画面のみ: 右下にフローティングボタン
+                // （地図シート・カレンダー表示中、記録詳細の写真ライトボックス表示中は非表示）
+                if tab == .records && !ui.isMapSheetVisible && !ui.isCalendarVisible && !ui.isPhotoLightboxVisible {
                     FloatingAtozukeButton {
                         recording.showManualEntrySheet = true
                     }

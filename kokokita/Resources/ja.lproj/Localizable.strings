@@ -24,6 +24,7 @@
 "common.copy" = "コピー";
 "common.showOptions" = "詳細設定";
 "common.hideOptions" = "詳細設定を閉じる";
+"common.photoSaved" = "保存しました";
 
 // MARK: - Visit Edit
 "visit.edit.titlePlaceholder" = "タイトル";

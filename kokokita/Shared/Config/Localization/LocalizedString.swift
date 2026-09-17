@@ -27,6 +27,7 @@ enum L {
         static let copy = localized("common.copy")
         static let showOptions = localized("common.showOptions")
         static let hideOptions = localized("common.hideOptions")
+        static let photoSaved = localized("common.photoSaved")
     }
 
     // MARK: - Visit Edit

@@ -1,6 +1,7 @@
 import SwiftUI
 import MapKit
 import CoreLocation
+import Photos
 
 // MARK: - 詳細画面
 struct VisitDetailScreen: View {
@@ -23,7 +24,6 @@ struct VisitDetailScreen: View {
 
     // 写真全画面表示用（View固有のUI状態）
     @State private var photoFullScreenIndex: Int? = nil
-    @State private var photoDragOffset: CGFloat = 0
 
     // 共有プレビュー
     @State private var showSharePreview = false
@@ -70,26 +70,24 @@ struct VisitDetailScreen: View {
                 detailContent
             }
 
-            // 写真全画面表示オーバーレイ
+            // 写真ライトボックス（地図のスポット/記録写真タップと同じ、
+            // 暗転オーバーレイ + フェード&スケールで出す見せ方。保存ボタンのみ右上に残す）
             if let index = photoFullScreenIndex {
-                Color.clear
-                    .ignoresSafeArea()
-                    .overlay(
-                        PhotoPager(
-                            paths: data.photoPaths,
-                            startIndex: index,
-                            externalDragOffset: $photoDragOffset,
-                            onDismiss: { photoFullScreenIndex = nil }
-                        )
-                        .ignoresSafeArea()
-                    )
-                    .transition(.opacity)
-                    .zIndex(1000)
+                VisitPhotoLightboxView(
+                    paths: data.photoPaths,
+                    startIndex: index,
+                    onDismiss: {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            photoFullScreenIndex = nil
+                        }
+                    }
+                )
+                .transition(.opacity.combined(with: .scale(scale: 0.92)))
+                .zIndex(1000)
             }
         }
         // ▼ 標準の戻るボタンを活かしつつ、右側に「編集」を出す
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar(photoFullScreenIndex == nil || photoDragOffset != 0 ? .visible : .hidden, for: .navigationBar)
         .toolbar {
             ToolbarItemGroup(placement: .topBarTrailing) {
                 Button {
@@ -155,29 +153,16 @@ struct VisitDetailScreen: View {
             await store.loadNearbyVisits(visitId: visitId)
             await store.loadSameGroupVisits(visitId: visitId)
         }
-        .onChange(of: photoFullScreenIndex) { oldValue, newValue in
-            if newValue != nil {
-                // 写真が開いた時: フッターを非表示
-                appUIState.tabBarOpacity = 0
-                appUIState.isTabBarHidden = true
-            } else {
-                // 写真が閉じた時: フッターを表示
-                appUIState.tabBarOpacity = 1
-                appUIState.isTabBarHidden = false
-                photoDragOffset = 0  // リセット
-            }
-        }
-        .onChange(of: photoDragOffset) { oldValue, newValue in
-            // ドラッグ中: ドラッグ量に応じてフッターをフェードイン
-            if photoFullScreenIndex != nil {
-                let progress = min(abs(newValue) / 150, 1.0)
-                appUIState.tabBarOpacity = progress
-            }
+        .onChange(of: photoFullScreenIndex) { _, newValue in
+            // 手動記録のフローティングボタンがライトボックスより手前に出てしまうため、
+            // 開閉に合わせてRootTabView側で非表示にする
+            appUIState.isPhotoLightboxVisible = (newValue != nil)
         }
         .onDisappear {
             // 画面を離れる時はタブバーを表示
             appUIState.isTabBarHidden = false
             appUIState.tabBarOpacity = 1
+            appUIState.isPhotoLightboxVisible = false
         }
     }
 
@@ -197,7 +182,7 @@ struct VisitDetailScreen: View {
             onMemberTap: store.handleMemberTap,
             onMapTap: handleMapTap,
             labelColorMap: store.labelColorMap,
-            photoFullScreenIndex: $photoFullScreenIndex
+            photoFullScreenIndex: animatedPhotoFullScreenIndex
         )
     }
 
@@ -205,6 +190,116 @@ struct VisitDetailScreen: View {
     private func handleMapTap() {
         dismiss()
         onMapTap?()
+    }
+
+    // 写真を開く操作(PhotoReadOnlyGrid内のタップ)はwithAnimationでラップされていないため、
+    // ここでBindingのsetterごしに包み、開閉どちらもフェード&スケールのtransitionが効くようにする
+    private var animatedPhotoFullScreenIndex: Binding<Int?> {
+        Binding(
+            get: { photoFullScreenIndex },
+            set: { newValue in
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    photoFullScreenIndex = newValue
+                }
+            }
+        )
+    }
+}
+
+// MARK: - 写真ライトボックス
+
+/// 記録詳細画面の写真タップ時の拡大表示。地図のスポット/記録写真タップと同じ
+/// 暗転オーバーレイ+タップで閉じるシンプルな見せ方に統一しつつ、
+/// 複数枚のスワイプ閲覧と、カメラロールへの保存ボタンだけは維持する
+private struct VisitPhotoLightboxView: View {
+    let paths: [String]
+    let onDismiss: () -> Void
+    @State private var currentIndex: Int
+    @State private var showSavedToast = false
+
+    init(paths: [String], startIndex: Int, onDismiss: @escaping () -> Void) {
+        self.paths = paths
+        self.onDismiss = onDismiss
+        _currentIndex = State(initialValue: startIndex)
+    }
+
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.9)
+                .ignoresSafeArea()
+
+            TabView(selection: $currentIndex) {
+                ForEach(paths.indices, id: \.self) { index in
+                    Group {
+                        if let uiImage = ImageStore.load(paths[index]) {
+                            Image(uiImage: uiImage)
+                                .resizable()
+                                .scaledToFit()
+                                .padding(24)
+                        } else {
+                            Color.clear
+                        }
+                    }
+                    .tag(index)
+                }
+            }
+            .tabViewStyle(.page(indexDisplayMode: paths.count > 1 ? .always : .never))
+            .ignoresSafeArea()
+
+            // 保存ボタン・トーストはセーフエリアに従わせ、ノッチ/Dynamic Islandを避ける
+            VStack {
+                HStack {
+                    Spacer()
+                    Button {
+                        saveCurrentPhoto()
+                    } label: {
+                        Image(systemName: "square.and.arrow.down")
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundStyle(.white)
+                            .frame(width: 40, height: 40)
+                            .background(.black.opacity(0.45), in: Circle())
+                            .overlay(Circle().strokeBorder(.white.opacity(0.5), lineWidth: 1))
+                    }
+                    .padding(.trailing, 16)
+                }
+
+                if showSavedToast {
+                    Text(L.Common.photoSaved)
+                        .font(.caption)
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(Color.black.opacity(0.8), in: Capsule())
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                        .padding(.top, 8)
+                }
+
+                Spacer()
+            }
+            .padding(.top, 12)
+        }
+        .statusBarHidden(true)
+        .contentShape(Rectangle())
+        .onTapGesture { onDismiss() }
+    }
+
+    private func saveCurrentPhoto() {
+        guard paths.indices.contains(currentIndex),
+              let img = ImageStore.load(paths[currentIndex]) else { return }
+        PHPhotoLibrary.requestAuthorization { status in
+            guard status == .authorized || status == .limited else { return }
+            PHPhotoLibrary.shared().performChanges({
+                PHAssetChangeRequest.creationRequestForAsset(from: img)
+            }) { success, _ in
+                guard success else { return }
+                DispatchQueue.main.async {
+                    withAnimation { showSavedToast = true }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                        withAnimation { showSavedToast = false }
+                    }
+                }
+            }
+        }
     }
 }
 

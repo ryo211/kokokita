@@ -24,6 +24,7 @@
 "common.copy" = "Copy";
 "common.showOptions" = "More options";
 "common.hideOptions" = "Hide options";
+"common.photoSaved" = "Saved";
 
 // MARK: - Visit Edit
 "visit.edit.titlePlaceholder" = "Title";

@@ -24,6 +24,9 @@ struct VisitMapView: View {
     // ここに大きいピンをoverlayで重ねて描画することで必ず最前面に表示する
     @State private var selectedItemScreenPoint: CGPoint? = nil
     @AppStorage(Self.zoomOnVisitFocusKey) private var zoomOnVisitFocus = true
+    // 写真タップ時のライトボックス表示（コース詳細画面のスポット画像タップと同じ、
+    // 暗転オーバーレイ + フェード&スケールで出す軽量な見せ方）
+    @State private var expandedImage: UIImage? = nil
 
     var body: some View {
         VStack(spacing: 0) {
@@ -92,6 +95,20 @@ struct VisitMapView: View {
                         guard selectedItemScreenPoint != nil else { return }
                         updateSelectedItemScreenPoint(proxy: proxy)
                     }
+                    // フォーカス中アイテムに写真があれば、左上に中型サイズで
+                    // リーダーライン付きに表示する（巡礼モードは右上/中央だが記録モードは左上に固定）
+                    .overlay {
+                        if let point = selectedItemScreenPoint,
+                           let agg = items.first(where: { $0.id == selectedItemId }),
+                           let firstPhotoPath = agg.details.photoPaths.first,
+                           let uiImage = ImageStore.load(firstPhotoPath) {
+                            VisitPhotoLeaderLineView(spotPoint: point, image: uiImage) {
+                                withAnimation(.easeInOut(duration: 0.2)) {
+                                    expandedImage = uiImage
+                                }
+                            }
+                        }
+                    }
                     // 選択ピンを SwiftUI overlay として最前面に描画（MapKit z-order に依存しない）
                     .overlay {
                         if let point = selectedItemScreenPoint,
@@ -135,6 +152,28 @@ struct VisitMapView: View {
                 }
             }
         }
+        // 写真ライトボックス（タップで閉じる）
+        .overlay {
+            if let image = expandedImage {
+                ZStack {
+                    Color.black.opacity(0.65)
+                        .ignoresSafeArea()
+                    Image(uiImage: image)
+                        .resizable()
+                        .scaledToFit()
+                        .padding(32)
+                        .shadow(color: .black.opacity(0.35), radius: 24, x: 0, y: 8)
+                }
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        expandedImage = nil
+                    }
+                }
+                .transition(.opacity.combined(with: .scale(scale: 0.92)))
+            }
+        }
+        .animation(.easeInOut(duration: 0.2), value: expandedImage != nil)
         .task {
             if let id = selectedItemId {
                 focusOnItem(id: id, animated: false)
@@ -465,6 +504,61 @@ private struct VisitMapSettingsSheet: View {
                 .background(isSelected ? Color.indigo : Color.clear, in: Capsule())
         }
         .buttonStyle(.plain)
+    }
+}
+
+// MARK: - Visit Photo Leader Line View
+
+/// フォーカス中の訪問記録に写真がある場合、地図の左上に中型サイズで表示する
+/// （コース詳細画面のSpotLeaderLineViewとは別実装。記録モードでは常に左上・中型固定でよいため
+/// サイズ切り替えは持たせず、位置も左上に固定している）
+private struct VisitPhotoLeaderLineView: View {
+    let spotPoint: CGPoint
+    let image: UIImage
+    var onTap: () -> Void = {}
+
+    private let margin: CGFloat = 12
+    private let imageSize = CGSize(width: 132, height: 88)
+
+    var body: some View {
+        GeometryReader { geo in
+            let imgCenter = CGPoint(x: imageSize.width / 2 + margin, y: imageSize.height / 2 + margin)
+            // ピンに近い側（右下角）から線を伸ばす
+            let lineEnd = CGPoint(x: imgCenter.x + imageSize.width / 2, y: imgCenter.y + imageSize.height / 2)
+
+            ZStack {
+                Canvas { ctx, _ in
+                    let pinOuterRadius: CGFloat = 13
+                    let dx = lineEnd.x - spotPoint.x
+                    let dy = lineEnd.y - spotPoint.y
+                    let dist = sqrt(dx * dx + dy * dy)
+                    let lineStart: CGPoint = dist > 0
+                        ? CGPoint(x: spotPoint.x + dx / dist * pinOuterRadius,
+                                  y: spotPoint.y + dy / dist * pinOuterRadius)
+                        : spotPoint
+
+                    var path = Path()
+                    path.move(to: lineStart)
+                    path.addLine(to: lineEnd)
+
+                    ctx.stroke(path, with: .color(.black.opacity(0.25)),
+                               style: StrokeStyle(lineWidth: 4.5, lineCap: .round))
+                    ctx.stroke(path, with: .color(.white.opacity(0.95)),
+                               style: StrokeStyle(lineWidth: 2.5, lineCap: .round))
+                }
+                .allowsHitTesting(false)
+
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: imageSize.width, height: imageSize.height)
+                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    .shadow(color: .black.opacity(0.3), radius: 6, x: 0, y: 2)
+                    .position(imgCenter)
+                    .onTapGesture { onTap() }
+            }
+            .clipped()
+        }
     }
 }
 
