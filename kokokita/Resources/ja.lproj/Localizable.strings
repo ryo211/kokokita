@@ -747,10 +747,14 @@
 "tourMode.settings.photoSpotsOnly" = "写真があるスポットのみ";
 "tourMode.settings.typewriter" = "説明文タイプライター演出";
 "tourMode.settings.typewriterDesc" = "説明文を一文字ずつ表示します。ONにするとスポット切り替え時間は無効になります。";
+"tourMode.settings.showSummary" = "最初にコース概要を表示";
+"tourMode.settings.showSummaryDesc" = "ツアー開始時、コースの概要を3秒ほど表示してから自動巡回を始めます。";
 
 // MARK: - CourseDetail メニュー
 "courseDetail.menu.courseInfo" = "コース概要";
 "courseDetail.menu.edit" = "編集";
+"courseDetail.tour.preparingTitle" = "ツアー用に写真を準備中";
+"courseDetail.tour.preparingMessage" = "準備後に自動で巡回を開始します";
 "courseDetail.deleteConfirmTitle" = "コースを削除";
 "courseDetail.deleteConfirmMessage" = "このコースとスポットをすべて削除します。この操作は取り消せません。";
 "courseDetail.menu.sectionMapSettings" = "地図設定";

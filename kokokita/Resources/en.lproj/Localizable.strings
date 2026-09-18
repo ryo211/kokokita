@@ -743,10 +743,14 @@
 "tourMode.settings.photoSpotsOnly" = "Photo spots only";
 "tourMode.settings.typewriter" = "Typewriter Effect";
 "tourMode.settings.typewriterDesc" = "Reveals the description one character at a time. When ON, the auto-advance timer is disabled.";
+"tourMode.settings.showSummary" = "Show course summary first";
+"tourMode.settings.showSummaryDesc" = "Shows the course summary for about 3 seconds before the tour starts automatically.";
 
 // MARK: - CourseDetail Menu
 "courseDetail.menu.courseInfo" = "Course Info";
 "courseDetail.menu.edit" = "Edit";
+"courseDetail.tour.preparingTitle" = "Preparing photos for the tour";
+"courseDetail.tour.preparingMessage" = "The tour will start automatically once ready";
 "courseDetail.deleteConfirmTitle" = "Delete Course";
 "courseDetail.deleteConfirmMessage" = "This will delete the course and all its spots. This action cannot be undone.";
 "courseDetail.menu.sectionMapSettings" = "Map Settings";

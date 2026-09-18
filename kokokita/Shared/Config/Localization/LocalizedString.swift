@@ -856,6 +856,8 @@ enum L {
         static let settingsPhotoSpotsOnly = localized("tourMode.settings.photoSpotsOnly")
         static let settingsTypewriter = localized("tourMode.settings.typewriter")
         static let settingsTypewriterDesc = localized("tourMode.settings.typewriterDesc")
+        static let settingsShowSummary = localized("tourMode.settings.showSummary")
+        static let settingsShowSummaryDesc = localized("tourMode.settings.showSummaryDesc")
     }
 
     // MARK: - CourseDetail メニュー
@@ -863,6 +865,8 @@ enum L {
         static let menuCourseInfo = localized("courseDetail.menu.courseInfo")
         static let menuShare = localized("courseDetail.menu.share")
         static let menuEdit = localized("courseDetail.menu.edit")
+        static let tourPreparingTitle = localized("courseDetail.tour.preparingTitle")
+        static let tourPreparingMessage = localized("courseDetail.tour.preparingMessage")
         static let deleteConfirmTitle = localized("courseDetail.deleteConfirmTitle")
         static let deleteConfirmMessage = localized("courseDetail.deleteConfirmMessage")
         static let menuSectionMapSettings = localized("courseDetail.menu.sectionMapSettings")

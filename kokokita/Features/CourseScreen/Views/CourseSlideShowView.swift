@@ -1212,8 +1212,9 @@ private struct VideoPreparationOverlay: View {
 }
 
 // MARK: - 画像キャッシュ
+// コース詳細画面の地図フォーカス型ツアー（CourseDetailView）でも事前ロードに再利用するため internal
 
-private final class CourseSlideShowImageCache {
+final class CourseSlideShowImageCache {
     static let shared = CourseSlideShowImageCache()
 
     private let cache = NSCache<NSString, UIImage>()

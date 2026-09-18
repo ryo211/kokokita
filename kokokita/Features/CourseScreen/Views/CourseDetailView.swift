@@ -77,12 +77,20 @@ struct CourseDetailView: View {
     // MARK: - ツアーモード状態
     @AppStorage("tourMode.intervalSeconds") private var tourIntervalSeconds: Double = 3.0
     @AppStorage("tourMode.photoSpotsOnly") private var tourPhotoSpotsOnly = false
+    @AppStorage("tourMode.showCourseSummaryFirst") private var tourShowCourseSummaryFirst = false
     @State private var isTourPlaying = false
     @State private var isTourPaused = false
     @State private var tourSpotIndex = 0
     @State private var tourTask: Task<Void, Never>?
     @State private var showTourSettings = false
     @State private var isShowingTourEndPromotion = false
+    // ツアー開始前の画像事前取得（進捗バー表示中はまだ地図フォーカスは動かさない）
+    @State private var isPreparingTour = false
+    @State private var tourPreparationProgress: Double = 0
+    @State private var tourPreparationTask: Task<Void, Never>? = nil
+    // ツアー開始直後、任意で既存の「コース概要」シートを数秒表示してから自動巡回を始める
+    @State private var pendingTourSpotsAfterSummary: [CourseSpot]? = nil
+    @State private var tourSummaryAutoDismissTask: Task<Void, Never>? = nil
     // シネマモード（programmatic navigation）
     @State private var showCinemaMode = false
     // ペイウォール（Premiumゲート）
@@ -100,8 +108,10 @@ struct CourseDetailView: View {
         return course.spots.filter { $0.coverImageUrl != nil || $0.localCoverImagePath != nil }
     }
 
-    /// ツアー中（再生中 or 終了プロモーション表示中）
-    private var isTourActive: Bool { isTourPlaying || isShowingTourEndPromotion }
+    /// ツアー中（準備中 or 再生中 or 終了プロモーション表示中）
+    private var isTourActive: Bool {
+        isPreparingTour || pendingTourSpotsAfterSummary != nil || isTourPlaying || isShowingTourEndPromotion
+    }
 
     init(
         course: Course,
@@ -179,6 +189,12 @@ struct CourseDetailView: View {
                 }
                 .animation(.easeInOut(duration: 0.3), value: viewLayout)
 
+                // ツアー開始前の画像取得中（写真が揃うまで地図フォーカスは動かさない）
+                if isPreparingTour {
+                    TourPreparationOverlay(progress: tourPreparationProgress)
+                        .transition(.opacity)
+                }
+
                 // ツアー終了プロモーション画面（タップで解除）
                 if isShowingTourEndPromotion {
                     KokokitaEndPromotionStage(
@@ -191,6 +207,7 @@ struct CourseDetailView: View {
                 }
 
             }
+            .animation(.easeInOut(duration: 0.3), value: isPreparingTour)
             .animation(.easeInOut(duration: 0.4), value: isShowingTourEndPromotion)
         }
         .navigationTitle(showTitle ? course.title : "")
@@ -206,6 +223,10 @@ struct CourseDetailView: View {
         }
         .onDisappear {
             if isTourActive {
+                tourPreparationTask?.cancel()
+                isPreparingTour = false
+                tourSummaryAutoDismissTask?.cancel()
+                pendingTourSpotsAfterSummary = nil
                 tourTask?.cancel()
                 isTourPlaying = false
                 isShowingTourEndPromotion = false
@@ -216,7 +237,8 @@ struct CourseDetailView: View {
             SpotTourSettingsSheet(
                 intervalSeconds: $tourIntervalSeconds,
                 photoSpotsOnly: $tourPhotoSpotsOnly,
-                typewriterEnabled: $tourTypewriterEnabled
+                typewriterEnabled: $tourTypewriterEnabled,
+                showCourseSummaryFirst: $tourShowCourseSummaryFirst
             ) {
                 startTour()
             }
@@ -337,7 +359,15 @@ struct CourseDetailView: View {
                 }
             }
         }
-        .sheet(isPresented: $showSummary) {
+        .sheet(isPresented: $showSummary, onDismiss: {
+            // 手動で閉じても、3秒タイマーで自動的に閉じても、ここで一元的にツアーを開始する
+            tourSummaryAutoDismissTask?.cancel()
+            tourSummaryAutoDismissTask = nil
+            if let spots = pendingTourSpotsAfterSummary {
+                pendingTourSpotsAfterSummary = nil
+                beginTourPlayback(spots: spots)
+            }
+        }) {
             CourseSummarySheet(course: course)
         }
         .sheet(isPresented: $showCourseInquiry) {
@@ -613,8 +643,9 @@ struct CourseDetailView: View {
         if spotPhotoSize != .none,
            let spotPoint = selectedSpotScreenPoint,
            let spot = course.spots.first(where: { $0.id == selectedSpotId }) {
-            // ローカル保存画像 → リモートURL の順で優先
-            let localImage = spot.localCoverImagePath.flatMap { LocalImageStorage.shared.load(from: $0) }
+            // ツアーの事前取得キャッシュ → ローカル保存画像 → リモートURL の順で優先
+            let localImage = CourseSlideShowImageCache.shared.cachedImage(for: spot)
+                ?? spot.localCoverImagePath.flatMap { LocalImageStorage.shared.load(from: $0) }
             let remoteUrl = spot.coverImageUrl.flatMap { URL(string: $0) }
 
             if localImage != nil || remoteUrl != nil {
@@ -828,6 +859,56 @@ struct CourseDetailView: View {
     private func startTour() {
         let spots = tourSpots
         guard !spots.isEmpty else { return }
+        isPreparingTour = true
+        tourPreparationProgress = 0
+        tourPreparationTask = Task {
+            await preloadTourImages(spots: spots)
+            guard !Task.isCancelled else { return }
+            await MainActor.run {
+                isPreparingTour = false
+                if tourShowCourseSummaryFirst {
+                    presentTourSummary(spots: spots)
+                } else {
+                    beginTourPlayback(spots: spots)
+                }
+            }
+        }
+    }
+
+    /// ツアー中に地図がフォーカスを移すたびリモート画像をその場で取得すると
+    /// 通信待ちで画像が表示されないまま次のスポットへ進んでしまうため、
+    /// 開始前にまとめて取得してキャッシュしておく（CourseSlideShowImageCacheを共用）
+    private func preloadTourImages(spots: [CourseSpot]) async {
+        // コース概要シートもカバー画像を表示するため、URLCacheのウォームアップも兼ねて先に取得しておく
+        if tourShowCourseSummaryFirst {
+            _ = await CourseSlideShowImageCache.shared.image(for: course)
+        }
+        let total = spots.count
+        guard total > 0 else { return }
+        for (index, spot) in spots.enumerated() {
+            guard !Task.isCancelled else { return }
+            _ = await CourseSlideShowImageCache.shared.image(for: spot)
+            await MainActor.run {
+                tourPreparationProgress = Double(index + 1) / Double(total)
+            }
+        }
+    }
+
+    /// 右上メニューの「コース概要」と同じシート（CourseSummarySheet）を表示し、
+    /// 3秒後に自動的に閉じて自動巡回を始める（手動で閉じた場合も.sheetのonDismissで開始する）
+    private func presentTourSummary(spots: [CourseSpot]) {
+        pendingTourSpotsAfterSummary = spots
+        showSummary = true
+        tourSummaryAutoDismissTask = Task {
+            try? await Task.sleep(nanoseconds: 3_000_000_000)
+            guard !Task.isCancelled else { return }
+            await MainActor.run {
+                showSummary = false
+            }
+        }
+    }
+
+    private func beginTourPlayback(spots: [CourseSpot]) {
         // 地図が見えていないレイアウトの場合は split に切り替え
         if viewLayout == .listFull {
             withAnimation(.easeInOut(duration: 0.3)) { viewLayout = .split }
@@ -841,6 +922,15 @@ struct CourseDetailView: View {
     }
 
     private func stopTour() {
+        tourPreparationTask?.cancel()
+        tourPreparationTask = nil
+        isPreparingTour = false
+        tourSummaryAutoDismissTask?.cancel()
+        tourSummaryAutoDismissTask = nil
+        if pendingTourSpotsAfterSummary != nil {
+            pendingTourSpotsAfterSummary = nil
+            showSummary = false
+        }
         tourTask?.cancel()
         typewriterTask?.cancel()
         typewriterCount = 0
@@ -999,6 +1089,7 @@ struct SpotTourSettingsSheet: View {
     @Binding var intervalSeconds: Double
     @Binding var photoSpotsOnly: Bool
     @Binding var typewriterEnabled: Bool
+    @Binding var showCourseSummaryFirst: Bool
     @Environment(\.dismiss) private var dismiss
     let onStart: () -> Void
 
@@ -1051,6 +1142,17 @@ struct SpotTourSettingsSheet: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
 
+                // 開始時のコース概要表示
+                VStack(alignment: .leading, spacing: 6) {
+                    Toggle(L.TourMode.settingsShowSummary, isOn: $showCourseSummaryFirst)
+                        .font(.headline)
+                        .tint(.indigo)
+                    Text(L.TourMode.settingsShowSummaryDesc)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
                 Button {
                     dismiss()
                     onStart()
@@ -1074,7 +1176,7 @@ struct SpotTourSettingsSheet: View {
                 }
             }
         }
-        .presentationDetents([.height(440)])
+        .presentationDetents([.height(540)])
     }
 }
 
@@ -1798,6 +1900,40 @@ private struct SpotDetailExpandedView: View {
             photoPaths: agg.details.photoPaths,
             isManualEntry: agg.visit.isManualEntry
         )
+    }
+}
+
+// MARK: - ツアー準備中オーバーレイ
+
+/// ツアー開始前に全スポットの画像を事前取得している間に表示する進捗オーバーレイ
+private struct TourPreparationOverlay: View {
+    let progress: Double
+
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.78)
+                .ignoresSafeArea()
+
+            VStack(spacing: 18) {
+                Image(systemName: "photo.on.rectangle.angled")
+                    .font(.system(size: 38, weight: .semibold))
+                    .foregroundStyle(.white.opacity(0.88))
+
+                VStack(spacing: 8) {
+                    Text(L.CourseDetail.tourPreparingTitle)
+                        .font(.headline)
+                        .foregroundStyle(.white)
+                    Text(L.CourseDetail.tourPreparingMessage)
+                        .font(.caption)
+                        .foregroundStyle(.white.opacity(0.64))
+                }
+
+                ProgressView(value: progress)
+                    .tint(.white)
+                    .frame(width: 210)
+            }
+            .padding(.horizontal, 24)
+        }
     }
 }
 
