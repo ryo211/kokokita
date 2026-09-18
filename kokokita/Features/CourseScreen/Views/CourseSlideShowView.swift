@@ -827,12 +827,11 @@ struct KokokitaEndPromotionStage: View {
                         .foregroundStyle(.white.opacity(0.88))
                 }
 
-                Text("App Store「ココキタ」で検索🔍")
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundStyle(.white.opacity(0.82))
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 8)
-                    .background(.black.opacity(0.22), in: Capsule())
+                // Apple公式のダウンロード導線バッジ（正規デザイン）
+                Image("Download_on_the_App_Store_Badge_JP_RGB_blk_100317")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(height: 44)
                     .padding(.top, 8)
             }
             .padding(.horizontal, 28)

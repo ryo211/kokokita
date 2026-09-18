@@ -6,44 +6,68 @@ struct AppIconGeneratorScreen: View {
     @State private var selectedAppearance: AppIconAppearance = .light
     @State private var selectedVariant: AppIconVariant = .clearBlueDeep
     @State private var logoScaleAdjustment: Double = 1.0
+    @State private var showMapPattern: Bool = false
+    @State private var mapPatternSeed: UInt64 = 20250128
     @State private var renderedShareItem: RenderedAppIcon?
     @State private var alert: AlertMessage?
 
     var body: some View {
-        List {
-            Section {
-                VStack(spacing: 18) {
-                    AppIconCanvas(
-                        appearance: selectedAppearance,
-                        variant: selectedVariant,
-                        size: 220,
-                        logoScaleAdjustment: logoScaleAdjustment
-                    )
-                        .frame(width: 220, height: 220)
-                        .clipShape(RoundedRectangle(cornerRadius: 48, style: .continuous))
-                        .shadow(color: .black.opacity(0.18), radius: 18, x: 0, y: 8)
-                        .padding(.top, 10)
+        VStack(spacing: 0) {
+            previewHeader
 
-                    VStack(spacing: 4) {
-                        Text("\(selectedAppearance.title) / \(selectedVariant.title)")
-                            .font(.headline)
-                        Text(selectedVariant.description(for: selectedAppearance))
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .multilineTextAlignment(.center)
-                        Text("Logo \(Int(logoScaleAdjustment * 100))%")
-                            .font(.caption2.monospacedDigit())
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                .frame(maxWidth: .infinity)
-                .listRowInsets(EdgeInsets(top: 14, leading: 16, bottom: 18, trailing: 16))
-            } header: {
-                Text("Preview")
-            } footer: {
-                Text("書き出し画像は1024x1024 PNGです。XcodeのAppIconに登録する前提なので、文字は入れずロゴを大きめにしています。")
+            Divider()
+
+            settingsList
+        }
+        .navigationTitle("App Icon Generator")
+        .navigationBarTitleDisplayMode(.inline)
+        .sheet(item: $renderedShareItem) { item in
+            ShareSheet(items: [item.url])
+        }
+        .alert(item: $alert) { alert in
+            Alert(
+                title: Text(alert.title),
+                message: Text(alert.message),
+                dismissButton: .default(Text("OK"))
+            )
+        }
+    }
+
+    // 下のListをスクロールしても常に見える固定プレビュー
+    private var previewHeader: some View {
+        VStack(spacing: 12) {
+            AppIconCanvas(
+                appearance: selectedAppearance,
+                variant: selectedVariant,
+                size: 140,
+                logoScaleAdjustment: logoScaleAdjustment,
+                showMapPattern: showMapPattern,
+                mapPatternSeed: mapPatternSeed
+            )
+                .frame(width: 140, height: 140)
+                .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
+                .shadow(color: .black.opacity(0.18), radius: 14, x: 0, y: 6)
+
+            VStack(spacing: 4) {
+                Text("\(selectedAppearance.title) / \(selectedVariant.title)")
+                    .font(.headline)
+                Text(selectedVariant.description(for: selectedAppearance))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                Text("Logo \(Int(logoScaleAdjustment * 100))%")
+                    .font(.caption2.monospacedDigit())
+                    .foregroundStyle(.secondary)
             }
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 16)
+        .padding(.horizontal, 16)
+        .background(Color(.systemGroupedBackground))
+    }
 
+    private var settingsList: some View {
+        List {
             Section {
                 Picker("Appearance", selection: $selectedAppearance) {
                     ForEach(AppIconAppearance.allCases) { appearance in
@@ -52,7 +76,7 @@ struct AppIconGeneratorScreen: View {
                 }
                 .pickerStyle(.segmented)
             } footer: {
-                Text("Dark / Tinted はXcodeのAppIconに対応スロットを用意した場合の候補です。Tintedはホーム画面の色調変更に馴染みやすいよう、控えめで単色寄りにしています。")
+                Text("書き出し画像は1024x1024 PNGです。XcodeのAppIconに登録する前提なので、文字は入れずロゴを大きめにしています。\n\nDark / Tinted はXcodeのAppIconに対応スロットを用意した場合の候補です。Tintedはホーム画面の色調変更に馴染みやすいよう、控えめで単色寄りにしています。")
             }
 
             Section {
@@ -79,6 +103,22 @@ struct AppIconGeneratorScreen: View {
             }
 
             Section {
+                Toggle("地図パターンを重ねる", isOn: $showMapPattern)
+
+                if showMapPattern {
+                    Button {
+                        withAnimation(.snappy) {
+                            mapPatternSeed = UInt64.random(in: UInt64.min...UInt64.max)
+                        }
+                    } label: {
+                        Label("模様を変える", systemImage: "shuffle")
+                    }
+                }
+            } footer: {
+                Text("ホーム画面や記録リストの背景と同じ、うっすらとした地図風のライン装飾を重ねます。同じ模様は固定シードで再現されるため、気に入らなければ「模様を変える」でランダムに引き直せます。")
+            }
+
+            Section {
                 ForEach(AppIconVariant.allCases) { variant in
                     Button {
                         withAnimation(.snappy) {
@@ -90,7 +130,9 @@ struct AppIconGeneratorScreen: View {
                                 appearance: selectedAppearance,
                                 variant: variant,
                                 size: 52,
-                                logoScaleAdjustment: logoScaleAdjustment
+                                logoScaleAdjustment: logoScaleAdjustment,
+                                showMapPattern: showMapPattern,
+                                mapPatternSeed: mapPatternSeed
                             )
                                 .frame(width: 52, height: 52)
                                 .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
@@ -131,18 +173,6 @@ struct AppIconGeneratorScreen: View {
                 Text("共有シートから画像保存、AirDrop、Files保存などを選べます。")
             }
         }
-        .navigationTitle("App Icon Generator")
-        .navigationBarTitleDisplayMode(.inline)
-        .sheet(item: $renderedShareItem) { item in
-            ShareSheet(items: [item.url])
-        }
-        .alert(item: $alert) { alert in
-            Alert(
-                title: Text(alert.title),
-                message: Text(alert.message),
-                dismissButton: .default(Text("OK"))
-            )
-        }
     }
 
     @MainActor
@@ -150,7 +180,9 @@ struct AppIconGeneratorScreen: View {
         guard let image = renderIcon(
             appearance: selectedAppearance,
             variant: selectedVariant,
-            logoScaleAdjustment: logoScaleAdjustment
+            logoScaleAdjustment: logoScaleAdjustment,
+            showMapPattern: showMapPattern,
+            mapPatternSeed: mapPatternSeed
         ) else {
             alert = AlertMessage(title: "書き出し失敗", message: "アイコン画像を生成できませんでした。")
             return
@@ -176,13 +208,17 @@ struct AppIconGeneratorScreen: View {
     private func renderIcon(
         appearance: AppIconAppearance,
         variant: AppIconVariant,
-        logoScaleAdjustment: Double
+        logoScaleAdjustment: Double,
+        showMapPattern: Bool,
+        mapPatternSeed: UInt64
     ) -> UIImage? {
         let content = AppIconCanvas(
             appearance: appearance,
             variant: variant,
             size: 1024,
-            logoScaleAdjustment: logoScaleAdjustment
+            logoScaleAdjustment: logoScaleAdjustment,
+            showMapPattern: showMapPattern,
+            mapPatternSeed: mapPatternSeed
         )
             .frame(width: 1024, height: 1024)
             .environment(\.colorScheme, appearance == .dark ? .dark : .light)
@@ -406,6 +442,8 @@ private struct AppIconCanvas: View {
     let variant: AppIconVariant
     let size: CGFloat
     let logoScaleAdjustment: Double
+    var showMapPattern: Bool = false
+    var mapPatternSeed: UInt64 = 20250128
 
     private var logoSize: CGFloat {
         size * variant.logoScale * CGFloat(logoScaleAdjustment)
@@ -414,6 +452,9 @@ private struct AppIconCanvas: View {
     var body: some View {
         ZStack {
             background
+            if showMapPattern {
+                mapPatternOverlay
+            }
             glassHighlights
             logo
             foregroundSheen
@@ -421,6 +462,32 @@ private struct AppIconCanvas: View {
         .frame(width: size, height: size)
         .saturation(appearance == .tinted ? 0.18 : 1.0)
         .contrast(appearance == .tinted ? 1.08 : 1.0)
+    }
+
+    // ホーム画面・記録リストと同じ抽象的な地図風ラインを、ロゴの邪魔にならない
+    // 薄い不透明度で重ねる（アイコンとしての視認性優先のため線幅・格子間隔はサイズに比例させる）
+    private var mapPatternOverlay: some View {
+        MapBackgroundLayer(
+            config: MapBackgroundConfig(
+                style: .structured,
+                seed: mapPatternSeed,
+                lineWidth: max(size * 0.006, 1),
+                blur: size * 0.0015,
+                opacity: 0.16,
+                exclusionRadiusFactor: 0.30,
+                padding: size * 0.06,
+                offset: .zero,
+                organicLineCount: 20,
+                gridSpacing: size * 0.16,
+                gridJitter: size * 0.012,
+                gridStepMin: 0.75,
+                gridStepMax: 1.15,
+                diagonalChance: 0.4,
+                diagonalBackChance: 0.25,
+                diagonalStride: 2.2,
+                diagonalBackStride: 2.4
+            )
+        )
     }
 
     private var background: some View {
