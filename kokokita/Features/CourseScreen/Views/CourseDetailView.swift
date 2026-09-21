@@ -859,6 +859,14 @@ struct CourseDetailView: View {
     private func startTour() {
         let spots = tourSpots
         guard !spots.isEmpty else { return }
+
+        // レイアウト切替・タブバー非表示は画像事前取得と同時に済ませておく。
+        // 準備完了後（フォーカス移動開始時）にUIが動くと、そこでもたつきが目立っていた
+        if viewLayout == .listFull {
+            withAnimation(.easeInOut(duration: 0.3)) { viewLayout = .split }
+        }
+        appUIState.isTabBarHidden = true
+
         isPreparingTour = true
         tourPreparationProgress = 0
         tourPreparationTask = Task {
@@ -909,10 +917,7 @@ struct CourseDetailView: View {
     }
 
     private func beginTourPlayback(spots: [CourseSpot]) {
-        // 地図が見えていないレイアウトの場合は split に切り替え
-        if viewLayout == .listFull {
-            withAnimation(.easeInOut(duration: 0.3)) { viewLayout = .split }
-        }
+        // レイアウト切替・タブバー非表示はstartTour()で事前取得と同時に済ませ済み
         isTourPlaying = true
         isTourPaused = false
         isShowingTourEndPromotion = false
