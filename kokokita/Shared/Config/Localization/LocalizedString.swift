@@ -646,6 +646,7 @@ enum L {
     enum SpotList {
         static let title = localized("spotList.title")
         static let locationUnavailable = localized("spotList.locationUnavailable")
+        static let filterSearchPlaceholder = localized("spotList.filter.searchPlaceholder")
         static let noSpots = localized("spotList.noSpots")
         static let modeNearby = localized("spotList.mode.nearby")
         static let modeNearbyShort = localized("spotList.mode.nearby.short")

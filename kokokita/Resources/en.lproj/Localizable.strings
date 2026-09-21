@@ -581,6 +581,7 @@
 // MARK: - SpotList
 "spotList.title" = "Spots";
 "spotList.locationUnavailable" = "Location unavailable";
+"spotList.filter.searchPlaceholder" = "Search by spot name or address";
 "spotList.noSpots" = "No nearby spots\nPlease enable a pilgrimage course";
 "spotList.mode.nearby" = "Nearby Spots";
 "spotList.mode.nearby.short" = "Nearby";

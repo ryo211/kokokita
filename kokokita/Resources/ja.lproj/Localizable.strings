@@ -585,6 +585,7 @@
 // MARK: - SpotList（スポット一覧）
 "spotList.title" = "スポット";
 "spotList.locationUnavailable" = "現在地が取得できません";
+"spotList.filter.searchPlaceholder" = "スポット名・住所で検索";
 "spotList.noSpots" = "近くのスポットがありません\n巡礼コースを有効にしてください";
 "spotList.mode.nearby" = "近くのスポット";
 "spotList.mode.nearby.short" = "近く";

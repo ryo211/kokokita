@@ -721,25 +721,25 @@ struct SpotListScreen: View {
             ))
 
             // 絞り込みボタン（全モード共通）
-            if !showFilter {
-                HStack {
-                    Spacer()
-                    filterButton
-                        .padding(.trailing, 16)
-                        .padding(.bottom, 16)
-                }
-            }
-
-            if showFilter {
-                SpotFilterPanel(store: store) {
-                    withAnimation(.spring(duration: 0.35, bounce: 0.05)) { showFilter = false }
-                }
-                .transition(.move(edge: .bottom).combined(with: .opacity))
+            HStack {
+                Spacer()
+                filterButton
+                    .padding(.trailing, 16)
+                    .padding(.bottom, 16)
             }
         }
         .animation(.easeInOut(duration: 0.28), value: store.listMode)
-        .animation(.spring(duration: 0.35, bounce: 0.05), value: showFilter)
         .clipped()
+        // 絞り込みパネル: ネイティブのボトムシートにして、ドラッグで
+        // 中サイズ⇔全画面を自然に行き来できるようにする（旧実装は下方向の
+        // ドラッグだけで即座に閉じてしまいUXが悪かった）
+        .sheet(isPresented: $showFilter) {
+            SpotFilterPanel(store: store) {
+                showFilter = false
+            }
+            .presentationDetents([.medium, .large])
+            .presentationDragIndicator(.visible)
+        }
     }
 
     // フォルダモードのヘッダー: フォルダ名 + 切り替えメニュー
@@ -1932,20 +1932,15 @@ private struct SpotFilterPanel: View {
         store.recalculateNearbySpots()
     }
 
+    private var searchQueryBinding: Binding<String> {
+        Binding(
+            get: { store.searchQuery },
+            set: { store.searchQuery = $0; store.recalculateNearbySpots() }
+        )
+    }
+
     var body: some View {
         VStack(spacing: 0) {
-            Capsule()
-                .fill(Color.secondary.opacity(0.35))
-                .frame(width: 36, height: 4)
-                .padding(.top, 10)
-                .padding(.bottom, 8)
-                .frame(maxWidth: .infinity)
-                .contentShape(Rectangle())
-                .gesture(
-                    DragGesture(minimumDistance: 10)
-                        .onChanged { value in if value.translation.height > 30 { onDismiss() } }
-                )
-
             HStack(alignment: .bottom) {
                 VStack(alignment: .leading, spacing: 2) {
                     Label("絞り込み", systemImage: "slider.horizontal.3")
@@ -1965,6 +1960,31 @@ private struct SpotFilterPanel: View {
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.indigo)
             }
+            .padding(.horizontal, 16)
+            .padding(.top, 12)
+            .padding(.bottom, 10)
+
+            // ワード検索
+            HStack(spacing: 8) {
+                Image(systemName: "magnifyingglass")
+                    .foregroundStyle(.secondary)
+                TextField(L.SpotList.filterSearchPlaceholder, text: searchQueryBinding)
+                    .textFieldStyle(.plain)
+                    .submitLabel(.search)
+                    .autocorrectionDisabled()
+                if !store.searchQuery.isEmpty {
+                    Button {
+                        searchQueryBinding.wrappedValue = ""
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
             .padding(.horizontal, 16)
             .padding(.bottom, 10)
 
