@@ -248,15 +248,35 @@ struct PilgrimageHomeView: View {
 
     // MARK: - ① コース横スクロール
 
+    /// 新着コースを先頭にまとめ、それ以外は元の順序（作成日時昇順）を保つ
+    private var sortedCoursesForCarousel: [Course] {
+        store.courses.enumerated()
+            .sorted { lhs, rhs in
+                let lhsNew = store.isNew(lhs.element.id)
+                let rhsNew = store.isNew(rhs.element.id)
+                if lhsNew != rhsNew { return lhsNew && !rhsNew }
+                return lhs.offset < rhs.offset
+            }
+            .map(\.element)
+    }
+
     private var courseScrollSection: some View {
         VStack(alignment: .leading, spacing: 0) {
             CourseSelectionCarousel(
-                courses: store.courses,
+                courses: sortedCoursesForCarousel,
+                newCourseIds: Set(store.courses.filter { store.isNew($0.id) }.map(\.id)),
                 selectedIndex: $selectedCourseIndex,
                 onCourseTap: { course in
                     selectedCourseDetailRoute = SelectedCourseRoute(id: course.id)
                 }
             )
+        }
+        // カルーセルに表示された新着コースは視認済みにする
+        .onAppear {
+            store.markAsSeen(ids: sortedCoursesForCarousel.filter { store.isNew($0.id) }.map(\.id))
+        }
+        .onChange(of: sortedCoursesForCarousel.map(\.id)) { _, _ in
+            store.markAsSeen(ids: sortedCoursesForCarousel.filter { store.isNew($0.id) }.map(\.id))
         }
     }
 
@@ -505,6 +525,7 @@ struct PilgrimageHomeView: View {
 
 private struct CourseSelectionCarousel: View {
     let courses: [Course]
+    var newCourseIds: Set<UUID> = []
     @Binding var selectedIndex: Int
     let onCourseTap: (Course) -> Void
 
@@ -523,7 +544,7 @@ private struct CourseSelectionCarousel: View {
                     Button {
                         onCourseTap(course)
                     } label: {
-                        CourseCarouselCard(course: course, style: .focused)
+                        CourseCarouselCard(course: course, style: .focused, isNew: newCourseIds.contains(course.id))
                             .frame(width: centerCardWidth)
                     }
                     .buttonStyle(.plain)
@@ -537,7 +558,8 @@ private struct CourseSelectionCarousel: View {
                             } label: {
                                 CourseCarouselCard(
                                     course: course,
-                                    style: abs(progress) < 0.35 ? .focused : .side
+                                    style: abs(progress) < 0.35 ? .focused : .side,
+                                    isNew: newCourseIds.contains(course.id)
                                 )
                                 .frame(width: centerCardWidth)
                             }
@@ -702,6 +724,7 @@ private struct CourseCarouselCard: View {
 
     let course: Course
     let style: Style
+    var isNew: Bool = false
 
     var body: some View {
         ZStack(alignment: .bottomLeading) {
@@ -716,6 +739,17 @@ private struct CourseCarouselCard: View {
                 startPoint: .top,
                 endPoint: .bottom
             )
+
+            if isNew {
+                Text(L.Course.newBadge)
+                    .font(.caption2.bold())
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(Color.indigo, in: Capsule())
+                    .padding(8)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            }
 
             VStack(alignment: .leading, spacing: 10) {
                 if !course.categories.isEmpty {
