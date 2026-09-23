@@ -23,6 +23,13 @@ struct DeveloperToolsScreen: View {
                     Label("App Icon Generator", systemImage: "app.dashed")
                         .foregroundStyle(.indigo)
                 }
+
+                NavigationLink {
+                    AppStoreScreenshotBackgroundGenerator()
+                } label: {
+                    Label("Screenshot Background", systemImage: "photo.stack")
+                        .foregroundStyle(.pink)
+                }
             }
 
             Section {
