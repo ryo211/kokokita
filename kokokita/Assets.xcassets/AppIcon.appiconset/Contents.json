@@ -1,7 +1,7 @@
 {
   "images" : [
     {
-      "filename" : "kokokita-app-icon-clearBlueDeep.png",
+      "filename" : "icon1.png",
       "idiom" : "universal",
       "platform" : "ios",
       "size" : "1024x1024"
@@ -13,7 +13,7 @@
           "value" : "dark"
         }
       ],
-      "filename" : "kokokita-app-icon-dark-clearBlueDeep.png",
+      "filename" : "icon2.png",
       "idiom" : "universal",
       "platform" : "ios",
       "size" : "1024x1024"
@@ -25,7 +25,7 @@
           "value" : "tinted"
         }
       ],
-      "filename" : "kokokita-app-icon-tinted-clearBlueAqua.png",
+      "filename" : "icon3.png",
       "idiom" : "universal",
       "platform" : "ios",
       "size" : "1024x1024"

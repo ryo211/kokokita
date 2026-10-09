@@ -9,10 +9,9 @@ extension Collection where Element == LabelTag {
         Dictionary(uniqueKeysWithValues: map { ($0.id, $0.name) })
     }
 
-    /// 名前でソート（空白除外済み）
-    var sortedByName: [LabelTag] {
+    /// 空白名を除外（順序はリポジトリ側の並び順＝最後に使った順を維持する）
+    var excludingBlankNames: [LabelTag] {
         filter { !$0.name.isBlankOrEmpty }
-            .sorted { $0.name.localizedCompare($1.name) == .orderedAscending }
     }
 
     /// ラベル名 → Color のマップ（色設定ありのみ）
@@ -31,10 +30,9 @@ extension Collection where Element == GroupTag {
         Dictionary(uniqueKeysWithValues: map { ($0.id, $0.name) })
     }
 
-    /// 名前でソート（空白除外済み）
-    var sortedByName: [GroupTag] {
+    /// 空白名を除外（順序はリポジトリ側の並び順＝最後に使った順を維持する）
+    var excludingBlankNames: [GroupTag] {
         filter { !$0.name.isBlankOrEmpty }
-            .sorted { $0.name.localizedCompare($1.name) == .orderedAscending }
     }
 }
 
@@ -44,9 +42,8 @@ extension Collection where Element == MemberTag {
         Dictionary(uniqueKeysWithValues: map { ($0.id, $0.name) })
     }
 
-    /// 名前でソート（空白除外済み）
-    var sortedByName: [MemberTag] {
+    /// 空白名を除外（順序はリポジトリ側の並び順＝最後に使った順を維持する）
+    var excludingBlankNames: [MemberTag] {
         filter { !$0.name.isBlankOrEmpty }
-            .sorted { $0.name.localizedCompare($1.name) == .orderedAscending }
     }
 }

@@ -270,7 +270,7 @@ struct SpotListScreen: View {
                             )
                             Annotation("", coordinate: coord, anchor: .center) {
                                 SpotPinView(
-                                    orderNumber: index + 1,
+                                    iconName: item.course.primaryCategory?.iconName ?? "mappin",
                                     isCheckedIn: item.spot.isCheckedIn,
                                     isSelected: false
                                 )
@@ -364,7 +364,7 @@ struct SpotListScreen: View {
                        let entry = store.nearbySpots.enumerated().first(where: { $0.element.spot.id == selectedSpotId }),
                        entry.element.spot.hasValidCoordinate {
                         SpotPinView(
-                            orderNumber: entry.offset + 1,
+                            iconName: entry.element.course.primaryCategory?.iconName ?? "mappin",
                             isCheckedIn: entry.element.spot.isCheckedIn,
                             isSelected: true
                         )
@@ -663,7 +663,6 @@ struct SpotListScreen: View {
                                         SpotListRowView(
                                             spot: item.spot,
                                             course: item.course,
-                                            orderNumber: index + 1,
                                             isSelected: selectedSpotId == item.spot.id,
                                             distance: nil,
                                             onCourseTap: { courseDetailRoute = CourseRoute(course: item.course, initialSpotId: item.spot.id) },
@@ -693,7 +692,6 @@ struct SpotListScreen: View {
                                     SpotListRowView(
                                         spot: item.spot,
                                         course: item.course,
-                                        orderNumber: index + 1,
                                         isSelected: selectedSpotId == item.spot.id,
                                         distance: isLocationSelectionActive ? item.distance : nil,
                                         onCourseTap: { courseDetailRoute = CourseRoute(course: item.course, initialSpotId: item.spot.id) }
@@ -723,25 +721,25 @@ struct SpotListScreen: View {
             ))
 
             // 絞り込みボタン（全モード共通）
-            if !showFilter {
-                HStack {
-                    Spacer()
-                    filterButton
-                        .padding(.trailing, 16)
-                        .padding(.bottom, 16)
-                }
-            }
-
-            if showFilter {
-                SpotFilterPanel(store: store) {
-                    withAnimation(.spring(duration: 0.35, bounce: 0.05)) { showFilter = false }
-                }
-                .transition(.move(edge: .bottom).combined(with: .opacity))
+            HStack {
+                Spacer()
+                filterButton
+                    .padding(.trailing, 16)
+                    .padding(.bottom, 16)
             }
         }
         .animation(.easeInOut(duration: 0.28), value: store.listMode)
-        .animation(.spring(duration: 0.35, bounce: 0.05), value: showFilter)
         .clipped()
+        // 絞り込みパネル: ネイティブのボトムシートにして、ドラッグで
+        // 中サイズ⇔全画面を自然に行き来できるようにする（旧実装は下方向の
+        // ドラッグだけで即座に閉じてしまいUXが悪かった）
+        .sheet(isPresented: $showFilter) {
+            SpotFilterPanel(store: store) {
+                showFilter = false
+            }
+            .presentationDetents([.medium, .large])
+            .presentationDragIndicator(.visible)
+        }
     }
 
     // フォルダモードのヘッダー: フォルダ名 + 切り替えメニュー
@@ -1408,18 +1406,19 @@ private struct SpotModeTabShape: Shape {
 // MARK: - スポットピンビュー
 
 private struct SpotPinView: View {
-    let orderNumber: Int
+    /// コースの代表カテゴリのSF Symbol名（連番の代わりに表示するロゴ）
+    let iconName: String
     let isCheckedIn: Bool
     let isSelected: Bool
 
-    private var size: CGFloat { isSelected ? 20 : 14 }
+    private var size: CGFloat { isSelected ? 30 : 22 }
 
     var body: some View {
         ZStack {
             // フォーカス時のスポットライト（背後からの照射グロー）
             Circle()
                 .fill(Color.indigo.opacity(0.38))
-                .frame(width: 42, height: 42)
+                .frame(width: 48, height: 48)
                 .blur(radius: 9)
                 .scaleEffect(isSelected ? 1 : 0.01)
                 .opacity(isSelected ? 1 : 0)
@@ -1431,13 +1430,13 @@ private struct SpotPinView: View {
                 .shadow(color: .black.opacity(isSelected ? 0.4 : 0.25),
                         radius: isSelected ? 6 : 3, x: 0, y: 2)
 
-            // インディゴ + 番号（達成済みも同色）
+            // インディゴ + カテゴリロゴ（達成済みも同色）
             ZStack {
                 Circle()
                     .fill(Color.indigo)
                     .frame(width: size, height: size)
-                Text("\(orderNumber)")
-                    .font(.system(size: isSelected ? 9 : 6, weight: .bold))
+                Image(systemName: iconName)
+                    .font(.system(size: isSelected ? 15 : 11, weight: .semibold))
                     .foregroundStyle(.white)
             }
             .overlay(alignment: .bottomTrailing) {
@@ -1446,9 +1445,9 @@ private struct SpotPinView: View {
                     ZStack {
                         Circle()
                             .fill(Color.white)
-                            .frame(width: isSelected ? 9 : 7, height: isSelected ? 9 : 7)
+                            .frame(width: isSelected ? 12 : 9, height: isSelected ? 12 : 9)
                         Image(systemName: "checkmark")
-                            .font(.system(size: isSelected ? 5 : 4, weight: .bold))
+                            .font(.system(size: isSelected ? 7 : 5, weight: .bold))
                             .foregroundStyle(Color.indigo)
                     }
                     .offset(x: isSelected ? 3 : 2, y: isSelected ? 3 : 2)
@@ -1464,7 +1463,6 @@ private struct SpotPinView: View {
 private struct SpotListRowView: View {
     let spot: CourseSpot
     let course: Course
-    let orderNumber: Int
     let isSelected: Bool
     var distance: Double? = nil
     var onCourseTap: () -> Void = {}
@@ -1485,13 +1483,13 @@ private struct SpotListRowView: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 12) {
-                // 番号バッジ（インディゴ統一 / 達成済みは右下チェックバッジ付き）
+                // カテゴリロゴバッジ（インディゴ統一 / 達成済みは右下チェックバッジ付き）
                 ZStack {
                     Circle()
                         .fill(Color.indigo)
                         .frame(width: 32, height: 32)
-                    Text("\(orderNumber)")
-                        .font(.caption.bold())
+                    Image(systemName: course.primaryCategory?.iconName ?? "mappin")
+                        .font(.system(size: 15, weight: .semibold))
                         .foregroundStyle(.white)
                 }
                 .overlay(alignment: .bottomTrailing) {
@@ -1934,20 +1932,15 @@ private struct SpotFilterPanel: View {
         store.recalculateNearbySpots()
     }
 
+    private var searchQueryBinding: Binding<String> {
+        Binding(
+            get: { store.searchQuery },
+            set: { store.searchQuery = $0; store.recalculateNearbySpots() }
+        )
+    }
+
     var body: some View {
         VStack(spacing: 0) {
-            Capsule()
-                .fill(Color.secondary.opacity(0.35))
-                .frame(width: 36, height: 4)
-                .padding(.top, 10)
-                .padding(.bottom, 8)
-                .frame(maxWidth: .infinity)
-                .contentShape(Rectangle())
-                .gesture(
-                    DragGesture(minimumDistance: 10)
-                        .onChanged { value in if value.translation.height > 30 { onDismiss() } }
-                )
-
             HStack(alignment: .bottom) {
                 VStack(alignment: .leading, spacing: 2) {
                     Label("絞り込み", systemImage: "slider.horizontal.3")
@@ -1967,6 +1960,31 @@ private struct SpotFilterPanel: View {
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.indigo)
             }
+            .padding(.horizontal, 16)
+            .padding(.top, 12)
+            .padding(.bottom, 10)
+
+            // ワード検索
+            HStack(spacing: 8) {
+                Image(systemName: "magnifyingglass")
+                    .foregroundStyle(.secondary)
+                TextField(L.SpotList.filterSearchPlaceholder, text: searchQueryBinding)
+                    .textFieldStyle(.plain)
+                    .submitLabel(.search)
+                    .autocorrectionDisabled()
+                if !store.searchQuery.isEmpty {
+                    Button {
+                        searchQueryBinding.wrappedValue = ""
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
             .padding(.horizontal, 16)
             .padding(.bottom, 10)
 

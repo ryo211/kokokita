@@ -22,7 +22,7 @@ final class AppContainer {
     lazy var poi: MapKitPlaceLookupService = MapKitPlaceLookupService(rateLimiter: rateLimiter)
     let integ = DefaultIntegrityService()
     lazy var courseRecognitionService: CourseRecognitionService = CourseRecognitionService(repo: courseRepo)
-    lazy var retroactiveService: CourseRetroactiveRecognitionService = CourseRetroactiveRecognitionService(courseRepo: courseRepo)
+    lazy var retroactiveService: CourseRetroactiveRecognitionService = CourseRetroactiveRecognitionService(courseRepo: courseRepo, visitRepo: repo)
     lazy var courseStoreService: CourseStoreService = CourseStoreService()
     lazy var courseAutoSyncService: CourseAutoSyncService = CourseAutoSyncService()
 

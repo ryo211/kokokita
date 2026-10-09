@@ -1,6 +1,6 @@
 import SwiftUI
 
-// 巡礼モードのルートタブビュー（3タブ: ホーム / コース / マイリスト）
+// 巡礼モードのルートタブビュー（4タブ: ホーム / コース / スポット / スタンプ）
 // 記録モードと同じカスタムタブバー UI を使用
 struct PilgrimageRootTabView: View {
     /// 現在このモードが表示中か（RootViewが両モードを常駐させているため、
@@ -16,14 +16,6 @@ struct PilgrimageRootTabView: View {
     @State private var showCourseTabBadge = false
     /// 自動記録候補がある場合、記録モード切り替えボタンに赤ポチを表示
     @State private var hasAutoRecordCandidates = false
-    /// 飛翔アニメーション実行中フラグ
-    @State private var isFlyAnimating = false
-    /// マイリストタブのグローバルフレーム（飛翔アニメーション用）
-    @State private var myListTabFrame: CGRect = .zero
-    /// コースタブのグローバルフレーム（飛翔アニメーション用）
-    @State private var courseTabFrame: CGRect = .zero
-    /// 親 ZStack のグローバルフレーム（飛翔アニメーションのtoLocal()専用。コーチマークはrootSize/named spaceを使う）
-    @State private var rootFrame: CGRect = .zero
     /// 記録ボタンのフレーム（"pilgrimageCoachmark"座標空間、コーチマーク位置計算用）
     @State private var recordButtonFrame: CGRect = .zero
     /// モード切替ボタンのフレーム（"pilgrimageCoachmark"座標空間、コーチマーク位置計算用）
@@ -73,11 +65,9 @@ struct PilgrimageRootTabView: View {
                         .opacity(tab == .spotList ? 1 : 0)
                         .zIndex(tab == .spotList ? 1 : 0)
 
-                    NavigationStack {
-                        MyListView()
-                    }
-                    .opacity(tab == .myList ? 1 : 0)
-                    .zIndex(tab == .myList ? 1 : 0)
+                    StampScreen(store: courseStore)
+                        .opacity(tab == .stamp ? 1 : 0)
+                        .zIndex(tab == .stamp ? 1 : 0)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
 
@@ -115,8 +105,6 @@ struct PilgrimageRootTabView: View {
                                 hasSwitchedToRecordMode = true
                                 modeManager.setMode(.record)
                             },
-                            onMyListTabFrame: { myListTabFrame = $0 },
-                            onCourseTabFrame: { courseTabFrame = $0 },
                             onRecordButtonFrame: { recordButtonFrame = $0 },
                             onModeSwitchButtonFrame: { modeSwitchButtonFrame = $0 },
                             // コーチマークが表示されている間だけ光らせる（× で閉じた後は静止させる）
@@ -126,27 +114,6 @@ struct PilgrimageRootTabView: View {
                     }
                     .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
-            }
-            // 飛翔アニメーション用のルートフレーム取得（.global→ローカル変換用）
-            .background(
-                GeometryReader { geo in
-                    Color.clear.onAppear { rootFrame = geo.frame(in: .global) }
-                }
-            )
-
-            // 飛翔アイコン（フルスクリーン ZStack の上に重ねる）
-            if isFlyAnimating {
-                FlyingIconView(
-                    start: toLocal(myListTabFrame),
-                    end: toLocal(courseTabFrame),
-                    onComplete: {
-                        isFlyAnimating = false
-                        withAnimation(.spring(duration: 0.4)) {
-                            showCourseTabBadge = true
-                        }
-                    }
-                )
-                .allowsHitTesting(false)
             }
 
             // ガイド付きツアー: コーチマーク吹き出し（自前実装。ボタン直上に確実に表示する）
@@ -203,27 +170,11 @@ struct PilgrimageRootTabView: View {
         }
     }
 
-    // MARK: - 座標変換
-
-    /// グローバル座標 → rootFrame 内のローカル座標
-    private func toLocal(_ globalRect: CGRect) -> CGPoint {
-        CGPoint(
-            x: globalRect.midX - rootFrame.minX,
-            y: globalRect.midY - rootFrame.minY
-        )
-    }
-
     // MARK: - 有効化エフェクト
 
     private func triggerCourseEnabledEffect() {
-        if !myListTabFrame.isEmpty && !courseTabFrame.isEmpty {
-            // フレームが取得できていれば飛翔アニメーション → アニメ完了後に赤ポチ
-            isFlyAnimating = true
-        } else {
-            // フレーム未取得の場合は即座に赤ポチ
-            withAnimation(.spring(duration: 0.4)) {
-                showCourseTabBadge = true
-            }
+        withAnimation(.spring(duration: 0.4)) {
+            showCourseTabBadge = true
         }
     }
 
@@ -241,61 +192,7 @@ enum PilgrimageTab: Hashable {
     case home
     case map
     case spotList
-    case myList
-}
-
-// MARK: - 飛翔アイコンビュー
-
-private struct FlyingIconView: View {
-    let start: CGPoint
-    let end: CGPoint
-    let onComplete: () -> Void
-
-    @State private var progress: CGFloat = 0
-
-    private let duration: Double = 0.55
-
-    var body: some View {
-        Circle()
-            .fill(
-                LinearGradient(
-                    colors: [Color.indigo.opacity(0.95), Color.indigo.opacity(0.6)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-            )
-            .frame(width: 30, height: 30)
-            .overlay {
-                Image("kokokita_irodori_white")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 18, height: 18)
-            }
-            .shadow(color: Color.indigo.opacity(0.4), radius: 8, x: 0, y: 2)
-            .scaleEffect(1.0 - progress * 0.4)
-            .opacity(progress < 0.8 ? 1.0 : (1.0 - (progress - 0.8) / 0.2))
-            .position(bezierPoint(t: progress))
-            .onAppear {
-                withAnimation(.easeIn(duration: duration)) {
-                    progress = 1.0
-                }
-                Task {
-                    try? await Task.sleep(for: .seconds(duration))
-                    await MainActor.run { onComplete() }
-                }
-            }
-    }
-
-    /// 二次ベジェ曲線（出発点から到達点まで、中間でやや上に膨らむ）
-    private func bezierPoint(t: CGFloat) -> CGPoint {
-        let ctrl = CGPoint(
-            x: (start.x + end.x) / 2,
-            y: min(start.y, end.y) - 50
-        )
-        let x = (1 - t) * (1 - t) * start.x + 2 * (1 - t) * t * ctrl.x + t * t * end.x
-        let y = (1 - t) * (1 - t) * start.y + 2 * (1 - t) * t * ctrl.y + t * t * end.y
-        return CGPoint(x: x, y: y)
-    }
+    case stamp
 }
 
 // MARK: - 巡礼モードのボトムバー
@@ -307,8 +204,6 @@ private struct PilgrimageBottomBar: View {
     let onRecord: () -> Void
     let showRecordModeBadge: Bool
     let onModeSwitch: () -> Void
-    let onMyListTabFrame: (CGRect) -> Void
-    let onCourseTabFrame: (CGRect) -> Void
     let onRecordButtonFrame: (CGRect) -> Void
     let onModeSwitchButtonFrame: (CGRect) -> Void
     /// ガイド付きツアー①: 記録ボタンをパルス発光させるか
@@ -321,7 +216,7 @@ private struct PilgrimageBottomBar: View {
         (.home, "house.fill", L.Tab.home),
         (.map, "map", L.Tab.course),
         (.spotList, "mappin.and.ellipse", L.Tab.spotList),
-        (.myList, "plus.square.on.square", L.Tab.create),
+        (.stamp, "seal", L.Tab.stamp),
     ]
 
     private var footerOverlayColor: Color {
@@ -360,9 +255,7 @@ private struct PilgrimageBottomBar: View {
                     items: tabItems,
                     current: current,
                     showCourseTabBadge: showCourseTabBadge,
-                    onSelect: onSelect,
-                    onMyListTabFrame: onMyListTabFrame,
-                    onCourseTabFrame: onCourseTabFrame
+                    onSelect: onSelect
                 )
 
                 // モード切り替えボタン（記録モードへ）
@@ -408,8 +301,6 @@ private struct CustomTabBar: View {
     let current: PilgrimageTab
     let showCourseTabBadge: Bool
     let onSelect: (PilgrimageTab) -> Void
-    let onMyListTabFrame: (CGRect) -> Void
-    let onCourseTabFrame: (CGRect) -> Void
     @Environment(\.colorScheme) private var colorScheme
 
     private var tintColor: Color {
@@ -556,18 +447,6 @@ private struct CustomTabBar: View {
                             }
                         }
                         .buttonStyle(.plain)
-                        .background(
-                            GeometryReader { tabGeo in
-                                Color.clear.onAppear {
-                                    let frame = tabGeo.frame(in: .global)
-                                    if tabId == .map {
-                                        onCourseTabFrame(frame)
-                                    } else if tabId == .myList {
-                                        onMyListTabFrame(frame)
-                                    }
-                                }
-                            }
-                        )
                     }
                 }
                 .padding(6)

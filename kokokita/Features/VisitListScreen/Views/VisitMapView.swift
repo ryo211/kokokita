@@ -20,51 +20,104 @@ struct VisitMapView: View {
     @State private var currentLocation: CLLocationCoordinate2D?
     @State private var currentMapRegion: MKCoordinateRegion?
     @State private var showMapSettings = false
+    // フォーカス中アイテムのスクリーン座標。MapKitのz-orderに頼らず、
+    // ここに大きいピンをoverlayで重ねて描画することで必ず最前面に表示する
+    @State private var selectedItemScreenPoint: CGPoint? = nil
     @AppStorage(Self.zoomOnVisitFocusKey) private var zoomOnVisitFocus = true
-
-    // 選択されたアイテムを最後に配置するようソート（最前面に描画）
-    private var sortedItems: [VisitAggregate] {
-        items.sorted { item1, item2 in
-            let isItem1Selected = item1.id == selectedItemId
-            let isItem2Selected = item2.id == selectedItemId
-            if isItem1Selected == isItem2Selected { return false }
-            return isItem2Selected
-        }
-    }
+    // 写真タップ時のライトボックス表示（コース詳細画面のスポット画像タップと同じ、
+    // 暗転オーバーレイ + フェード&スケールで出す軽量な見せ方）
+    @State private var expandedImage: UIImage? = nil
 
     var body: some View {
         VStack(spacing: 0) {
             // 上部 2/3：地図
             ZStack(alignment: .topTrailing) {
-                Map(position: $cameraPosition) {
-                    ForEach(sortedItems) { agg in
-                        if agg.visit.latitude != 0 || agg.visit.longitude != 0 {
-                            let isSelected = selectedItemId == agg.id
-                            let pinColor = firstLabelColor(for: agg)
-                            Annotation("", coordinate: CLLocationCoordinate2D(
-                                latitude: agg.visit.latitude,
-                                longitude: agg.visit.longitude
-                            )) {
-                                MapPinView(isSelected: isSelected, pinColor: pinColor)
-                                    .onTapGesture {
-                                        selectedItemId = (selectedItemId == agg.id ? nil : agg.id)
-                                    }
+                MapReader { proxy in
+                    Map(position: $cameraPosition) {
+                        // 非選択ピンを先に描画（z-order: 下）。選択中のピンも
+                        // ここでは常に非選択の見た目のまま描画し、大きい選択ピンは
+                        // overlayで別途最前面に重ねる
+                        ForEach(items) { agg in
+                            if agg.visit.latitude != 0 || agg.visit.longitude != 0 {
+                                let pinColor = firstLabelColor(for: agg)
+                                Annotation("", coordinate: CLLocationCoordinate2D(
+                                    latitude: agg.visit.latitude,
+                                    longitude: agg.visit.longitude
+                                )) {
+                                    MapPinView(isSelected: false, pinColor: pinColor)
+                                        .onTapGesture {
+                                            selectedItemId = (selectedItemId == agg.id ? nil : agg.id)
+                                        }
+                                }
+                                .annotationTitles(.hidden)
+                            }
+                        }
+
+                        // 現在地のピン
+                        if showCurrentLocation, let location = currentLocation {
+                            Annotation("現在地", coordinate: location) {
+                                CurrentLocationPinView()
                             }
                             .annotationTitles(.hidden)
                         }
                     }
-
-                    // 現在地のピン
-                    if showCurrentLocation, let location = currentLocation {
-                        Annotation("現在地", coordinate: location) {
-                            CurrentLocationPinView()
+                    .mapStyle(.standard)
+                    .task(id: selectedItemId) {
+                        guard selectedItemId != nil else { return }
+                        // Programmatic camera moves do not always emit onEnd, so retry after layout/camera settle.
+                        try? await Task.sleep(nanoseconds: 180_000_000)
+                        guard !Task.isCancelled else { return }
+                        await MainActor.run {
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                updateSelectedItemScreenPoint(proxy: proxy)
+                            }
                         }
-                        .annotationTitles(.hidden)
+                        try? await Task.sleep(nanoseconds: 320_000_000)
+                        guard !Task.isCancelled else { return }
+                        await MainActor.run {
+                            if selectedItemScreenPoint == nil {
+                                withAnimation(.easeInOut(duration: 0.2)) {
+                                    updateSelectedItemScreenPoint(proxy: proxy)
+                                }
+                            }
+                        }
                     }
-                }
-                .mapStyle(.standard)
-                .onMapCameraChange { context in
-                    currentMapRegion = context.region
+                    .onMapCameraChange(frequency: .onEnd) { context in
+                        currentMapRegion = context.region
+                        // カメラ停止後にアイテム座標を確定してフェードイン表示
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            updateSelectedItemScreenPoint(proxy: proxy)
+                        }
+                    }
+                    .onMapCameraChange(frequency: .continuous) { context in
+                        currentMapRegion = context.region
+                        // 座標が表示済みの場合のみリアルタイム追従（手動パン中）
+                        guard selectedItemScreenPoint != nil else { return }
+                        updateSelectedItemScreenPoint(proxy: proxy)
+                    }
+                    // フォーカス中アイテムに写真があれば、左上に中型サイズで
+                    // リーダーライン付きに表示する（巡礼モードは右上/中央だが記録モードは左上に固定）
+                    .overlay {
+                        if let point = selectedItemScreenPoint,
+                           let agg = items.first(where: { $0.id == selectedItemId }),
+                           let firstPhotoPath = agg.details.photoPaths.first,
+                           let uiImage = ImageStore.load(firstPhotoPath) {
+                            VisitPhotoLeaderLineView(spotPoint: point, image: uiImage) {
+                                withAnimation(.easeInOut(duration: 0.2)) {
+                                    expandedImage = uiImage
+                                }
+                            }
+                        }
+                    }
+                    // 選択ピンを SwiftUI overlay として最前面に描画（MapKit z-order に依存しない）
+                    .overlay {
+                        if let point = selectedItemScreenPoint,
+                           let agg = items.first(where: { $0.id == selectedItemId }) {
+                            MapPinView(isSelected: true, pinColor: firstLabelColor(for: agg))
+                                .onTapGesture { selectedItemId = nil }
+                                .position(point)
+                        }
+                    }
                 }
 
                 // 右上ボタン群
@@ -99,6 +152,28 @@ struct VisitMapView: View {
                 }
             }
         }
+        // 写真ライトボックス（タップで閉じる）
+        .overlay {
+            if let image = expandedImage {
+                ZStack {
+                    Color.black.opacity(0.65)
+                        .ignoresSafeArea()
+                    Image(uiImage: image)
+                        .resizable()
+                        .scaledToFit()
+                        .padding(32)
+                        .shadow(color: .black.opacity(0.35), radius: 24, x: 0, y: 8)
+                }
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        expandedImage = nil
+                    }
+                }
+                .transition(.opacity.combined(with: .scale(scale: 0.92)))
+            }
+        }
+        .animation(.easeInOut(duration: 0.2), value: expandedImage != nil)
         .task {
             if let id = selectedItemId {
                 focusOnItem(id: id, animated: false)
@@ -110,6 +185,9 @@ struct VisitMapView: View {
             updateCameraPosition()
         }
         .onChange(of: selectedItemId) { _, newId in
+            // スポット変更（選択・解除問わず）は即座に非表示
+            // → カメラ停止後に onEnd で座標を確定して再表示
+            selectedItemScreenPoint = nil
             if let newId {
                 focusOnItem(id: newId, animated: true)
             } else {
@@ -187,6 +265,18 @@ struct VisitMapView: View {
         } else {
             cameraPosition = .region(region)
         }
+    }
+
+    /// フォーカス中アイテムのスクリーン座標を MapProxy で更新する
+    private func updateSelectedItemScreenPoint(proxy: MapProxy) {
+        guard let id = selectedItemId,
+              let agg = items.first(where: { $0.id == id }),
+              agg.visit.latitude != 0 || agg.visit.longitude != 0 else {
+            selectedItemScreenPoint = nil
+            return
+        }
+        let coord = CLLocationCoordinate2D(latitude: agg.visit.latitude, longitude: agg.visit.longitude)
+        selectedItemScreenPoint = proxy.convert(coord, to: .local)
     }
 
     private func updateCameraPosition() {
@@ -414,6 +504,61 @@ private struct VisitMapSettingsSheet: View {
                 .background(isSelected ? Color.indigo : Color.clear, in: Capsule())
         }
         .buttonStyle(.plain)
+    }
+}
+
+// MARK: - Visit Photo Leader Line View
+
+/// フォーカス中の訪問記録に写真がある場合、地図の左上に中型サイズで表示する
+/// （コース詳細画面のSpotLeaderLineViewとは別実装。記録モードでは常に左上・中型固定でよいため
+/// サイズ切り替えは持たせず、位置も左上に固定している）
+private struct VisitPhotoLeaderLineView: View {
+    let spotPoint: CGPoint
+    let image: UIImage
+    var onTap: () -> Void = {}
+
+    private let margin: CGFloat = 12
+    private let imageSize = CGSize(width: 132, height: 88)
+
+    var body: some View {
+        GeometryReader { geo in
+            let imgCenter = CGPoint(x: imageSize.width / 2 + margin, y: imageSize.height / 2 + margin)
+            // ピンに近い側（右下角）から線を伸ばす
+            let lineEnd = CGPoint(x: imgCenter.x + imageSize.width / 2, y: imgCenter.y + imageSize.height / 2)
+
+            ZStack {
+                Canvas { ctx, _ in
+                    let pinOuterRadius: CGFloat = 13
+                    let dx = lineEnd.x - spotPoint.x
+                    let dy = lineEnd.y - spotPoint.y
+                    let dist = sqrt(dx * dx + dy * dy)
+                    let lineStart: CGPoint = dist > 0
+                        ? CGPoint(x: spotPoint.x + dx / dist * pinOuterRadius,
+                                  y: spotPoint.y + dy / dist * pinOuterRadius)
+                        : spotPoint
+
+                    var path = Path()
+                    path.move(to: lineStart)
+                    path.addLine(to: lineEnd)
+
+                    ctx.stroke(path, with: .color(.black.opacity(0.25)),
+                               style: StrokeStyle(lineWidth: 4.5, lineCap: .round))
+                    ctx.stroke(path, with: .color(.white.opacity(0.95)),
+                               style: StrokeStyle(lineWidth: 2.5, lineCap: .round))
+                }
+                .allowsHitTesting(false)
+
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: imageSize.width, height: imageSize.height)
+                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    .shadow(color: .black.opacity(0.3), radius: 6, x: 0, y: 2)
+                    .position(imgCenter)
+                    .onTapGesture { onTap() }
+            }
+            .clipped()
+        }
     }
 }
 

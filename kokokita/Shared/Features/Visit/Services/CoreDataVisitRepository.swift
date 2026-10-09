@@ -131,6 +131,10 @@ final class CoreDataVisitRepository {
             v.integrityPayloadHash = nil
             v.integrityCreatedAtUTC = nil
 
+            // ブック割り当て（これが無いと bookId == currentBookId で絞り込む
+            // 一覧フェッチに一切ヒットせず、保存した記録が永久に表示されなくなる）
+            v.bookId = currentBookId
+
             // ---- VisitDetails（可変部） ----
             let d = VisitDetailsEntity(context: ctx)
             d.title = details.title
@@ -573,14 +577,15 @@ final class CoreDataVisitRepository {
         try ctx.performAndWait {
             let req: NSFetchRequest<LabelEntity> = LabelEntity.fetchRequest()
             req.predicate = NSPredicate(format: "bookId == %@", currentBookId as NSUUID)
-            req.sortDescriptors = [NSSortDescriptor(key: #keyPath(LabelEntity.name), ascending: true)]
-            return try ctx.fetch(req).compactMap { row in
+            let tags: [LabelTag] = try ctx.fetch(req).compactMap { row in
                 guard let id = row.id, let name = row.name else {
                     Logger.warning("Label entity missing required fields (id or name)")
                     return nil
                 }
                 return LabelTag(id: id, name: name, colorId: row.colorId)
             }
+            let recentOrder = try recentlyUsedLabelIds()
+            return sortedByRecentUsage(tags, order: recentOrder)
         }
     }
 
@@ -588,14 +593,15 @@ final class CoreDataVisitRepository {
         try ctx.performAndWait {
             let req: NSFetchRequest<GroupEntity> = GroupEntity.fetchRequest()
             req.predicate = NSPredicate(format: "bookId == %@", currentBookId as NSUUID)
-            req.sortDescriptors = [NSSortDescriptor(key: #keyPath(GroupEntity.name), ascending: true)]
-            return try ctx.fetch(req).compactMap { row in
+            let tags: [GroupTag] = try ctx.fetch(req).compactMap { row in
                 guard let id = row.id, let name = row.name else {
                     Logger.warning("Group entity missing required fields (id or name)")
                     return nil
                 }
                 return GroupTag(id: id, name: name)
             }
+            let recentOrder = try recentlyUsedGroupIds()
+            return sortedByRecentUsage(tags, order: recentOrder)
         }
     }
 
@@ -603,13 +609,78 @@ final class CoreDataVisitRepository {
         try ctx.performAndWait {
             let req: NSFetchRequest<MemberEntity> = MemberEntity.fetchRequest()
             req.predicate = NSPredicate(format: "bookId == %@", currentBookId as NSUUID)
-            req.sortDescriptors = [NSSortDescriptor(key: #keyPath(MemberEntity.name), ascending: true)]
-            return try ctx.fetch(req).compactMap { row in
+            let tags: [MemberTag] = try ctx.fetch(req).compactMap { row in
                 guard let id = row.id, let name = row.name else {
                     Logger.warning("Member entity missing required fields (id or name)")
                     return nil
                 }
                 return MemberTag(id: id, name: name)
+            }
+            let recentOrder = try recentlyUsedMemberIds()
+            return sortedByRecentUsage(tags, order: recentOrder)
+        }
+    }
+
+    // MARK: - 「最後に使った順」の並べ替え
+    // CoreDataモデルにフィールドを追加せず、訪問記録の新しい順に辿って初出現のタグIDを
+    // 記録することで直近使用順を動的に求める（1回のフェッチで完結し追加の永続化コストがない）
+
+    private func recentlyUsedLabelIds() throws -> [UUID] {
+        let req = VisitEntity.fetchRequest()
+        req.sortDescriptors = [NSSortDescriptor(key: "timestampUTC", ascending: false)]
+        req.predicate = NSPredicate(format: "details.labels.@count > 0")
+        req.relationshipKeyPathsForPrefetching = ["details.labels"]
+        var seen = Set<UUID>()
+        var order: [UUID] = []
+        for visit in try ctx.fetch(req) {
+            guard let labels = visit.details?.labels as? Set<LabelEntity> else { continue }
+            for label in labels {
+                guard let id = label.id, seen.insert(id).inserted else { continue }
+                order.append(id)
+            }
+        }
+        return order
+    }
+
+    private func recentlyUsedGroupIds() throws -> [UUID] {
+        let req = VisitEntity.fetchRequest()
+        req.sortDescriptors = [NSSortDescriptor(key: "timestampUTC", ascending: false)]
+        req.predicate = NSPredicate(format: "details.groupId != nil")
+        var seen = Set<UUID>()
+        var order: [UUID] = []
+        for visit in try ctx.fetch(req) {
+            guard let groupId = visit.details?.groupId, seen.insert(groupId).inserted else { continue }
+            order.append(groupId)
+        }
+        return order
+    }
+
+    private func recentlyUsedMemberIds() throws -> [UUID] {
+        let req = VisitEntity.fetchRequest()
+        req.sortDescriptors = [NSSortDescriptor(key: "timestampUTC", ascending: false)]
+        req.predicate = NSPredicate(format: "details.members.@count > 0")
+        req.relationshipKeyPathsForPrefetching = ["details.members"]
+        var seen = Set<UUID>()
+        var order: [UUID] = []
+        for visit in try ctx.fetch(req) {
+            guard let members = visit.details?.members as? Set<MemberEntity> else { continue }
+            for member in members {
+                guard let id = member.id, seen.insert(id).inserted else { continue }
+                order.append(id)
+            }
+        }
+        return order
+    }
+
+    /// order（直近使用順のID一覧）に従って並べ替える。未使用のタグは末尾に名前順でまとめる
+    private func sortedByRecentUsage<T: Identifiable & TaxonomyNamed>(_ tags: [T], order: [UUID]) -> [T] where T.ID == UUID {
+        let rank = Dictionary(uniqueKeysWithValues: order.enumerated().map { ($1, $0) })
+        return tags.sorted { a, b in
+            switch (rank[a.id], rank[b.id]) {
+            case let (.some(ra), .some(rb)): return ra < rb
+            case (.some, .none): return true
+            case (.none, .some): return false
+            case (.none, .none): return a.name.localizedCompare(b.name) == .orderedAscending
             }
         }
     }

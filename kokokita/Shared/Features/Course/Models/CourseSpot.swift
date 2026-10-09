@@ -33,4 +33,12 @@ struct CourseSpot: Identifiable, Equatable {
     let firstCheckedInAt: Date?
     /// このスポットにリンクされた訪問記録の ID 一覧（VisitEntity.id）
     let visitIds: [UUID]
+    /// ユーザーが設定したカスタム写真。要素の位置がそのままスロット（0=メイン、1〜3=サブ）を表し、
+    /// nilはそのスロットが未設定であることを示す（詰めて保存するとスロット位置の情報が失われるため）。
+    /// LocalImageStorage管理のファイル名のみを保持する
+    var customPhotoPaths: [String?] = []
+    /// カスタム写真のメイン（スロット0）。未設定ならnil
+    var customMainPhotoPath: String? {
+        customPhotoPaths.first ?? nil
+    }
 }

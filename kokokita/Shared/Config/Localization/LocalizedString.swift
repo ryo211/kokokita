@@ -27,6 +27,7 @@ enum L {
         static let copy = localized("common.copy")
         static let showOptions = localized("common.showOptions")
         static let hideOptions = localized("common.hideOptions")
+        static let photoSaved = localized("common.photoSaved")
     }
 
     // MARK: - Visit Edit
@@ -153,20 +154,33 @@ enum L {
         static let course = localized("tab.course")
         static let modePilgrimage = localized("tab.modePilgrimage")
         static let modeRecord = localized("tab.modeRecord")
-        static let myList = localized("tab.myList")
-        static let create = localized("tab.create")
+        static let stamp = localized("tab.stamp")
         static let spotList = localized("tab.spotList")
     }
 
-    // MARK: - My List（マイリスト）
-    enum MyList {
-        static let title = localized("myList.title")
-        static let emptyTitle = localized("myList.emptyTitle")
-        static let emptyDescription = localized("myList.emptyDescription")
-        static let newCourseButton = localized("myList.newCourseButton")
-        static let deleteConfirmTitle = localized("myList.deleteConfirmTitle")
-        static let deleteConfirmMessage = localized("myList.deleteConfirmMessage")
-        static func spotsCount(_ count: Int) -> String { String(format: localized("myList.spotsCount"), count) }
+    // MARK: - Stamp（スタンプ、仮実装）
+    enum Stamp {
+        static let emptyDescription = localized("stamp.emptyDescription")
+        static let countSummarySuffix = localized("stamp.countSummarySuffix")
+        static let noVisitHistory = localized("stamp.noVisitHistory")
+        static let unlinkVisit = localized("stamp.unlinkVisit")
+        static let unlinkConfirmTitle = localized("stamp.unlinkConfirmTitle")
+        static let unlinkConfirmMessage = localized("stamp.unlinkConfirmMessage")
+        static let candidateListTitle = localized("stamp.candidateListTitle")
+        static let candidateEmptyDescription = localized("stamp.candidateEmptyDescription")
+        static let claimButton = localized("stamp.claimButton")
+        static func candidateMatchCount(_ count: Int) -> String { String(format: localized("stamp.candidateMatchCount"), count) }
+        static let editPhotosButton = localized("stamp.editPhotosButton")
+        static let photoSourceTitle = localized("stamp.photoSourceTitle")
+        static let photoSourceLibrary = localized("stamp.photoSourceLibrary")
+        static let photoSourceVisit = localized("stamp.photoSourceVisit")
+        static let photoSlotEmpty = localized("stamp.photoSlotEmpty")
+        static let photoSlotMain = localized("stamp.photoSlotMain")
+        static let photoEditorDescription = localized("stamp.photoEditorDescription")
+        static let photoResetToDefault = localized("stamp.photoResetToDefault")
+        static let swapWithMain = localized("stamp.swapWithMain")
+        static let visitPhotoPickerTitle = localized("stamp.visitPhotoPickerTitle")
+        static let visitPhotoPickerEmpty = localized("stamp.visitPhotoPickerEmpty")
     }
 
     // MARK: - Course Editor（コース作成・編集）
@@ -481,17 +495,22 @@ enum L {
         static let categoryAnime           = localized("course.category.anime")
         static let categoryUserCreated     = localized("course.category.user_created")
         static let newBadge = localized("course.newBadge")
-        static let newSectionTitle = localized("course.newSectionTitle")
         static let favoriteSectionTitle = localized("course.favoriteSectionTitle")
         static let favoriteToggleAdd = localized("course.favoriteToggleAdd")
         static let favoriteToggleRemove = localized("course.favoriteToggleRemove")
-        static let favoriteViewAll = localized("course.favoriteViewAll")
-        static let favoriteEmptyDescription = localized("course.favoriteEmptyDescription")
         static let achieved = localized("course.achieved")
         static let syncingMessage = localized("course.syncingMessage")
         static let syncFailedTitle = localized("course.syncFailedTitle")
         static let syncFailedDescription = localized("course.syncFailedDescription")
-        static let searchPlaceholder = localized("course.searchPlaceholder")
+        static let displayModeSwitchToGrid = localized("course.displayMode.switchToGrid")
+        static let displayModeSwitchToList = localized("course.displayMode.switchToList")
+        static let createNewButton = localized("course.createNewButton")
+        static func courseCount(_ count: Int) -> String { String(format: localized("course.courseCount"), count) }
+        static let filterNew = localized("course.filterNew")
+        static let filterUserCreated = localized("course.filterUserCreated")
+        static let filterEmptyDescription = localized("course.filterEmptyDescription")
+        static let filterExpand = localized("course.filterExpand")
+        static let filterCollapse = localized("course.filterCollapse")
 
         static let notVisited = localized("course.notVisited")
         static let noAddress = localized("course.noAddress")
@@ -504,6 +523,7 @@ enum L {
         static let sortDistance = localized("course.sort.distance")
         static let sortUpdatedAt = localized("course.sort.updatedAt")
         static let sortSpotCount = localized("course.sort.spotCount")
+        static let sortAchievedCount = localized("course.sort.achievedCount")
     }
 
     // MARK: - Manual Entry (後付け記録)
@@ -626,6 +646,7 @@ enum L {
     enum SpotList {
         static let title = localized("spotList.title")
         static let locationUnavailable = localized("spotList.locationUnavailable")
+        static let filterSearchPlaceholder = localized("spotList.filter.searchPlaceholder")
         static let noSpots = localized("spotList.noSpots")
         static let modeNearby = localized("spotList.mode.nearby")
         static let modeNearbyShort = localized("spotList.mode.nearby.short")
@@ -836,12 +857,19 @@ enum L {
         static let settingsPhotoSpotsOnly = localized("tourMode.settings.photoSpotsOnly")
         static let settingsTypewriter = localized("tourMode.settings.typewriter")
         static let settingsTypewriterDesc = localized("tourMode.settings.typewriterDesc")
+        static let settingsShowSummary = localized("tourMode.settings.showSummary")
+        static let settingsShowSummaryDesc = localized("tourMode.settings.showSummaryDesc")
     }
 
     // MARK: - CourseDetail メニュー
     enum CourseDetail {
         static let menuCourseInfo = localized("courseDetail.menu.courseInfo")
         static let menuShare = localized("courseDetail.menu.share")
+        static let menuEdit = localized("courseDetail.menu.edit")
+        static let tourPreparingTitle = localized("courseDetail.tour.preparingTitle")
+        static let tourPreparingMessage = localized("courseDetail.tour.preparingMessage")
+        static let deleteConfirmTitle = localized("courseDetail.deleteConfirmTitle")
+        static let deleteConfirmMessage = localized("courseDetail.deleteConfirmMessage")
         static let menuSectionMapSettings = localized("courseDetail.menu.sectionMapSettings")
         static let menuSectionPlayback = localized("courseDetail.menu.sectionPlayback")
         static let menuZoomOnFocus = localized("courseDetail.menu.zoomOnFocus")
@@ -864,13 +892,6 @@ enum L {
         static let layoutMap = localized("share.layoutMap")
         static let showSubThumbnail = localized("share.showSubThumbnail")
         static let selectPhoto = localized("share.selectPhoto")
-        static let stampSettingsLabel = localized("share.stampSettingsLabel")
-        static let showStamp = localized("share.showStamp")
-        static let achievedLabel = localized("share.achievedLabel")
-        static let dateStampStyleLabel = localized("share.dateStampStyleLabel")
-        static let dateStampNone = localized("share.dateStampNone")
-        static let dateStampTab = localized("share.dateStampTab")
-        static let dateStampPlate = localized("share.dateStampPlate")
         static func spotShareText(_ course: String, _ spot: String) -> String {
             String(format: localized("share.spotShareText"), course, spot)
         }

@@ -24,6 +24,7 @@
 "common.copy" = "コピー";
 "common.showOptions" = "詳細設定";
 "common.hideOptions" = "詳細設定を閉じる";
+"common.photoSaved" = "保存しました";
 
 // MARK: - Visit Edit
 "visit.edit.titlePlaceholder" = "タイトル";
@@ -338,7 +339,15 @@
 "course.syncingMessage" = "コースを読み込んでいます";
 "course.syncFailedTitle" = "コースを取得できませんでした";
 "course.syncFailedDescription" = "インターネット接続を確認してもう一度お試しください";
-"course.searchPlaceholder" = "コースを検索";
+"course.displayMode.switchToGrid" = "グリッド表示に切り替え";
+"course.displayMode.switchToList" = "リスト表示に切り替え";
+"course.createNewButton" = "コースを作る";
+"course.courseCount" = "%d件";
+"course.filterNew" = "新着";
+"course.filterUserCreated" = "自作コース";
+"course.filterEmptyDescription" = "このフィルタに該当するコースはありません";
+"course.filterExpand" = "絞り込みを開く";
+"course.filterCollapse" = "絞り込みを閉じる";
 "course.enable" = "有効にする";
 "course.disable" = "無効にする";
 "course.enableToggle" = "このコースを有効にする";
@@ -359,12 +368,9 @@
 "course.category.anime" = "アニメ・漫画";
 "course.category.user_created" = "自作コース";
 "course.newBadge" = "NEW";
-"course.newSectionTitle" = "新着コース";
 "course.favoriteSectionTitle" = "お気に入り";
 "course.favoriteToggleAdd" = "お気に入りに追加";
 "course.favoriteToggleRemove" = "お気に入りから削除";
-"course.favoriteViewAll" = "すべて見る";
-"course.favoriteEmptyDescription" = "コースをお気に入りに追加すると、ここに表示されます";
 "course.achieved" = "達成";
 
 "course.notVisited" = "未訪問";
@@ -376,8 +382,9 @@
 "course.sort.nearby" = "現在地から近い順";
 "course.sort.default" = "デフォルト順";
 "course.sort.distance" = "近い順";
-"course.sort.updatedAt" = "更新日";
-"course.sort.spotCount" = "スポット数";
+"course.sort.updatedAt" = "更新日順";
+"course.sort.spotCount" = "スポット数順";
+"course.sort.achievedCount" = "達成スポット数順";
 
 // MARK: - Mode Selection（SettingsSheetのモード切替行でのみ使用）
 "modeSelection.appModeSection" = "アプリモード";
@@ -494,14 +501,28 @@
 "recordBadge.manualTitle" = "後付け記録";
 "recordBadge.manualDescription" = "後から手動で追加した記録です。実際に訪れたかどうかの証明はありません。";
 
-// MARK: - My List（マイリスト）
-"myList.title" = "コースを作る";
-"myList.emptyTitle" = "まだコースがありません";
-"myList.emptyDescription" = "+ 新しいコースを作成する";
-"myList.newCourseButton" = "新規コース作成";
-"myList.deleteConfirmTitle" = "コースを削除";
-"myList.deleteConfirmMessage" = "このコースとスポットをすべて削除します。この操作は取り消せません。";
-"myList.spotsCount" = "%d件のスポット";
+// MARK: - Stamp（スタンプ、仮実装）
+"stamp.emptyDescription" = "巡礼でスポットにチェックインするとスタンプが増えていきます";
+"stamp.noVisitHistory" = "記録が見つかりませんでした";
+"stamp.countSummarySuffix" = "個のスタンプを集めました";
+"stamp.unlinkVisit" = "この記録の紐づけを解除";
+"stamp.unlinkConfirmTitle" = "このスポットとの紐づけを解除しますか？";
+"stamp.unlinkConfirmMessage" = "訪問記録自体は削除されません";
+"stamp.candidateListTitle" = "取得可能なスタンプ";
+"stamp.candidateEmptyDescription" = "該当する記録は見つかりませんでした";
+"stamp.claimButton" = "この記録で獲得する";
+"stamp.candidateMatchCount" = "%d件該当";
+"stamp.editPhotosButton" = "写真を編集";
+"stamp.photoSourceTitle" = "写真を選ぶ";
+"stamp.photoSourceLibrary" = "フォトライブラリから選択";
+"stamp.photoSourceVisit" = "訪問記録の写真から選択";
+"stamp.photoSlotEmpty" = "写真を追加";
+"stamp.photoSlotMain" = "メイン";
+"stamp.photoEditorDescription" = "スタンプの背景に使う写真を設定できます";
+"stamp.photoResetToDefault" = "スポット画像に戻す";
+"stamp.swapWithMain" = "メインと入れ替え";
+"stamp.visitPhotoPickerTitle" = "訪問記録の写真";
+"stamp.visitPhotoPickerEmpty" = "選べる写真がありません";
 
 // MARK: - Course Editor（コース作成・編集）
 "courseEditor.createTitle" = "新しいコース";
@@ -558,13 +579,13 @@
 "spotEditor.longitude" = "経度";
 
 // MARK: - Tab Bar（追加分）
-"tab.myList" = "マイリスト";
-"tab.create" = "作る";
+"tab.stamp" = "スタンプ";
 "tab.spotList" = "スポット";
 
 // MARK: - SpotList（スポット一覧）
 "spotList.title" = "スポット";
 "spotList.locationUnavailable" = "現在地が取得できません";
+"spotList.filter.searchPlaceholder" = "スポット名・住所で検索";
 "spotList.noSpots" = "近くのスポットがありません\n巡礼コースを有効にしてください";
 "spotList.mode.nearby" = "近くのスポット";
 "spotList.mode.nearby.short" = "近く";
@@ -727,9 +748,16 @@
 "tourMode.settings.photoSpotsOnly" = "写真があるスポットのみ";
 "tourMode.settings.typewriter" = "説明文タイプライター演出";
 "tourMode.settings.typewriterDesc" = "説明文を一文字ずつ表示します。ONにするとスポット切り替え時間は無効になります。";
+"tourMode.settings.showSummary" = "最初にコース概要を表示";
+"tourMode.settings.showSummaryDesc" = "ツアー開始時、コースの概要を3秒ほど表示してから自動巡回を始めます。";
 
 // MARK: - CourseDetail メニュー
 "courseDetail.menu.courseInfo" = "コース概要";
+"courseDetail.menu.edit" = "編集";
+"courseDetail.tour.preparingTitle" = "ツアー用に写真を準備中";
+"courseDetail.tour.preparingMessage" = "準備後に自動で巡回を開始します";
+"courseDetail.deleteConfirmTitle" = "コースを削除";
+"courseDetail.deleteConfirmMessage" = "このコースとスポットをすべて削除します。この操作は取り消せません。";
 "courseDetail.menu.sectionMapSettings" = "地図設定";
 "courseDetail.menu.sectionPlayback" = "再生機能";
 "courseDetail.menu.zoomOnFocus" = "フォーカスズーム";
@@ -788,10 +816,3 @@
 "share.layoutMap" = "地図メイン";
 "share.showSubThumbnail" = "サブサムネイルを表示";
 "share.selectPhoto" = "写真を選択";
-"share.stampSettingsLabel" = "達成演出";
-"share.showStamp" = "スタンプを表示";
-"share.dateStampStyleLabel" = "日付スタンプ";
-"share.dateStampNone" = "なし";
-"share.dateStampTab" = "タブ";
-"share.dateStampPlate" = "プレート";
-"share.achievedLabel" = "達成";

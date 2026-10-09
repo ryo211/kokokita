@@ -69,6 +69,8 @@ final class SpotListStore {
     var displayLimit: Int = 10
     /// フィルターで除外するコースID（空 = すべて表示）
     var excludedCourseIds: Set<UUID> = []
+    /// スポット名・住所でのワード検索クエリ（空 = 絞り込みなし）
+    var searchQuery: String = ""
     /// 都道府県別モードで選択中の都道府県（デフォルト: 東京都）
     var selectedPrefecture: String = "東京都"
     /// 都道府県別モードの現在ページ（1始まり）
@@ -118,7 +120,7 @@ final class SpotListStore {
         relevantCourses
             .filter { !excludedCourseIds.contains($0.id) }
             .flatMap { course -> [CourseSpot] in
-                let valid = course.spots.filter { $0.hasValidCoordinate }
+                let valid = course.spots.filter { $0.hasValidCoordinate && matchesSearchQuery($0) }
                 switch listMode {
                 case .nearby:      return valid
                 case .favorites:   return valid.filter { favoriteSpotIds.contains($0.id) }
@@ -210,6 +212,15 @@ final class SpotListStore {
 
     // MARK: - スポット計算（モード・ソート対応）
 
+    /// スポット名・住所に検索クエリが部分一致するか（空クエリは常に true）
+    private func matchesSearchQuery(_ spot: CourseSpot) -> Bool {
+        let trimmed = searchQuery.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return true }
+        if spot.name.localizedCaseInsensitiveContains(trimmed) { return true }
+        if let address = spot.address, address.localizedCaseInsensitiveContains(trimmed) { return true }
+        return false
+    }
+
     func recalculateNearbySpots() {
         switch listMode {
         case .nearby:
@@ -236,7 +247,7 @@ final class SpotListStore {
         for course in courses
             where !excludedCourseIds.contains(course.id)
                && (!course.isUserCreated || course.isEnabled) {
-            for spot in course.spots where spot.hasValidCoordinate {
+            for spot in course.spots where spot.hasValidCoordinate && matchesSearchQuery(spot) {
                 let spotLocation = CLLocation(latitude: spot.latitude, longitude: spot.longitude)
                 results.append((course, spot, fromLocation.distance(from: spotLocation)))
             }
@@ -250,7 +261,7 @@ final class SpotListStore {
         var results: [(course: Course, spot: CourseSpot, distance: Double)] = []
 
         for course in courses where !excludedCourseIds.contains(course.id) && (!course.isUserCreated || course.isEnabled) {
-            for spot in course.spots where spot.hasValidCoordinate && favoriteSpotIds.contains(spot.id) {
+            for spot in course.spots where spot.hasValidCoordinate && favoriteSpotIds.contains(spot.id) && matchesSearchQuery(spot) {
                 let distance = fromLocation.map {
                     CLLocation(latitude: spot.latitude, longitude: spot.longitude).distance(from: $0)
                 } ?? 0
@@ -272,7 +283,7 @@ final class SpotListStore {
         var spotMap: [UUID: (course: Course, spot: CourseSpot)] = [:]
 
         for course in courses where !excludedCourseIds.contains(course.id) && (!course.isUserCreated || course.isEnabled) {
-            for spot in course.spots where spot.hasValidCoordinate && folderSpotIds.contains(spot.id) {
+            for spot in course.spots where spot.hasValidCoordinate && folderSpotIds.contains(spot.id) && matchesSearchQuery(spot) {
                 spotMap[spot.id] = (course, spot)
             }
         }
@@ -296,7 +307,7 @@ final class SpotListStore {
         var results: [(course: Course, spot: CourseSpot, distance: Double)] = []
 
         for course in courses where !excludedCourseIds.contains(course.id) && (!course.isUserCreated || course.isEnabled) {
-            for spot in course.spots where spot.hasValidCoordinate && spot.isCheckedIn {
+            for spot in course.spots where spot.hasValidCoordinate && spot.isCheckedIn && matchesSearchQuery(spot) {
                 let distance = fromLocation.map {
                     CLLocation(latitude: spot.latitude, longitude: spot.longitude).distance(from: $0)
                 } ?? 0
@@ -320,7 +331,7 @@ final class SpotListStore {
         let active = courses.filter { !$0.isUserCreated || $0.isEnabled }
         var results: [(course: Course, spot: CourseSpot, distance: Double)] = []
         for course in active where !excludedCourseIds.contains(course.id) {
-            for spot in course.spots where spot.hasValidCoordinate {
+            for spot in course.spots where spot.hasValidCoordinate && matchesSearchQuery(spot) {
                 guard Self.extractPrefecture(from: spot.address) == selectedPrefecture else { continue }
                 results.append((course, spot, 0))
             }

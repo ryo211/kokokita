@@ -48,4 +48,10 @@ struct Course: Identifiable, Equatable {
 
     /// 全スポット制覇済みか
     var isCompleted: Bool { checkedInCount == totalSpotCount && totalSpotCount > 0 }
+
+    /// 地図ピン等で使う代表カテゴリ。自作コース向けの userCreated よりも
+    /// 具体的なジャンルを優先し、無ければ userCreated、それも無ければ nil
+    var primaryCategory: CourseCategory? {
+        categories.first(where: { $0 != .userCreated }) ?? categories.first
+    }
 }

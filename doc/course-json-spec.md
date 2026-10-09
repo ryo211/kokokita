@@ -1,6 +1,6 @@
 # コース JSON 仕様書
 
-コース機能で使用する JSON ファイルは3種類あります。
+コース機能で使用する JSON ファイルは2種類あります。
 
 ---
 
@@ -8,35 +8,24 @@
 
 | ファイル | 役割 | 配置場所 |
 |---------|------|---------|
-| `courses/index.json` | バンドルコースの一覧と表示順 | アプリバンドル内 |
-| `courses/{id}.json` | コースデータ本体 | バンドル内 / サーバー |
-| `store/index.json` | ストア公開コースの一覧とメタ情報 | サーバー |
+| `store/index.json` | 自動同期コースの一覧とメタ情報 | サーバー |
+| `courses/{id}.json` | コースデータ本体 | サーバー |
 
 ---
 
-## 1. バンドルコース インデックス（`courses/index.json`）
+## ~~1. バンドルコース インデックス~~ **廃止**
 
-アプリに同梱するコースの一覧と表示順を管理します。
-
-### スキーマ
-
-```json
-["world_heritage_japan_001", "100_famous_castles_japan_001"]
-```
-
-文字列配列で、各要素は `courses/` フォルダ内の JSON ファイル名（拡張子なし）です。
-
-### ルール
-
-- 配列の順番がコース一覧の表示順になります
-- ここに記載のないバンドルコース（`source: "bundled"`）はアプリ起動時に CoreData から自動削除されます
-- ダウンロードコース（`source: "downloaded"`）・ユーザー作成コース（`source: "user"`）はこのファイルの影響を受けません
+> **v3.x でバンドルコースは廃止されました。**
+> アプリ同梱の `courses/index.json` と個別コース JSON ファイルはすべて削除済みです。
+> 既存ユーザーの CoreData に残存する `source == "bundled"` レコードは、
+> `CoreDataCourseRepository.mapToCourse()` により実行時に `source == .downloaded` として透過変換されます。
+> CoreData マイグレーションは不要です。
 
 ---
 
 ## 2. コース JSON（`courses/{id}.json`）
 
-バンドルコースとストアからのダウンロードコースで共通のフォーマットです。
+自動同期コース（`source: "downloaded"`）とユーザー作成コース（`source: "user"`）で共通のフォーマットです。
 
 ### トップレベル フィールド
 
@@ -105,9 +94,9 @@
 
 | 値 | 意味 |
 |----|------|
-| `"bundled"` | アプリに同梱されたコース |
-| `"downloaded"` | ストアからダウンロードしたコース |
+| `"downloaded"` | `CourseAutoSyncService` でサーバーから自動同期されたコース |
 | `"user"` | ユーザーが作成したコース |
+| ~~`"bundled"`~~ | **廃止**。アプリ同梱コース（v3.x 以前）。CoreData の既存レコードは実行時に `"downloaded"` として扱う |
 
 ### <a name="categories">categories 値一覧</a>
 
@@ -130,7 +119,7 @@
   "courseType": "pilgrimage",
   "title": "日本の世界遺産",
   "summary": "ユネスコ世界遺産に登録された日本の遺産地を巡るコースです。",
-  "source": "bundled",
+  "source": "downloaded",
   "isUserCreated": false,
   "version": 1,
   "recognitionRadiusMeters": 500.0,
@@ -161,7 +150,7 @@
   "id": "course-tokyo-shitamachi-walk-001",
   "courseType": "pilgrimage",
   "title": "東京下町さんぽ",
-  "source": "bundled",
+  "source": "downloaded",
   "isUserCreated": false,
   "version": 1,
   "recognitionRadiusMeters": 150.0,
@@ -193,9 +182,10 @@
 
 ---
 
-## 3. ストア インデックス（`store/index.json`）
+## 3. 自動同期インデックス（`store/index.json`）
 
-コースストア画面に表示するダウンロード可能コースの一覧とメタ情報を管理します。個別コース JSON を取得せずとも一覧表示できる情報をここに含めます。
+アプリ起動時に `CourseAutoSyncService` が取得する自動同期用インデックスです。
+ここに記載されたコースが端末の CoreData と同期されます（新規追加・バージョン更新・削除を自動反映）。
 
 **本番配置先**: `https://kokokita-app.irodoriq.com/course/store/index.json`
 
@@ -221,7 +211,7 @@
 | `jsonPath` | string | ✅ | ベース URL からの相対パス（例: `"courses/xxx.json"`） |
 | `updatedAt` | string?（ISO8601） | | 最終更新日時 |
 
-### ストア インデックスの例
+### 自動同期インデックスの例
 
 ```json
 {
@@ -247,39 +237,33 @@
 
 ## ファイル配置
 
-### アプリバンドル（Xcode プロジェクト内）
-
-```
-kokokita/Resources/
-├── courses/
-│   ├── index.json                          ← バンドルコース インデックス
-│   ├── world_heritage_japan_001.json
-│   └── 100_famous_castles_japan_001.json
-└── store_index.json                        ← ストア index のローカル参照用コピー（開発用）
-```
-
 ### サーバー（https://kokokita-app.irodoriq.com/course/）
 
 ```
-/store/index.json              ← ストア インデックス（アプリが参照）
+/store/index.json              ← 自動同期インデックス（アプリ起動時に取得）
 /courses/{id}.json             ← 個別コース JSON
 /images/course/{id}.jpg        ← カバー画像
 ```
 
+> **注意**: アプリバンドル内のコースリソース（`kokokita/Resources/courses/`）は v3.x で全廃済みです。
+> 新規コースはサーバーの `store/index.json` に追加することで自動配信されます。
+
 ---
 
-## ダウンロード状態の判定ロジック
+## 自動同期ロジック（CourseAutoSyncService）
 
-ストア画面では、ローカル DB とストア index を照合して各コースの状態を判定します。
+アプリ起動時に `CourseAutoSyncService.sync()` が実行され、`store/index.json` とローカル DB を自動照合します。
 
-| 判定条件 | 状態 | UI |
-|---------|------|-----|
-| ローカル DB にコースが存在しない | 未ダウンロード | 「取得」ボタン |
-| ローカルの `version` ≥ ストアの `version` | ダウンロード済み | 「済み」バッジ（非活性） |
-| ローカルの `version` < ストアの `version` | 更新あり | 「更新」ボタン |
+| 条件 | 処理 |
+|------|------|
+| `index.json` にあり、ローカル DB になし | 個別 JSON をダウンロードして新規保存（`source = "downloaded"`） |
+| `index.json` のバージョン > ローカルの `version` | 個別 JSON を取得してローカルを上書き更新（チェックイン状態は保持） |
+| `index.json` のバージョン ≤ ローカルの `version` | 変更なし（スキップ） |
+| ローカル DB にあり（`source == .downloaded`）、`index.json` になし | CoreData から自動削除 |
 
-- バンドルコースとダウンロードコースは同等に扱われます
-- コースを削除すると「未ダウンロード」状態に戻り、ストアから再取得できます
+- `source == .user`（ユーザー作成コース）は自動削除の対象外
+- 新規ダウンロード時は `courseDownloaded` 通知が発行され、コース一覧の「新着」バッジに反映される
+- `index.json` 取得失敗時（ネットワーク不通等）は既存ローカルデータをそのまま表示する
 
 ---
 

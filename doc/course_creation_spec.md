@@ -6,6 +6,12 @@
 既存のコース詳細画面（SwiftUI）をベースとしたUIで、スポットの追加・編集・並び替えが可能。
 作成したコースはCoreDataに保存され、コース一覧に反映して巡礼達成判定の対象にできる。
 
+### コース配信方式（v3.x 改訂）
+
+v3.x 以降、配信コースはアプリバンドル同梱（bundled）から **サーバー自動同期（downloaded）** に移行した。
+アプリ起動時に `CourseAutoSyncService` が `index.json` を取得し、新規・更新・削除を自動反映する。
+バンドルコース（`source == "bundled"`）は廃止済み。既存DBに残るデータは実行時に透過的に `.downloaded` として扱われる。
+
 ---
 
 ## 前提・制約
@@ -51,7 +57,7 @@ CoreDataの各フィールドとJSON仕様フィールドの対応は以下の�
 | `courseType` | `courseType` | `"my_list"` 固定 |
 | `title` | `title` | ユーザー入力 |
 | `summary` | `summary` | ユーザー入力（任意） |
-| `source` | `source` | `"user"` 固定 |
+| `source` | `source` | `"user"` 固定（配信コースは `"downloaded"`、旧バンドルは廃止） |
 | `isUserCreated` | `isUserCreated` | `true` 固定 |
 | `version` | `version` | 初回作成時 `1`、編集保存のたびにインクリメント |
 | `recognitionRadiusMeters` | `recognitionRadiusMeters` | ユーザー設定（デフォルト `150.0`） |
@@ -411,22 +417,51 @@ final class LocalImageStorage {
 
 ## 8. コース一覧への反映
 
-既存のコース一覧画面（`CourseListView` 等）の `@FetchRequest` 条件を変更する。
+`CourseListStore.load()` が `repo.fetchAll()` で全コースを取得し、Swift レベルでフィルタリングする。
 
-### 変更前（推定）
 ```swift
-// bundled / downloaded のコースを表示
+// isUserCreated == true のコースは isEnabled == true のものだけ表示
+// source == .downloaded のコースは全件表示
+courses = all.filter { course in
+    !course.isUserCreated || course.isEnabled
+}
 ```
 
-### 変更後
-```swift
-// bundled / downloaded に加えて、
-// isUserCreated == true かつ isEnabled == true のコースも表示
-let predicate = NSPredicate(
-    format: "source IN %@ OR (isUserCreated == YES AND isEnabled == YES)",
-    ["bundled", "downloaded"]
-)
-```
+### `CourseSource` の扱い
+
+| source | 説明 | 現行対応 |
+|---|---|---|
+| `"downloaded"` | `CourseAutoSyncService` で自動同期されたコース | 全件表示 |
+| `"user"` | ユーザーが作成したコース（`isUserCreated == true`） | `isEnabled == true` のみ表示 |
+| `"bundled"` | **廃止** | 既存DBとの後方互換のみ。`CoreDataCourseRepository.mapToCourse()` で実行時に `.downloaded` として扱う |
+
+> `source == "bundled"` はCoreDataに保存された値として残存する可能性があるが、
+> `mapToCourse()` で透過的に `.downloaded` へ変換されるため、
+> アプリ実行時には `.bundled` が露出することはない。CoreData マイグレーションは不要。
+
+---
+
+## 8.5. 配信コースの自動同期（CourseAutoSyncService）
+
+アプリ起動時に `CourseAutoSyncService.sync()` が実行され、サーバー上の `index.json` からコース配信を自動管理する。
+
+### 同期フロー
+
+1. サーバーから `index.json` を取得（ネットワーク不通時は既存データをそのまま表示）
+2. ローカル DB（`source == .downloaded`）と比較:
+   - **新規コース**: JSON をダウンロードして CoreData に保存（`source = "downloaded"`）
+   - **更新コース**: `version` が上がっていれば情報を上書き更新
+   - **削除コース**: `index.json` に存在しない `source == .downloaded` コースを削除
+     - `source == .user`（ユーザー作成）のコースは絶対に削除しない
+3. 同期完了後、`CourseListStore.syncAndLoad()` が一覧を再ロードする
+
+### 新着バッジ
+
+自動同期で新規ダウンロードされたコースは `courseDownloaded` 通知が発行され、`CourseListStore` が NEWバッジを付与する（`newlyAddedCourses`）。コース一覧の「新着コース」横スクロールセクションに表示される。
+
+### バンドルコースからの移行
+
+v3.x 以前のバンドルコース（アプリバンドル同梱）は廃止された。既存ユーザーのローカルDBに残存する `source == "bundled"` データは、`CoreDataCourseRepository.mapToCourse()` により実行時に透過的に `.downloaded` として扱われる。
 
 ---
 

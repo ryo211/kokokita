@@ -95,13 +95,6 @@ struct VisitListScreen: View {
                 .padding(.top, 8)
             }
         }
-        .task { store.reload() }
-        .onReceive(NotificationCenter.default.publisher(for: .visitsChanged)) { _ in
-            Task { store.reload() }
-        }
-        .onReceive(NotificationCenter.default.publisher(for: .taxonomyChanged)) { _ in
-            Task { await store.reloadTaxonomyThenData() }
-        }
     }
 
     // ソートボタン（Liquid Glass風カプセル）
@@ -176,6 +169,7 @@ struct VisitListScreen: View {
                 }
             }
             .listStyle(.plain)
+            .scrollContentBackground(.hidden)
             .onChange(of: selectedDate) { _, newDate in
                 if let date = newDate {
                     withAnimation {
@@ -253,6 +247,17 @@ struct VisitListScreen: View {
         }
         .navigationTitle(L.Home.title)
         .toolbar(.hidden, for: .navigationBar)
+        .task { store.reload() }
+        // 表示モードに関わらず（list/map/calendarのどれでも）確実に受け取れるよう、
+        // 個別のコンテンツ内ではなくここで一括して購読する
+        // （以前はlistContent()/calendarContent()内にあり、mapモード中は
+        //  他画面での記録変更を取りこぼして反映が遅れる不具合があった）
+        .onReceive(NotificationCenter.default.publisher(for: .visitsChanged)) { _ in
+            store.reload()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .taxonomyChanged)) { _ in
+            Task { await store.reloadTaxonomyThenData() }
+        }
         .onChange(of: selectedMapItemId) { _, newValue in
             if newValue == nil {
                 mapSheetHeight = 0
@@ -269,6 +274,10 @@ struct VisitListScreen: View {
             selectedMapItemId = visitId
         }
         .onChange(of: displayMode) {
+            // モード切替のたびに保険としてもreload（通知の取りこぼしがあっても
+            // ここで最新化される。以前はlistContent()/calendarContent()の.taskが
+            // モード切替のたびに再実行されこの役割を果たしていた）
+            store.reload()
             mapSheetHeight = 0
             if displayMode == .map {
                 // 地図に戻った時、選択中のアイテムがあればシート表示状態を復元
@@ -284,30 +293,35 @@ struct VisitListScreen: View {
     }
     
     private var contentStack: some View {
-        VStack(spacing: 0) {
-            HomeFilterHeader(
-                store: store,
-                displayMode: displayMode,
-                onTapSearch: {
-                    showSearchSheet = true
-                },
-                onToggleDisplayMode: { newMode in
-                    displayMode = newMode
-                }
-            )
-            .sheet(isPresented: $showSearchSheet) {
-                NavigationStack { SearchFilterSheet(store: store) { showSearchSheet = false } }
-                .iPadSheetSize()
-            }
+        ZStack {
+            // 背景（ホーム画面と同じグラデーション + 抽象ライン装飾）
+            HomeStyleBackground()
 
-            // 表示モードで切り替え
-            switch displayMode {
-            case .list:
-                listContent()
-            case .map:
-                mapContent()
-            case .calendar:
-                calendarContent()
+            VStack(spacing: 0) {
+                HomeFilterHeader(
+                    store: store,
+                    displayMode: displayMode,
+                    onTapSearch: {
+                        showSearchSheet = true
+                    },
+                    onToggleDisplayMode: { newMode in
+                        displayMode = newMode
+                    }
+                )
+                .sheet(isPresented: $showSearchSheet) {
+                    NavigationStack { SearchFilterSheet(store: store) { showSearchSheet = false } }
+                    .iPadSheetSize()
+                }
+
+                // 表示モードで切り替え
+                switch displayMode {
+                case .list:
+                    listContent()
+                case .map:
+                    mapContent()
+                case .calendar:
+                    calendarContent()
+                }
             }
         }
         .navigationDestination(isPresented: Binding(
@@ -448,7 +462,6 @@ struct VisitListScreen: View {
             Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color(.systemBackground))
     }
 
     // MARK: - Map Content
@@ -485,13 +498,6 @@ struct VisitListScreen: View {
                 ui.isCalendarVisible = visible
             }
         )
-        .task { store.reload() }
-        .onReceive(NotificationCenter.default.publisher(for: .visitsChanged)) { _ in
-            Task { store.reload() }
-        }
-        .onReceive(NotificationCenter.default.publisher(for: .taxonomyChanged)) { _ in
-            Task { await store.reloadTaxonomyThenData() }
-        }
     }
 
     private func formatDateHeader(_ date: Date) -> String {

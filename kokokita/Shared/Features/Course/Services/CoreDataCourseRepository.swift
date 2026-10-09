@@ -53,7 +53,8 @@ final class CoreDataCourseRepository: CourseRepository {
         try ctx.performAndWait {
             guard let entity = try fetchEntity(id: courseId) else { return }
             entity.everEnabled = NSNumber(value: true)
-            entity.updatedAt = Date()
+            // updatedAt はコースJSON側の更新日時を保持するフィールドのため、
+            // アプリ内部のフラグ更新では書き換えない
             try ctx.save()
         }
     }
@@ -88,6 +89,27 @@ final class CoreDataCourseRepository: CourseRepository {
             }
             try ctx.save()
             // 関係キャッシュを無効化して次回フェッチ時に必ず永続化ストアから取得させる
+            ctx.refreshAllObjects()
+        }
+    }
+
+    func unlinkVisit(spotId: UUID, visitId: UUID) throws {
+        try ctx.performAndWait {
+            // fetchLimit を設けず同UUID の全エンティティを更新する（checkIn と同様、重複エンティティ対策）
+            let req = CourseSpotEntity.fetchRequest()
+            req.predicate = NSPredicate(format: "id == %@", spotId as NSUUID)
+            let found = try ctx.fetch(req)
+            guard !found.isEmpty else { return }
+
+            let vReq = VisitEntity.fetchRequest()
+            vReq.predicate = NSPredicate(format: "id == %@", visitId as NSUUID)
+            vReq.fetchLimit = 1
+            guard let details = try ctx.fetch(vReq).first?.details else { return }
+
+            for spot in found where spot.visits?.contains(details) ?? false {
+                spot.removeFromVisits(details)
+            }
+            try ctx.save()
             ctx.refreshAllObjects()
         }
     }
@@ -450,7 +472,10 @@ final class CoreDataCourseRepository: CourseRepository {
         let visitIds: [UUID] = linkedVisits.compactMap { $0.id }
         // firstCheckedInAt は visits の最古の訪問日時から導出（CoreData フラグは参照しない）
         let firstCheckedInAt: Date? = linkedVisits.first?.timestampUTC
-        return CourseSpot(
+        let customPhotoPaths: [String?] = s.customPhotoPaths
+            .flatMap { $0.data(using: .utf8) }
+            .flatMap { try? JSONDecoder().decode([String?].self, from: $0) } ?? []
+        var spot = CourseSpot(
             id: s.id ?? UUID(),
             spotId: s.spotId ?? "",
             name: s.name ?? "",
@@ -466,5 +491,24 @@ final class CoreDataCourseRepository: CourseRepository {
             firstCheckedInAt: firstCheckedInAt,
             visitIds: visitIds
         )
+        spot.customPhotoPaths = customPhotoPaths
+        return spot
+    }
+
+    /// スポットのカスタム写真パスを更新する（要素の位置がスロット）。自動同期(syncSpots)では一切触れない
+    func updateSpotPhotos(spotId: UUID, paths: [String?]) throws {
+        try ctx.performAndWait {
+            let req = CourseSpotEntity.fetchRequest()
+            req.predicate = NSPredicate(format: "id == %@", spotId as NSUUID)
+            let found = try ctx.fetch(req)
+            guard !found.isEmpty else { return }
+
+            let json = (try? JSONEncoder().encode(paths)).flatMap { String(data: $0, encoding: .utf8) }
+            for spot in found {
+                spot.customPhotoPaths = json
+            }
+            try ctx.save()
+            ctx.refreshAllObjects()
+        }
     }
 }
