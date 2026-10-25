@@ -1,4 +1,5 @@
 import SwiftUI
+import CoreLocation
 
 // スタンプの手動確認画面
 // 未達成スポットと、条件（認識半径）を満たす過去の訪問記録の組み合わせを検出し、
@@ -8,6 +9,9 @@ struct StampCandidateListView: View {
     @State private var isLoading = true
     // 記録候補は普段閉じておき、タップしたスポットだけ展開する
     @State private var expandedSpotIds: Set<UUID> = []
+    // 獲得直後、通常記録時と同じ達成シートを表示する
+    @State private var checkInResults: [CourseRecognitionService.RecognitionResult] = []
+    @State private var showCheckInResult = false
 
     var body: some View {
         ZStack {
@@ -47,7 +51,7 @@ struct StampCandidateListView: View {
                                         HStack(spacing: 10) {
                                             CheckInVisitCard(aggregate: aggregate)
                                             Spacer(minLength: 0)
-                                            claimButton(spotId: candidate.spot.id, visitId: aggregate.id)
+                                            claimButton(course: candidate.course, spot: candidate.spot, aggregate: aggregate)
                                         }
                                     }
                                     .transition(.opacity.combined(with: .move(edge: .top)))
@@ -64,12 +68,15 @@ struct StampCandidateListView: View {
         .task {
             await loadCandidates()
         }
+        .sheet(isPresented: $showCheckInResult) {
+            CheckInResultSheet(results: checkInResults)
+        }
     }
 
     // 記録カード(280pt固定)の右側にできる余白を使い、獲得アクションをコンパクトな丸ボタンにする
-    private func claimButton(spotId: UUID, visitId: UUID) -> some View {
+    private func claimButton(course: Course, spot: CourseSpot, aggregate: VisitAggregate) -> some View {
         Button {
-            claim(spotId: spotId, visitId: visitId)
+            claim(course: course, spot: spot, aggregate: aggregate)
         } label: {
             Image(systemName: "checkmark.seal.fill")
                 .font(.system(size: 22))
@@ -99,12 +106,27 @@ struct StampCandidateListView: View {
         isLoading = false
     }
 
-    private func claim(spotId: UUID, visitId: UUID) {
+    private func claim(course: Course, spot: CourseSpot, aggregate: VisitAggregate) {
         do {
-            try AppContainer.shared.courseRepo.checkIn(spotId: spotId, visitId: visitId)
+            try AppContainer.shared.courseRepo.checkIn(spotId: spot.id, visitId: aggregate.id)
             NotificationCenter.default.post(name: .courseChanged, object: nil)
             // 獲得したスポットは候補一覧から除去する
-            candidates.removeAll { $0.spot.id == spotId }
+            candidates.removeAll { $0.spot.id == spot.id }
+
+            // 通常記録時のチェックイン判定と同じ形式の結果を組み立て、同じ達成シートを表示する
+            let visit = aggregate.visit
+            let distance = CLLocation(latitude: visit.latitude, longitude: visit.longitude)
+                .distance(from: CLLocation(latitude: spot.latitude, longitude: spot.longitude))
+            let updatedCourse = try AppContainer.shared.courseRepo.fetch(id: course.id) ?? course
+            checkInResults = [CourseRecognitionService.RecognitionResult(
+                course: updatedCourse,
+                spot: spot,
+                distanceMeters: distance,
+                achievedAt: visit.timestampUTC,
+                visitLatitude: visit.latitude,
+                visitLongitude: visit.longitude
+            )]
+            showCheckInResult = true
         } catch {
             Logger.error("スタンプの獲得に失敗しました: \(error)")
         }
