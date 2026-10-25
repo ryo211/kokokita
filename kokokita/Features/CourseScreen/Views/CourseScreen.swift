@@ -73,7 +73,7 @@ struct AllCourseListView: View {
     @Bindable var store: CourseListStore
     @Environment(\.courseFavoriteStore) private var favoriteStore
     @State private var sortOrder: CourseSortOrder = .updatedAt
-    @AppStorage(CourseListDisplayMode.storageKey) private var displayModeRaw = CourseListDisplayMode.list.rawValue
+    @AppStorage(CourseListDisplayMode.storageKey) private var displayModeRaw = CourseListDisplayMode.grid.rawValue
     @State private var selectedFilter: AllCourseFilter = .all
     @State private var showCreateEditor = false
     @State private var isFilterExpanded = true
@@ -86,7 +86,7 @@ struct AllCourseListView: View {
     }
 
     private var displayMode: CourseListDisplayMode {
-        get { CourseListDisplayMode(rawValue: displayModeRaw) ?? .list }
+        get { CourseListDisplayMode(rawValue: displayModeRaw) ?? .grid }
         nonmutating set { displayModeRaw = newValue.rawValue }
     }
 
