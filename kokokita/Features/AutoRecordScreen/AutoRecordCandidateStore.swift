@@ -9,21 +9,30 @@ final class AutoRecordCandidateStore {
     private let candidateRepo: VisitCandidateRepository
     private let visitRepo: CoreDataVisitRepository
     private let excludedRepo: ExcludedLocationRepository
+    private let courseRecognitionService: CourseRecognitionService?
+    private let courseRepo: CourseRepository?
     private let geocoder = CLGeocoder()
 
     var candidates: [VisitCandidate] = []
     var isLoading = false
     var approvedVisitId: UUID?
     var errorMessage: String?
+    /// 承認した候補がコーススポットの認識条件を満たした場合の判定結果
+    /// （ここキタボタン押下時と同じ達成シートを表示するために使用）
+    var pendingCheckInResults: [CourseRecognitionService.RecognitionResult] = []
 
     init(
         candidateRepo: VisitCandidateRepository = AppContainer.shared.candidateRepo,
         visitRepo: CoreDataVisitRepository = AppContainer.shared.repo,
-        excludedRepo: ExcludedLocationRepository = AppContainer.shared.excludedLocationRepo
+        excludedRepo: ExcludedLocationRepository = AppContainer.shared.excludedLocationRepo,
+        courseRecognitionService: CourseRecognitionService? = AppContainer.shared.courseRecognitionService,
+        courseRepo: CourseRepository? = AppContainer.shared.courseRepo
     ) {
         self.candidateRepo = candidateRepo
         self.visitRepo = visitRepo
         self.excludedRepo = excludedRepo
+        self.courseRecognitionService = courseRecognitionService
+        self.courseRepo = courseRepo
     }
 
     // MARK: - 読み込み
@@ -122,9 +131,39 @@ final class AutoRecordCandidateStore {
         candidates.removeAll { $0.id == candidate.id }
         AppIconBadgeService.shared.setBadgeCount(candidates.count)
         NotificationCenter.default.post(name: .visitsChanged, object: nil)
+
+        // ここキタボタン押下時（RecordingController.runCourseRecognition）と同様に、保存直後にコース認識を実行する
+        pendingCheckInResults = []
+        if let svc = courseRecognitionService, let cRepo = courseRepo {
+            recognizeCourses(latitude: candidate.latitude, longitude: candidate.longitude, visitId: visitId, service: svc, courseRepo: cRepo)
+        }
+
         Logger.success("自動記録を承認・確定しました: \(visitId)")
         approvedVisitId = visitId
         return visitId
+    }
+
+    /// コース認識を実行（RecordingController.runCourseRecognition と同じロジック）
+    private func recognizeCourses(
+        latitude: Double,
+        longitude: Double,
+        visitId: UUID,
+        service: CourseRecognitionService,
+        courseRepo: CourseRepository
+    ) {
+        do {
+            let results = try service.recognize(latitude: latitude, longitude: longitude, isManualEntry: false)
+            guard !results.isEmpty else { return }
+
+            for result in results {
+                try courseRepo.checkIn(spotId: result.spot.id, visitId: visitId)
+            }
+            NotificationCenter.default.post(name: .courseChanged, object: nil)
+
+            pendingCheckInResults = results
+        } catch {
+            Logger.error("コース認識エラー", error: error)
+        }
     }
 
     // MARK: - 却下
