@@ -10,6 +10,11 @@ struct AutoRecordCandidateReviewScreen: View {
     @State private var excludingCandidate: VisitCandidate?
     @State private var excludeLabel: String = ""
     @State private var showDismissAllAlert = false
+    // ここキタボタン押下時（RecordingController/RecordingOverlay）と同じ
+    // 「達成シート→現在地を記録しましたシート→（任意で）編集シート」の順で表示する
+    @State private var pendingCheckInResults: [CourseRecognitionService.RecognitionResult] = []
+    @State private var pendingConfirmationId: UUID?
+    @State private var confirmationVisitId: UUID?
 
     var body: some View {
         NavigationStack {
@@ -79,7 +84,41 @@ struct AutoRecordCandidateReviewScreen: View {
             } message: {
                 Text(L.AutoRecord.excludeMessage(Int(AppConfig.autoRecordExclusionRadiusMeters)))
             }
-            .sheet(item: $editingVisitWrapper) { wrapper in
+            // 達成シート（コーススポットを達成した場合のみ）
+            .sheet(isPresented: Binding(
+                get: { !pendingCheckInResults.isEmpty },
+                set: { if !$0 {
+                    pendingCheckInResults = []
+                    if let id = pendingConfirmationId {
+                        confirmationVisitId = id
+                        pendingConfirmationId = nil
+                    }
+                }}
+            )) {
+                CheckInResultSheet(results: pendingCheckInResults) {
+                    pendingCheckInResults = []
+                }
+            }
+            // 「現在地を記録しました」確認シート
+            .sheet(isPresented: Binding(
+                get: { confirmationVisitId != nil },
+                set: { if !$0 { confirmationVisitId = nil } }
+            )) {
+                if let visitId = confirmationVisitId {
+                    PostKokokitaConfirmationSheet(
+                        visitId: visitId,
+                        onEnterInfo: { id in
+                            confirmationVisitId = nil
+                            editingVisitWrapper = EditingVisitWrapper(visitId: id)
+                        }
+                    )
+                    .iPadSheetSize(iPhoneDetents: nil)
+                }
+            }
+            // 編集シート（確認シートから「情報を入力」をタップした場合のみ）
+            .sheet(item: $editingVisitWrapper, onDismiss: {
+                NotificationCenter.default.post(name: .visitsChanged, object: nil)
+            }) { wrapper in
                 editSheet(visitId: wrapper.visitId)
             }
         }
@@ -118,7 +157,13 @@ struct AutoRecordCandidateReviewScreen: View {
                         candidate: candidate,
                         onApprove: {
                             if let id = try? store.approve(candidate: candidate) {
-                                editingVisitWrapper = EditingVisitWrapper(visitId: id)
+                                let results = store.pendingCheckInResults
+                                if !results.isEmpty {
+                                    pendingCheckInResults = results
+                                    pendingConfirmationId = id
+                                } else {
+                                    confirmationVisitId = id
+                                }
                             }
                         },
                         onDismiss: {

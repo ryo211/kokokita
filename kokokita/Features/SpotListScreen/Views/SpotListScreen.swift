@@ -1852,7 +1852,7 @@ private struct SpotRowBackdropView: View {
     }
 }
 
-// MARK: - 絞り込みパネル（近くのスポットモード専用）
+// MARK: - 絞り込みパネル（全モード共通、件数は現在のモードに応じて変化）
 
 private struct SpotFilterPanel: View {
     let store: SpotListStore
@@ -2027,7 +2027,7 @@ private struct SpotFilterPanel: View {
                                         Text(section.category?.displayName ?? "その他")
                                             .font(.subheadline.weight(.semibold))
                                             .foregroundStyle(.primary)
-                                        Text("(\(section.courses.flatMap(\.spots).count)スポット)")
+                                        Text("(\(store.filteredSpotCount(of: section.courses.flatMap(\.spots)))スポット)")
                                             .font(.caption2)
                                             .foregroundStyle(.secondary)
                                     }
@@ -2060,7 +2060,7 @@ private struct SpotFilterPanel: View {
                                             .font(.subheadline)
                                             .foregroundStyle(store.excludedCourseIds.contains(course.id) ? Color.secondary : Color.primary)
                                             .lineLimit(2)
-                                        Text("(\(course.spots.count)スポット)")
+                                        Text("(\(store.filteredSpotCount(of: course.spots))スポット)")
                                             .font(.caption2)
                                             .foregroundStyle(.secondary)
                                     }

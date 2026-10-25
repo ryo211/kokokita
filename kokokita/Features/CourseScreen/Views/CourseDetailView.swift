@@ -1296,11 +1296,9 @@ private struct SpotListAreaView: View, Equatable {
                                 }
                             }
                         } else {
-                            // デフォルト: セクション別（ツアー中は達成済スポットを非表示）
+                            // デフォルト: セクション別（達成済スポットも表示）
                             ForEach(course.sections) { section in
-                                let visibleSpots = isTourPlaying
-                                    ? section.spots.filter { !$0.isCheckedIn }
-                                    : section.spots
+                                let visibleSpots = section.spots
                                 if !visibleSpots.isEmpty {
                                     if section.hasName {
                                         CourseSectionHeaderView(section: section)

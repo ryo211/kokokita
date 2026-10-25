@@ -117,19 +117,24 @@ final class SpotListStore {
 
     /// フィルター適用後の表示対象スポット総数（絞り込みパネルの件数表示用）
     var totalFilteredSpotCount: Int {
-        relevantCourses
-            .filter { !excludedCourseIds.contains($0.id) }
-            .flatMap { course -> [CourseSpot] in
-                let valid = course.spots.filter { $0.hasValidCoordinate && matchesSearchQuery($0) }
-                switch listMode {
-                case .nearby:      return valid
-                case .favorites:   return valid.filter { favoriteSpotIds.contains($0.id) }
-                case .visited:     return valid.filter { $0.isCheckedIn }
-                case .prefecture:  return valid.filter { Self.extractPrefecture(from: $0.address) == selectedPrefecture }
-                case .folder:      return valid.filter { folderSpotIds.contains($0.id) }
-                }
-            }
-            .count
+        filteredSpotCount(
+            of: relevantCourses
+                .filter { !excludedCourseIds.contains($0.id) }
+                .flatMap(\.spots)
+        )
+    }
+
+    /// 指定したスポット群に、現在のモード・ワード検索条件を適用した表示対象件数を計算する
+    /// （絞り込みパネルのカテゴリ別・コース別の件数表示にも使用。現在画面に表示される件数と一致させる）
+    func filteredSpotCount(of spots: [CourseSpot]) -> Int {
+        let valid = spots.filter { $0.hasValidCoordinate && matchesSearchQuery($0) }
+        switch listMode {
+        case .nearby:      return valid.count
+        case .favorites:   return valid.filter { favoriteSpotIds.contains($0.id) }.count
+        case .visited:     return valid.filter { $0.isCheckedIn }.count
+        case .prefecture:  return valid.filter { Self.extractPrefecture(from: $0.address) == selectedPrefecture }.count
+        case .folder:      return valid.filter { folderSpotIds.contains($0.id) }.count
+        }
     }
 
     /// 都道府県別モードの総ページ数
