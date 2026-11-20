@@ -80,6 +80,10 @@
 | `orderIndex` | int | ✅ | 表示順（0始まり） |
 | `recognitionRadiusMeters` | double? | | 個別の GPS 認識半径。`null` の場合はコースのデフォルト値を使用 |
 
+> **`spotId` 不変ルール**: 一度公開した `spotId` は、スポットの並べ替え・コースのバージョン更新・スポットの一部削除があっても**絶対に変更・再利用しない**こと。
+> `spotId` はクライアント側で `CourseJSONParser.uuidFromString()` によりチェックイン状態・訪問記録とのリンクを保持するキー（決定論的UUID）の元になっており、また `doc/server-feature-design.md` フェーズ1のサーバー同期（`spot_arrivals.spot_id`・到達者数の集計キー）でもそのまま使われる。
+> `spotId` を変更すると、既存ユーザーの達成状態（チェックイン・到達記録）が新規スポットとして扱われ、達成状況とサーバー側の集計の両方が壊れる。
+
 ---
 
 ### <a name="courseType">courseType 値一覧</a>

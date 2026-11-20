@@ -936,6 +936,24 @@ enum L {
         static let subscriptionDisclosure    = localized("paywall.subscriptionDisclosure")
     }
 
+    // MARK: - Meta Collection（到達記録のサーバー送信・同意）
+    enum MetaCollection {
+        static let consentTitle = localized("metaCollection.consent.title")
+        static let consentBody = localized("metaCollection.consent.body")
+        static let consentAgree = localized("metaCollection.consent.agree")
+        static let consentDecline = localized("metaCollection.consent.decline")
+        static let settingsSectionTitle = localized("metaCollection.settings.sectionTitle")
+        static let settingsToggle = localized("metaCollection.settings.toggle")
+        static let settingsToggleDescription = localized("metaCollection.settings.toggleDescription")
+        static let settingsOpenConsent = localized("metaCollection.settings.openConsent")
+        static let deleteServerData = localized("metaCollection.settings.deleteServerData")
+        static let deleteServerDataConfirmTitle = localized("metaCollection.delete.confirmTitle")
+        static let deleteServerDataConfirmMessage = localized("metaCollection.delete.confirmMessage")
+        static let deleteServerDataSuccess = localized("metaCollection.delete.success")
+        static let deleteServerDataFailure = localized("metaCollection.delete.failure")
+        static func rankFormat(_ rank: Int) -> String { String(format: localized("metaCollection.rankFormat"), rank) }
+    }
+
     // MARK: - Helper
     private static func localized(_ key: String, comment: String = "") -> String {
         NSLocalizedString(key, comment: comment)

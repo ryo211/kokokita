@@ -234,6 +234,11 @@ final class CourseEditorViewModel {
             createdAt = originalCourse?.createdAt ?? now
         }
 
+        // rawIdはサーバー同期用の元文字列ID。既存コースは引き継ぎ、未設定（マイグレーション直後等）
+        // または新規作成時はこの場で発行する。一度発行したら変更しない
+        let rawId = originalCourse?.rawId
+            ?? "course-user-\(courseId.uuidString.prefix(8).lowercased())-001"
+
         // v1はセクションなしのスポット直下構造
         let section = CourseSection(
             id: courseId,
@@ -247,6 +252,7 @@ final class CourseEditorViewModel {
 
         return Course(
             id: courseId,
+            rawId: rawId,
             courseType: .myList,
             title: title,
             summary: summary.isEmpty ? nil : summary,

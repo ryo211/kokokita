@@ -21,6 +21,9 @@ protocol CourseRepository {
     /// 遡り判定実施済みフラグをセットする
     func setEverEnabled(_ courseId: UUID) throws
 
+    /// rawId（サーバー同期用の元文字列ID）が未設定のコースにのみ書き込む
+    func backfillRawId(_ courseId: UUID, rawId: String) throws
+
     /// 指定スポットに訪問記録を紐づける（isCheckedIn は visitIds から自動導出）
     func checkIn(spotId: UUID, visitId: UUID?) throws
 

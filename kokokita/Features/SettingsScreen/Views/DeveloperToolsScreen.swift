@@ -4,6 +4,7 @@ import FirebaseCrashlytics
 #if DEBUG
 struct DeveloperToolsScreen: View {
     @State private var showCrashAlert = false
+    @State private var spotArrivalResetMessage: String?
     private var debugSettings = DebugSettings.shared
     private var premiumManager = PremiumManager.shared
 
@@ -66,6 +67,26 @@ struct DeveloperToolsScreen: View {
                 }
             } header: {
                 Text(L.Settings.developerTest)
+            }
+
+            // MARK: - 到達記録送信デバッグ
+            Section {
+                Button {
+                    resetSpotArrivalSentFlags()
+                } label: {
+                    Label("到達記録の送信済みフラグをリセット", systemImage: "arrow.counterclockwise.circle")
+                        .foregroundStyle(.teal)
+                }
+                if let message = spotArrivalResetMessage {
+                    Text(message)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            } header: {
+                Text("到達記録デバッグ")
+            } footer: {
+                Text("サーバー側のテストデータ（spot_arrivals等）を手動で削除した後、端末側の送信済み判定をリセットして再送信可能にする。")
+                    .font(.caption)
             }
 
             // MARK: - Premium状態のデバッグ制御
@@ -134,6 +155,18 @@ struct DeveloperToolsScreen: View {
     private func testCrash() {
         Crashlytics.crashlytics().log("テストクラッシュを実行します")
         fatalError("Test Crash for Firebase Crashlytics")
+    }
+
+    private func resetSpotArrivalSentFlags() {
+        do {
+            try AppContainer.shared.spotArrivalOutboxRepo.resetAllSentFlagsForDebug()
+            spotArrivalResetMessage = "リセットしました。再起動またはフォアグラウンド復帰で再送信されます。"
+            Task {
+                await AppContainer.shared.spotArrivalSyncService.flushPending()
+            }
+        } catch {
+            spotArrivalResetMessage = "リセットに失敗しました: \(error.localizedDescription)"
+        }
     }
 }
 #endif

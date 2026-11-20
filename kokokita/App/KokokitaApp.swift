@@ -45,12 +45,24 @@ struct KokokitaApp: App {
                     // ブック初期化後に AppUIState へ反映
                     uiState.currentBook = AppContainer.shared.currentBook
                     AppIconBadgeService.shared.syncAutoRecordCandidateCount()
+                    await syncCoursesAndFlushArrivals()
                 }
                 .onChange(of: scenePhase) { _, newPhase in
                     if newPhase == .active {
                         AppIconBadgeService.shared.syncAutoRecordCandidateCount()
+                        Task {
+                            await syncCoursesAndFlushArrivals()
+                        }
                     }
                 }
         }
+    }
+
+    /// コース自動同期（course.rawId のバックフィル含む）を先に実行し、達成済みスポットを
+    /// 全件キューに再登録（冪等なので毎回呼んでも安全）した上で、未送信の到達記録を送信する
+    private func syncCoursesAndFlushArrivals() async {
+        await AppContainer.shared.courseAutoSyncService.sync()
+        AppContainer.shared.spotArrivalSyncService.enqueueAllHistoricalArrivals()
+        await AppContainer.shared.spotArrivalSyncService.flushPending()
     }
 }

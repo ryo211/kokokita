@@ -59,6 +59,16 @@ final class CoreDataCourseRepository: CourseRepository {
         }
     }
 
+    /// rawId（サーバー同期用の元文字列ID）が未設定のコースにのみ書き込む。
+    /// 既に設定済みの場合は上書きしない（決定論的なIDなので変化しないはずだが、安全のため）
+    func backfillRawId(_ courseId: UUID, rawId: String) throws {
+        try ctx.performAndWait {
+            guard let entity = try fetchEntity(id: courseId), entity.rawId == nil else { return }
+            entity.rawId = rawId
+            try ctx.save()
+        }
+    }
+
     func checkIn(spotId: UUID, visitId: UUID?) throws {
         try ctx.performAndWait {
             // fetchLimit を設けず同UUID の全エンティティを更新する
@@ -246,6 +256,7 @@ final class CoreDataCourseRepository: CourseRepository {
     /// Course ドメインモデル → CoreData エンティティへの書き込み
     private func apply(course: Course, to entity: CourseEntity) throws {
         entity.id = course.id
+        entity.rawId = course.rawId
         entity.courseType = course.courseType.rawValue
         entity.title = course.title
         entity.summary = course.summary
@@ -390,6 +401,7 @@ final class CoreDataCourseRepository: CourseRepository {
     private func mapToCourse(_ entity: CourseEntity) -> Course {
         Course(
             id: entity.id ?? UUID(),
+            rawId: entity.rawId,
             courseType: CourseType(rawValue: entity.courseType ?? "") ?? .myList,
             title: entity.title ?? "",
             summary: entity.summary,

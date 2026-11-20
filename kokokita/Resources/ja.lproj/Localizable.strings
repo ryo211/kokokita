@@ -816,3 +816,19 @@
 "share.layoutMap" = "地図メイン";
 "share.showSubThumbnail" = "サブサムネイルを表示";
 "share.selectPhoto" = "写真を選択";
+
+/* Meta Collection（到達記録のサーバー送信・同意） */
+"metaCollection.consent.title" = "到達記録をサーバーに送りますか？";
+"metaCollection.consent.body" = "到達したスポットの情報をサーバーに送ると、「人気のコース」「よく訪問されるスポット」や、スポットに到達した「◯人目」を見られるようになります。\n\n送るのは到達したスポットの情報だけです。日常の訪問記録（カフェなど）やGPSの軌跡は送りません。\n\n同意すると、これまでに到達済みのスポットの記録もまとめて送信されます。アプリ内で記録を削除しても、サーバー側の集計からは消えません。設定からいつでもオフにでき、サーバー上のデータの削除もできます。";
+"metaCollection.consent.agree" = "同意して有効にする";
+"metaCollection.consent.decline" = "今はしない";
+"metaCollection.settings.sectionTitle" = "サーバーとの連携";
+"metaCollection.settings.toggle" = "到達記録の送信";
+"metaCollection.settings.toggleDescription" = "オンにすると、到達したスポットの情報をサーバーに送り、人気コース表示や「◯人目」表示が使えるようになります。オフにしても記録機能はすべて使えます。";
+"metaCollection.settings.openConsent" = "人気コース表示を有効にする";
+"metaCollection.settings.deleteServerData" = "サーバーのデータを削除";
+"metaCollection.delete.confirmTitle" = "サーバーのデータを削除しますか？";
+"metaCollection.delete.confirmMessage" = "サーバーに送信した到達記録・閲覧履歴を削除します。アプリ内の記録は削除されません。この操作は取り消せません。";
+"metaCollection.delete.success" = "サーバーのデータを削除しました";
+"metaCollection.delete.failure" = "削除に失敗しました。しばらくしてから再度お試しください";
+"metaCollection.rankFormat" = "このスポットに到達した%d人目です";

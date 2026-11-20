@@ -3,6 +3,11 @@ import Foundation
 // コースを表すドメインモデル
 struct Course: Identifiable, Equatable {
     let id: UUID
+    /// サーバー同期用の元の文字列ID（例: "course-world-heritage-japan-001"）。
+    /// `id`はこの文字列を`CourseJSONParser.uuidFromString()`で決定論的にハッシュ化したUUIDであり、
+    /// 元の文字列はここにしか残らない（ハッシュは非可逆）。マイグレーション直後の既存コースはnilで、
+    /// `CourseAutoSyncService`がバックフィルするまでサーバーへのcourse_id送信は保留する
+    let rawId: String?
     let courseType: CourseType
     let title: String
     let summary: String?

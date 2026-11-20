@@ -155,8 +155,16 @@ final class AutoRecordCandidateStore {
             let results = try service.recognize(latitude: latitude, longitude: longitude, isManualEntry: false)
             guard !results.isEmpty else { return }
 
+            let checkInTime = Date()
             for result in results {
                 try courseRepo.checkIn(spotId: result.spot.id, visitId: visitId)
+                AppContainer.shared.spotArrivalSyncService.enqueueAndSendImmediately(
+                    courseId: result.course.id,
+                    spotId: result.spot.id,
+                    visitId: visitId,
+                    distanceMeters: result.distanceMeters,
+                    achievedAt: checkInTime
+                )
             }
             NotificationCenter.default.post(name: .courseChanged, object: nil)
 

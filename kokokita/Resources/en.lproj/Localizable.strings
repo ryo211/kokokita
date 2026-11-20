@@ -812,3 +812,19 @@
 "share.layoutMap" = "Map First";
 "share.showSubThumbnail" = "Show Thumbnail";
 "share.selectPhoto" = "Select Photo";
+
+/* Meta Collection (sending arrival records to the server, consent) */
+"metaCollection.consent.title" = "Send arrival records to the server?";
+"metaCollection.consent.body" = "Sending the spots you've reached to the server lets you see popular courses, frequently visited spots, and which number arrival you were at a spot.\n\nOnly the spots you've reached are sent. Everyday visit records (like cafes) and raw GPS tracks are never sent.\n\nIf you agree, your past arrivals will be sent as well. Even if you delete a record in the app, it will remain in the server's statistics. You can turn this off anytime in Settings, and delete your server data there too.";
+"metaCollection.consent.agree" = "Agree and Enable";
+"metaCollection.consent.decline" = "Not Now";
+"metaCollection.settings.sectionTitle" = "Server Sync";
+"metaCollection.settings.toggle" = "Send Arrival Records";
+"metaCollection.settings.toggleDescription" = "When on, the spots you've reached are sent to the server, enabling popular course rankings and arrival rank display. Recording still works fully when off.";
+"metaCollection.settings.openConsent" = "Enable Popular Course Display";
+"metaCollection.settings.deleteServerData" = "Delete Server Data";
+"metaCollection.delete.confirmTitle" = "Delete Server Data?";
+"metaCollection.delete.confirmMessage" = "This deletes the arrival records and view history sent to the server. Records in the app itself are not affected. This cannot be undone.";
+"metaCollection.delete.success" = "Server data deleted";
+"metaCollection.delete.failure" = "Failed to delete. Please try again later";
+"metaCollection.rankFormat" = "You are arrival number %d at this spot";

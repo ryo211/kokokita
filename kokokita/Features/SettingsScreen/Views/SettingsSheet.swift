@@ -11,7 +11,41 @@ struct SettingsSheet: View {
     @State private var showPaywall = false
     private var premiumManager = PremiumManager.shared
 
+    @ObservedObject private var metaCollectionSettings = MetaCollectionSettings.shared
+    @State private var showMetaCollectionConsent = false
+    @State private var showDeleteServerDataConfirm = false
+    @State private var isDeletingServerData = false
+    @State private var deleteServerDataResultMessage: String?
+
     var body: some View {
+        settingsNavigationStack
+            .sheet(isPresented: $showMetaCollectionConsent) {
+                MetaCollectionConsentSheet()
+            }
+            .confirmationDialog(
+                L.MetaCollection.deleteServerDataConfirmTitle,
+                isPresented: $showDeleteServerDataConfirm,
+                titleVisibility: .visible
+            ) {
+                Button(L.MetaCollection.deleteServerData, role: .destructive) {
+                    deleteServerData()
+                }
+                Button(L.Common.cancel, role: .cancel) {}
+            } message: {
+                Text(L.MetaCollection.deleteServerDataConfirmMessage)
+            }
+            .alert(
+                deleteServerDataResultMessage ?? "",
+                isPresented: Binding(
+                    get: { deleteServerDataResultMessage != nil },
+                    set: { if !$0 { deleteServerDataResultMessage = nil } }
+                )
+            ) {
+                Button(L.Common.ok) {}
+            }
+    }
+
+    private var settingsNavigationStack: some View {
         NavigationStack {
             List {
                 // プレミアム
@@ -65,6 +99,9 @@ struct SettingsSheet: View {
                 } footer: {
                     Text(L.AutoRecord.settingsToggleDescription)
                 }
+
+                // サーバーとの連携（到達記録の送信・同意）
+                metaCollectionSection
 
                 // アプリモード切替
                 Section {
@@ -221,8 +258,51 @@ struct SettingsSheet: View {
         }
     }
 
+    // MARK: - Meta Collection Section
+
+    private var metaCollectionSection: some View {
+        Section {
+            if metaCollectionSettings.isConsented {
+                Toggle(isOn: $metaCollectionSettings.isConsented) {
+                    Label(L.MetaCollection.settingsToggle, systemImage: "antenna.radiowaves.left.and.right")
+                }
+
+                Button(role: .destructive) {
+                    showDeleteServerDataConfirm = true
+                } label: {
+                    Label(L.MetaCollection.deleteServerData, systemImage: "trash")
+                }
+                .disabled(isDeletingServerData)
+            } else {
+                Button {
+                    showMetaCollectionConsent = true
+                } label: {
+                    Label(L.MetaCollection.settingsOpenConsent, systemImage: "antenna.radiowaves.left.and.right")
+                }
+            }
+        } header: {
+            Text(L.MetaCollection.settingsSectionTitle)
+        } footer: {
+            Text(L.MetaCollection.settingsToggleDescription)
+        }
+    }
+
     private func loadPendingCount() {
         pendingCandidateCount = (try? AppContainer.shared.candidateRepo.countPending()) ?? 0
+    }
+
+    private func deleteServerData() {
+        isDeletingServerData = true
+        Task {
+            let result = await SpotArrivalAPIClient().deleteAllServerData()
+            isDeletingServerData = false
+            switch result {
+            case .success:
+                deleteServerDataResultMessage = L.MetaCollection.deleteServerDataSuccess
+            case .failure:
+                deleteServerDataResultMessage = L.MetaCollection.deleteServerDataFailure
+            }
+        }
     }
 
     private var appVersion: String {

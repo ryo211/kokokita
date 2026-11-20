@@ -61,6 +61,7 @@ enum CourseJSONParser {
         let sections = buildSections(from: json, existing: existing)
         return Course(
             id: uuidFromString(json.id),
+            rawId: json.id,
             courseType: CourseType(rawValue: json.courseType) ?? .myList,
             title: json.title,
             summary: json.summary,

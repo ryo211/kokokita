@@ -4,6 +4,10 @@
 <dict>
 	<key>GADApplicationIdentifier</key>
 	<string>ca-app-pub-7495977536865069~4734364300</string>
+	<key>SUPABASE_URL</key>
+	<string>https://rssflhzampqtkdfslufk.supabase.co</string>
+	<key>SUPABASE_ANON_KEY</key>
+	<string>sb_publishable_vV1vJwWDH_IcfhsyhC2SoQ_lUdUFOZ1</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>location</string>

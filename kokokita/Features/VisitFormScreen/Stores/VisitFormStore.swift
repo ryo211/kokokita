@@ -306,8 +306,16 @@ final class VisitFormStore {
 
             guard !results.isEmpty else { return }
 
+            let checkInTime = Date()
             for result in results {
                 try courseRepo.checkIn(spotId: result.spot.id, visitId: visitId)
+                AppContainer.shared.spotArrivalSyncService.enqueueAndSendImmediately(
+                    courseId: result.course.id,
+                    spotId: result.spot.id,
+                    visitId: visitId,
+                    distanceMeters: result.distanceMeters,
+                    achievedAt: checkInTime
+                )
             }
 
             pendingCheckInResults = results

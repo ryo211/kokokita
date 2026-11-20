@@ -202,6 +202,15 @@ final class RecordingController {
 
             for result in results {
                 try courseRepo.checkIn(spotId: result.spot.id, visitId: visitId)
+                if let visitId {
+                    AppContainer.shared.spotArrivalSyncService.enqueueAndSendImmediately(
+                        courseId: result.course.id,
+                        spotId: result.spot.id,
+                        visitId: visitId,
+                        distanceMeters: result.distanceMeters,
+                        achievedAt: checkInTime
+                    )
+                }
             }
             NotificationCenter.default.post(name: .courseChanged, object: nil)
 
@@ -237,7 +246,7 @@ final class RecordingController {
                     )
                 }
                 let updatedCourse = Course(
-                    id: result.course.id, courseType: result.course.courseType,
+                    id: result.course.id, rawId: result.course.rawId, courseType: result.course.courseType,
                     title: result.course.title, summary: result.course.summary,
                     source: result.course.source, isUserCreated: result.course.isUserCreated,
                     version: result.course.version,

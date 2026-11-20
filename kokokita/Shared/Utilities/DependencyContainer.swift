@@ -25,6 +25,9 @@ final class AppContainer {
     lazy var retroactiveService: CourseRetroactiveRecognitionService = CourseRetroactiveRecognitionService(courseRepo: courseRepo, visitRepo: repo)
     lazy var courseStoreService: CourseStoreService = CourseStoreService()
     lazy var courseAutoSyncService: CourseAutoSyncService = CourseAutoSyncService()
+    let spotArrivalOutboxRepo = SpotArrivalOutboxRepository()
+    let supabaseAuthService = SupabaseAuthService()
+    lazy var spotArrivalSyncService: SpotArrivalSyncService = SpotArrivalSyncService()
 
     /// 現在選択中のブック（UI参照用）
     var currentBook: Book? = nil
