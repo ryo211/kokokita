@@ -11,6 +11,7 @@ struct StampCandidateListView: View {
     @State private var expandedSpotIds: Set<UUID> = []
     // 獲得直後、通常記録時と同じ達成シートを表示する
     @State private var checkInResults: [CourseRecognitionService.RecognitionResult] = []
+    @State private var checkInVisitId: UUID?
     @State private var showCheckInResult = false
 
     var body: some View {
@@ -69,7 +70,7 @@ struct StampCandidateListView: View {
             await loadCandidates()
         }
         .sheet(isPresented: $showCheckInResult) {
-            CheckInResultSheet(results: checkInResults)
+            CheckInResultSheet(results: checkInResults, visitId: checkInVisitId ?? UUID())
         }
     }
 
@@ -118,6 +119,15 @@ struct StampCandidateListView: View {
             let distance = CLLocation(latitude: visit.latitude, longitude: visit.longitude)
                 .distance(from: CLLocation(latitude: spot.latitude, longitude: spot.longitude))
             let updatedCourse = try AppContainer.shared.courseRepo.fetch(id: course.id) ?? course
+
+            AppContainer.shared.spotArrivalSyncService.enqueueAndSendImmediately(
+                courseId: course.id,
+                spotId: spot.id,
+                visitId: aggregate.id,
+                distanceMeters: distance,
+                achievedAt: visit.timestampUTC
+            )
+
             checkInResults = [CourseRecognitionService.RecognitionResult(
                 course: updatedCourse,
                 spot: spot,
@@ -126,6 +136,7 @@ struct StampCandidateListView: View {
                 visitLatitude: visit.latitude,
                 visitLongitude: visit.longitude
             )]
+            checkInVisitId = aggregate.id
             showCheckInResult = true
         } catch {
             Logger.error("スタンプの獲得に失敗しました: \(error)")

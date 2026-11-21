@@ -47,6 +47,21 @@ final class SpotArrivalOutboxRepository {
         }
     }
 
+    /// 指定のコース・スポットに対する到達順位を取得する（スタンプ画面での表示用）。
+    /// 再訪問していても同じスポットへの順位は常に同じ値になる設計のため、
+    /// rankが確定している行が見つかればそれを返す
+    func fetchRank(courseId: UUID, spotId: UUID) throws -> Int? {
+        try ctx.performAndWait {
+            let req = SpotArrivalEntity.fetchRequest()
+            req.predicate = NSPredicate(
+                format: "courseId == %@ AND spotId == %@ AND rank != nil",
+                courseId as NSUUID, spotId as NSUUID
+            )
+            req.fetchLimit = 1
+            return try ctx.fetch(req).first?.rank?.intValue
+        }
+    }
+
     /// 送信成功後に送信済みへ更新する
     func markSent(_ id: UUID, rank: Int?) throws {
         try ctx.performAndWait {

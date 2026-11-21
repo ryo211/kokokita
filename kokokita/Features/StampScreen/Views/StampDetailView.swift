@@ -10,6 +10,8 @@ struct StampDetailView: View {
     @State private var labelMap: [UUID: String] = [:]
     @State private var groupMap: [UUID: String] = [:]
     @State private var memberMap: [UUID: String] = [:]
+    /// このスポットへの到達順位（「◯人目」）。未送信・未確定の間はnil
+    @State private var rank: Int?
     @State private var pendingUnlinkVisitId: UUID? = nil
     @State private var showUnlinkConfirm = false
     @State private var showShare = false
@@ -58,6 +60,14 @@ struct StampDetailView: View {
                         .padding(.horizontal, 20)
                         .padding(.top, 16)
 
+                        // 到達順位（「◯人目」）。ハンコカードの上に重ねると見た目が崩れるため、
+                        // カードの下にバランスよく独立して表示する
+                        if let rank {
+                            RankAchievementBadge(rank: rank)
+                                .padding(.horizontal, 20)
+                                .padding(.top, 12)
+                        }
+
                         // CheckInVisitCard は frame(width:) の外側に自前で
                         // .padding(.horizontal, 12) を持つため、その分(24pt)を差し引く
                         visitHistorySection(cardWidth: geo.size.width - horizontalPadding * 2 - 24)
@@ -85,6 +95,7 @@ struct StampDetailView: View {
         }
         .task(id: spot.id) {
             customPhotoPaths = spot.customPhotoPaths
+            rank = try? AppContainer.shared.spotArrivalOutboxRepo.fetchRank(courseId: course.id, spotId: spot.id)
             await loadData()
         }
         .onReceive(NotificationCenter.default.publisher(for: .visitsChanged)) { _ in
@@ -430,6 +441,37 @@ private struct StampHeroCard: View {
                 .font(.system(size: 60, weight: .thin))
                 .foregroundStyle(.white.opacity(0.3))
         }
+    }
+}
+
+// MARK: - 到達順位バッジ（「◯人目」表示。ハンコカードの下にバランスよく配置する）
+
+private struct RankAchievementBadge: View {
+    let rank: Int
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "trophy.fill")
+                .font(.title2)
+                .foregroundStyle(.orange)
+
+            Text(L.MetaCollection.rankFormat(rank))
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.primary)
+                .multilineTextAlignment(.leading)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .frame(maxWidth: .infinity)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .strokeBorder(Color.orange.opacity(0.35), lineWidth: 1.5)
+        )
+        .shadow(color: .black.opacity(0.08), radius: 6, x: 0, y: 3)
     }
 }
 

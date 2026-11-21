@@ -828,3 +828,4 @@
 "metaCollection.delete.success" = "Server data deleted";
 "metaCollection.delete.failure" = "Failed to delete. Please try again later";
 "metaCollection.rankFormat" = "You are arrival number %d at this spot";
+"metaCollection.rankFormatMultiline" = "You are arrival number %d\nat this spot";

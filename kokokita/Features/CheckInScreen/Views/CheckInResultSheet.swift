@@ -4,6 +4,7 @@ import SwiftUI
 // 通常記録時にコーススポットへのチェックインが成功した場合に表示
 struct CheckInResultSheet: View {
     let results: [CourseRecognitionService.RecognitionResult]
+    let visitId: UUID
     var onDismiss: (() -> Void)?
 
     @Environment(\.dismiss) private var dismiss
@@ -21,6 +22,7 @@ struct CheckInResultSheet: View {
                         ForEach(Array(results.enumerated()), id: \.offset) { index, result in
                             StampedCheckInCard(
                                 result: result,
+                                visitId: visitId,
                                 stampDelay: Double(index) * 0.18
                             )
                         }
@@ -106,12 +108,17 @@ struct CheckInResultSheet: View {
 // スタンプ付きチェックインカード
 private struct StampedCheckInCard: View {
     let result: CourseRecognitionService.RecognitionResult
+    let visitId: UUID
     let stampDelay: Double
 
     // スタンプが「ズン！」と押されるアニメーション用状態
     @State private var stampScale: CGFloat = 0.05
     @State private var stampOpacity: Double = 0
     @State private var stampAngle: Double = -22
+
+    // 到達順位（「◯人目」）。サーバーからの応答が遅れる・無い場合は表示しないだけなので
+    // nilのままでも問題ない（記録詳細画面で後から確認できる）
+    @State private var rank: Int?
 
     var body: some View {
         HStack(spacing: 14) {
@@ -150,6 +157,24 @@ private struct StampedCheckInCard: View {
             }
         }
         .padding(.top, result.course.isCompleted ? 13 : 0)
+        .task {
+            // シート表示前に送信・応答が既に完了していた場合に備えて、ローカルの保存済み順位を確認する
+            if let arrivals = try? AppContainer.shared.spotArrivalOutboxRepo.fetchByVisitId(visitId),
+               let match = arrivals.first(where: { $0.spotId == result.spot.id }),
+               let existingRank = match.rank {
+                rank = existingRank
+            }
+        }
+        .onReceive(
+            NotificationCenter.default.publisher(for: .spotArrivalRankDetermined)
+                .receive(on: DispatchQueue.main)
+        ) { notification in
+            guard let payload = notification.object as? SpotArrivalRankPayload else { return }
+            guard payload.visitId == visitId && payload.spotId == result.spot.id else { return }
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+                rank = payload.rank
+            }
+        }
         .onAppear {
             DispatchQueue.main.asyncAfter(deadline: .now() + stampDelay + 0.2) {
                 // 第1フェーズ: ゆっくり降りてくる（落下）
@@ -215,6 +240,18 @@ private struct StampedCheckInCard: View {
                     .font(.caption2.monospacedDigit())
             }
             .foregroundStyle(.secondary)
+
+            // 到達順位（届いた場合のみ表示。届かない間は何も出さない）
+            if let rank {
+                HStack(spacing: 4) {
+                    Image(systemName: "trophy.fill")
+                        .font(.caption2)
+                    Text(L.MetaCollection.rankFormat(rank))
+                        .font(.caption2.bold())
+                }
+                .foregroundStyle(.orange)
+                .transition(.opacity.combined(with: .scale(scale: 0.9)))
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }

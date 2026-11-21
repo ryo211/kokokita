@@ -45,7 +45,10 @@ struct VisitFormScreen: View {
       // チェックイン結果シートを閉じたらフォームも閉じる
       dismiss()
     }) {
-      CheckInResultSheet(results: vm.pendingCheckInResults) {
+      CheckInResultSheet(
+        results: vm.pendingCheckInResults,
+        visitId: vm.pendingCheckInVisitId ?? UUID()
+      ) {
         vm.pendingCheckInResults = []
       }
     }

@@ -164,6 +164,7 @@ erDiagram
 - **コースのバージョン更新でスポットが追加されても、既存の達成者の達成状態は遡って取り消さない。** 達成は「その時点のスポット集合に対するスナップショット」として扱う。クライアント側の `CourseAutoSyncService` も既にバージョン更新時にチェックイン状態を保持する実装になっており、挙動を一致させる。「達成済みなのに後から取り消される」はGPS証明というブランドの信頼を損なうため、仕様として確定する（旧・未決事項）
 - 不正チェック（スポットとの距離・時刻・短時間の大量到達）に引っかかった記録は保存するが集計から除外する
 - 1日1回のバッチで course_stats を更新し、**静的JSON（`/course/store/stats.json`）としてS3に書き出す**。アプリはCDN経由で読むのでDBに読み取り負荷がかからない
+- バッチの実行先は**AWS Lambda（EventBridge Schedulerで1日1回起動）**。既存のNGワードチェック用Lambdaと同様にAWS側に集約し、S3書き込み・CloudFrontキャッシュ無効化はIAMロールで行う（AWS側にSupabaseのservice_roleキーを持たせない設計。集計自体はSupabase側の`compute_course_stats` RPC——`security definer`で全ユーザー横断集計を行うが、返すのは集計済みの数値のみ——をanonキーで呼ぶだけで完結する）。実装は`lambda/course-stats-batch/`
 
 ### stats.json の構造
 
@@ -319,15 +320,19 @@ P1で唯一ユーザーに見える機能。同意画面だけのリリースに
 
 ### P1 メタ情報収集
 
-- [ ] **`CourseEntity` への `rawId` 文字列フィールド追加と `CourseAutoSyncService` へのバックフィル統合**（他の全タスクの前提になるため最初に着手）
-- [ ] バックエンド選定を確定（Supabase / Firebase / AWS）
-- [ ] 全テーブルのスキーマ定義（P2・P3分も含めて設計、作成はP1分のみでも可）。`courses.source`（official/community）とクライアントJSONの`source`（downloaded/user）のマッピング処理を含む
+- [x] **`CourseEntity` への `rawId` 文字列フィールド追加と `CourseAutoSyncService` へのバックフィル統合**
+- [x] バックエンド選定を確定（Supabase）。本番Supabaseプロジェクト作成・Anonymous Sign-ins有効化済み
+- [x] 全テーブルのスキーマ定義・本番適用（`doc/sql/phase1_schema.sql`。placesは作らない方針に変更済み）
 - [x] 公式コースから course_spots を生成するスクリプト（`store_course/sync_courses_to_supabase.py`、本番 `store/index.json` 経由で取得）
 - [x] spotId不変ルールを仕様書に追記（`doc/course-json-spec.md`）
-- [ ] 匿名認証の組み込み、即時送信（記録確定のクリティカルパスをブロックしない非同期実装）と到達記録の同期（初回は過去分も全件）
-- [ ] 集計バッチと stats.json の書き出し、アプリ側の人気表示。運営手動ピックアップフラグをP1から用意
-- [ ] 到達時の「◯人目」表示（送信レスポンスで順位を返す、達成シートと記録詳細に表示）
-- [ ] 同意画面・設定のオプトアウト・サーバーデータ削除（`SettingsSheet.swift` の既存Section/Toggleパターンに合わせて追加）
+- [x] 匿名認証の組み込み、即時送信（記録確定のクリティカルパスをブロックしない非同期実装）と到達記録の同期（初回は過去分も全件）。実機で動作確認済み
+- [x] 集計バッチのコード実装（`compute_course_stats` RPC、`lambda/course-stats-batch/`）。**AWS側のLambda作成・EventBridge Scheduler設定・デプロイは未実施**（`lambda/course-stats-batch/README.md`の手順を参照）
+- [ ] アプリ側の人気表示（stats.jsonを読んでコース一覧に反映する部分）。運営手動ピックアップフラグをP1から用意
+- [x] 到達時の「◯人目」表示 → 記録詳細画面（`VisitDetailStore.loadCourseArrivalInfo`、ローカル保存済みのrankを読むだけ）と、
+  達成シート（`CheckInResultSheet`）の両方に実装済み。送信は非同期のため、シート表示中に順位が返ってくれば
+  `NotificationCenter`（`.spotArrivalRankDetermined`）経由でその場に反映する。返ってこなければ何も表示しないだけで、
+  後から記録詳細を開けば確認できる（正確な順位の算出方法自体は変えていない。あくまで「届いたら出す」というUI側の工夫）
+- [x] 同意画面・設定のオプトアウト・サーバーデータ削除（`SettingsSheet.swift` の既存Section/Toggleパターンに合わせて追加、実機で動作確認済み）
 - [ ] プライバシーポリシーとApp Privacy更新
 
 ### P2 写真投稿
@@ -349,6 +354,6 @@ P1で唯一ユーザーに見える機能。同意画面だけのリリースに
 
 - [ ] 公式コースとコミュニティコースをストアで混ぜるか分けるか
 - [ ] Sign in with Apple を任意にするか、投稿時に必須にするか
-- [ ] 人気表示を出し始める閾値（何人から数字を出すか）
+- [x] 人気表示を出し始める閾値（何人から数字を出すか）→ `minDisplayCount`（デフォルト10人）として`compute_course_stats` RPCに実装済み
 - [ ] 写真・コース投稿を有料プランの特典に含めるか（広告非表示DLなど既存の収益化案との関係）
 - [ ] コース外の訪問記録（日常の記録）は将来も送らない方針で確定してよいか

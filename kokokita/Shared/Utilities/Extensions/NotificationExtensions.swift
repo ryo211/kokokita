@@ -15,4 +15,6 @@ extension Notification.Name {
     static let autoRecordCandidatesChanged = Notification.Name("autoRecordCandidatesChanged")
     /// 現在のブックが切り替わったことを通知
     static let bookChanged = Notification.Name("bookChanged")
+    /// 到達記録の順位が確定したことを通知（object: SpotArrivalRankPayload）
+    static let spotArrivalRankDetermined = Notification.Name("spotArrivalRankDetermined")
 }

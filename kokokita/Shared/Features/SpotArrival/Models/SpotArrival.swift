@@ -39,3 +39,11 @@ struct ResolvedSpotArrival {
     let arrivedAt: Date
     let appVersion: String
 }
+
+/// 到達記録の順位が確定した（サーバーから返ってきた）ことを知らせる通知のペイロード。
+/// 達成シート（CheckInResultSheet）が表示中にリアルタイムで順位を反映するために使う
+struct SpotArrivalRankPayload {
+    let visitId: UUID
+    let spotId: UUID
+    let rank: Int
+}

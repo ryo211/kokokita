@@ -70,6 +70,8 @@ final class VisitFormStore {
 
     /// チェックイン判定結果（CheckInResultSheet 表示用）
     var pendingCheckInResults: [CourseRecognitionService.RecognitionResult] = []
+    /// pendingCheckInResults に対応する記録のID（CheckInResultSheetへ渡す用）
+    var pendingCheckInVisitId: UUID?
 
     // MARK: - Initialization
 
@@ -319,6 +321,7 @@ final class VisitFormStore {
             }
 
             pendingCheckInResults = results
+            pendingCheckInVisitId = visitId
         } catch {
             Logger.error("コース認識エラー", error: error)
         }

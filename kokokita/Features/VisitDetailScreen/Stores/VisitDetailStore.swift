@@ -28,11 +28,22 @@ final class VisitDetailStore {
     /// ラベル名 -> 色のマップ（labelOptions から構築）
     var labelColorMap: [String: Color] { labelOptions.colorMap }
 
+    // MARK: - コース到達の順位（「◯人目」表示）
+    var courseArrivalInfo: [CourseArrivalRankInfo] = []
+
     // MARK: - 依存
     private let repo: CoreDataVisitRepository
+    private let spotArrivalOutboxRepo: SpotArrivalOutboxRepository
+    private let courseRepo: CourseRepository
 
-    init(repo: CoreDataVisitRepository = AppContainer.shared.repo) {
+    init(
+        repo: CoreDataVisitRepository = AppContainer.shared.repo,
+        spotArrivalOutboxRepo: SpotArrivalOutboxRepository = AppContainer.shared.spotArrivalOutboxRepo,
+        courseRepo: CourseRepository = AppContainer.shared.courseRepo
+    ) {
         self.repo = repo
+        self.spotArrivalOutboxRepo = spotArrivalOutboxRepo
+        self.courseRepo = courseRepo
     }
 
     // MARK: - データロード
@@ -93,6 +104,21 @@ final class VisitDetailStore {
         }
     }
 
+    /// この記録に紐づくコース到達の順位（「◯人目」）を読み込む。
+    /// サーバーへの送信がまだ完了していない（rankが未確定）場合は表示しない
+    func loadCourseArrivalInfo(visitId: UUID) async {
+        guard let arrivals = try? spotArrivalOutboxRepo.fetchByVisitId(visitId) else { return }
+
+        var results: [CourseArrivalRankInfo] = []
+        for arrival in arrivals {
+            guard let rank = arrival.rank else { continue }
+            guard let course = try? courseRepo.fetch(id: arrival.courseId) else { continue }
+            guard let spot = course.spots.first(where: { $0.id == arrival.spotId }) else { continue }
+            results.append(CourseArrivalRankInfo(id: spot.id, course: course, spot: spot, rank: rank))
+        }
+        courseArrivalInfo = results
+    }
+
     // MARK: - タクソノミー選択ハンドラ
 
     /// ラベルタップ時の処理
@@ -116,4 +142,12 @@ final class VisitDetailStore {
         }
     }
 
+}
+
+/// この記録で到達したコーススポットの「◯人目」表示用データ
+struct CourseArrivalRankInfo: Identifiable {
+    let id: UUID
+    let course: Course
+    let spot: CourseSpot
+    let rank: Int
 }

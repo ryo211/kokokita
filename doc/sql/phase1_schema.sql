@@ -220,3 +220,78 @@ end;
 $$;
 
 grant execute on function public.delete_my_data to anon, authenticated;
+
+-- =========================================
+-- 8. RPC: 集計バッチ（Lambda）用。コース・スポットごとの集計を
+-- doc/server-feature-design.md の stats.json 形式そのままで返す。
+-- 全ユーザー横断の集計（RLSで通常は不可能）をsecurity definerで行うが、
+-- 返す内容は集計済みの数値のみなので anon キーで呼んで問題ない
+-- （service_roleキーをLambdaに持たせる必要が無い）
+-- =========================================
+create or replace function public.compute_course_stats(p_min_display_count integer default 10)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_result jsonb;
+begin
+  return (
+    with course_totals as (
+      select course_id, count(*) as total_spots
+      from public.course_spots
+      group by course_id
+    ),
+    user_spot_counts as (
+      select course_id, user_id, count(distinct spot_id) as visited_spots
+      from public.spot_arrivals
+      where is_valid
+      group by course_id, user_id
+    ),
+    challenger_counts as (
+      select course_id, count(distinct user_id) as challenger_count
+      from public.spot_arrivals
+      where is_valid
+      group by course_id
+    ),
+    completed_counts as (
+      select usc.course_id, count(*) as completed_count
+      from user_spot_counts usc
+      join course_totals ct on ct.course_id = usc.course_id
+      where usc.visited_spots >= ct.total_spots
+      group by usc.course_id
+    ),
+    spot_counts as (
+      select course_id, spot_id, count(distinct user_id) as arrival_count
+      from public.spot_arrivals
+      where is_valid
+      group by course_id, spot_id
+    ),
+    course_json as (
+      select
+        cc.course_id,
+        jsonb_build_object(
+          'challengerCount', cc.challenger_count,
+          'completedCount', coalesce(comp.completed_count, 0),
+          'spots', (
+            select coalesce(jsonb_object_agg(sc.spot_id, jsonb_build_object('arrivalCount', sc.arrival_count)), '{}'::jsonb)
+            from spot_counts sc
+            where sc.course_id = cc.course_id and sc.arrival_count >= p_min_display_count
+          )
+        ) as stats
+      from challenger_counts cc
+      left join completed_counts comp on comp.course_id = cc.course_id
+      where cc.challenger_count >= p_min_display_count
+    )
+    select jsonb_build_object(
+      'schemaVersion', 1,
+      'generatedAt', to_char(now() at time zone 'utc', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'),
+      'minDisplayCount', p_min_display_count,
+      'courses', coalesce((select jsonb_object_agg(course_id, stats) from course_json), '{}'::jsonb)
+    )
+  );
+end;
+$$;
+
+grant execute on function public.compute_course_stats to anon, authenticated;

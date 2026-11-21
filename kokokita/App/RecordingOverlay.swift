@@ -66,7 +66,10 @@ struct RecordingOverlay: ViewModifier {
                     }
                 }}
             )) {
-                CheckInResultSheet(results: recording.pendingCheckInResults) {
+                CheckInResultSheet(
+                    results: recording.pendingCheckInResults,
+                    visitId: recording.pendingConfirmationId ?? UUID()
+                ) {
                     recording.pendingCheckInResults = []
                 }
             }

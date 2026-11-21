@@ -11,6 +11,7 @@ struct VisitDetailContent: View {
     var sameGroupVisits: [VisitAggregate] = []
     var sameGroupVisitsData: [VisitDetailData] = []
     var currentGroupName: String? = nil
+    var courseArrivalInfo: [CourseArrivalRankInfo] = []
     var onLabelTap: ((String) -> Void)? = nil
     var onGroupTap: ((String) -> Void)? = nil
     var onMemberTap: ((String) -> Void)? = nil
@@ -140,7 +141,7 @@ struct VisitDetailContent: View {
 
             }
             .padding(.horizontal)
-            
+
             // 時刻・住所カード
             InfoCard {
                 HStack(alignment: .center, spacing: 12) {
@@ -202,6 +203,12 @@ struct VisitDetailContent: View {
                 }
             }
 
+            // コース到達の順位カード（「◯人目」表示。共有時は非表示）
+            if !isSharing && !courseArrivalInfo.isEmpty {
+                courseArrivalSection
+                    .padding(.horizontal)
+            }
+
             // メモカード
             if let memo = data.memo?.trimmed, !memo.isEmpty {
                 InfoCard {
@@ -238,6 +245,45 @@ struct VisitDetailContent: View {
             RecordBadgeExplanationSheet()
                 .presentationDetents([.medium])
                 .presentationDragIndicator(.visible)
+        }
+    }
+
+    // MARK: - Course Arrival Section（「◯人目」表示）
+
+    @ViewBuilder
+    private var courseArrivalSection: some View {
+        InfoCard {
+            ForEach(Array(courseArrivalInfo.enumerated()), id: \.element.id) { index, info in
+                if index > 0 {
+                    Divider().padding(.vertical, 4)
+                }
+                NavigationLink {
+                    StampDetailView(course: info.course, spot: info.spot)
+                } label: {
+                    HStack(alignment: .center, spacing: 12) {
+                        Image(systemName: "trophy.fill")
+                            .foregroundStyle(.orange)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(info.spot.name)
+                                .font(.subheadline.weight(.semibold))
+                            Text(info.course.title)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        Spacer(minLength: 0)
+                        Text(L.MetaCollection.rankFormatMultiline(info.rank))
+                            .font(.footnote.weight(.semibold))
+                            .foregroundStyle(.orange)
+                            .multilineTextAlignment(.trailing)
+                        Image(systemName: "chevron.right")
+                            .font(.caption2.weight(.semibold))
+                            .foregroundStyle(.tertiary)
+                    }
+                    .foregroundStyle(.primary)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
         }
     }
 

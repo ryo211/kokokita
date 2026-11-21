@@ -56,6 +56,14 @@ struct SpotArrivalSyncService {
             switch await apiClient.send(resolved) {
             case .success(let result):
                 try? outboxRepo.markSent(arrival.id, rank: result.rank)
+                // 達成シート表示中であればリアルタイムに順位を反映するための通知
+                // （画面が無い場合はただ誰にも受信されないだけで無害）
+                if let rank = result.rank {
+                    NotificationCenter.default.post(
+                        name: .spotArrivalRankDetermined,
+                        object: SpotArrivalRankPayload(visitId: arrival.visitId, spotId: arrival.spotId, rank: rank)
+                    )
+                }
             case .failure(let error):
                 // サーバー未設定・ネットワーク不通等。キューに残したまま次回再試行する
                 Logger.error("到達記録の送信に失敗（キューには残します）: course=\(resolved.courseRawId) spot=\(resolved.spotStringId)", error: error)

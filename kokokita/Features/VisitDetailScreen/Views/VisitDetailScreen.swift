@@ -152,6 +152,7 @@ struct VisitDetailScreen: View {
             await store.loadTaxonomyData()
             await store.loadNearbyVisits(visitId: visitId)
             await store.loadSameGroupVisits(visitId: visitId)
+            await store.loadCourseArrivalInfo(visitId: visitId)
         }
         .onChange(of: photoFullScreenIndex) { _, newValue in
             // 手動記録のフローティングボタンがライトボックスより手前に出てしまうため、
@@ -177,6 +178,7 @@ struct VisitDetailScreen: View {
             sameGroupVisits: store.sameGroupVisits,
             sameGroupVisitsData: store.sameGroupVisitsData,
             currentGroupName: store.currentGroupName,
+            courseArrivalInfo: store.courseArrivalInfo,
             onLabelTap: store.handleLabelTap,
             onGroupTap: store.handleGroupTap,
             onMemberTap: store.handleMemberTap,

@@ -831,4 +831,5 @@
 "metaCollection.delete.confirmMessage" = "サーバーに送信した到達記録・閲覧履歴を削除します。アプリ内の記録は削除されません。この操作は取り消せません。";
 "metaCollection.delete.success" = "サーバーのデータを削除しました";
 "metaCollection.delete.failure" = "削除に失敗しました。しばらくしてから再度お試しください";
-"metaCollection.rankFormat" = "このスポットに到達した%d人目です";
+"metaCollection.rankFormat" = "このスポットに訪れた%d人目です";
+"metaCollection.rankFormatMultiline" = "このスポットに訪れた\n%d人目です";

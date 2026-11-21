@@ -952,6 +952,8 @@ enum L {
         static let deleteServerDataSuccess = localized("metaCollection.delete.success")
         static let deleteServerDataFailure = localized("metaCollection.delete.failure")
         static func rankFormat(_ rank: Int) -> String { String(format: localized("metaCollection.rankFormat"), rank) }
+        /// 記録詳細画面の順位カード用。「〜に訪れた」で改行し「〜人目です」を次行にする表示
+        static func rankFormatMultiline(_ rank: Int) -> String { String(format: localized("metaCollection.rankFormatMultiline"), rank) }
     }
 
     // MARK: - Helper
