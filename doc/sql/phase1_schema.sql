@@ -15,7 +15,6 @@
 -- 場所の実体を正規化する places テーブルは意図的に作らない。
 --
 -- 簡略化した点（将来の課題）:
--- - course_view（コース閲覧）送信・course_statsの集計バッチは未実装（別タスク）。
 -- - courses/course_spots の正式なメタ情報は store_course/sync_courses_to_supabase.py で投入する。
 --   未実行の間は、record_spot_arrival RPCが courses に title=course_id のダミー行を
 --   source='official' で自動生成してフォールバックする。
@@ -101,9 +100,13 @@ create index spot_arrivals_user_idx on public.spot_arrivals (user_id);
 create index spot_arrivals_visit_idx on public.spot_arrivals (visit_id);
 
 -- =========================================
--- 4. course_events: コース閲覧（P1「関心度」指標。送信は未実装、テーブルのみ先行作成）
+-- 4. course_events: コースへの関心度イベント（閲覧・お気に入り追加等。送信は CourseEventSyncService が行う）
 -- =========================================
+-- idはクライアント側で(courseId, type, eventDay)から決定論的に導出する。
+-- 起動時フラッシュの競合で同じイベントが2回送信されても、on_conflict=idで
+-- 重複挿入されないようにするための冪等キー（spot_arrivals.idと同じ考え方）
 create table public.course_events (
+  id uuid primary key,
   user_id uuid not null references public.users(id) on delete cascade,
   course_id text not null,
   version integer not null,
@@ -137,6 +140,10 @@ create policy "本人の到達記録のみ挿入できる"
 create policy "本人の到達記録のみ削除できる"
   on public.spot_arrivals for delete using (auth.uid() = user_id);
 
+-- SELECTポリシーが無いと、on_conflict=idでのUPSERT（重複無視）が既存行の有無を
+-- 確認できずRLS違反になる（PostgreSQL/PostgRESTの既知の挙動）ため、挿入・削除に加えて必須
+create policy "本人の閲覧イベントのみ参照できる"
+  on public.course_events for select using (auth.uid() = user_id);
 create policy "本人の閲覧イベントのみ挿入できる"
   on public.course_events for insert with check (auth.uid() = user_id);
 create policy "本人の閲覧イベントのみ削除できる"

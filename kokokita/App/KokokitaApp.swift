@@ -64,5 +64,6 @@ struct KokokitaApp: App {
         await AppContainer.shared.courseAutoSyncService.sync()
         AppContainer.shared.spotArrivalSyncService.enqueueAllHistoricalArrivals()
         await AppContainer.shared.spotArrivalSyncService.flushPending()
+        await AppContainer.shared.courseEventSyncService.flushPending()
     }
 }

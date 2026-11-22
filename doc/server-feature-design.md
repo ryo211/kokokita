@@ -134,12 +134,13 @@ erDiagram
 
 ### 収集するデータ
 
-端末から送るのは **spot_arrival と course_view の2種類だけ**。達成や挑戦中の判定はサーバー側で到達記録から算出する。
+端末から送るのは **spot_arrival と course_event（関心度イベント）の2種類だけ**。達成や挑戦中の判定はサーバー側で到達記録から算出する。
 
 | データ | 端末から送るか | 内容 | 用途 |
 | --- | --- | --- | --- |
 | spot_arrival | 送る | 記録UUID, course_id, spot_id, arrived_at, スポットまでの距離, アプリバージョン | 到達者数、「◯人目」表示、写真投稿の権利 |
-| course_view | 送る | course_id, 閲覧日（同一コースは1日1回まで） | 関心度。到達が少ない初期の人気指標 |
+| course_event（view） | 送る | course_id, 閲覧日（同一コースは1日1回まで） | 関心度。到達が少ない初期の人気指標 |
+| course_event（favorite_add） | 送る | course_id, 追加日（同一コースは1日1回まで。削除は送らない一方向シグナル） | 関心度。お気に入り追加は閲覧より強い興味の表明 |
 | コース達成 | 送らない | 到達記録と course_spots からサーバーで判定 | 達成者数、達成率 |
 | 挑戦中ユーザー | 送らない | コース内で1スポット以上到達したユーザー | 人気指標 |
 
@@ -153,7 +154,7 @@ erDiagram
 1. **即時送信：** 記録確定時にその1件を送り、レスポンスで「◯人目」を受け取る。**記録の確定（CoreData保存・UI反映）自体は送信を待たずに完了させ、送信とレスポンス受信は非同期で行う。** 記録確定のクリティカルパスにAPI呼び出しを同期的に挟むと、「ログイン不要・いつでもすぐ記録できる」という体験が電波状況に左右されてしまうため
 2. **同期：** アプリ起動時とフォアグラウンド復帰時に、未送信の到達記録をまとめて送る。端末側は記録ごとに送信済みフラグを持つ。即時送信の失敗やオフライン記録もここで埋まる
 3. **初回同期：** 同意直後の初回は、機能実装前のものも含めて到達記録を全件送る。過去分のための一括アップロード処理は別に作らない
-4. **course_view：** 端末に貯めておき、同期時にまとめて送る
+4. **course_event（関心度イベント）：** 端末に貯めておき、同期時にまとめて送る
 
 ### 集計ルール
 
@@ -326,8 +327,13 @@ P1で唯一ユーザーに見える機能。同意画面だけのリリースに
 - [x] 公式コースから course_spots を生成するスクリプト（`store_course/sync_courses_to_supabase.py`、本番 `store/index.json` 経由で取得）
 - [x] spotId不変ルールを仕様書に追記（`doc/course-json-spec.md`）
 - [x] 匿名認証の組み込み、即時送信（記録確定のクリティカルパスをブロックしない非同期実装）と到達記録の同期（初回は過去分も全件）。実機で動作確認済み
-- [x] 集計バッチのコード実装（`compute_course_stats` RPC、`lambda/course-stats-batch/`）。**AWS側のLambda作成・EventBridge Scheduler設定・デプロイは未実施**（`lambda/course-stats-batch/README.md`の手順を参照）
-- [ ] アプリ側の人気表示（stats.jsonを読んでコース一覧に反映する部分）。運営手動ピックアップフラグをP1から用意
+- [x] 集計バッチのコード実装・デプロイ（`compute_course_stats` RPC、`lambda/course-stats-batch/`）。CloudFormationスタック`kokokita-course-stats-batch`をデプロイ済み、EventBridgeで毎日03:00 UTC実行、`stats.json`のS3書き出しまで実機確認済み
+- [ ] アプリ側の人気表示（stats.jsonを読んでコース一覧に反映する部分）。運営手動ピックアップフラグをP1から用意。**データが十分に溜まるまで保留**（2026/11/21にユーザーと合意）
+- [x] course_event（関心度イベント）の端末からの送信実装。`CourseEventOutboxRepository`/`CourseEventSyncService`で、
+  コース詳細画面（`CourseDetailView`）を開いた時（type=view）と、コースをお気に入りに追加した時（`CourseFavoriteStore.toggle`、
+  type=favorite_add。削除時は送らない一方向シグナル）に、それぞれ1日1回まで（ローカルで冪等化）記録し、起動時・フォアグラウンド
+  復帰時に`course_events`テーブルへ直接INSERTでまとめて送る。人気表示（上記）の初期指標が、十分な到達者数が溜まる前から
+  貯まり始めるようにする目的（「データが溜まってから実装すれば良い」のは表示側だけで、収集自体は早く始めた方が良いため）
 - [x] 到達時の「◯人目」表示 → 記録詳細画面（`VisitDetailStore.loadCourseArrivalInfo`、ローカル保存済みのrankを読むだけ）と、
   達成シート（`CheckInResultSheet`）の両方に実装済み。送信は非同期のため、シート表示中に順位が返ってくれば
   `NotificationCenter`（`.spotArrivalRankDetermined`）経由でその場に反映する。返ってこなければ何も表示しないだけで、

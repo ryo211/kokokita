@@ -26,6 +26,8 @@ final class CourseFavoriteStore {
             orderedFavoriteIds.remove(at: index)
         } else {
             orderedFavoriteIds.append(courseId)
+            // 「関心度」イベントとして記録（追加時のみ。削除は一方向シグナルのため送らない）
+            AppContainer.shared.courseEventSyncService.recordFavoriteAdd(courseId: courseId)
         }
         persist()
     }

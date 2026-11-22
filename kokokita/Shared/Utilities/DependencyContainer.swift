@@ -28,6 +28,8 @@ final class AppContainer {
     let spotArrivalOutboxRepo = SpotArrivalOutboxRepository()
     let supabaseAuthService = SupabaseAuthService()
     lazy var spotArrivalSyncService: SpotArrivalSyncService = SpotArrivalSyncService()
+    let courseEventOutboxRepo = CourseEventOutboxRepository()
+    lazy var courseEventSyncService: CourseEventSyncService = CourseEventSyncService()
 
     /// 現在選択中のブック（UI参照用）
     var currentBook: Book? = nil

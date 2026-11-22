@@ -153,7 +153,9 @@ struct CourseDetailView: View {
         }
     }
 
-    var body: some View {
+    // 巨大な body 直書きだとSwiftコンパイラの型推論がタイムアウトするため、
+    // コア部分（coreContent）と、重いsheet/toolbar/confirmationDialogを分離する
+    private var coreContent: some View {
         GeometryReader { geo in
             ZStack {
                 VStack(spacing: 0) {
@@ -210,6 +212,10 @@ struct CourseDetailView: View {
             .animation(.easeInOut(duration: 0.3), value: isPreparingTour)
             .animation(.easeInOut(duration: 0.4), value: isShowingTourEndPromotion)
         }
+    }
+
+    var body: some View {
+        coreContent
         .navigationTitle(showTitle ? course.title : "")
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(isTourActive)
@@ -249,6 +255,8 @@ struct CourseDetailView: View {
             // 詳細を開いたコースを新着リストから除去
             courseListStore?.markAsOpened(courseId)
             AppReviewService.shared.courseDetailViewOpened()
+            // 閲覧イベント（「関心度」指標）を記録。1日1回までのローカル冪等化済み
+            AppContainer.shared.courseEventSyncService.recordView(courseId: courseId)
             if showSummaryOnAppear {
                 showSummary = true
             }

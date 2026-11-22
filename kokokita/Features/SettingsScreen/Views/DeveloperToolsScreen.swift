@@ -5,6 +5,7 @@ import FirebaseCrashlytics
 struct DeveloperToolsScreen: View {
     @State private var showCrashAlert = false
     @State private var spotArrivalResetMessage: String?
+    @State private var courseEventResetMessage: String?
     private var debugSettings = DebugSettings.shared
     private var premiumManager = PremiumManager.shared
 
@@ -89,6 +90,26 @@ struct DeveloperToolsScreen: View {
                     .font(.caption)
             }
 
+            // MARK: - コースイベント（閲覧・お気に入り）送信デバッグ
+            Section {
+                Button {
+                    resetCourseEvents()
+                } label: {
+                    Label("コースイベント（閲覧・お気に入り）の記録を全削除", systemImage: "arrow.counterclockwise.circle")
+                        .foregroundStyle(.teal)
+                }
+                if let message = courseEventResetMessage {
+                    Text(message)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            } header: {
+                Text("コースイベントデバッグ")
+            } footer: {
+                Text("「1日1回まで」のローカル重複防止チェックのため、サーバー側のcourse_eventsを手動で削除しただけでは同日中は再送信されない。ここで端末側の記録も削除すれば再テストできる。")
+                    .font(.caption)
+            }
+
             // MARK: - Premium状態のデバッグ制御
             Section {
                 // 現在の状態表示
@@ -166,6 +187,15 @@ struct DeveloperToolsScreen: View {
             }
         } catch {
             spotArrivalResetMessage = "リセットに失敗しました: \(error.localizedDescription)"
+        }
+    }
+
+    private func resetCourseEvents() {
+        do {
+            try AppContainer.shared.courseEventOutboxRepo.deleteAllForDebug()
+            courseEventResetMessage = "削除しました。再度コース詳細を開く・お気に入り追加すると記録されます。"
+        } catch {
+            courseEventResetMessage = "削除に失敗しました: \(error.localizedDescription)"
         }
     }
 }
