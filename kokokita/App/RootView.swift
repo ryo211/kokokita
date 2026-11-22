@@ -1,7 +1,7 @@
 import SwiftUI
 
 // アプリのルートビュー
-// AppModeManager を参照して初回起動時のウェルカム画面を表示し、
+// AppModeManager を参照して初回起動時のオンボーディングを表示し、
 // モードに応じて RootTabView または PilgrimageRootTabView を表示する
 //
 // 以前は modeManager.mode を switch して RootTabView()/PilgrimageRootTabView() を
@@ -18,8 +18,8 @@ struct RootView: View {
     var body: some View {
         Group {
             if !modeManager.hasSeenWelcome {
-                // 初回起動: ウェルカム画面を表示
-                WelcomeScreen()
+                // 初回起動: オンボーディングを表示（完了済みフラグは従来の hasSeenWelcome を引き継ぐ）
+                OnboardingScreen()
                     .environment(modeManager)
             } else {
                 ZStack {

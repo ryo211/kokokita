@@ -591,20 +591,32 @@ enum L {
         static let switchToPilgrimage = localized("modeSelection.switchToPilgrimage")
     }
 
-    // MARK: - Welcome（初回起動時のウェルカム画面）
-    enum Welcome {
-        static let title = localized("welcome.title")
-        static let setupSectionTitle = localized("welcome.setupSectionTitle")
-        static let locationPermissionTitle = localized("welcome.locationPermissionTitle")
-        static let locationPermissionDescription = localized("welcome.locationPermissionDescription")
-        static let autoRecordPermissionTitle = localized("welcome.autoRecordPermissionTitle")
-        static let autoRecordPermissionDescription = localized("welcome.autoRecordPermissionDescription")
-        static let metaCollectionTitle = localized("welcome.metaCollectionTitle")
-        static let metaCollectionDescription = localized("welcome.metaCollectionDescription")
-        static let syncProgressLabel = localized("welcome.syncProgressLabel")
-        static let syncProgressCompleteLabel = localized("welcome.syncProgressCompleteLabel")
-        static let permissionDialogNote = localized("welcome.permissionDialogNote")
-        static let startButton = localized("welcome.startButton")
+    // MARK: - Onboarding（初回起動時のオンボーディング）
+    enum Onboarding {
+        static let next = localized("onboarding.next")
+        static let preparing = localized("onboarding.preparing")
+        /// ページインジケーターのVoiceOverラベル（例: 3ページ中1ページ目）
+        static func pageIndicator(current: Int, total: Int) -> String {
+            String(format: localized("onboarding.pageIndicator"), current, total)
+        }
+
+        static let pilgrimageEyebrow = localized("onboarding.pilgrimage.eyebrow")
+        static let pilgrimageTitle = localized("onboarding.pilgrimage.title")
+        static let pilgrimageBody = localized("onboarding.pilgrimage.body")
+        static let pilgrimageMediaLabel = localized("onboarding.pilgrimage.mediaLabel")
+
+        static let recordEyebrow = localized("onboarding.record.eyebrow")
+        static let recordTitle = localized("onboarding.record.title")
+        static let recordBody = localized("onboarding.record.body")
+        static let recordMediaLabel = localized("onboarding.record.mediaLabel")
+
+        static let locationEyebrow = localized("onboarding.location.eyebrow")
+        static let locationTitle = localized("onboarding.location.title")
+        static let locationBody = localized("onboarding.location.body")
+        static let allowLocationButton = localized("onboarding.location.allowButton")
+
+        static let anonymousDataTitle = localized("onboarding.anonymousData.title")
+        static let anonymousDataDescription = localized("onboarding.anonymousData.description")
     }
 
     // MARK: - Coachmark（初回チュートリアルのガイド付きツアー）

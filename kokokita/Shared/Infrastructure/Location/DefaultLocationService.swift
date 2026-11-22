@@ -23,6 +23,9 @@ final class DefaultLocationService: NSObject, CLLocationManagerDelegate {
     private let manager = CLLocationManager()
     private var cont: CheckedContinuation<(CLLocation, LocationSourceFlags), Error>?
     private var authCont: CheckedContinuation<Bool, Never>?
+    /// 許可リクエストの世代番号。authCont が解決されるたびに進め、古いタイムアウトが
+    /// 後続の別リクエストの継続を誤って解決しないようにする
+    private var authRequestGeneration = 0
 
     override init() {
         super.init()
@@ -30,11 +33,30 @@ final class DefaultLocationService: NSObject, CLLocationManagerDelegate {
         manager.delegate = self
     }
 
-    /// 位置情報取得は行わず、WhenInUse許可のリクエストのみを発火する（結果を待たない）
-    /// ウェルカム画面の「はじめる」タップ時など、許可ダイアログを出したいだけの場面で使う
-    func requestWhenInUsePermissionOnly() {
-        guard manager.authorizationStatus == .notDetermined else { return }
-        manager.requestWhenInUseAuthorization()
+    /// WhenInUse許可をリクエストし、ユーザーの回答を待って許可されたかどうかを返す
+    /// オンボーディングで「ダイアログに回答してから次の画面へ進む」ために使う
+    /// - 既に許可状態が確定している場合はダイアログを出さず、現在の状態から即座に返す
+    /// - ダイアログが表示されないまま回答が来ないケースに備え、タイムアウトで打ち切る（その場合はfalse）
+    @MainActor
+    func requestWhenInUsePermissionAndWait(timeout: TimeInterval = 8) async -> Bool {
+        let status = manager.authorizationStatus
+        guard status == .notDetermined else {
+            return [.authorizedAlways, .authorizedWhenInUse].contains(status)
+        }
+
+        authRequestGeneration += 1
+        let generation = authRequestGeneration
+        return await withCheckedContinuation { (c: CheckedContinuation<Bool, Never>) in
+            self.authCont = c
+            manager.requestWhenInUseAuthorization()
+            DispatchQueue.main.asyncAfter(deadline: .now() + timeout) { [weak self] in
+                // 同じリクエストの継続がまだ未解決の場合だけタイムアウトとして解決する
+                guard let self, self.authRequestGeneration == generation, let pending = self.authCont else { return }
+                Logger.warning("位置情報の許可ダイアログへの回答待ちがタイムアウトしました")
+                self.authCont = nil
+                pending.resume(returning: false)
+            }
+        }
     }
 
     func requestOneShotLocation(
@@ -152,8 +174,9 @@ final class DefaultLocationService: NSObject, CLLocationManagerDelegate {
         // 権限ダイアログの結果を返す
         if let authCont = authCont {
             let granted = [.authorizedAlways, .authorizedWhenInUse].contains(status)
-            authCont.resume(returning: granted)
             self.authCont = nil
+            authRequestGeneration += 1
+            authCont.resume(returning: granted)
         }
     }
 }

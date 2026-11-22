@@ -387,19 +387,24 @@
 "modeSelection.switchToRecord" = "Switch to Record Mode";
 "modeSelection.switchToPilgrimage" = "Switch to Pilgrimage Mode";
 
-// MARK: - Welcome (first-launch welcome screen)
-"welcome.title" = "Welcome";
-"welcome.setupSectionTitle" = "The following settings are required to use this app.";
-"welcome.locationPermissionTitle" = "\"While Using the App\" Location Access";
-"welcome.locationPermissionDescription" = "Used for recording your location and finding nearby spots";
-"welcome.autoRecordPermissionTitle" = "\"Always\" Location Access (optional)";
-"welcome.autoRecordPermissionDescription" = "Needed only if you use Auto Record. No setup required now — you can turn it on later in Settings";
-"welcome.metaCollectionTitle" = "Anonymous Data Sharing";
-"welcome.metaCollectionDescription" = "Anonymously sends the spots you've reached and how you view courses, used for popular course rankings and arrival rank display. You can turn this off anytime in Settings";
-"welcome.permissionDialogNote" = "Tapping \"Get Started\" will show the permission prompt.";
-"welcome.syncProgressLabel" = "Preparing the app…";
-"welcome.syncProgressCompleteLabel" = "The app is ready";
-"welcome.startButton" = "Get Started";
+// MARK: - Onboarding (first-launch onboarding)
+"onboarding.next" = "Next";
+"onboarding.pageIndicator" = "Page %1$d of %2$d";
+"onboarding.preparing" = "Preparing";
+"onboarding.pilgrimage.eyebrow" = "Pilgrimage Mode";
+"onboarding.pilgrimage.title" = "Collect stamps at\npilgrimage spots.";
+"onboarding.pilgrimage.body" = "Real-life settings from anime, films and more, gathered into courses. Record when you reach a spot, and you get a stamp.";
+"onboarding.pilgrimage.mediaLabel" = "Reaching a spot and getting a stamp";
+"onboarding.record.eyebrow" = "Record Mode";
+"onboarding.record.title" = "Record anywhere,\nwith one tap.";
+"onboarding.record.body" = "One button saves where you are and when, using GPS. Add photos, notes, and who you were with.";
+"onboarding.record.mediaLabel" = "The screen right after recording the current location";
+"onboarding.location.eyebrow" = "One last step";
+"onboarding.location.title" = "Allow access to\nyour location";
+"onboarding.location.body" = "Used to get your current location when you record, and to show nearby spots and places.";
+"onboarding.location.allowButton" = "Allow Location Access";
+"onboarding.anonymousData.title" = "Anonymous Data Sharing";
+"onboarding.anonymousData.description" = "Anonymously sends the spots you reach and the courses you view, used to show things like your arrival rank. You can change this anytime in Settings.";
 
 // MARK: - Coachmark (first-time guided tour)
 "coachmark.recordButton.title" = "Try recording your location";
