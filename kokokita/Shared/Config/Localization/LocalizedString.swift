@@ -599,6 +599,8 @@ enum L {
         static let locationPermissionDescription = localized("welcome.locationPermissionDescription")
         static let autoRecordPermissionTitle = localized("welcome.autoRecordPermissionTitle")
         static let autoRecordPermissionDescription = localized("welcome.autoRecordPermissionDescription")
+        static let metaCollectionTitle = localized("welcome.metaCollectionTitle")
+        static let metaCollectionDescription = localized("welcome.metaCollectionDescription")
         static let syncProgressLabel = localized("welcome.syncProgressLabel")
         static let syncProgressCompleteLabel = localized("welcome.syncProgressCompleteLabel")
         static let permissionDialogNote = localized("welcome.permissionDialogNote")
@@ -936,16 +938,15 @@ enum L {
         static let subscriptionDisclosure    = localized("paywall.subscriptionDisclosure")
     }
 
-    // MARK: - Meta Collection（到達記録のサーバー送信・同意）
+    // MARK: - Meta Collection（匿名データの送信。デフォルトでオン、設定からオフにできる）
     enum MetaCollection {
-        static let consentTitle = localized("metaCollection.consent.title")
-        static let consentBody = localized("metaCollection.consent.body")
-        static let consentAgree = localized("metaCollection.consent.agree")
-        static let consentDecline = localized("metaCollection.consent.decline")
+        static let infoTitle = localized("metaCollection.info.title")
+        static let infoBody = localized("metaCollection.info.body")
+        static let infoClose = localized("metaCollection.info.close")
         static let settingsSectionTitle = localized("metaCollection.settings.sectionTitle")
         static let settingsToggle = localized("metaCollection.settings.toggle")
         static let settingsToggleDescription = localized("metaCollection.settings.toggleDescription")
-        static let settingsOpenConsent = localized("metaCollection.settings.openConsent")
+        static let settingsLearnMore = localized("metaCollection.settings.learnMore")
         static let deleteServerData = localized("metaCollection.settings.deleteServerData")
         static let deleteServerDataConfirmTitle = localized("metaCollection.delete.confirmTitle")
         static let deleteServerDataConfirmMessage = localized("metaCollection.delete.confirmMessage")

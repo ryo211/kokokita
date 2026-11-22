@@ -19,12 +19,13 @@ final class SpotFavoriteStore {
         }
     }
 
-    /// お気に入りを切り替える
-    func toggle(_ spotId: UUID) {
+    /// お気に入りを切り替える（追加時は「関心度」イベントとして記録する）
+    func toggle(_ spotId: UUID, courseId: UUID) {
         if favoriteSpotIds.contains(spotId) {
             favoriteSpotIds.remove(spotId)
         } else {
             favoriteSpotIds.insert(spotId)
+            AppContainer.shared.courseEventSyncService.recordSpotFavoriteAdd(courseId: courseId, spotId: spotId)
         }
         persist()
     }

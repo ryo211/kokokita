@@ -394,6 +394,8 @@
 "welcome.locationPermissionDescription" = "Used for recording your location and finding nearby spots";
 "welcome.autoRecordPermissionTitle" = "\"Always\" Location Access (optional)";
 "welcome.autoRecordPermissionDescription" = "Needed only if you use Auto Record. No setup required now — you can turn it on later in Settings";
+"welcome.metaCollectionTitle" = "Anonymous Data Sharing";
+"welcome.metaCollectionDescription" = "Anonymously sends the spots you've reached and how you view courses, used for popular course rankings and arrival rank display. You can turn this off anytime in Settings";
 "welcome.permissionDialogNote" = "Tapping \"Get Started\" will show the permission prompt.";
 "welcome.syncProgressLabel" = "Preparing the app…";
 "welcome.syncProgressCompleteLabel" = "The app is ready";
@@ -814,14 +816,13 @@
 "share.selectPhoto" = "Select Photo";
 
 /* Meta Collection (sending arrival records to the server, consent) */
-"metaCollection.consent.title" = "Send arrival records to the server?";
-"metaCollection.consent.body" = "Sending the spots you've reached to the server lets you see popular courses, frequently visited spots, and which number arrival you were at a spot.\n\nOnly the spots you've reached are sent. Everyday visit records (like cafes) and raw GPS tracks are never sent.\n\nIf you agree, your past arrivals will be sent as well. Even if you delete a record in the app, it will remain in the server's statistics. You can turn this off anytime in Settings, and delete your server data there too.";
-"metaCollection.consent.agree" = "Agree and Enable";
-"metaCollection.consent.decline" = "Not Now";
-"metaCollection.settings.sectionTitle" = "Server Sync";
-"metaCollection.settings.toggle" = "Send Arrival Records";
-"metaCollection.settings.toggleDescription" = "When on, the spots you've reached are sent to the server, enabling popular course rankings and arrival rank display. Recording still works fully when off.";
-"metaCollection.settings.openConsent" = "Enable Popular Course Display";
+"metaCollection.info.title" = "About Anonymous Data Sharing";
+"metaCollection.info.body" = "Anonymously sending the spots you've reached and how you view or favorite courses lets you see popular courses, frequently visited spots, and which number arrival you were at a spot.\n\nOnly an anonymous ID (no login or account needed) and information about spot arrivals and course views are sent. Everyday visit records (like cafes) and raw GPS tracks are never sent.\n\nYou can turn this off anytime in Settings, and delete your server data there too. Recording still works fully when off.";
+"metaCollection.info.close" = "Close";
+"metaCollection.settings.sectionTitle" = "Course Popularity Stats";
+"metaCollection.settings.toggle" = "Send Anonymous Data";
+"metaCollection.settings.toggleDescription" = "Anonymously sends the spots you've reached and how you view or favorite courses, used for popular course rankings and arrival rank display. Turning this off stops sending (recording still works fully).";
+"metaCollection.settings.learnMore" = "Learn More";
 "metaCollection.settings.deleteServerData" = "Delete Server Data";
 "metaCollection.delete.confirmTitle" = "Delete Server Data?";
 "metaCollection.delete.confirmMessage" = "This deletes the arrival records and view history sent to the server. Records in the app itself are not affected. This cannot be undone.";

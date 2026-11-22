@@ -1596,7 +1596,7 @@ private struct SpotListRowView: View {
 
                     // ハートボタン（お気に入り）
                     Button {
-                        favoriteStore.toggle(spot.id)
+                        favoriteStore.toggle(spot.id, courseId: course.id)
                     } label: {
                         let isFav = favoriteStore.isFavorite(spot.id)
                         Image(systemName: isFav ? "heart.fill" : "heart")

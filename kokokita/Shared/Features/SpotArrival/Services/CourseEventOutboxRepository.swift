@@ -10,18 +10,19 @@ final class CourseEventOutboxRepository {
         self.ctx = context
     }
 
-    /// 指定コース・種別の今日のイベントをまだ記録していなければ1件追加する（1日1回までの冪等化）。
-    /// idは(courseId, type, eventDay)から決定論的に導出するため、何度呼んでも同じ日のうちは
+    /// 指定コース（・スポット）・種別の今日のイベントをまだ記録していなければ1件追加する（1日1回までの冪等化）。
+    /// idは(courseId, spotId, type, eventDay)から決定論的に導出するため、何度呼んでも同じ日のうちは
     /// 同じidの1件にしかならず、送信済みかどうかに関わらず再登録されない
-    func recordEventIfNeeded(courseId: UUID, type: CourseEventType, on day: Date = Date()) throws {
+    func recordEventIfNeeded(courseId: UUID, spotId: UUID? = nil, type: CourseEventType, on day: Date = Date()) throws {
         try ctx.performAndWait {
             let startOfDay = Calendar.current.startOfDay(for: day)
-            let id = CourseEvent.makeId(courseId: courseId, type: type, eventDay: startOfDay)
+            let id = CourseEvent.makeId(courseId: courseId, spotId: spotId, type: type, eventDay: startOfDay)
             guard try fetchEntity(id: id) == nil else { return }
 
             let entity = CourseEventEntity(context: ctx)
             entity.id = id
             entity.courseId = courseId
+            entity.spotId = spotId
             entity.type = type.rawValue
             entity.eventDay = startOfDay
             entity.isSent = false
@@ -74,6 +75,7 @@ final class CourseEventOutboxRepository {
         return CourseEvent(
             id: e.id ?? UUID(),
             courseId: e.courseId ?? UUID(),
+            spotId: e.spotId,
             type: type,
             eventDay: e.eventDay ?? Date(),
             isSent: e.isSent

@@ -33,6 +33,7 @@ struct WelcomeScreen: View {
                 VStack(alignment: .leading, spacing: UIConstants.Spacing.xxLarge) {
                     LocationPermissionInfoView()
                     AutoRecordPermissionInfoView()
+                    MetaCollectionInfoView()
 
                     Text(L.Welcome.permissionDialogNote)
                         .font(.caption)

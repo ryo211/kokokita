@@ -398,6 +398,8 @@
 "welcome.locationPermissionDescription" = "現在地の記録や、近くのスポット探索に使用します";
 "welcome.autoRecordPermissionTitle" = "位置情報の常に許可（任意）";
 "welcome.autoRecordPermissionDescription" = "自動記録機能をご利用の場合に必要です。今は設定不要で、あとから設定画面でONにできます";
+"welcome.metaCollectionTitle" = "匿名データの送信";
+"welcome.metaCollectionDescription" = "到達したスポットやコースの閲覧状況を匿名で送信し、「人気コース」「◯人目」表示に使います。設定からいつでもオフにできます";
 "welcome.permissionDialogNote" = "「はじめる」をタップすると、確認画面が表示されます";
 "welcome.syncProgressLabel" = "アプリの準備をしています…";
 "welcome.syncProgressCompleteLabel" = "アプリの準備ができました";
@@ -818,14 +820,13 @@
 "share.selectPhoto" = "写真を選択";
 
 /* Meta Collection（到達記録のサーバー送信・同意） */
-"metaCollection.consent.title" = "到達記録をサーバーに送りますか？";
-"metaCollection.consent.body" = "到達したスポットの情報をサーバーに送ると、「人気のコース」「よく訪問されるスポット」や、スポットに到達した「◯人目」を見られるようになります。\n\n送るのは到達したスポットの情報だけです。日常の訪問記録（カフェなど）やGPSの軌跡は送りません。\n\n同意すると、これまでに到達済みのスポットの記録もまとめて送信されます。アプリ内で記録を削除しても、サーバー側の集計からは消えません。設定からいつでもオフにでき、サーバー上のデータの削除もできます。";
-"metaCollection.consent.agree" = "同意して有効にする";
-"metaCollection.consent.decline" = "今はしない";
-"metaCollection.settings.sectionTitle" = "サーバーとの連携";
-"metaCollection.settings.toggle" = "到達記録の送信";
-"metaCollection.settings.toggleDescription" = "オンにすると、到達したスポットの情報をサーバーに送り、人気コース表示や「◯人目」表示が使えるようになります。オフにしても記録機能はすべて使えます。";
-"metaCollection.settings.openConsent" = "人気コース表示を有効にする";
+"metaCollection.info.title" = "匿名データの送信について";
+"metaCollection.info.body" = "到達したスポットの情報や、コースの閲覧・お気に入り追加の状況を匿名で送信することで、「人気コース」「よく訪問されるスポット」や、スポットに到達した「◯人目」を見られるようにしています。\n\n送信されるのは匿名のID（ログインやアカウント登録は不要）と、スポットの到達・コースの閲覧といった情報だけです。日常の訪問記録（カフェなど）やGPSの軌跡は送信しません。\n\n設定からいつでも送信をオフにでき、サーバー上のデータの削除もできます。オフにしても記録機能はすべてそのまま使えます。";
+"metaCollection.info.close" = "閉じる";
+"metaCollection.settings.sectionTitle" = "コース人気度の集計";
+"metaCollection.settings.toggle" = "匿名データの送信";
+"metaCollection.settings.toggleDescription" = "到達したスポットやコースの閲覧・お気に入り状況を匿名で送信し、「人気コース」「◯人目」表示に使います。オフにすると送信を停止します（記録機能には影響しません）。";
+"metaCollection.settings.learnMore" = "詳しく見る";
 "metaCollection.settings.deleteServerData" = "サーバーのデータを削除";
 "metaCollection.delete.confirmTitle" = "サーバーのデータを削除しますか？";
 "metaCollection.delete.confirmMessage" = "サーバーに送信した到達記録・閲覧履歴を削除します。アプリ内の記録は削除されません。この操作は取り消せません。";

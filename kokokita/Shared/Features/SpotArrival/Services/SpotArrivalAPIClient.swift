@@ -81,7 +81,7 @@ struct SpotArrivalAPIClient {
     /// idは呼び出し元で(courseId, type, eventDay)から決定論的に導出されたものを渡す。
     /// 起動時フラッシュが競合して同じイベントを2回送信しても、on_conflict=idでサーバー側が
     /// 重複を無視するため、クライアント側で多重送信を厳密に防ぐ必要がない（record_spot_arrivalと同じ考え方）
-    func sendCourseEvent(id: UUID, courseRawId: String, version: Int, type: CourseEventType) async -> Result<Void, Error> {
+    func sendCourseEvent(id: UUID, courseRawId: String, spotStringId: String? = nil, version: Int, type: CourseEventType) async -> Result<Void, Error> {
         guard SupabaseConfig.isConfigured else { return .failure(APIError.notConfigured) }
         guard let authSession = await authService.currentSession(),
               let baseURL = SupabaseConfig.projectURL,
@@ -94,13 +94,16 @@ struct SpotArrivalAPIClient {
         components.queryItems = [URLQueryItem(name: "on_conflict", value: "id")]
         guard let url = components.url else { return .failure(APIError.invalidResponse) }
 
-        let payload: [String: Any] = [
+        var payload: [String: Any] = [
             "id": id.uuidString,
             "user_id": authSession.userId,
             "course_id": courseRawId,
             "version": version,
             "type": type.rawValue
         ]
+        if let spotStringId {
+            payload["spot_id"] = spotStringId
+        }
 
         do {
             var req = URLRequest(url: url)

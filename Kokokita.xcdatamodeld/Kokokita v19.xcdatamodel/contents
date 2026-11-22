@@ -67,6 +67,7 @@
         <attribute name="eventDay" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
         <attribute name="isSent" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="spotId" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
         <attribute name="type" attributeType="String" defaultValueString="view"/>
     </entity>
     <entity name="ExcludedLocationEntity" representedClassName="ExcludedLocationEntity" syncable="YES" codeGenerationType="none">

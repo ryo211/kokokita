@@ -12,15 +12,23 @@ struct SettingsSheet: View {
     private var premiumManager = PremiumManager.shared
 
     @ObservedObject private var metaCollectionSettings = MetaCollectionSettings.shared
-    @State private var showMetaCollectionConsent = false
+    @State private var showMetaCollectionInfo = false
     @State private var showDeleteServerDataConfirm = false
     @State private var isDeletingServerData = false
     @State private var deleteServerDataResultMessage: String?
 
     var body: some View {
         settingsNavigationStack
-            .sheet(isPresented: $showMetaCollectionConsent) {
-                MetaCollectionConsentSheet()
+            .sheet(isPresented: $showMetaCollectionInfo) {
+                MetaCollectionInfoSheet()
+            }
+            .onChange(of: metaCollectionSettings.isConsented) { wasOn, isOn in
+                // オフ→オンに切り替えた直後は、過去の到達済みスポットも含めて即座に送信を試みる
+                guard !wasOn, isOn else { return }
+                Task.detached(priority: .utility) {
+                    AppContainer.shared.spotArrivalSyncService.enqueueAllHistoricalArrivals()
+                    await AppContainer.shared.courseEventSyncService.flushPending()
+                }
             }
             .confirmationDialog(
                 L.MetaCollection.deleteServerDataConfirmTitle,
@@ -262,24 +270,22 @@ struct SettingsSheet: View {
 
     private var metaCollectionSection: some View {
         Section {
-            if metaCollectionSettings.isConsented {
-                Toggle(isOn: $metaCollectionSettings.isConsented) {
-                    Label(L.MetaCollection.settingsToggle, systemImage: "antenna.radiowaves.left.and.right")
-                }
-
-                Button(role: .destructive) {
-                    showDeleteServerDataConfirm = true
-                } label: {
-                    Label(L.MetaCollection.deleteServerData, systemImage: "trash")
-                }
-                .disabled(isDeletingServerData)
-            } else {
-                Button {
-                    showMetaCollectionConsent = true
-                } label: {
-                    Label(L.MetaCollection.settingsOpenConsent, systemImage: "antenna.radiowaves.left.and.right")
-                }
+            Toggle(isOn: $metaCollectionSettings.isConsented) {
+                Label(L.MetaCollection.settingsToggle, systemImage: "antenna.radiowaves.left.and.right")
             }
+
+            Button {
+                showMetaCollectionInfo = true
+            } label: {
+                Label(L.MetaCollection.settingsLearnMore, systemImage: "info.circle")
+            }
+
+            Button(role: .destructive) {
+                showDeleteServerDataConfirm = true
+            } label: {
+                Label(L.MetaCollection.deleteServerData, systemImage: "trash")
+            }
+            .disabled(isDeletingServerData)
         } header: {
             Text(L.MetaCollection.settingsSectionTitle)
         } footer: {

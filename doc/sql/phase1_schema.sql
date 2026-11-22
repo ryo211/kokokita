@@ -102,13 +102,16 @@ create index spot_arrivals_visit_idx on public.spot_arrivals (visit_id);
 -- =========================================
 -- 4. course_events: コースへの関心度イベント（閲覧・お気に入り追加等。送信は CourseEventSyncService が行う）
 -- =========================================
--- idはクライアント側で(courseId, type, eventDay)から決定論的に導出する。
+-- idはクライアント側で(courseId, spotId, type, eventDay)から決定論的に導出する。
 -- 起動時フラッシュの競合で同じイベントが2回送信されても、on_conflict=idで
--- 重複挿入されないようにするための冪等キー（spot_arrivals.idと同じ考え方）
+-- 重複挿入されないようにするための冪等キー（spot_arrivals.idと同じ考え方）。
+-- spot_idはスポット単位のイベント（例: スポットのお気に入り追加）の場合のみ入る。
+-- コース単位のイベント（閲覧・コースのお気に入り追加）はnullのまま
 create table public.course_events (
   id uuid primary key,
   user_id uuid not null references public.users(id) on delete cascade,
   course_id text not null,
+  spot_id text,
   version integer not null,
   type text not null default 'view',
   at timestamptz not null default now()
