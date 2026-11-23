@@ -15,27 +15,22 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## アーキテクチャ
 
-コードベースは**クリーンアーキテクチャ**の原則に従い、関心事の明確な分離を実現しています。
+**Feature-based MV + `@Observable` Store** 構成です(詳細は [doc/architecture/architecture-guide.md](doc/architecture/architecture-guide.md)、判断の経緯は [ADR-001](doc/architecture/adr/001-フォルダ構成とアーキテクチャの再設計.md))。
 
-### ドメイン層 (`kokokita/Domain/`)
-- **Models.swift**: コアドメインモデル。`Visit`(改ざん防止署名付きの不変な位置情報データ)、`VisitDetails`(可変なメタデータ)、`VisitAggregate`(両者を結合)、タクソノミー型(`LabelTag`、`GroupTag`、`MemberTag`)を定義
-- **Protocols.swift**: データアクセスとビジネスロジックの契約を定義するリポジトリとサービスのインターフェース
+```
+kokokita/
+├── App/              # エントリポイント・ルート(KokokitaApp, RootView, RootTabView, AppUIState, AppModeManager)
+├── Features/         # 画面単位の機能(HomeScreen, VisitFormScreen, CourseScreen, AutoRecordScreen など)
+└── Shared/
+    ├── Features/     # 複数画面で共有するドメイン(Visit, Course, AutoRecord, SpotArrival, Taxonomy, Premium など)
+    │                 #   それぞれ Models / Services / Views を持つ
+    ├── Infrastructure/  # Persistence(CoreDataStack 等), Location, Security(DefaultIntegrityService), Map, Notifications
+    ├── Components/   # 再利用 UI 部品(Media/ImageStore など)
+    ├── Config/       # AppConfig, UIConstants, LocalizedString
+    └── Utilities/    # DependencyContainer, Logger, NavigationRouter, Extensions
+```
 
-### インフラ層 (`kokokita/Infrastructure/`)
-- **CoreDataStack.swift**: Core Dataの永続化コンテナを管理。自動マイグレーション有効化
-- **CoreDataVisitRepository.swift**: `VisitRepository`と`TaxonomyRepository`プロトコルを実装。すべてのCore Data CRUD操作を処理
-- **DefaultIntegrityService.swift**: CryptoKitのP256鍵を使用した暗号署名/検証。鍵はKeychainに保存
-
-### プレゼンテーション層 (`kokokita/Presentation/`)
-- **ViewModels/**: MVVMパターンで`@MainActor`付きビューモデル(`HomeViewModel`、`CreateEditViewModel`)
-- **Views/**: 機能ごとに整理されたSwiftUIビュー(Home、Create、Detail、Menu、共通コンポーネント)
-
-### サービス層 (`kokokita/Services/`)
-- **DefaultLocationService.swift**: 位置情報権限とワンショットGPS取得を処理。ソースフラグ検出(シミュレート/アクセサリ)付き
-- **LocationGeocodingService.swift**: 位置情報取得と逆ジオコーディングを組み合わせ
-- **POICoordinatorService.swift**: 近隣POI検索をリトライロジック付きで管理(3回試行、指数バックオフ)
-- **MapKitPlaceLookupService.swift**: MapKitを使用したPOI検索実装
-- **PhotoEditService.swift**: 訪問記録の写真管理
+アプリ外の補助ツール(コース生成スクリプト、管理画面、Lambda)は [tools/](tools/README.md) にあります。
 
 ### 依存性注入
 **DependencyContainer.swift** (`AppContainer.shared`) で集中的にサービスを初期化。すべてのリポジトリとサービスはここでインスタンス化され、ビューモデルに注入されます。
@@ -55,7 +50,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **VisitPhotoEntity**: 写真ファイルパスの順序付き関係
 - **LabelEntity**、**GroupEntity**、**MemberEntity**: 多対多関係を持つタクソノミーエンティティ
 
-写真はファイルシステムにファイルパスとして保存され、`ImageStore` (kokokita/Shared/Media/) で管理されます。
+写真はファイルシステムにファイルパスとして保存され、`ImageStore` (kokokita/Shared/Components/Media/) で管理されます。
 
 ### 位置情報ソース検出
 アプリは偽装された位置情報を検出して防止します:
@@ -156,6 +151,18 @@ xcodebuild -project kokokita.xcodeproj -scheme kokokita -sdk iphonesimulator bui
    - ログ出力やデバッグ用の文字列（ユーザーに表示されないもの）
    - 技術的な識別子やキー（例: UserDefaultsのキー名）
 
+### ドキュメント配置ルール
+
+**ドキュメントを新規作成・移動するときは、必ず先に [doc/README.md](doc/README.md) を読み、そこに定めたフォルダ構成と判断フローに従って配置してください。**
+
+- 機能の仕様・設計書 → `doc/features/<機能名>/`(フォルダごとに README.md 必須)
+- 設計判断の記録 → `doc/architecture/adr/`、全体ルール → `doc/architecture/`
+- 作業手順 → `doc/operations/`、規約・ポリシー → `doc/legal/`、役目を終えた資料 → `doc/archive/`
+- リポジトリのルート直下や `doc/` 直下に設計書を置かない。`.docx` 等のバイナリや作業用データ(CSV・JSON)はコミットしない
+- 補助スクリプト・管理画面・Lambda は `tools/<用途>/` に置く
+- 新規ドキュメントの冒頭には「ステータス・最終更新・対象バージョン」の3行を書く
+- 新しい機能フォルダやツールを追加したら `doc/README.md` / `tools/README.md` の一覧も更新する
+
 ### 機能概要書の更新ルール
 
 **[doc/app-overview.md](doc/app-overview.md) は、一般の人がアプリの全体像を理解するための機能概要書です。ユーザーから見える機能を変えたときは、同じ作業の中で必ず更新してください。**
@@ -224,37 +231,6 @@ xcodebuild -project kokokita.xcodeproj -scheme kokokita -sdk iphonesimulator bui
 - "Swift CryptoKit P256 signature implementation"
 - "SwiftUI navigation patterns 2025"
 
-### Serenaツールの優先使用
-
-**コード探索・編集時はSerenaツールを優先してください:**
-
-1. **会話開始時**
-   ```
-   mcp__serena__check_onboarding_performed
-   mcp__serena__list_memories
-   mcp__serena__read_memory (必要なメモリを読み込み)
-   ```
-
-2. **コード探索時**
-   ```
-   mcp__serena__get_symbols_overview (ファイル全体を読む前に)
-   mcp__serena__find_symbol (特定のシンボルを探す)
-   mcp__serena__find_referencing_symbols (依存関係を調査)
-   ```
-
-3. **コード編集時**
-   ```
-   mcp__serena__replace_symbol_body (シンボル置換)
-   mcp__serena__insert_after_symbol (新規追加)
-   ```
-
-4. **品質確認時**
-   ```
-   mcp__serena__think_about_collected_information
-   mcp__serena__think_about_task_adherence
-   mcp__serena__think_about_whether_you_are_done
-   ```
-
 ### エージェントシステムの活用
 
 **タスクに応じて適切なエージェントに委譲してください:**
@@ -266,10 +242,10 @@ xcodebuild -project kokokita.xcodeproj -scheme kokokita -sdk iphonesimulator bui
 
 ### 実装の基本フロー
 
-1. **情報収集** → インターネット検索 + Serenaメモリ読み込み
+1. **情報収集** → インターネット検索 + 関連ドキュメント(`doc/README.md` の索引から探す)
 2. **設計** → 最新のベストプラクティスを確認
-3. **実装** → Serenaツールで効率的にコード操作
-4. **検証** → インターネットでエラー解決、Serenaで品質確認
-5. **ドキュメント** → Serenaメモリに知見を保存
+3. **実装** → 既存コードのパターンに合わせて実装
+4. **検証** → エラーは [doc/architecture/troubleshooting.md](doc/architecture/troubleshooting.md) とインターネットで解決
+5. **ドキュメント** → 得た知見は `doc/README.md` の配置ルールに従って記録
 
 この方針により、常に最新の情報に基づいた高品質な実装が可能になります。

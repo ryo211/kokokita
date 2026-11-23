@@ -102,6 +102,12 @@ iOSInjectionProject/
 # Local tooling
 opcode/
 
+# tools/ の作業データ(正本はS3。コミットしない)
+.google_geocode_cache.json
+.aws-sam/
+tools/course-pipeline/*.json
+tools/course-pipeline/*.txt
+
 # Claude Code
 # .claude/
 # CLAUDE.md

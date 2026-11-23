@@ -143,7 +143,7 @@
 - 自宅や職場など、検知してほしくない場所は「この場所を自動検知しない」で除外できる
 - 使うには、位置情報の権限を「常に許可」にする必要がある
 
-💡技術メモ: iOS の Visit Monitoring(訪問検知)を利用しています。詳細は [auto-record-feature-design.md](auto-record-feature-design.md)。
+💡技術メモ: iOS の Visit Monitoring(訪問検知)を利用しています。詳細は [auto-record-feature-design.md](features/auto-record/auto-record-feature-design.md)。
 
 ### 4.6 記録を見る・探す
 
@@ -274,7 +274,7 @@
 - 初期設定はオン。設定画面からいつでもオフにでき、**サーバーに送ったデータを削除** することもできます
 - オフにしても記録機能は今までどおり使えます
 
-💡技術メモ: Supabase の匿名認証を使用しています。詳細は [server-feature-design.md](server-feature-design.md)。
+💡技術メモ: Supabase の匿名認証を使用しています。詳細は [server-feature-design.md](features/server/server-feature-design.md)。
 
 ---
 
@@ -320,15 +320,12 @@
 
 | ドキュメント | 内容 |
 |---|---|
-| [architecture-guide.md](architecture-guide.md) | アーキテクチャ・フォルダ構成 |
-| [implementation-guide.md](implementation-guide.md) | 実装の手順 |
-| [auto-record-feature-design.md](auto-record-feature-design.md) | 自動記録の設計 |
-| [server-feature-design.md](server-feature-design.md) | サーバー連携の設計 |
-| [course_creation_spec.md](course_creation_spec.md) / [course-json-spec.md](course-json-spec.md) | コースデータの仕様 |
-| [../PILGRIMAGE_FEATURE_PLAN.md](../PILGRIMAGE_FEATURE_PLAN.md) | 巡礼モードの計画 |
-| [design/](design/) | 機能ごとの設計書 |
-| [ADR/](ADR/) | 設計判断の記録 |
-| [../PRIVACY_POLICY.md](../PRIVACY_POLICY.md) | プライバシーポリシー |
+| [README.md](README.md) | ドキュメント全体の索引と配置ルール |
+| [architecture/architecture-guide.md](architecture/architecture-guide.md) | アーキテクチャ・フォルダ構成 |
+| [architecture/implementation-guide.md](architecture/implementation-guide.md) | 実装の手順 |
+| [features/](features/) | 機能ごとの設計書(コース・サーバー連携・自動記録・オンボーディングなど) |
+| [architecture/adr/](architecture/adr/) | 設計判断の記録 |
+| [legal/privacy-policy.md](legal/privacy-policy.md) | プライバシーポリシー |
 
 ---
 

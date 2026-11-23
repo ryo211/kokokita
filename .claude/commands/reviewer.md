@@ -51,8 +51,8 @@ description: コードレビューエージェント - 実装コードの品質�
 ```
 1. レビュー対象のファイルを特定
 2. CLAUDE.mdでプロジェクト概要を確認
-3. doc/architecture-guide.mdで設計方針を確認
-4. doc/implementation-guide.mdで実装基準を確認
+3. doc/architecture/architecture-guide.mdで設計方針を確認
+4. doc/architecture/implementation-guide.mdで実装基準を確認
 5. 関連する設計書やADRを確認
 6. **インターネット検索で最新のベストプラクティスを確認**
    - コードに関連するセキュリティ脆弱性

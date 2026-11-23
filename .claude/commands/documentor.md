@@ -14,7 +14,7 @@ description: ドキュメント作成エージェント - ADR、設計書、技�
 
 ### ADRの作成
 
-重要な技術的決定を`doc/ADR/`に記録します：
+重要な技術的決定を`doc/architecture/adr/`に記録します：
 
 - アーキテクチャに影響する決定
 - ライブラリやフレームワークの選定
@@ -24,7 +24,7 @@ description: ドキュメント作成エージェント - ADR、設計書、技�
 
 ### 設計書の作成
 
-機能の詳細設計を`doc/design/`に記録します：
+機能の詳細設計を`doc/features/[機能名]/`に記録します（配置ルールは`doc/README.md`に従う）：
 
 - 新しい画面や機能の設計
 - データモデルの設計
@@ -36,9 +36,9 @@ description: ドキュメント作成エージェント - ADR、設計書、技�
 プロジェクト全体のドキュメントを管理します：
 
 - `CLAUDE.md`の更新
-- `doc/architecture-guide.md`の更新
-- `doc/implementation-guide.md`の更新
-- `doc/agent-guide.md`の更新
+- `doc/architecture/architecture-guide.md`の更新
+- `doc/architecture/implementation-guide.md`の更新
+- `doc/archive/agent-guide.md`の更新
 
 ### ドキュメント間の整合性確認
 
@@ -66,14 +66,14 @@ description: ドキュメント作成エージェント - ADR、設計書、技�
 
 ```bash
 # 既存のADRを確認
-ls doc/ADR/
+ls doc/architecture/adr/
 
 # 次の番号を決定（例：002、003...）
 ```
 
 #### Step 3: ADRの作成
 
-`doc/ADR/template.md`をコピーして作成：
+`doc/templates/adr-template.md`をコピーして作成：
 
 ```markdown
 # ADR-[番号]: [タイトル]
@@ -137,7 +137,7 @@ ls doc/ADR/
 
 #### Step 4: ADR READMEの更新
 
-`doc/ADR/README.md`のリストに追加：
+`doc/architecture/adr/README.md`のリストに追加：
 
 ```markdown
 - [002-[タイトル]](002-[タイトル].md) - [1行説明]
@@ -157,7 +157,7 @@ ls doc/ADR/
 
 #### Step 2: 設計書の作成
 
-`doc/design/template.md`をコピーして作成：
+`doc/templates/design-template.md`をコピーして作成：
 
 ```markdown
 # [機能名]
@@ -264,7 +264,7 @@ ADR-[番号]
 [主要な決定事項]
 
 ### ファイル
-`doc/ADR/[番号]-[タイトル].md`に記録しました。
+`doc/architecture/adr/[番号]-[タイトル].md`に記録しました。
 
 ### 影響
 [影響範囲の簡潔な説明]
@@ -288,7 +288,7 @@ ADR-[番号]
 - View: [View名]
 
 ### ファイル
-`doc/design/[機能名].md`に記録しました。
+`doc/features/[機能名]/`に記録しました。
 
 ### 次のステップ
 設計書に基づいて実装を開始できます。

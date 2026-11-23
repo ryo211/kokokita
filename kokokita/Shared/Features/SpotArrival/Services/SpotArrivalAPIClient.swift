@@ -3,7 +3,7 @@ import Foundation
 /// 到達記録をサーバー（Supabase）へ送信するクライアント。
 /// Supabase未設定（SupabaseConfig.isConfigured == false）の間は常に失敗を返し、
 /// キューには積んだまま保持する（SpotArrivalSyncServiceが次回再送する）。
-/// サーバー側は doc/sql/phase1_schema.sql の record_spot_arrival RPC を使う想定。
+/// サーバー側は doc/features/server/phase1_schema.sql の record_spot_arrival RPC を使う想定。
 /// doc/server-feature-design.md フェーズ1「到達時の『◯人目』表示」参照
 struct SpotArrivalAPIClient {
     struct SendResult {

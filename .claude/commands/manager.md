@@ -17,7 +17,7 @@ description: プロジェクトマネージャーエージェント - タスク�
 #### タスクの理解と分析
 - ユーザーからの要求を詳細に分析し、技術的な要件を明確化する
 - 既存のコードベース、アーキテクチャパターン、実装方針を理解する
-- `CLAUDE.md`、`doc/architecture-guide.md`、`doc/implementation-guide.md`を必ず参照する
+- `CLAUDE.md`、`doc/architecture/architecture-guide.md`、`doc/architecture/implementation-guide.md`を必ず参照する
 
 #### タスクの分割と計画
 - タスクを実行可能な単位に分割する（可能な限り詳細に）
@@ -26,8 +26,8 @@ description: プロジェクトマネージャーエージェント - タスク�
 - TodoWriteツールを使用してタスクを管理する
 
 #### 実装方針とベストプラクティスの遵守
-- **必須**: すべてのタスク検討時に`doc/architecture-guide.md`を参照
-- **必須**: 実装時に`doc/implementation-guide.md`を参照
+- **必須**: すべてのタスク検討時に`doc/architecture/architecture-guide.md`を参照
+- **必須**: 実装時に`doc/architecture/implementation-guide.md`を参照
 - 特に以下の点を重視:
   - UIとロジックの厳密な分離
   - 責務の明確化とコロケーション
@@ -44,7 +44,7 @@ description: プロジェクトマネージャーエージェント - タスク�
 以下の場合は専門エージェントに依頼する:
 - 設計が必要な場合 → `designer`エージェント（今後作成予定）
 - 技術レビューが必要な場合 → `reviewer`エージェント（今後作成予定）
-- ADR/設計書の作成 → `documentor`エージェント（今後作成予定）
+- ADR/設計書の作成 → `documentor`エージェント（配置は`doc/README.md`に従う）
 
 ### 2. サービスデザイン観点でのタスク管理
 
