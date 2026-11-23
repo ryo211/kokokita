@@ -6,6 +6,7 @@ kokokita コース管理 API Lambda ハンドラー
   POST /complete-upload … 画像アップロード完了処理（ドラフト JSON を更新）
   POST /get-draft       … ドラフト JSON を取得（なければ null）
   POST /publish         … ドラフトを本番に適用（バージョンインクリメント）
+  POST /stats           … 到達人数・お気に入り数・閲覧数の統計を取得（Supabase集計）
 
 S3 パス構成:
   本番 JSON : course/{courseJsonPath}         例: course/courses/xxx.json
@@ -231,6 +232,7 @@ def lambda_handler(event, context):
         elif '/publish'         in path: return handle_publish(body)
         elif '/delete-course'   in path: return handle_delete_course(body)
         elif '/list-drafts'    in path: return handle_list_drafts(body)
+        elif '/stats'           in path: return handle_stats(body)
         else: return err(404, 'Not found')
     except Exception as e:
         print(f'[ERROR] {e}')
@@ -566,3 +568,20 @@ def handle_list_drafts(body):
             print(f'[WARN] ドラフット読み込みスキップ: {key}: {e}')
 
     return ok({'drafts': drafts})
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# POST /stats
+# Supabaseのcompute_admin_stats RPCを呼び、到達人数・お気に入り数・閲覧数の
+# 集計を管理画面にそのまま返す（doc/features/server/admin_stats_function.sql参照）。
+# ─────────────────────────────────────────────────────────────────────────────
+def handle_stats(body):
+    try:
+        raw = supabase_request('POST', 'rpc/compute_admin_stats', body={})
+        if raw is None:
+            # Supabase未設定（ローカル検証など）
+            return ok({'generatedAt': None, 'courses': {}})
+        return ok(json.loads(raw))
+    except Exception as e:
+        print(f'[ERROR] 統計情報取得失敗: {e}')
+        return err(500, f'統計情報の取得に失敗しました: {e}')

@@ -35,6 +35,11 @@
       <div id="courseIdBadge"
         class="ml-auto text-xs text-gray-400 bg-gray-100 px-2 py-1.5 rounded font-mono hidden truncate max-w-[120px] sm:max-w-xs">
       </div>
+      <button onclick="openStatsPage()"
+        class="ml-auto flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900
+               bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg transition-colors hidden" id="statsNavBtn">
+        📊 統計
+      </button>
       <button onclick="logout()"
         class="ml-2 sm:ml-3 text-xs text-gray-400 hover:text-gray-600 flex-shrink-0 hidden py-2 px-1" id="logoutBtn">
         ログアウト
@@ -217,15 +222,20 @@
     // ブラウザキャッシュ破壊用（アップロード後の画像を即時反映するため）
     const cacheBustMap = new Map();
 
+    // 統計情報（到達人数・お気に入り数・閲覧数）のキャッシュ。null = 未取得
+    let statsCache = null;
+
     // ──────────────────────────────────────────────────────────────────────────
     // 初期化
     // ──────────────────────────────────────────────────────────────────────────
     async function init() {
-      // ログアウトボタンを表示
+      // ログアウトボタン・統計ボタンを表示
       document.getElementById('logoutBtn').classList.remove('hidden');
+      document.getElementById('statsNavBtn').classList.remove('hidden');
       mount(loadingHTML());
       try {
-        // store/index.json と /list-drafts を並列取得
+        // store/index.json と /list-drafts、統計情報を並列取得
+        // 統計情報の取得に失敗してもアプリ自体は使えるようにする（ベストエフォート）
         const storeResProm = fetch(`${BASE_URL}store/index.json?_t=${Date.now()}`);
         const draftsResProm = API_CONFIGURED
           ? fetch(`${API_BASE_URL}/list-drafts`, {
@@ -234,8 +244,11 @@
               body:    JSON.stringify({}),
             })
           : Promise.resolve(null);
+        const statsProm = fetchStats().catch(err => {
+          console.warn('統計情報の取得に失敗しました:', err);
+        });
 
-        const [storeRes, draftsRes] = await Promise.all([storeResProm, draftsResProm]);
+        const [storeRes, draftsRes] = await Promise.all([storeResProm, draftsResProm, statsProm]);
         if (!storeRes.ok) throw new Error(`HTTP ${storeRes.status}: store/index.json`);
         const data = await storeRes.json();
         state.courses = data.courses || [];
@@ -301,6 +314,194 @@
       setHeader(false);
       renderList();
     };
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // 統計ページ（到達人数・お気に入り数・閲覧数をコース横断で一覧表示）
+    // ──────────────────────────────────────────────────────────────────────────
+    let statsTab = 'course'; // 'course' | 'spot'
+    const statsSort = {
+      course: { key: 'challengerCount', dir: 'desc' },
+      spot:   { key: 'arrivalCount',    dir: 'desc' },
+    };
+
+    window.openStatsPage = async function () {
+      state.view = 'stats';
+      statsTab   = 'course';
+      setHeader(true);
+      mount(loadingHTML());
+      try {
+        const stats = await fetchStats(true);
+        renderStatsPage(stats);
+      } catch (err) {
+        renderError('統計情報を読み込めませんでした', err.message);
+      }
+    };
+
+    window.switchStatsTab = function (tab) {
+      statsTab = tab;
+      renderStatsPage(statsCache);
+    };
+
+    /** 統計テーブルの列ヘッダークリック。同じ列なら昇順/降順を反転、別の列なら降順から開始 */
+    window.setStatsSort = function (tab, key) {
+      const s = statsSort[tab];
+      s.dir = (s.key === key) ? (s.dir === 'desc' ? 'asc' : 'desc') : 'desc';
+      s.key = key;
+      renderStatsPage(statsCache);
+    };
+
+    function sortRows(rows, key, dir) {
+      const mul = dir === 'desc' ? -1 : 1;
+      return rows.slice().sort((a, b) => {
+        const av = a[key], bv = b[key];
+        if (typeof av === 'string') return av.localeCompare(bv, 'ja') * mul;
+        return ((av || 0) - (bv || 0)) * mul;
+      });
+    }
+
+    function sortHeader(tab, key, label, alignRight) {
+      const s      = statsSort[tab];
+      const active = s.key === key;
+      const arrow  = active ? (s.dir === 'desc' ? ' ▼' : ' ▲') : '';
+      return `<th onclick="setStatsSort('${tab}', '${key}')"
+        class="${alignRight ? 'text-right' : 'text-left'} px-4 py-2.5 font-medium cursor-pointer
+               select-none hover:text-gray-700 transition-colors ${active ? 'text-gray-700' : ''}">
+        ${label}${arrow}
+      </th>`;
+    }
+
+    function renderStatsPage(stats) {
+      const byId = stats?.courses || {};
+      const courseRows = state.courses
+        .map(c => {
+          const s = byId[c.id] || {};
+          return {
+            id:              c.id,
+            title:           c.title,
+            spotCount:       c.spotCount || 0,
+            challengerCount: s.challengerCount || 0,
+            completedCount:  s.completedCount || 0,
+            viewCount:       s.viewCount || 0,
+            favoriteCount:   s.favoriteCount || 0,
+          };
+        });
+
+      const spotRows = [];
+      for (const c of state.courses) {
+        const spots = byId[c.id]?.spots;
+        if (!spots) continue;
+        for (const [spotId, s] of Object.entries(spots)) {
+          spotRows.push({
+            courseId:     c.id,
+            courseTitle:  c.title,
+            spotId,
+            name:         s.name || spotId,
+            arrivalCount: s.arrivalCount || 0,
+            favoriteCount: s.favoriteCount || 0,
+          });
+        }
+      }
+
+      const totalChallengers = courseRows.reduce((sum, r) => sum + r.challengerCount, 0);
+      const totalViews       = courseRows.reduce((sum, r) => sum + r.viewCount, 0);
+      const totalFavorites   = courseRows.reduce((sum, r) => sum + r.favoriteCount, 0);
+
+      const tabBtn = (tab, label) => `
+        <button onclick="switchStatsTab('${tab}')"
+          class="px-3 py-1.5 rounded-full text-sm font-medium transition-colors
+                 ${statsTab === tab
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'}">
+          ${label}
+        </button>`;
+
+      mount(`
+        <div class="fade-in">
+          <div class="flex items-center justify-between gap-3 mb-5">
+            <h2 class="text-lg font-bold text-gray-900">📊 統計</h2>
+            <span class="text-xs text-gray-400">
+              ${stats?.generatedAt ? '生成: ' + new Date(stats.generatedAt).toLocaleString('ja-JP') : ''}
+            </span>
+          </div>
+
+          <div class="grid grid-cols-3 gap-2 mb-5">
+            ${statCard('到達した人数（延べ）', totalChallengers, 'text-gray-900', '')}
+            ${statCard('コース閲覧数', totalViews, 'text-sky-600', 'border-sky-100')}
+            ${statCard('お気に入り登録数（延べ）', totalFavorites, 'text-pink-600', 'border-pink-100')}
+          </div>
+
+          <p class="text-xs text-gray-400 mb-3">
+            「到達した人数」「達成数」は現在時点のユニークユーザー数。「閲覧数」「お気に入り登録数」は
+            送信イベントの延べ件数（同じ人が複数回カウントされうる）。行をクリックするとコース詳細に移動します。
+          </p>
+
+          <div class="flex gap-1.5 mb-4">
+            ${tabBtn('course', 'コース別')}
+            ${tabBtn('spot', 'スポット別')}
+          </div>
+
+          ${statsTab === 'course' ? renderCourseStatsTable(courseRows) : renderSpotStatsTable(spotRows)}
+        </div>`);
+    }
+
+    function renderCourseStatsTable(rows) {
+      const sorted = sortRows(rows, statsSort.course.key, statsSort.course.dir);
+      return `
+          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-x-auto">
+            <table class="w-full text-sm whitespace-nowrap">
+              <thead class="bg-slate-50 text-gray-500 text-xs">
+                <tr>
+                  ${sortHeader('course', 'title', 'コース', false)}
+                  ${sortHeader('course', 'challengerCount', '到達した人数', true)}
+                  ${sortHeader('course', 'completedCount', '達成数', true)}
+                  ${sortHeader('course', 'viewCount', '閲覧数', true)}
+                  ${sortHeader('course', 'favoriteCount', 'お気に入り(延べ)', true)}
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-50">
+                ${sorted.map(r => `
+                  <tr class="hover:bg-slate-50/60 cursor-pointer transition-colors" onclick="openCourse('${e(r.id)}')">
+                    <td class="px-4 py-2.5">
+                      <div class="font-medium text-gray-800 max-w-xs truncate">${e(r.title)}</div>
+                      <div class="text-xs text-gray-400">${r.spotCount} スポット</div>
+                    </td>
+                    <td class="text-right px-4 py-2.5 font-mono">${r.challengerCount}</td>
+                    <td class="text-right px-4 py-2.5 font-mono">${r.completedCount}</td>
+                    <td class="text-right px-4 py-2.5 font-mono">${r.viewCount}</td>
+                    <td class="text-right px-4 py-2.5 font-mono">${r.favoriteCount}</td>
+                  </tr>`).join('')}
+              </tbody>
+            </table>
+          </div>
+          ${!rows.length ? `<p class="text-sm text-gray-400 mt-4">コースがありません。</p>` : ''}`;
+    }
+
+    function renderSpotStatsTable(rows) {
+      const sorted = sortRows(rows, statsSort.spot.key, statsSort.spot.dir);
+      return `
+          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-x-auto">
+            <table class="w-full text-sm whitespace-nowrap">
+              <thead class="bg-slate-50 text-gray-500 text-xs">
+                <tr>
+                  ${sortHeader('spot', 'name', 'スポット', false)}
+                  ${sortHeader('spot', 'courseTitle', 'コース', false)}
+                  ${sortHeader('spot', 'arrivalCount', '到達した人数', true)}
+                  ${sortHeader('spot', 'favoriteCount', 'お気に入り(延べ)', true)}
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-50">
+                ${sorted.map(r => `
+                  <tr class="hover:bg-slate-50/60 cursor-pointer transition-colors" onclick="openCourse('${e(r.courseId)}')">
+                    <td class="px-4 py-2.5 font-medium text-gray-800 max-w-xs truncate">${e(r.name)}</td>
+                    <td class="px-4 py-2.5 text-gray-500 max-w-xs truncate">${e(r.courseTitle)}</td>
+                    <td class="text-right px-4 py-2.5 font-mono">${r.arrivalCount}</td>
+                    <td class="text-right px-4 py-2.5 font-mono">${r.favoriteCount}</td>
+                  </tr>`).join('')}
+              </tbody>
+            </table>
+          </div>
+          ${!rows.length ? `<p class="text-sm text-gray-400 mt-4">スポットの統計データがまだありません。</p>` : ''}`;
+    }
 
     // ──────────────────────────────────────────────────────────────────────────
     // コース一覧
@@ -634,6 +835,7 @@
       const pct     = spots.length ? Math.round(withImg / spots.length * 100) : 0;
       const hasSec  = Array.isArray(d.sections) && d.sections.length > 0;
       const summary = state.currentSummary;
+      const cStats  = statsCache?.courses?.[d.id] || null;
 
       mount(`
         <div class="fade-in">
@@ -648,6 +850,13 @@
                           overflow-hidden flex-shrink-0 relative group">
                 ${renderCourseCoverImg(d)}
                 ${svgImgIcon('w-10 h-10 text-gray-300')}
+                ${d.coverImageUrl ? `
+                  <button onclick="downloadImage('${e(getDisplayUrl(d.coverImageUrl))}', '${e(getCourseImageId(summary))}.jpg')"
+                    title="画像をダウンロード"
+                    class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity
+                           bg-black/60 hover:bg-black/80 text-white rounded-lg p-1.5">
+                    ${svgDownload('w-3.5 h-3.5')}
+                  </button>` : ''}
                 ${API_CONFIGURED ? `
                   <button onclick="openUpload({
                     type: 'course',
@@ -755,6 +964,15 @@
                 noImg > 0 ? 'text-orange-500' : 'text-gray-300',
                 noImg > 0 ? 'border-orange-100' : '')}
           </div>
+
+          <!-- 到達・お気に入り・閲覧の統計（Supabase集計。未取得時は非表示） -->
+          ${cStats ? `
+          <div class="grid grid-cols-4 gap-2 mb-4">
+            ${statCard('到達した人数',  cStats.challengerCount || 0, 'text-gray-900', '')}
+            ${statCard('達成数',        cStats.completedCount  || 0, 'text-indigo-600', 'border-indigo-100')}
+            ${statCard('閲覧数',        cStats.viewCount       || 0, 'text-sky-600', 'border-sky-100')}
+            ${statCard('お気に入り(延べ)', cStats.favoriteCount || 0, 'text-pink-600', 'border-pink-100')}
+          </div>` : ''}
 
           <!-- カバー率プログレスバー -->
           <div class="bg-white rounded-xl border border-gray-100 shadow-sm px-5 py-4 mb-6">
@@ -881,7 +1099,8 @@
       const mapsUrl        = ds.latitude != null && ds.longitude != null
         ? `https://www.google.com/maps?q=${ds.latitude},${ds.longitude}`
         : null;
-      const imageId = getSpotImageId(spot);
+      const imageId  = getSpotImageId(spot);
+      const sStats   = statsCache?.courses?.[summary?.id]?.spots?.[spot.spotId] || null;
 
       // サムネイルクリックでアップロードモーダルを開くためのデータ属性
       const uploadAttrs = API_CONFIGURED ? `
@@ -983,6 +1202,9 @@
                 ? `<a href="${mapsUrl}" target="_blank" rel="noopener"
                      class="text-blue-500 hover:text-blue-700 hover:underline">地図を開く →</a>`
                 : ''}
+              ${sStats ? `
+                <span title="到達した人数">🏁 ${sStats.arrivalCount || 0}</span>
+                <span title="お気に入り登録数（延べ）">⭐ ${sStats.favoriteCount || 0}</span>` : ''}
             </div>
             ${spot.imageCredit
               ? `<p class="text-[10px] text-gray-400 mt-0.5 line-clamp-1" title="${e(spot.imageCredit)}">
@@ -994,6 +1216,13 @@
           <!-- スポット操作ボタン（ホバー時表示） -->
           ${API_CONFIGURED ? `
             <div class="flex flex-col gap-1 flex-shrink-0 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity self-center">
+              ${has ? `
+              <button onclick="downloadImage('${e(dispUrl)}', '${e(imageId)}.jpg')"
+                title="画像をダウンロード"
+                class="text-gray-400 hover:text-blue-600 bg-gray-100 hover:bg-blue-50
+                       rounded-lg p-2.5 sm:p-1.5 touch-manipulation">
+                ${svgDownload('w-4 h-4 sm:w-3.5 sm:h-3.5')}
+              </button>` : ''}
               <button onclick="openSpotEdit('${e(spot.spotId)}')"
                 title="スポット情報を編集"
                 class="text-gray-400 hover:text-blue-600 bg-gray-100 hover:bg-blue-50
@@ -1114,6 +1343,17 @@
       if (modal.result && state.view === 'detail') renderDetail();
     };
 
+    // onclick属性（グローバルスコープで実行される）からIIFEローカルの modal を直接
+    // 参照すると ReferenceError になるため、window公開した関数経由でアクセスする
+    window.closeModalUnlessUploading = function () {
+      if (modal.status !== 'uploading') closeModal();
+    };
+
+    window.retryModalUpload = function () {
+      modal.status = 'idle';
+      renderModal();
+    };
+
     function renderModal() {
       const content = document.getElementById('modalContent');
       const target  = modal.target;
@@ -1188,7 +1428,7 @@
             </div>
             <p class="text-sm text-red-500 mb-5">${e(modal.error || '')}</p>
             <div class="flex gap-3">
-              <button onclick="modal.status='idle'; renderModal()"
+              <button onclick="retryModalUpload()"
                 class="flex-1 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700">
                 やり直す
               </button>
@@ -1213,7 +1453,7 @@
               </p>
               <p class="text-xs text-gray-300 font-mono mt-0.5">${e(target.imageId)}.jpg</p>
             </div>
-            <button onclick="if(modal.status!=='uploading') closeModal()"
+            <button onclick="closeModalUnlessUploading()"
               class="text-gray-400 hover:text-gray-600 p-1">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
@@ -1752,6 +1992,44 @@
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
       </svg>`;
     }
+    function svgDownload(cls) {
+      return `<svg class="${cls}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+      </svg>`;
+    }
+
+    /** 到達人数・お気に入り数・閲覧数の統計情報を取得し statsCache にキャッシュする */
+    async function fetchStats(force) {
+      if (statsCache && !force) return statsCache;
+      if (!API_CONFIGURED) return null;
+      const res = await fetch(`${API_BASE_URL}/stats`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': ADMIN_SECRET },
+        body:    JSON.stringify({}),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      statsCache = await res.json();
+      return statsCache;
+    }
+
+    /** 画像URLをfetchしてBlobとして保存ダイアログを出す（同一オリジンのCDN配信画像が前提） */
+    window.downloadImage = async function (url, filename) {
+      if (!url) return;
+      try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const blob = await res.blob();
+        const objUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = objUrl;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(objUrl);
+      } catch (err) {
+        showToast(`画像のダウンロードに失敗しました: ${err.message}`, 'error');
+      }
+    };
     function loadingHTML() {
       return `<div class="flex items-center justify-center py-24">
         <svg class="w-7 h-7 text-blue-500 spin" fill="none" viewBox="0 0 24 24">
@@ -1846,6 +2124,11 @@
       el.classList.remove('flex');
     };
 
+    window.retryJsonUpload = function () {
+      jm.status = 'idle';
+      renderJsonModal();
+    };
+
     function renderJsonModal() {
       const content = document.getElementById('jsonModalContent');
       const s = jm.summary;
@@ -1898,7 +2181,7 @@
             </div>
             <p class="text-sm text-red-500 mb-5">${e(jm.error || '')}</p>
             <div class="flex gap-3">
-              <button onclick="jm.status='idle'; renderJsonModal()"
+              <button onclick="retryJsonUpload()"
                 class="flex-1 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700">
                 やり直す
               </button>
@@ -2978,6 +3261,11 @@
       if (ncm.status === 'success' && state.view === 'list') renderList();
     };
 
+    window.retryNewCourseUpload = function () {
+      ncm.status = 'idle';
+      renderNewCourseModal();
+    };
+
     function renderNewCourseModal() {
       const content = document.getElementById('newCourseModalContent');
 
@@ -3032,7 +3320,7 @@
             </div>
             <p class="text-sm text-red-500 mb-5">${e(ncm.error || '')}</p>
             <div class="flex gap-3">
-              <button onclick="ncm.status='idle'; renderNewCourseModal()"
+              <button onclick="retryNewCourseUpload()"
                 class="flex-1 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700">
                 やり直す
               </button>
