@@ -348,10 +348,6 @@
 "course.filterEmptyDescription" = "このフィルタに該当するコースはありません";
 "course.filterExpand" = "絞り込みを開く";
 "course.filterCollapse" = "絞り込みを閉じる";
-"course.enable" = "有効にする";
-"course.disable" = "無効にする";
-"course.enableToggle" = "このコースを有効にする";
-"course.settingsSection" = "設定";
 "course.spotsCount" = "件";
 "course.spotsSection" = "スポット一覧";
 "course.progress" = "達成状況";

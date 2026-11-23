@@ -1,6 +1,6 @@
 # プライバシーポリシー
 
-最終更新日：2025年11月
+最終更新日：2026年11月23日
 
 ## 1. はじめに
 
@@ -19,8 +19,12 @@ ryo hashimoto（以下「開発者」）が提供するiOSアプリケーショ�
 ### 3.1 位置情報
 - **収集する情報**: GPS座標（緯度・経度）、位置精度、取得日時
 - **収集目的**: 訪問記録の作成・管理機能を提供するため
-- **収集方法**: ユーザーが「ココキタ」ボタンを押した際に、デバイスの位置情報サービスを使用して取得
-- **利用タイミング**: アプリ使用中のみ（バックグラウンドでは取得しません）
+- **収集方法**:
+  - 通常の記録: ユーザーが「ココキタ」ボタンを押した際に、デバイスの位置情報サービスを使用して取得
+  - 自動記録機能（オプション機能、デフォルトはオフ）: ユーザーがONにし、iOSの位置情報権限を「常に許可」にした場合、滞在地点をバックグラウンドでも検知し、訪問の「候補」として保存します。候補は自動的に訪問記録になるのではなく、ユーザーが確認・承認した場合のみ正式な訪問記録として保存されます
+- **利用タイミング**:
+  - 通常の記録: アプリ使用中のみ取得（ユーザーの操作時のみ）
+  - 自動記録機能: ONにしている間は、バックグラウンドでも滞在地点の検知のために位置情報サービスが利用されます（iOSの滞在検知の仕組みにより省電力で動作し、常時のGPS追跡は行いません）
 
 ### 3.2 写真
 - **収集する情報**: ユーザーが選択した写真データ
@@ -38,12 +42,19 @@ ryo hashimoto（以下「開発者」）が提供するiOSアプリケーショ�
 - **収集目的**: アプリの利便性向上のため
 - **保存場所**: デバイス内のローカルストレージ（UserDefaults）
 
+### 3.5 匿名データ送信（巡礼コースの到達記録・関心度情報）
+- **収集する情報**: 匿名のユーザーID（ログインやアカウント登録は不要）、巡礼コースのスポットに到達した記録（コースID・スポットID・到達日時）、コースの閲覧・お気に入り追加の履歴（コースID・スポットID・日付）
+- **収集目的**: スポットに到達した「◯人目」の表示、コースごとの到達者数・人気度の集計のため
+- **収集方法**: 巡礼モードでコースのスポットへの到達を記録したとき、またはコースの閲覧・お気に入り追加を行ったときに、該当する情報のみを自動的に送信
+- **送信しないもの**: 日常の訪問記録（カフェなど）、生のGPS座標の履歴、写真、タイトル・コメントなどのメタデータは送信しません
+- **送信の停止**: 設定画面からいつでも送信を停止できます。停止後も記録機能はすべてそのまま利用できます（詳細は7.6を参照）
+
 ## 4. 情報の保存と管理
 
 ### 4.1 保存場所
-- **すべてのデータはデバイス内のみに保存されます**
-- 開発者のサーバーやクラウドには一切送信されません
-- インターネット接続がなくてもアプリは完全に動作します
+- 訪問記録（タイトル・コメント・写真・ラベル等）、位置情報の暗号署名、アプリ設定は**すべてデバイス内のみに保存されます**
+- 上記3.5に記載した匿名データ（到達記録・コース閲覧情報・匿名ID）のみ、開発者が運用するサーバーに送信されます。これ以外のユーザーデータが開発者のサーバーやクラウドに送信されることはありません
+- インターネット接続がなくても記録機能は完全に動作します（匿名データの送信は、接続が確保されたタイミングでまとめて行われます）
 
 ### 4.2 データの保護
 - **暗号署名**: 位置情報データには暗号署名（P256 ECDSA）が付与され、改ざんを防止
@@ -56,6 +67,11 @@ ryo hashimoto（以下「開発者」）が提供するiOSアプリケーショ�
 - 外部アクセサリによる位置情報送信
 
 偽装が検出された場合、訪問記録の作成はできません。
+
+### 4.4 匿名データの送信先について
+- 匿名データ（3.5）の保存・集計には、Supabase, Inc.が提供するクラウドサービスを利用しています
+- 送信される匿名IDは本アプリ専用のものであり、他のサービスのアカウントやApple IDとは結び付けられません
+- Supabaseのプライバシーポリシー: [https://supabase.com/privacy](https://supabase.com/privacy)
 
 ## 5. 第三者への情報提供
 
@@ -88,6 +104,7 @@ ryo hashimoto（以下「開発者」）が提供するiOSアプリケーショ�
 - アプリの機能改善および不具合修正
 - 広告の配信（Google AdMob経由）
 - カスタマーサポートの提供
+- 匿名データによる、スポットの到達順位表示・コースの人気度集計（3.5参照）
 
 ## 7. ユーザーの権利
 
@@ -108,7 +125,11 @@ ryo hashimoto（以下「開発者」）が提供するiOSアプリケーショ�
 - 設定 > プライバシーとセキュリティ > トラッキング
 
 ### 7.5 データの完全削除
-- アプリをアンインストールすることで、すべてのデータが完全に削除されます
+- アプリをアンインストールすることで、デバイス内のすべてのデータが完全に削除されます
+
+### 7.6 匿名データ送信の停止とサーバー上のデータ削除
+- 設定画面から、匿名データ（3.5）の送信をいつでもオフにできます。オフにしても記録機能や既存のデバイス内データには影響しません
+- 設定画面の「サーバーのデータを削除」から、これまでに送信した匿名データ（到達記録・コース閲覧情報）をサーバーから削除できます
 
 ## 8. 未成年者の利用
 
@@ -135,7 +156,7 @@ ryo hashimoto（以下「開発者」）が提供するiOSアプリケーショ�
 ---
 
 **制定日**: 2025年11月25日
-**最終改定日**: 2025年11月25日
+**最終改定日**: 2026年11月23日
 
 ryo hashimoto
 
@@ -144,7 +165,7 @@ ryo hashimoto
 
 # Privacy Policy
 
-Last Updated: November 2025
+Last Updated: November 23, 2026
 
 ## 1. Introduction
 
@@ -163,8 +184,12 @@ The App collects the following information:
 ### 3.1 Location Information
 - **Information Collected**: GPS coordinates (latitude and longitude), location accuracy, timestamp
 - **Purpose**: To provide visit recording and management features
-- **Collection Method**: Collected using the device's location services when the user presses the "Kokokita" button
-- **Timing**: Only while using the app (not collected in the background)
+- **Collection Method**:
+  - Standard recording: Collected using the device's location services when the user presses the "Kokokita" button
+  - Auto-Record feature (optional, off by default): When the user turns this on and grants "Always" location permission in iOS, the app detects visited places in the background and saves them as "candidates." Candidates are not automatically turned into visit records — they become official visit records only after the user reviews and approves them
+- **Timing**:
+  - Standard recording: Only while using the app (only on user action)
+  - Auto-Record feature: While enabled, location services may be used in the background to detect visited places (this uses iOS's low-power visit-detection mechanism, not continuous GPS tracking)
 
 ### 3.2 Photos
 - **Information Collected**: Photo data selected by the user
@@ -182,12 +207,19 @@ The App collects the following information:
 - **Purpose**: To improve app usability
 - **Storage Location**: Device local storage (UserDefaults)
 
+### 3.5 Anonymous Data Transmission (Pilgrimage Course Arrivals and Interest Information)
+- **Information Collected**: An anonymous user ID (no login or account registration required), records of arrivals at pilgrimage course spots (course ID, spot ID, arrival timestamp), and course viewing/favoriting activity (course ID, spot ID, date)
+- **Purpose**: To display arrival rank ("You are visitor number N to arrive"), and to aggregate arrival counts and popularity per course
+- **Collection Method**: Automatically sent, limited to the relevant information only, when a spot arrival is recorded in Pilgrimage Mode, or when a course is viewed or favorited
+- **Not Sent**: Everyday visit records (e.g., cafes), raw GPS coordinate history, photos, and metadata such as titles or comments are never sent
+- **Opting Out**: Can be disabled anytime from the Settings screen; all recording features remain fully available after opting out (see 7.6)
+
 ## 4. Information Storage and Management
 
 ### 4.1 Storage Location
-- **All data is stored only on your device**
-- No data is transmitted to the Developer's servers or cloud services
-- The app functions fully without an internet connection
+- Visit records (title, comments, photos, labels, etc.), cryptographic location signatures, and app settings are **all stored only on your device**
+- Only the anonymous data described in 3.5 (arrival records, course viewing information, anonymous ID) is transmitted to a server operated by the Developer. No other user data is transmitted to the Developer's servers or cloud services
+- Recording features function fully without an internet connection (anonymous data is transmitted in batches once a connection is available)
 
 ### 4.2 Data Protection
 - **Cryptographic Signatures**: Location data is signed with P256 ECDSA cryptographic signatures to prevent tampering
@@ -200,6 +232,11 @@ The App checks for the following to ensure location data reliability:
 - Location transmission from external accessories
 
 If fake location is detected, visit record creation will be disabled.
+
+### 4.4 About the Destination of Anonymous Data
+- Anonymous data (3.5) is stored and aggregated using cloud services provided by Supabase, Inc.
+- The anonymous ID transmitted is specific to this app and is not linked to accounts on other services or to your Apple ID
+- Supabase's Privacy Policy: [https://supabase.com/privacy](https://supabase.com/privacy)
 
 ## 5. Third-Party Information Sharing
 
@@ -232,6 +269,7 @@ Collected information is used only for the following purposes:
 - App improvement and bug fixes
 - Ad delivery (via Google AdMob)
 - Customer support
+- Displaying spot arrival rank and aggregating course popularity using anonymous data (see 3.5)
 
 ## 7. User Rights
 
@@ -252,7 +290,11 @@ Collected information is used only for the following purposes:
 - Settings > Privacy & Security > Tracking
 
 ### 7.5 Complete Data Deletion
-- All data is completely deleted by uninstalling the app
+- All data on your device is completely deleted by uninstalling the app
+
+### 7.6 Stopping Anonymous Data Transmission and Deleting Server-Side Data
+- Anonymous data transmission (3.5) can be turned off anytime from the Settings screen. Turning it off does not affect recording features or existing data on your device
+- "Delete Server Data" in the Settings screen deletes any anonymous data (arrival records, course viewing information) previously transmitted to the server
 
 ## 8. Use by Minors
 
@@ -279,6 +321,6 @@ For questions, comments, or inquiries regarding this Privacy Policy or personal 
 ---
 
 **Effective Date**: November 25, 2025
-**Last Revised**: November 25, 2025
+**Last Revised**: November 23, 2026
 
 ryo hashimoto

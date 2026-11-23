@@ -228,4 +228,45 @@ pending な VisitCandidate を取得
 2. `departureDate == nil` 暫定 Visit を「どれだけ待って確定させるか」
 3. 自動記録トグルのデフォルト ON/OFF（審査・UX・電力のバランス）
 4. 候補の保持上限・期間の具体値
-5. 起動時レビューの通知強度（うるさくない範囲）
+5. ~~起動時レビューの通知強度（うるさくない範囲）~~ → 「10. 通知機能」で設計確定（v3.6.4で実装予定）
+
+---
+
+## 10. 通知機能（設計確定・v3.6.4で実装予定）
+
+ストア概要に「記録候補をお知らせします。通知を確認してタップするだけで記録完了」と記載しているが、現状の実装はアプリアイコンのバッジ更新のみで、実際のバナー通知は出していない（`AppIconBadgeService`は`.badge`権限しか要求していない）。この食い違いを解消するため、実際にローカル通知を送る機能を設計した。**v3.6.3ではテスト工数の都合で見送り、v3.6.4で実装する。**
+
+### 10-1. 設定画面の通知トグル
+
+- 設定画面の「自動記録」セクション内に、自動記録がONのときだけ表示される「通知」トグルを追加する
+- トグルの初期値は**常にOFF**（新規ユーザー・既存ユーザーともに）。自動記録ONに自動でバンドルしない
+  - 理由1: バンドルすると「ユーザー操作なしに勝手に許可ダイアログを出す」問題に逆戻りするため
+  - 理由2: 既存ユーザーの一部は`AppIconBadgeService`の実装上（保留候補が1件以上たまった時だけ許可要求が走る）、OS側の許可状態が`authorized`(badgeのみ)または`notDetermined`のまま不揃いになっている。一律デフォルトONにすると「ONなのに通知が来ない」不整合が起きうる
+- ユーザーがトグルをONにした瞬間に`UNUserNotificationCenter.requestAuthorization(options: [.badge, .alert, .sound])`を呼ぶ
+  - OS側がまだ`notDetermined`ならネイティブ許可ダイアログが表示される（新規ユーザー、または候補が一度も溜まったことのない既存ユーザー）
+  - OS側で既に確定済み（badgeのみ許可 等）の場合はダイアログが出せないので、「設定アプリで通知を許可してください」という案内を表示し、タップで`UIApplication.openSettingsURLString`へ遷移させる
+- 自動記録自体をOFFにしたら通知トグルも非表示にする（OS側の許可状態自体は変更しない）
+
+### 10-2. 通知内容
+
+- タイトル: 「訪れた場所を検出しました」
+- 本文: 「◯時◯分に訪れた場所を記録候補として保存しました。タップして確認しましょう。」（`visit.arrivalDate`の時刻を埋め込む）
+- 地名・住所は本文に含めない。候補作成時点（`AutoRecordService.didVisit`）では逆ジオコーディング前で`placeName`が未確定なため表示できる情報がないことに加え、ロック画面表示を考慮すると場所の詳細を出さない方がプライバシー上安全
+- 音: `.default`
+- バッジ: 既存のバッジ件数更新ロジックは通知と併用してそのまま残す
+
+### 10-3. タップ時の挙動
+
+1. スケジュール時に`UNMutableNotificationContent.userInfo`へ`["candidateId": candidate.id.uuidString]`を埋め込む
+2. `KokokitaApp.swift`起動時に`UNUserNotificationCenter.current().delegate`を新規実装したdelegateに設定（現状アプリ全体でdelegate未実装）
+3. `userNotificationCenter(_:didReceive:withCompletionHandler:)`で`AppUIState`に新設するフラグ（例: `pendingAutoRecordCandidateReview`）をセット
+4. 巡礼モード中にタップされた場合は`AppModeManager`で記録モードへ強制切り替えしてから次のステップへ進む（自動記録は記録モード専用機能のため。前回検討したスタンプ画面の「戻る」問題とは異なり、通知タップは新規の入り口なので強制切り替えで違和感なく成立する）
+5. `HomeScreen`側で`AppUIState`のフラグを監視し、検知したら`AutoRecordCandidateReviewScreen()`のシートを自動的に開く
+6. 候補一覧は全件表示でよく、通知に紐づく特定の1件だけをハイライト/スクロールする機能は不要（件数は通常少ないため）
+
+### 10-4. 実装規模の見積もり
+
+- 変更ファイル: `AutoRecordService.swift`（許可要求の拡張、通知スケジュール）、`AutoRecordSettings.swift`（通知トグル用の新規設定値）、`SettingsSheet.swift`（トグルUI追加）、`KokokitaApp.swift`（delegate登録）、`AppUIState.swift`（フラグ追加）、`HomeScreen.swift`（フラグ監視・シート起動）
+- 新規ローカライズ文言: 通知タイトル・本文、トグルラベル、「設定アプリで許可してください」案内（ja/en + `LocalizedString.swift`）
+- `doc/app-overview.md`の更新（ユーザーに見える挙動変更のため、CLAUDE.mdのルールに従う）
+- ASC側の追加作業は不要（ローカル通知のためPush通知capability・Info.plistキー・プライバシー申告のいずれも対象外）。ストア概要の「通知を確認してタップ」の記述はこの実装によって正確になる

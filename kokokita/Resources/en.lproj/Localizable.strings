@@ -346,10 +346,6 @@
 "course.filterEmptyDescription" = "No courses match this filter";
 "course.filterExpand" = "Show filters";
 "course.filterCollapse" = "Hide filters";
-"course.enable" = "Enable";
-"course.disable" = "Disable";
-"course.enableToggle" = "Enable this course";
-"course.settingsSection" = "Settings";
 "course.spotsCount" = " spots";
 "course.spotsSection" = "Spots";
 "course.progress" = "Progress";

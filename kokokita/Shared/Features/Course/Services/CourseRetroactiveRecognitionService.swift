@@ -2,7 +2,7 @@ import Foundation
 import CoreLocation
 import CoreData
 
-// コースを初めて有効化した時に、過去の証明付き訪問記録を遡って判定するサービス
+// コース詳細を初めて開いた時に、過去の証明付き訪問記録を遡って判定するサービス
 final class CourseRetroactiveRecognitionService {
     private let courseRepo: CourseRepository
     private let visitRepo: CoreDataVisitRepository
@@ -38,8 +38,8 @@ final class CourseRetroactiveRecognitionService {
 
     // MARK: - 遡り判定
 
-    /// コースを初めて有効化した時に呼び出す
-    /// - everEnabled: false → true になったコースのみ対象
+    /// コース詳細を初めて開いた時に呼び出す（全コースは常に有効）
+    /// - everEnabled が false のコース（遡り判定が未実施）のみ対象
     /// - 過去の証明付き訪問記録（isManualEntry == false）を全件チェック
     /// - ヒットしたスポットの firstCheckedInAt を過去の訪問日時に設定
     func recognize(for courseId: UUID) throws -> RetroactiveResult? {
