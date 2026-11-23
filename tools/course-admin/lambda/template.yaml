@@ -13,6 +13,19 @@ Parameters:
     Description: >
       Lambda API を保護する秘密トークン（推測されにくいランダム文字列）
       例: openssl rand -hex 32 で生成
+  SupabaseUrl:
+    Type: String
+    Description: >
+      Supabase プロジェクトURL（例: https://xxxx.supabase.co）。
+      kokokita/Shared/Features/SpotArrival/Services/SupabaseConfig.swift と同じ値。
+  SupabaseServiceRoleKey:
+    Type: String
+    NoEcho: true
+    Description: >
+      Supabase の service_role（secret, "sb_secret_..."）キー。
+      courses/course_spotsをRLSを無視して書き込むために使う。
+      anon/publishableキーでは書き込めない。AdminSecretと同様、samconfig.tomlには
+      コミットせず、sam deploy実行時にパラメータとして渡すこと。
 
 Globals:
   Function:
@@ -26,6 +39,8 @@ Globals:
         BASE_CDN_URL:   https://kokokita-app.irodoriq.com/course
         ALLOWED_ORIGIN: https://kokokita-app.irodoriq.com
         ADMIN_SECRET:   !Ref AdminSecret
+        SUPABASE_URL:              !Ref SupabaseUrl
+        SUPABASE_SERVICE_ROLE_KEY: !Ref SupabaseServiceRoleKey
 
 Resources:
   CourseManageFunction:

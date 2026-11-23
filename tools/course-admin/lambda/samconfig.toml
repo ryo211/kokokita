@@ -5,7 +5,9 @@ stack_name = "kokokita-course-manage"
 resolve_s3 = true
 s3_prefix = "kokokita-course-manage"
 capabilities = "CAPABILITY_IAM"
-parameter_overrides = "CfDistributionId=\"E2SLZOSHR82S8Q\""
+# AdminSecret / SupabaseServiceRoleKey（NoEcho）はここにコミットせず、
+# sam deploy --parameter-overrides AdminSecret=... SupabaseServiceRoleKey=... で都度渡すこと
+parameter_overrides = "CfDistributionId=\"E2SLZOSHR82S8Q\" SupabaseUrl=\"https://rssflhzampqtkdfslufk.supabase.co\""
 image_repositories = []
 confirm_changeset = true
 

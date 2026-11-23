@@ -13,7 +13,10 @@ Supabase を使ったサーバー機能。フェーズ1では、匿名認証・�
 
 - `kokokita/Shared/Features/SpotArrival/` — Supabase 認証・API クライアント
 - `tools/course-stats-batch/` — コース統計を集計して `stats.json` を出力する Lambda
-- `tools/course-pipeline/sync_courses_to_supabase.py` — 公式コースを Supabase へ同期
+- `tools/course-admin/lambda/handler.py` — コース管理画面のAPI。`publish`/`delete-course`時に
+  `courses`/`course_spots`テーブルへ自動反映する（Supabase連携の正式な同期経路）
+- `tools/course-pipeline/sync_courses_to_supabase.py` — course-admin導入前に公開済みだった
+  コースを一括で取り込むための backfill 専用ツール（通常運用では不要）
 
 ## 資料
 

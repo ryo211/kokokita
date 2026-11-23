@@ -14,10 +14,11 @@
 -- 到達者数・「◯人目」・写真はすべて (course_id, spot_id) 単位で独立に扱う。
 -- 場所の実体を正規化する places テーブルは意図的に作らない。
 --
--- 簡略化した点（将来の課題）:
--- - courses/course_spots の正式なメタ情報は tools/course-pipeline/sync_courses_to_supabase.py で投入する。
---   未実行の間は、record_spot_arrival RPCが courses に title=course_id のダミー行を
---   source='official' で自動生成してフォールバックする。
+-- courses/course_spotsの正式なメタ情報は、tools/course-admin/lambda/handler.pyの
+-- publish/delete-courseが都度自動で反映する（コース管理画面での公開・削除操作がそのまま
+-- Supabaseにも反映される）。それでも何らかの理由でcourses行が無い場合に備え、
+-- record_spot_arrival RPCは title=course_id のダミー行をsource='official'で
+-- 自動生成するフォールバックを持つ。
 
 -- =========================================
 -- 1. users: auth.users を拡張するプロフィール的テーブル

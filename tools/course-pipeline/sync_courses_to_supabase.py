@@ -3,6 +3,11 @@
 本番配信中の公式コースJSON（https://kokokita-app.irodoriq.com/course/store/index.json
 および個別の courses/{id}.json）から courses / course_spots をSupabaseへ同期するスクリプト。
 
+【注意】通常運用でのcourses/course_spots同期は、tools/course-admin/lambda/handler.py の
+publish/delete-course が自動で行うため、このスクリプトを都度実行する必要は無い。
+これは course-admin のSupabase連携を導入する前に公開済みだったコースを
+一括で取り込むための backfill 専用ツールとして残している。
+
 使い方（tools/course-pipeline/ フォルダで実行）:
     python3 sync_courses_to_supabase.py --dry-run   # 変更内容を確認するだけ（書き込みなし）
     python3 sync_courses_to_supabase.py              # 実際に反映

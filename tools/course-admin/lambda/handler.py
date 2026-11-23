@@ -11,11 +11,23 @@ S3 パス構成:
   本番 JSON : course/{courseJsonPath}         例: course/courses/xxx.json
   ドラフト  : course/drafts/{courseJsonPath}  例: course/drafts/courses/xxx.json
   画像      : course/images/{type}/{id}.jpg
+
+Supabase 連携:
+  publish 時に courses/course_spots テーブルへ反映し、delete-course 時に
+  courses.status を 'removed' にする（物理削除はしない。spot_arrivals/course_events
+  が historical に course_id を参照し続けるため）。
+  SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY が未設定の環境では同期をスキップする
+  （ローカル検証など）。失敗してもpublish/delete-course自体は失敗させない（ベストエフォート）。
+  既存の tools/course-pipeline/sync_courses_to_supabase.py は、このLambda導入前に
+  公開済みだったコースを一括で取り込むための backfill 専用ツールとして残す。
 """
 
 import hmac
 import json
 import os
+import urllib.error
+import urllib.parse
+import urllib.request
 import uuid
 import traceback
 from datetime import datetime, timezone
@@ -30,6 +42,9 @@ CF_DIST_ID     = os.environ.get('CF_DIST_ID',    '')
 BASE_CDN_URL   = os.environ.get('BASE_CDN_URL',  'https://kokokita-app.irodoriq.com/course')
 ALLOWED_ORIGIN = os.environ.get('ALLOWED_ORIGIN', '*')
 ADMIN_SECRET   = os.environ.get('ADMIN_SECRET',  '')
+
+SUPABASE_URL               = os.environ.get('SUPABASE_URL', '')
+SUPABASE_SERVICE_ROLE_KEY  = os.environ.get('SUPABASE_SERVICE_ROLE_KEY', '')
 
 s3_client = boto3.client('s3')
 cf_client = boto3.client('cloudfront')
@@ -60,6 +75,95 @@ def calc_spot_stats(data):
     spot_count     = len(spots)
     spot_img_count = sum(1 for sp in spots if sp.get('coverImageUrl'))
     return spot_count, spot_img_count
+
+def flatten_spots(data):
+    """sections / spots のどちらの形式でも、順序を保ったスポット一覧を返す
+    （tools/course-pipeline/sync_courses_to_supabase.py と同じロジック）。"""
+    if data.get('sections'):
+        spots = []
+        for sec in data['sections']:
+            spots.extend(sec.get('spots', []))
+        return spots
+    return data.get('spots') or []
+
+def supabase_request(method, path, body=None, params=None, extra_headers=None):
+    """Supabase REST(PostgREST)へリクエストを送る。service_roleキーでRLSを無視して書き込む。
+    SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY未設定の環境では何もしない（ローカル検証など）。"""
+    if not SUPABASE_URL or not SUPABASE_SERVICE_ROLE_KEY:
+        print('[WARN] Supabase未設定のため同期をスキップします')
+        return None
+
+    url = f'{SUPABASE_URL.rstrip("/")}/rest/v1/{path}'
+    if params:
+        url += '?' + urllib.parse.urlencode(params)
+
+    headers = {
+        'apikey': SUPABASE_SERVICE_ROLE_KEY,
+        'Content-Type': 'application/json',
+    }
+    if extra_headers:
+        headers.update(extra_headers)
+
+    data_bytes = json.dumps(body, ensure_ascii=False).encode('utf-8') if body is not None else None
+    req = urllib.request.Request(url, data=data_bytes, headers=headers, method=method)
+    try:
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            return resp.read()
+    except urllib.error.HTTPError as e:
+        detail = e.read().decode('utf-8', errors='replace')
+        raise RuntimeError(f'Supabase {method} {path} 失敗 ({e.code}): {detail}')
+
+def supabase_upsert(path, rows, on_conflict):
+    if not rows:
+        return
+    supabase_request(
+        'POST', path, body=rows,
+        params={'on_conflict': on_conflict},
+        extra_headers={'Prefer': 'resolution=merge-duplicates,return=minimal'},
+    )
+
+def sync_course_to_supabase(course_id, data, version):
+    """publish時にcourses/course_spotsへ反映する。管理画面からの編集を正として扱うため、
+    コースから削除されたスポットはcourse_spots側からも削除する（到達記録自体は残す）。
+    失敗してもpublish自体は継続させる（呼び出し側でtry/exceptする）。"""
+    supabase_upsert('courses', [{
+        'id':              course_id,
+        'source':          'official',
+        'title':           data.get('title', ''),
+        'summary':         data.get('summary'),
+        'categories':      data.get('categories') or [],
+        'current_version': version,
+        'status':          'published',
+    }], on_conflict='id')
+
+    spots = flatten_spots(data)
+    spot_rows = [{
+        'course_id':   course_id,
+        'spot_id':     sp['spotId'],
+        'name':        sp.get('name', ''),
+        'lat':         sp.get('latitude'),
+        'lng':         sp.get('longitude'),
+        'order_index': sp.get('orderIndex', i),
+    } for i, sp in enumerate(spots)]
+    supabase_upsert('course_spots', spot_rows, on_conflict='course_id,spot_id')
+
+    if spots:
+        # 編集でスポットが削除された場合、Supabase側のcourse_spotsからも除く
+        spot_id_list = ','.join(sp['spotId'] for sp in spots)
+        supabase_request(
+            'DELETE', 'course_spots',
+            params={'course_id': f'eq.{course_id}', 'spot_id': f'not.in.({spot_id_list})'},
+        )
+
+def soft_delete_course_in_supabase(course_id):
+    """delete-course時にcourses.statusを'removed'にする。物理削除はしない
+    （spot_arrivals/course_eventsが集計のためcourse_idをhistoricalに参照し続けるため）。"""
+    supabase_request(
+        'PATCH', 'courses',
+        params={'id': f'eq.{course_id}'},
+        body={'status': 'removed'},
+        extra_headers={'Prefer': 'return=minimal'},
+    )
 
 def s3_get_json(key):
     """S3 から JSON を読み込む。存在しなければ None を返す。"""
@@ -341,6 +445,17 @@ def handle_publish(body):
     except Exception as e:
         print(f'[WARN] store/index.json 更新スキップ: {e}')
 
+    # Supabase（courses/course_spots）へ反映。失敗してもpublish自体は成功とする
+    try:
+        cid = draft_data.get('id') or course_id
+        if cid:
+            sync_course_to_supabase(cid, draft_data, new_version)
+            print(f'[INFO] Supabase同期完了: course_id={cid}')
+        else:
+            print('[WARN] courseIdが無いためSupabase同期をスキップします')
+    except Exception as e:
+        print(f'[WARN] Supabase同期失敗: {e}')
+
     invalidation_id = cf_invalidate(cf_paths)
 
     return ok({'success': True, 'newVersion': new_version,
@@ -353,6 +468,7 @@ def handle_publish(body):
 # ─────────────────────────────────────────────────────────────────────────────
 def handle_delete_course(body):
     course_json_path = body.get('courseJsonPath')
+    course_id         = body.get('courseId')
     if not course_json_path:
         return err(400, 'courseJsonPath が必要です')
 
@@ -389,6 +505,16 @@ def handle_delete_course(body):
         print(f'[INFO] store/index.json からコース削除: {course_json_path} ({before}→{len(store_data["courses"])}件)')
     except Exception as e:
         print(f'[WARN] store/index.json 更新スキップ: {e}')
+
+    # Supabase側は物理削除せずstatus='removed'にする（履歴データが参照し続けるため）
+    try:
+        if course_id:
+            soft_delete_course_in_supabase(course_id)
+            print(f'[INFO] Supabase上のコースをremoved状態に: {course_id}')
+        else:
+            print('[WARN] courseIdが無いためSupabase側の削除反映をスキップします')
+    except Exception as e:
+        print(f'[WARN] Supabase側コース削除反映失敗: {e}')
 
     invalidation_id = cf_invalidate(cf_paths)
 

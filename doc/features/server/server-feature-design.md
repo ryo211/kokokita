@@ -124,7 +124,7 @@ erDiagram
 ### 既存JSON仕様への追加
 
 - SpotJSONへの追加フィールドは不要（placeId等は導入しない。到達記録は`course_id`+`spot_id`で完結する）
-- 公式コースのcourses/course_spotsは `tools/course-pipeline/sync_courses_to_supabase.py` が本番配信中の `store/index.json` 経由でコースJSONを取得し、Supabaseへupsertする（新規スクリプト。SpotJSONのgooglePlaceIdは形骸化しており使用しない）
+- 公式コースのcourses/course_spotsは、コース管理画面（`tools/course-admin/`）の`publish`/`delete-course`操作に合わせて`tools/course-admin/lambda/handler.py`が自動でSupabaseへ反映する（SpotJSONのgooglePlaceIdは形骸化しており使用しない）。`tools/course-pipeline/sync_courses_to_supabase.py`は、この連携を入れる前に公開済みだったコースの一括取り込み用backfillツールとして残す
 - コースJSONに `author`（ハンドルネーム）を追加。既存の `source`（`downloaded`/`user`）フィールドで公式/コミュニティは判別できるため、重複する `origin` フィールドは追加しない
 - ユーザー投稿コースのID・スポットIDは、新規の命名規則を増やさず既存の `course-user-{UUID下8桁}-001` / `{コース略称}-{3桁連番}` 形式を維持する（上記「courseId生文字列マイグレーション」参照）
 
@@ -337,7 +337,8 @@ P1で唯一ユーザーに見える機能。同意画面だけのリリースに
 - [x] **`CourseEntity` への `rawId` 文字列フィールド追加と `CourseAutoSyncService` へのバックフィル統合**
 - [x] バックエンド選定を確定（Supabase）。本番Supabaseプロジェクト作成・Anonymous Sign-ins有効化済み
 - [x] 全テーブルのスキーマ定義・本番適用（`doc/features/server/phase1_schema.sql`。placesは作らない方針に変更済み）
-- [x] 公式コースから course_spots を生成するスクリプト（`tools/course-pipeline/sync_courses_to_supabase.py`、本番 `store/index.json` 経由で取得）
+- [x] 公式コースから course_spots を生成するスクリプト（`tools/course-pipeline/sync_courses_to_supabase.py`、本番 `store/index.json` 経由で取得。backfill専用）
+- [x] コース管理画面(`tools/course-admin/`)の publish/delete-course 操作をSupabase（courses/course_spots）へ自動反映（`tools/course-admin/lambda/handler.py`。delete-courseはstatus='removed'への論理削除）
 - [x] spotId不変ルールを仕様書に追記（`doc/features/course/course-json-spec.md`）
 - [x] 匿名認証の組み込み、即時送信（記録確定のクリティカルパスをブロックしない非同期実装）と到達記録の同期（初回は過去分も全件）。実機で動作確認済み
 - [x] 集計バッチのコード実装・デプロイ（`compute_course_stats` RPC、`tools/course-stats-batch/`）。CloudFormationスタック`kokokita-course-stats-batch`をデプロイ済み、EventBridgeで毎日03:00 UTC実行、`stats.json`のS3書き出しまで実機確認済み
