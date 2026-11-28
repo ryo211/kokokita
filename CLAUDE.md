@@ -30,7 +30,7 @@ kokokita/
     └── Utilities/    # DependencyContainer, Logger, NavigationRouter, Extensions
 ```
 
-アプリ外の補助ツール(コース生成スクリプト、管理画面、Lambda)は [tools/](tools/README.md) にあります。
+アプリ外の補助ツール(コース生成スクリプト、管理画面、Lambda)は [tools/](tools/README.md) に、公開Webサイト(巡礼ガイド、Astro)は、コードも資料も別リポジトリ `ryo211/kokokita-web`(ローカルでは `../kokokita-web`)にあります。
 
 ### 依存性注入
 **DependencyContainer.swift** (`AppContainer.shared`) で集中的にサービスを初期化。すべてのリポジトリとサービスはここでインスタンス化され、ビューモデルに注入されます。
@@ -160,6 +160,7 @@ xcodebuild -project kokokita.xcodeproj -scheme kokokita -sdk iphonesimulator bui
 - 作業手順 → `doc/operations/`、規約・ポリシー → `doc/legal/`、役目を終えた資料 → `doc/archive/`
 - リポジトリのルート直下や `doc/` 直下に設計書を置かない。`.docx` 等のバイナリや作業用データ(CSV・JSON)はコミットしない
 - 補助スクリプト・管理画面・Lambda は `tools/<用途>/` に置く
+- 一般公開する Web サイト(巡礼ガイド)は、コードも資料も別リポジトリ `kokokita-web` に置く
 - 新規ドキュメントの冒頭には「ステータス・最終更新・対象バージョン」の3行を書く
 - 新しい機能フォルダやツールを追加したら `doc/README.md` / `tools/README.md` の一覧も更新する
 
