@@ -1,10 +1,10 @@
 # プライバシーポリシー
 
-最終更新日：2026年11月23日
+最終更新日：2026年11月28日
 
 ## 1. はじめに
 
-ryo hashimoto（以下「開発者」）が提供するiOSアプリケーション「ココキタ」（以下「本アプリ」）は、ユーザーの皆様のプライバシーを尊重し、個人情報の保護に努めます。本プライバシーポリシーは、本アプリにおける情報の取り扱いについて説明するものです。
+ryo hashimoto（以下「開発者」）が提供するiOSアプリケーション「ココキタ」（以下「本アプリ」）は、ユーザーの皆様のプライバシーを尊重し、個人情報の保護に努めます。本プライバシーポリシーは、本アプリにおける情報の取り扱いについて説明するものです。また、開発者が運営するウェブサイトにおけるアクセス解析については、5.2で説明します。
 
 ## 2. 開発者情報
 
@@ -91,7 +91,20 @@ ryo hashimoto（以下「開発者」）が提供するiOSアプリケーショ�
   - 本アプリが記録する位置情報、写真、訪問記録データは、Google AdMobに送信されません
   - 広告配信に必要な情報のみがGoogle AdMobに送信されます
 
-### 5.2 その他の第三者提供
+### 5.2 ウェブサイトのアクセス解析
+開発者が運営するウェブサイト（本アプリの紹介サイト https://kokokita.irodoriq.com/ と、巡礼ガイド https://kokokita-web.irodoriq.com/。以下「本サイト」）では、利用状況を把握してサイトを改善するため、Google LLCが提供するアクセス解析ツール「Google アナリティクス」を使用しています。
+
+- **収集される情報**: 閲覧したページ、閲覧日時、参照元（どのサイトから来たか）、ブラウザ・OS・デバイスの種類、IPアドレスから推定されるおおよその地域、リンクのクリックなどの利用状況
+- **Cookieの利用**: Google アナリティクスは、Cookie（クッキー）を使ってこれらの情報を収集します。情報は匿名で収集され、個人を特定するものではありません
+- **本アプリとの関係**: 本サイトで収集した情報を、本アプリ内のデータ（位置情報、写真、訪問記録など）と結び付けることはありません
+- **収集を無効にする方法**: ブラウザの設定でCookieを無効にするか、Googleが提供する「Google アナリティクス オプトアウト アドオン」を利用すると、収集を止められます
+  [https://tools.google.com/dlpage/gaoptout?hl=ja](https://tools.google.com/dlpage/gaoptout?hl=ja)
+- **Googleによるデータの使用**:
+  [https://policies.google.com/technologies/partner-sites?hl=ja](https://policies.google.com/technologies/partner-sites?hl=ja)
+- **Googleのプライバシーポリシー**:
+  [https://policies.google.com/privacy](https://policies.google.com/privacy)
+
+### 5.3 その他の第三者提供
 上記以外に、ユーザーの個人情報を第三者に提供することはありません。ただし、以下の場合を除きます：
 - 法令に基づく場合
 - 人の生命、身体または財産の保護のために必要がある場合
@@ -105,6 +118,7 @@ ryo hashimoto（以下「開発者」）が提供するiOSアプリケーショ�
 - 広告の配信（Google AdMob経由）
 - カスタマーサポートの提供
 - 匿名データによる、スポットの到達順位表示・コースの人気度集計（3.5参照）
+- ウェブサイトの利用状況の把握と改善（5.2参照）
 
 ## 7. ユーザーの権利
 
@@ -156,7 +170,7 @@ ryo hashimoto（以下「開発者」）が提供するiOSアプリケーショ�
 ---
 
 **制定日**: 2025年11月25日
-**最終改定日**: 2026年11月23日
+**最終改定日**: 2026年11月28日
 
 ryo hashimoto
 
@@ -165,11 +179,11 @@ ryo hashimoto
 
 # Privacy Policy
 
-Last Updated: November 23, 2026
+Last Updated: November 28, 2026
 
 ## 1. Introduction
 
-This Privacy Policy explains how ryo hashimoto (hereinafter referred to as "the Developer") handles information in the iOS application "Kokokita" (hereinafter referred to as "the App"). The Developer respects your privacy and is committed to protecting your personal information.
+This Privacy Policy explains how ryo hashimoto (hereinafter referred to as "the Developer") handles information in the iOS application "Kokokita" (hereinafter referred to as "the App"). The Developer respects your privacy and is committed to protecting your personal information. Access analytics on the websites operated by the Developer are described in 5.2.
 
 ## 2. Developer Information
 
@@ -256,7 +270,20 @@ The App uses Google AdMob (provided by Google LLC) to display advertisements.
   - Location information, photos, and visit record data recorded by the App are NOT transmitted to Google AdMob
   - Only information necessary for ad delivery is transmitted to Google AdMob
 
-### 5.2 Other Third-Party Sharing
+### 5.2 Website Analytics
+The websites operated by the Developer (the App's introduction site https://kokokita.irodoriq.com/ and the pilgrimage guide https://kokokita-web.irodoriq.com/; hereinafter "the Websites") use Google Analytics, an analytics tool provided by Google LLC, to understand how they are used and to improve them.
+
+- **Information Collected**: Usage information such as pages viewed, date and time of access, referrer (the site you came from), browser, OS and device type, approximate region estimated from your IP address, and link clicks
+- **Use of Cookies**: Google Analytics uses cookies to collect this information. The information is collected anonymously and does not identify individuals
+- **Relation to the App**: Information collected on the Websites is never linked to data in the App (location information, photos, visit records, etc.)
+- **How to Opt Out**: You can stop the collection by disabling cookies in your browser settings or by using the Google Analytics Opt-out Browser Add-on provided by Google
+  [https://tools.google.com/dlpage/gaoptout](https://tools.google.com/dlpage/gaoptout)
+- **How Google Uses Data**:
+  [https://policies.google.com/technologies/partner-sites](https://policies.google.com/technologies/partner-sites)
+- **Google Privacy Policy**:
+  [https://policies.google.com/privacy](https://policies.google.com/privacy)
+
+### 5.3 Other Third-Party Sharing
 The Developer does not provide user personal information to third parties except as described above, unless:
 - Required by law
 - Necessary to protect the life, body, or property of a person
@@ -270,6 +297,7 @@ Collected information is used only for the following purposes:
 - Ad delivery (via Google AdMob)
 - Customer support
 - Displaying spot arrival rank and aggregating course popularity using anonymous data (see 3.5)
+- Understanding and improving the use of the Websites (see 5.2)
 
 ## 7. User Rights
 
@@ -321,6 +349,6 @@ For questions, comments, or inquiries regarding this Privacy Policy or personal 
 ---
 
 **Effective Date**: November 25, 2025
-**Last Revised**: November 23, 2026
+**Last Revised**: November 28, 2026
 
 ryo hashimoto
